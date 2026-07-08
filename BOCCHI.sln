@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ocelot.Pathfinding", "Ocelo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BOCCHI.CriticalEncounters", "BOCCHI.CriticalEncounters\BOCCHI.CriticalEncounters.csproj", "{EEDAAB63-C1BF-43F3-B85A-F35E9D436A5D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BOCCHI.MobFarmer", "BOCCHI.MobFarmer\BOCCHI.MobFarmer.csproj", "{B8E4F1A2-3C5D-4E6F-9A0B-1D2C3E4F5A6B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

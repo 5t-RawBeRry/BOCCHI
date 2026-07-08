@@ -20,4 +20,6 @@ public class Configuration : IConfiguration
     public BuffConfig BuffConfig { get; set; } = new();
 
     public CombatConfig CombatConfig { get; set; } = new();
+
+    public MobFarmerConfig MobFarmerConfig { get; set; } = new();
 }

@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\BOCCHI.Common\BOCCHI.Common.csproj"/>
+  </ItemGroup>
+</Project>

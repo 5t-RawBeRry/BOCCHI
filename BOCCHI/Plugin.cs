@@ -15,6 +15,7 @@ using BOCCHI.Data;
 using BOCCHI.Data.Zones;
 using BOCCHI.Experience;
 using BOCCHI.Fates;
+using BOCCHI.MobFarmer;
 using BOCCHI.Renderers;
 using BOCCHI.Services;
 using BOCCHI.Services.Materia;
@@ -92,6 +93,7 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.LoadCriticalEncountersModule();
 
         services.LoadAutomatorModule();
+        services.LoadMobFarmerModule();
     }
 
     private static void BootstrapOcelotModules(IServiceCollection services)

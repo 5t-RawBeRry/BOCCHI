@@ -2,24 +2,6 @@
   "version": 1,
   "dependencies": {
     "net10.0-windows7.0": {
-      "ClientStructsExposed.UnknownFieldGenerator": {
-        "type": "Direct",
-        "requested": "[0.1.3, )",
-        "resolved": "0.1.3",
-        "contentHash": "z9dUcxmdAUEYBkCVUiysW5urzN6vz5AsGaL2KHic/jRj6TsNqO+WvADs1aJUKRtdgjpXJcaMqsBnp5NKtawgRw=="
-      },
-      "DalamudPackager": {
-        "type": "Direct",
-        "requested": "[14.0.1, )",
-        "resolved": "14.0.1",
-        "contentHash": "y0WWyUE6dhpGdolK3iKgwys05/nZaVf4ZPtIjpLhJBZvHxkkiE23zYRo7K7uqAgoK/QvK5cqF6l3VG5AbgC6KA=="
-      },
-      "DotNet.ReproducibleBuilds": {
-        "type": "Direct",
-        "requested": "[1.2.39, )",
-        "resolved": "1.2.39",
-        "contentHash": "fcFN01tDTIQqDuTwr1jUQK/geofiwjG5DycJQOnC72i1SsLAk1ELe+apBOuZ11UMQG8YKFZG1FgvjZPbqHyatg=="
-      },
       "ECommons": {
         "type": "Transitive",
         "resolved": "3.2.0.11",
@@ -131,95 +113,9 @@
         "resolved": "3.1.12",
         "contentHash": "iAg6zifihXEFS/t7fiHhZBGAdCp3FavsF4i2ZIDp0JfeYeDVzvmlbY1CNhhIKimaIzrzSi5M/NBFcWvZT2rB/A=="
       },
-      "bocchi.automator": {
-        "type": "Project",
-        "dependencies": {
-          "BOCCHI.Buff": "[1.0.0, )",
-          "BOCCHI.Common": "[1.0.0, )",
-          "FFXIVOcelot": "[1.0.0, )",
-          "FFXIVOcelot.Chain": "[1.0.0, )",
-          "FFXIVOcelot.ECommons": "[1.0.0, )",
-          "FFXIVOcelot.Pathfinding": "[1.0.0, )",
-          "FFXIVOcelot.Pictomancy": "[1.0.0, )",
-          "FFXIVOcelot.UI": "[1.0.0, )"
-        }
-      },
-      "bocchi.buff": {
-        "type": "Project",
-        "dependencies": {
-          "BOCCHI.Common": "[1.0.0, )",
-          "FFXIVOcelot": "[1.0.0, )",
-          "FFXIVOcelot.Chain": "[1.0.0, )",
-          "FFXIVOcelot.ECommons": "[1.0.0, )",
-          "FFXIVOcelot.Pathfinding": "[1.0.0, )",
-          "FFXIVOcelot.Pictomancy": "[1.0.0, )",
-          "FFXIVOcelot.UI": "[1.0.0, )"
-        }
-      },
       "bocchi.common": {
         "type": "Project",
         "dependencies": {
-          "FFXIVOcelot": "[1.0.0, )",
-          "FFXIVOcelot.Chain": "[1.0.0, )",
-          "FFXIVOcelot.ECommons": "[1.0.0, )",
-          "FFXIVOcelot.Pathfinding": "[1.0.0, )",
-          "FFXIVOcelot.Pictomancy": "[1.0.0, )",
-          "FFXIVOcelot.UI": "[1.0.0, )"
-        }
-      },
-      "bocchi.criticalencounters": {
-        "type": "Project",
-        "dependencies": {
-          "BOCCHI.Common": "[1.0.0, )",
-          "ClientStructsExposed.UnknownFieldGenerator": "[0.1.3, )",
-          "FFXIVOcelot": "[1.0.0, )",
-          "FFXIVOcelot.Chain": "[1.0.0, )",
-          "FFXIVOcelot.ECommons": "[1.0.0, )",
-          "FFXIVOcelot.Pathfinding": "[1.0.0, )",
-          "FFXIVOcelot.Pictomancy": "[1.0.0, )",
-          "FFXIVOcelot.UI": "[1.0.0, )"
-        }
-      },
-      "bocchi.currency": {
-        "type": "Project",
-        "dependencies": {
-          "BOCCHI.Common": "[1.0.0, )",
-          "FFXIVOcelot": "[1.0.0, )",
-          "FFXIVOcelot.Chain": "[1.0.0, )",
-          "FFXIVOcelot.ECommons": "[1.0.0, )",
-          "FFXIVOcelot.Pathfinding": "[1.0.0, )",
-          "FFXIVOcelot.Pictomancy": "[1.0.0, )",
-          "FFXIVOcelot.UI": "[1.0.0, )"
-        }
-      },
-      "bocchi.experience": {
-        "type": "Project",
-        "dependencies": {
-          "BOCCHI.Common": "[1.0.0, )",
-          "FFXIVOcelot": "[1.0.0, )",
-          "FFXIVOcelot.Chain": "[1.0.0, )",
-          "FFXIVOcelot.ECommons": "[1.0.0, )",
-          "FFXIVOcelot.Pathfinding": "[1.0.0, )",
-          "FFXIVOcelot.Pictomancy": "[1.0.0, )",
-          "FFXIVOcelot.UI": "[1.0.0, )"
-        }
-      },
-      "bocchi.fates": {
-        "type": "Project",
-        "dependencies": {
-          "BOCCHI.Common": "[1.0.0, )",
-          "FFXIVOcelot": "[1.0.0, )",
-          "FFXIVOcelot.Chain": "[1.0.0, )",
-          "FFXIVOcelot.ECommons": "[1.0.0, )",
-          "FFXIVOcelot.Pathfinding": "[1.0.0, )",
-          "FFXIVOcelot.Pictomancy": "[1.0.0, )",
-          "FFXIVOcelot.UI": "[1.0.0, )"
-        }
-      },
-      "bocchi.mobfarmer": {
-        "type": "Project",
-        "dependencies": {
-          "BOCCHI.Common": "[1.0.0, )",
           "FFXIVOcelot": "[1.0.0, )",
           "FFXIVOcelot.Chain": "[1.0.0, )",
           "FFXIVOcelot.ECommons": "[1.0.0, )",
