@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using BOCCHI.Common.Data.Paths;
+using BOCCHI.Common.Data.Zones;
 using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
 
@@ -42,7 +43,7 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
                     [
                         PathStep.Pathfind(node.Position.GetApproachPosition(start, meta.InteractRange)),
                         PathStep.Teleport(meta.AetheryteId),
-                        PathStep.Pathfind(goal.Position),
+                        PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, inbound.Position)),
                     ]);
             }
             else
@@ -64,7 +65,7 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
                     [
                         PathStep.Pathfind(nearestAethernet.Position),
                         PathStep.Teleport(meta.AetheryteId),
-                        PathStep.Pathfind(goal.Position),
+                        PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, inbound.Position)),
                     ]);
             }
         }
@@ -86,7 +87,7 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
             [
                 PathStep.Pathfind(nearestTeleport.Position),
                 PathStep.Teleport(meta.AetheryteId),
-                PathStep.Pathfind(goal.Position),
+                PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, inbound.Position)),
             ]);
     }
 }

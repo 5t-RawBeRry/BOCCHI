@@ -47,7 +47,7 @@ public class CriticalEncounterContext(IObjectTable objects) : ICriticalEncounter
             {
                 var battleChara = (BattleChara*)o.Address;
 
-                return o.SubKind == (byte)BattleNpcSubKind.Enemy && battleChara->EventId.EntryId == ceId;
+                return o.SubKind == (byte)BattleNpcSubKind.Combatant && battleChara->EventId.EntryId == ceId;
             })
             .OrderBy(o => o.Position.Distance2D(player.Position));
     }

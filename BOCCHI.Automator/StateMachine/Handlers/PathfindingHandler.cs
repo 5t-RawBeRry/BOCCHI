@@ -4,6 +4,7 @@ using BOCCHI.Automator.Services;
 using BOCCHI.Automator.Services.Paths;
 using BOCCHI.Common.Data.Paths;
 using BOCCHI.Common.Data.Zones;
+using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.Services.Paths;
 using Dalamud.Game.ClientState.Conditions;
@@ -33,6 +34,11 @@ public class PathfindingHandler(
 
     public override StatePriority GetScore()
     {
+        if (memory.TryRemember<ApplyingBuffsMemory>(out var _))
+        {
+            return StatePriority.Never;
+        }
+
         return memory.TryRemember<GoalPathStepMemory>(out var _) ? StatePriority.High : StatePriority.Never;
     }
 

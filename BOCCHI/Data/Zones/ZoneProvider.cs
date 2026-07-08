@@ -14,6 +14,6 @@ public class ZoneProvider(IClientState client, IServiceProvider services) : IZon
 
     public IZone GetZone()
     {
-        return Zones.TryGetValue(client.TerritoryType, out var zone) ? zone : new NullZone();
+        return Zones.TryGetValue((ushort)client.TerritoryType, out var zone) ? zone : new NullZone();
     }
 }

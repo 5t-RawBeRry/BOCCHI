@@ -7,7 +7,6 @@ using Ocelot.Actions;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Chain.Middleware.Step;
-using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
 namespace BOCCHI.Services.Materia;
 
@@ -44,12 +43,12 @@ public class ExtractStep(
                     var values = stackalloc AtkValue[2];
                     values[0] = new AtkValue
                     {
-                        Type = ValueType.Int,
+                        Type = AtkValueType.Int,
                         Int = 2,
                     };
                     values[1] = new AtkValue
                     {
-                        Type = ValueType.UInt,
+                        Type = AtkValueType.UInt,
                         UInt = 0,
                     };
 

@@ -33,7 +33,7 @@ public class ApplyingBuffsHandler(
     {
         if (memory.TryRemember<ApplyingBuffsMemory>(out var _))
         {
-            return StatePriority.MediumHigh;
+            return StatePriority.VeryHigh;
         }
 
         if (!config.ShouldAutomateBuffs || !buffs.ShouldRefreshAny())
@@ -54,7 +54,7 @@ public class ApplyingBuffsHandler(
         }
 
         var closest = crystals.OrderBy(c => player.Position.Distance2D(c.Position)).First();
-        return player.Position.Distance2D(closest.Position) <= config.KnowledgeCrystalDistance ? StatePriority.Normal : StatePriority.Never;
+        return player.Position.Distance2D(closest.Position) <= config.KnowledgeCrystalDistance ? StatePriority.MediumHigh : StatePriority.Never;
     }
 
     public override void Enter()

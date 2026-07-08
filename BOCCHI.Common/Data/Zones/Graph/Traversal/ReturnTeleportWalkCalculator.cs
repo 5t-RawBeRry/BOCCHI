@@ -1,5 +1,7 @@
 ﻿using System.Numerics;
+using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Paths;
+using BOCCHI.Common.Data.Zones;
 using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
 
@@ -14,6 +16,17 @@ public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
 
     public async Task<TraversalCandidate?> CalculateAsync(ZoneGraph graph, Vector3 start, Node goal, IPathfinder pathfinder)
     {
+        if (graph.TryGetNode(start, AethernetData.InteractRadius, out var nearby) && nearby.IsTeleport())
+        {
+            return null;
+        }
+
+        var baseCampAetheryte = graph.GetBaseCampAetheryteNode();
+        if (baseCampAetheryte != null && start.Distance2D(baseCampAetheryte.Position) <= AethernetData.InteractRadius)
+        {
+            return null;
+        }
+
         var returnNode = graph.GetBaseCampReturnPositionNode();
         if (returnNode == null)
         {
@@ -50,7 +63,7 @@ public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
                 PathStep.Return(),
                 PathStep.Pathfind(baseCampNode.Position.GetApproachPosition(returnNode.Position, meta.InteractRange, 30f)),
                 PathStep.Teleport(meta.AetheryteId),
-                PathStep.Pathfind(goal.Position),
+                PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, inbound.Position)),
 
             ]
         );

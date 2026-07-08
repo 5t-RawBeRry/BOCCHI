@@ -1,7 +1,6 @@
 ﻿using BOCCHI.Common.Config;
+using BOCCHI.Common.Services;
 using BOCCHI.Currency.Data;
-using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using Ocelot.Lifecycle;
 
 namespace BOCCHI.Currency.Services;
@@ -50,10 +49,9 @@ public class CurrencyTracker(CurrencyConfig config) : ICurrencyTracker, IOnUpdat
         return GetHistory(sampleDuration, silverSnapshots);
     }
 
-    public unsafe void Update()
+    public void Update()
     {
-        var state = PublicContentOccultCrescent.GetState();
-        if (state == null)
+        if (!OccultCrescentHelper.IsStateAvailable())
         {
             return;
         }
@@ -199,19 +197,13 @@ public class CurrencyTracker(CurrencyConfig config) : ICurrencyTracker, IOnUpdat
         return result;
     }
 
-    private static unsafe int GetCurrentGold()
+    private static int GetCurrentGold()
     {
-        const int ITEM_ID = 45044;
-
-        var im = InventoryManager.Instance();
-        return im == null ? 0 : im->GetInventoryItemCount(ITEM_ID);
+        return OccultCrescentHelper.GetGold();
     }
 
-    private static unsafe int GetCurrentSilver()
+    private static int GetCurrentSilver()
     {
-        const int ITEM_ID = 45043;
-
-        var im = InventoryManager.Instance();
-        return im == null ? 0 : im->GetInventoryItemCount(ITEM_ID);
+        return OccultCrescentHelper.GetSilver();
     }
 }
