@@ -17,6 +17,9 @@ using BOCCHI.Experience;
 using BOCCHI.Fates;
 using BOCCHI.MobFarmer;
 using BOCCHI.Renderers;
+#if DEBUG
+using BOCCHI.Debug;
+#endif
 using BOCCHI.Services;
 using BOCCHI.Services.Materia;
 using BOCCHI.Services.Repair;
@@ -94,6 +97,10 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
 
         services.LoadAutomatorModule();
         services.LoadMobFarmerModule();
+
+#if DEBUG
+        services.LoadDebugModule();
+#endif
     }
 
     private static void BootstrapOcelotModules(IServiceCollection services)
