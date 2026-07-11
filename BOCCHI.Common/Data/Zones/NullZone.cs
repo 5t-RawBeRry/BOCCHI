@@ -2,12 +2,15 @@
 using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.KnowledgeCrystals;
 using BOCCHI.Common.Data.Zones.Graph;
-using Dalamud.Configuration;
 
 namespace BOCCHI.Common.Data.Zones;
 
 public class NullZone : IZone
 {
+    public ZoneId ZoneId => ZoneId.Unknown;
+
+    public ushort TerritoryType => 0;
+
     public bool IsOccultCrescentZone()
     {
         return false;
@@ -58,9 +61,16 @@ public class NullZone : IZone
         return [];
     }
 
+    public ushort ForkedTowerEventId => 0;
+
     public bool IsInForkedTower()
     {
         return false;
+    }
+
+    public float GetCriticalEncounterRadius(int eventId)
+    {
+        return 0f;
     }
 
     public async Task<ZoneGraph> GetGraph()

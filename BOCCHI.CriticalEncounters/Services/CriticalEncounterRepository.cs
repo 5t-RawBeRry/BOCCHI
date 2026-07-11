@@ -1,4 +1,5 @@
 ﻿using BOCCHI.Common.Data.CriticalEncounters;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.Services.Data;
 using BOCCHI.CriticalEncounters.Data;
@@ -11,7 +12,8 @@ namespace BOCCHI.CriticalEncounters.Services;
 
 public class CriticalEncounterRepository(
     IDataRepository<CriticalEncounterId, CriticalEncounter> data,
-    ICriticalEncounterFactory factory
+    ICriticalEncounterFactory factory,
+    IZoneProvider zones
 ) : ICriticalEncounterRepository, IOnUpdate
 {
     public event Action<CriticalEncounter>? CriticalEncounterAdded;
@@ -25,7 +27,8 @@ public class CriticalEncounterRepository(
 
     public IReadOnlyList<CriticalEncounter> SnapshotWithoutForkedTower()
     {
-        return data.Where(e => e.Id.Value != 48).ToList().AsReadOnly();
+        var forkedTowerId = zones.GetZone().ForkedTowerEventId;
+        return data.Where(e => e.Id.Value != forkedTowerId).ToList().AsReadOnly();
     }
 
     public bool HasCriticalEncounter(CriticalEncounterId id)

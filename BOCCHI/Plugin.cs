@@ -6,13 +6,13 @@ using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph.Factory;
+using BOCCHI.Common.Data.Zones.Implementations.SouthHorn;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.Steps;
 using BOCCHI.Config;
 using BOCCHI.CriticalEncounters;
 using BOCCHI.Currency;
 using BOCCHI.Data;
-using BOCCHI.Data.Zones;
 using BOCCHI.Experience;
 using BOCCHI.Fates;
 using BOCCHI.MobFarmer;
@@ -61,8 +61,8 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<ISupportJobFactory, SupportJobFactory>();
         services.AddSingleton<ISupportJobChanger, SupportJobChanger>();
 
-        services.AddSingleton<IZoneProvider, ZoneProvider>();
-        services.AddSingleton<SouthHorn>();
+        services.AddZones()
+            .AddZone<SouthHorn>();
 
 
         services.AddSingleton<IGraphFactory, GraphFactory>();

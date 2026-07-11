@@ -7,7 +7,7 @@ using Dalamud.Plugin.Services;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
 
-namespace BOCCHI.Common.Data.Zones;
+namespace BOCCHI.Common.Data.Zones.Implementations.SouthHorn;
 
 public class SouthHorn(
     IObjectTable objects,
@@ -15,7 +15,7 @@ public class SouthHorn(
     IGraphFactory graphs,
     IPathfinder pathfinder,
     ILogger logger
-) : BaseZone(objects, plugin, graphs, pathfinder, logger, 1252)
+) : BaseZone(objects, plugin, graphs, pathfinder, logger, ZoneId.SouthHorn)
 {
     protected override uint BasecampPlaceNameId { get; } = 4944;
 
@@ -93,21 +93,21 @@ public class SouthHorn(
     {
         return
         [
-            new ActivityData(33, new Vector3(286.25f, 70f, 699.25f)), // "Scourge of the Mind"
-            new ActivityData(34, new Vector3(483.39f, 65f, 382.15f)), // "The Black Regiment"
-            new ActivityData(35, new Vector3(597.41f, 79f, 809.66f)), // "The Unbridled"
-            new ActivityData(36, new Vector3(681f, 74f, 512f)), // "Crawling Death"
-            new ActivityData(37, new Vector3(-332.32f, 75f, 799.95f)), // "Calamity Bound"
-            new ActivityData(38, new Vector3(-447.50f, 92f, 58f)), // "Trial by Claw"
-            new ActivityData(39, new Vector3(-800f, 44f, 245f)), // "From Times Bygone"
-            new ActivityData(40, new Vector3(680f, 96f, -256f)), // "Company of Stone"
-            new ActivityData(41, new Vector3(-128f, 1f, -850f)), // "Shark Attack"
-            new ActivityData(42, new Vector3(637.82f, 108f, -54.07f)), // "On the Hunt"
-            new ActivityData(43, new Vector3(-384f, 5f, -588.25f)), // "With Extreme Prejudice"
-            new ActivityData(44, new Vector3(492f, 96f, -389.75f)), // "Noise Complaint"
-            new ActivityData(45, new Vector3(96.25f, 20f, -512f)), // "Cursed Concern"
-            new ActivityData(46, new Vector3(844.55f, 122f, 154.45f)), // "Eternal Watch"
-            new ActivityData(47, new Vector3(-577f, 97f, -187.25f)), // "Flame of Dusk"
+            new ActivityData(33, new Vector3(286.25f, 70f, 699.25f), 25f), // "Scourge of the Mind"
+            new ActivityData(34, new Vector3(483.39f, 65f, 382.15f), 25f), // "The Black Regiment"
+            new ActivityData(35, new Vector3(597.41f, 79f, 809.66f), 25f), // "The Unbridled"
+            new ActivityData(36, new Vector3(681f, 74f, 512f), 25f), // "Crawling Death"
+            new ActivityData(37, new Vector3(-332.32f, 75f, 799.95f), 25f), // "Calamity Bound"
+            new ActivityData(38, new Vector3(-447.50f, 92f, 58f), 20f), // "Trial by Claw"
+            new ActivityData(39, new Vector3(-800f, 44f, 245f), 20f), // "From Times Bygone"
+            new ActivityData(40, new Vector3(680f, 96f, -256f), 25f), // "Company of Stone"
+            new ActivityData(41, new Vector3(-128f, 1f, -850f), 15f), // "Shark Attack"
+            new ActivityData(42, new Vector3(637.82f, 108f, -54.07f), 25f), // "On the Hunt"
+            new ActivityData(43, new Vector3(-384f, 5f, -588.25f), 15f), // "With Extreme Prejudice"
+            new ActivityData(44, new Vector3(492f, 96f, -389.75f), 25f), // "Noise Complaint"
+            new ActivityData(45, new Vector3(96.25f, 20f, -512f), 25f), // "Cursed Concern"
+            new ActivityData(46, new Vector3(844.55f, 122f, 154.45f), 20f), // "Eternal Watch"
+            new ActivityData(47, new Vector3(-577f, 97f, -187.25f), 20f), // "Flame of Dusk"
         ];
     }
 

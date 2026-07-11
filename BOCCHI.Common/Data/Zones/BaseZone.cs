@@ -20,10 +20,18 @@ public abstract class BaseZone(
     IGraphFactory graphs,
     IPathfinder pathfinder,
     ILogger logger,
-    uint id
+    ZoneId zoneId
 ) : IZone
 {
+    private readonly ZoneId id = zoneId;
+
     protected abstract uint BasecampPlaceNameId { get; }
+
+    public ZoneId ZoneId => id;
+
+    public ushort TerritoryType => (ushort)id;
+
+    public ushort ForkedTowerEventId => GetForkedTowerEventId();
 
     public bool IsOccultCrescentZone()
     {
@@ -120,6 +128,14 @@ public abstract class BaseZone(
             .ToList();
     }
 
+    public virtual float GetCriticalEncounterRadius(int eventId)
+    {
+        var activity = GetCriticalEncounterData().FirstOrDefault(a => a.Id == eventId);
+        return activity?.CombatRadius is { } radius
+            ? radius + NavigationConstants.CriticalEncounterRadiusPadding
+            : 0f;
+    }
+
     protected abstract ushort GetForkedTowerEventId();
 
     public unsafe bool IsInForkedTower()
@@ -134,7 +150,7 @@ public abstract class BaseZone(
         var dir = Path.Combine(plugin.GetPluginConfigDirectory(), "zone_graphs");
         Directory.CreateDirectory(dir);
 
-        var path = Path.Combine(dir, $"{id}.json");
+        var path = Path.Combine(dir, $"{TerritoryType}.json");
 
         if (File.Exists(path))
         {

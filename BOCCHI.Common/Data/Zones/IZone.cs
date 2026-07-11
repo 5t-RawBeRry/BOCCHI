@@ -7,6 +7,10 @@ namespace BOCCHI.Common.Data.Zones;
 
 public interface IZone
 {
+    ZoneId ZoneId { get; }
+
+    ushort TerritoryType { get; }
+
     bool IsOccultCrescentZone();
 
     bool IsInBasecamp();
@@ -37,7 +41,11 @@ public interface IZone
         return GetNearbyKnowledgeCrystals().Count != 0;
     }
 
+    ushort ForkedTowerEventId { get; }
+
     bool IsInForkedTower();
+
+    float GetCriticalEncounterRadius(int eventId);
 
     List<ActivityData> GetNormalFateData()
     {

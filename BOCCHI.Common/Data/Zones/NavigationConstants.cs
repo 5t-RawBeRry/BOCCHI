@@ -9,4 +9,6 @@ public static class NavigationConstants
     public const float EventApproachMaxRadius = 20f;
 
     public const float CampApproachJitter = 30f;
+
+    public const float CriticalEncounterRadiusPadding = 7f;
 }

@@ -8,7 +8,7 @@ using Ocelot.Services.Logger;
 
 namespace BOCCHI.Common.Data.CriticalEncounters;
 
-public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev)
+public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev, float radius)
 {
     public readonly CriticalEncounterId Id = id;
 
@@ -22,29 +22,7 @@ public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev)
 
     public readonly ActivityProgressTracker ProgressTracker = new();
 
-    public float Radius {
-        // Not that each CE has a padding of 7 yalms. 2 yalms are a border and 5 yalms are the kill zone.
-        get => Id.Value switch
-        {
-            33 => 25f, // Scourge of the Mind ?
-            34 => 25f, // The Black Regiment
-            35 => 25f, // The Unbridled
-            36 => 25f, // Crawling Death
-            37 => 25f, // Calamity Bound
-            38 => 20f, // Trial by Claw
-            39 => 20f, // From Times Bygone ?
-            40 => 25f, // Company of Stone ?
-            41 => 15f, // Shark Attack ?
-            42 => 25f, // On the Hunt ?
-            43 => 15f, // With Extreme Prejudice
-            44 => 25f, // Noise Complaint
-            45 => 25f, // Cursed Concern
-            46 => 20f, // Eternal Watch
-            47 => 20f, // Flame of Dusk
-            // 48 = The Forked Tower
-            _ => 0f,
-        } + 7f;
-    }
+    public readonly float Radius = radius;
 
     private static unsafe Vector3 GetPosition(DynamicEvent ev)
     {
@@ -76,7 +54,6 @@ public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev)
 
         return new Vector3(position.X, position.Y, position.Z);
     }
-
 
     public void Update(DynamicEvent ev)
     {

@@ -4,7 +4,7 @@ using Ocelot.Services.Pathfinding;
 
 namespace BOCCHI.Common.Data.Zones.Graph;
 
-public record ActivityData(int Id, Vector3 Position);
+public record ActivityData(int Id, Vector3 Position, float? CombatRadius = null);
 
 public record CarrotData(int Id, Vector3 Position, int Level);
 
