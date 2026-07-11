@@ -1,4 +1,4 @@
-﻿using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services;
 using BOCCHI.Common;
 using BOCCHI.Common.Data.StateMemory;
@@ -10,29 +10,33 @@ using Ocelot.Services.UI;
 namespace BOCCHI.Automator;
 
 public class AutomatorRenderer(
-    IAutomator automator,
+    Func<IAutomator> automatorFactory,
     IAutomatorMemory memory,
     IPathfinder pathfinder,
     IUIService ui
 ) : IDynamicRenderer
 {
+    private IAutomator? automator;
+
+    private IAutomator Automator => automator ??= automatorFactory();
+
     public void Render()
     {
-        ui.LabelledValue("Automator State", automator.Enabled);
+        ui.LabelledValue("Automator State", Automator.Enabled);
 
         if (ImGui.Button("Toggle Automator"))
         {
-            automator.Toggle();
-            if (!automator.Enabled)
+            Automator.Toggle();
+            if (!Automator.Enabled)
             {
                 memory.Wipe();
                 pathfinder.Stop();
             }
         }
 
-        if (automator.Enabled)
+        if (Automator.Enabled)
         {
-            automator.Render();
+            Automator.Render();
         }
 
         if (memory.TryRemember<GoalMemory>(out var goalMemory))

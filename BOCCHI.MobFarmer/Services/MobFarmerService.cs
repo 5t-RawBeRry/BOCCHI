@@ -9,24 +9,29 @@ namespace BOCCHI.MobFarmer.Services;
 
 public class MobFarmerService(
     IMobScanner scanner,
-    IStateMachine<FarmerPhase> stateMachine,
+    Func<IStateMachine<FarmerPhase>> stateMachineFactory,
     IRotationPlugin rotation,
     IPlayer player
 ) : IMobFarmer, IOnUpdate
 {
+    private IStateMachine<FarmerPhase>? stateMachine;
+
+    private IStateMachine<FarmerPhase> StateMachine => stateMachine ??= stateMachineFactory();
+
     public bool Running { get; private set; }
 
     public Vector3 StartingPoint { get; private set; }
 
-    public FarmerPhase Phase => stateMachine.State;
+    public FarmerPhase Phase => StateMachine.State;
 
     public void Toggle()
     {
         Running = !Running;
-        if (stateMachine is FlowStateMachine<FarmerPhase> flow)
+        if (StateMachine is FlowStateMachine<FarmerPhase> flow)
         {
             flow.Reset();
         }
+
         rotation.PhantomJobOff();
 
         if (!Running)
@@ -44,7 +49,7 @@ public class MobFarmerService(
             return;
         }
 
-        stateMachine.Render();
+        StateMachine.Render();
     }
 
     public void Update()
@@ -56,6 +61,6 @@ public class MobFarmerService(
             return;
         }
 
-        stateMachine.Update();
+        StateMachine.Update();
     }
 }

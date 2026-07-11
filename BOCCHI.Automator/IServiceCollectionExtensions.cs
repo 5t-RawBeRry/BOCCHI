@@ -20,6 +20,7 @@ public static class IServiceCollectionExtensions
         Registry.RegisterAssemblies(typeof(AutomatorState).Assembly);
 
         services.AddSingleton<IAutomator, Services.Automator>();
+        services.AddSingleton<Func<IAutomator>>(sp => () => sp.GetRequiredService<IAutomator>());
         services.AddSingleton<IAutomatorContext, AutomatorContext>();
         services.AddSingleton<IDynamicRenderer, AutomatorRenderer>();
 
@@ -32,5 +33,6 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<IAutomatorMemory, AutomatorMemory>();
 
         services.AddScoreStateMachine<AutomatorState, StatePriority>(AutomatorState.Entry);
+        services.AddSingleton<Func<IStateMachine<AutomatorState>>>(sp => () => sp.GetRequiredService<IStateMachine<AutomatorState>>());
     }
 }

@@ -1,0 +1,22 @@
+{
+  "label": "UI",
+  "tooltip": "Choose which tracker widgets appear in the main window.",
+  "fields": {
+    "show_experience_tracker": {
+      "label": "Show experience tracker",
+      "tooltip": "Display the experience tracker panel in the main window."
+    },
+    "show_experience_tracker_graph": {
+      "label": "Show experience tracker graph",
+      "tooltip": "Display the experience graph under the tracker."
+    },
+    "show_currency_tracker": {
+      "label": "Show currency tracker",
+      "tooltip": "Display the currency tracker panel in the main window."
+    },
+    "show_currency_tracker_graph": {
+      "label": "Show currency tracker graph",
+      "tooltip": "Display the currency graph under the tracker."
+    }
+  }
+}

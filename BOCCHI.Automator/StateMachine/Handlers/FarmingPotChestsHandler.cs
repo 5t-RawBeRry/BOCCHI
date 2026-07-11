@@ -35,6 +35,11 @@ public class FarmingPotChestsHandler(
 
     public override StatePriority GetScore()
     {
+        if (memory.TryRemember<GoalPathStepMemory>(out _))
+        {
+            return StatePriority.Never;
+        }
+
         return memory.TryRemember<PotChestFarmMemory>(out _) ? StatePriority.Normal : StatePriority.Never;
     }
 

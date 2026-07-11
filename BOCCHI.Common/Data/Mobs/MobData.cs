@@ -42,9 +42,9 @@ public static class MobData
 
     public static bool TryFromNameId(uint nameId, out Mob mob)
     {
-        if (Enum.IsDefined(typeof(Mob), nameId))
+        mob = (Mob)nameId;
+        if (Enum.IsDefined(mob))
         {
-            mob = (Mob)nameId;
             return true;
         }
 

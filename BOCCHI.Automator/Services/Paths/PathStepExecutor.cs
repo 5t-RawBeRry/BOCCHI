@@ -51,7 +51,8 @@ public class PathStepExecutor(
                 }, "PathStep::MaybeMount")
                 .Then<PathfindToChain, PathfinderConfig>(new PathfinderConfig(destination)
                 {
-                    DistanceThreshold = range,
+                    DistanceThreshold = range > 0f ? range : 2f,
+                    ShouldSnapToFloor = true,
                 }),
 
             Teleport(var id) => chains.Create($"PathStep::Teleport({id})")

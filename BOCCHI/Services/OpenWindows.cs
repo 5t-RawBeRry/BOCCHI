@@ -1,30 +1,31 @@
-﻿#if DEBUG
+#if DEBUG
 using BOCCHI.Debug;
 #endif
-using BOCCHI.Common.Data.Zones;
+using Microsoft.Extensions.DependencyInjection;
 using Ocelot.Lifecycle;
 using Ocelot.Windows;
 
 namespace BOCCHI.Services;
 
-public class OpenWindows(
-    IMainWindow? main,
-    IConfigWindow? config,
-#if DEBUG
-    IDebugWindow? debug,
-#endif
-    IZoneProvider zones
-) : IOnStart
+public class OpenWindows(IServiceProvider services) : IOnUpdate
 {
-    public void OnStart()
-    {
-        main?.IsOpen = true;
-        config?.IsOpen = true;
-#if DEBUG
-        debug?.IsOpen = true;
-#endif
+    private bool opened;
 
-        var zone = zones.GetZone();
-        zone.GetGraph();
+    public int Order => int.MaxValue;
+
+    public void Update()
+    {
+        if (opened)
+        {
+            return;
+        }
+
+        opened = true;
+
+        services.GetService<IMainWindow>()?.IsOpen = true;
+        services.GetService<IConfigWindow>()?.IsOpen = true;
+#if DEBUG
+        services.GetService<IDebugWindow>()?.IsOpen = true;
+#endif
     }
 }

@@ -10,7 +10,7 @@ using Ocelot.Services.UI;
 namespace BOCCHI.MobFarmer;
 
 public class MobFarmerRenderer(
-    IMobFarmer farmer,
+    Func<IMobFarmer> farmerFactory,
     IMobScanner scanner,
     MobFarmerConfig config,
     IConfigSaver saver,
@@ -18,6 +18,10 @@ public class MobFarmerRenderer(
     IUIService ui
 ) : IDynamicRenderer
 {
+    private IMobFarmer? farmer;
+
+    private IMobFarmer Farmer => farmer ??= farmerFactory();
+
     private string mobSearch = string.Empty;
 
     public uint Order => 40;
@@ -27,14 +31,14 @@ public class MobFarmerRenderer(
         ui.Text("Mob Farmer");
         ImGui.Indent();
 
-        if (ImGui.Button(farmer.Running ? "Stop" : "Start"))
+        if (ImGui.Button(Farmer.Running ? "Stop" : "Start"))
         {
-            farmer.Toggle();
+            Farmer.Toggle();
         }
 
-        if (farmer.Running)
+        if (Farmer.Running)
         {
-            ui.LabelledValue("Phase", farmer.Phase);
+            ui.LabelledValue("Phase", Farmer.Phase);
         }
 
         ui.LabelledValue("Not engaged", scanner.NotInCombat.Count());
@@ -42,9 +46,9 @@ public class MobFarmerRenderer(
 
         DrawMobPicker();
 
-        if (farmer.Running)
+        if (Farmer.Running)
         {
-            farmer.Render();
+            Farmer.Render();
         }
 
         ImGui.Unindent();

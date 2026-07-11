@@ -16,9 +16,11 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<IMobScanner, MobScanner>();
         services.AddSingleton<IRotationPlugin, BlankRotationPlugin>();
         services.AddSingleton<IMobFarmer, MobFarmerService>();
+        services.AddSingleton<Func<IMobFarmer>>(sp => () => sp.GetRequiredService<IMobFarmer>());
         services.AddSingleton<IDynamicRenderer, MobFarmerRenderer>();
         services.AddSingleton<MobFarmerDebugDrawer>();
 
         services.AddFlowStateMachine<FarmerPhase>(FarmerPhase.Waiting);
+        services.AddSingleton<Func<IStateMachine<FarmerPhase>>>(sp => () => sp.GetRequiredService<IStateMachine<FarmerPhase>>());
     }
 }

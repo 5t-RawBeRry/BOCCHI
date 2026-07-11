@@ -10,7 +10,7 @@ using Ocelot.Services.PlayerState;
 namespace BOCCHI.MobFarmer;
 
 public class MobFarmerDebugDrawer(
-    IMobFarmer farmer,
+    Func<IMobFarmer> farmerFactory,
     IMobScanner scanner,
     MobFarmerConfig config,
     IZoneProvider zones,
@@ -18,6 +18,10 @@ public class MobFarmerDebugDrawer(
     IPlayer player
 ) : IOnRender
 {
+    private IMobFarmer? farmer;
+
+    private IMobFarmer Farmer => farmer ??= farmerFactory();
+
     public void Render()
     {
         if (!config.RenderDebugLines)
@@ -25,7 +29,7 @@ public class MobFarmerDebugDrawer(
             return;
         }
 
-        if (!farmer.Running && !config.RenderDebugLinesWhileNotRunning)
+        if (!Farmer.Running && !config.RenderDebugLinesWhileNotRunning)
         {
             return;
         }

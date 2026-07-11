@@ -1,5 +1,17 @@
 {
   "automation": {
     "label": "Automation"
+  },
+  "trackers": {
+    "label": "Trackers"
+  },
+  "ux": {
+    "label": "UI"
+  },
+  "mob_farmer": {
+    "label": "Mob Farmer"
+  },
+  "treasure": {
+    "label": "Treasure"
   }
 }

@@ -1,18 +1,20 @@
-﻿using BOCCHI.Common;
+using BOCCHI.Common;
 using BOCCHI.Common.Data.Zones;
-using Dalamud.Plugin.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Ocelot.Graphics;
 using Ocelot.Services.UI;
 using Ocelot.Services.WindowManager;
 
 namespace BOCCHI.Renderers;
 
-public class MainRenderer(IEnumerable<IDynamicRenderer> renderers, IZoneProvider zones, IUIService ui) : IMainRenderer
+public class MainRenderer(IServiceProvider services, IZoneProvider zones, IUIService ui) : IMainRenderer
 {
-    private IEnumerable<IDynamicRenderer> orderedRenderers
-    {
-        get => renderers.Where(r => r.ShouldRender()).OrderBy(r => r.Order);
-    }
+    private IEnumerable<IDynamicRenderer>? renderers;
+
+    private IEnumerable<IDynamicRenderer> OrderedRenderers =>
+        (renderers ??= services.GetServices<IDynamicRenderer>())
+        .Where(r => r.ShouldRender())
+        .OrderBy(r => r.Order);
 
     public void Render()
     {
@@ -23,8 +25,7 @@ public class MainRenderer(IEnumerable<IDynamicRenderer> renderers, IZoneProvider
             return;
         }
 
-
-        foreach (var renderer in orderedRenderers)
+        foreach (var renderer in OrderedRenderers)
         {
             renderer.Render();
         }

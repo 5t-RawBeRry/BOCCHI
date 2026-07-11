@@ -19,7 +19,7 @@ namespace BOCCHI.Automator.Services;
 
 public class Automator(
     IAutomatorMemory memory,
-    IStateMachine<AutomatorState> stateMachine,
+    Func<IStateMachine<AutomatorState>> stateMachineFactory,
     IPathCalculator calculator,
     IGoalValidator validator,
     IAutomatorContext context,
@@ -30,6 +30,10 @@ public class Automator(
     ILogger<Automator> logger
 ) : IAutomator, IOnUpdate
 {
+    private IStateMachine<AutomatorState>? stateMachine;
+
+    private IStateMachine<AutomatorState> StateMachine => stateMachine ??= stateMachineFactory();
+
     public bool Enabled
     {
         get => context.Enabled;
@@ -42,7 +46,7 @@ public class Automator(
 
     public void Render()
     {
-        stateMachine.Render();
+        StateMachine.Render();
     }
 
     public void Update()
@@ -64,7 +68,6 @@ public class Automator(
                 }
 
                 memory.Forget<GoalMemory>();
-                memory.Forget<GoalPathStepMemory>();
                 memory.Forget<WaitingForCriticalEncounterMemory>();
             }
             else if (!memory.TryRemember<GoalPathStepMemory>(out var _)
@@ -75,7 +78,7 @@ public class Automator(
             }
         }
 
-        stateMachine.Update();
+        StateMachine.Update();
     }
 
     private void TryStartPotChestFarm(FateId fateId)
@@ -120,3 +123,4 @@ public class Automator(
         memory.TryAdd(new PotChestFarmMemory(fateId, positions));
     }
 }
+
