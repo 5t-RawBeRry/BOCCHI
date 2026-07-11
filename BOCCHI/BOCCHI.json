@@ -1,11 +1,11 @@
 {
     "Author": "Faye",
     "Name": "BOCCHI",
-    "InternalName": "PluginTemplate",
+    "InternalName": "BOCCHI",
     "Punchline": "",
     "Description": "",
     "IconUrl": "https://raw.githubusercontent.com/OhKannaDuh/PluginTemplate/refs/heads/master/assets/icon.png",
     "ApplicableVersion": "any",
-    "DalamudApiLevel": 14,
+    "DalamudApiLevel": 15,
     "Tags": []
 }
