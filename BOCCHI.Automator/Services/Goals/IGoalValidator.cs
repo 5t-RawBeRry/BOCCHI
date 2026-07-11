@@ -1,5 +1,4 @@
-﻿using BOCCHI.Automator.Data;
-using BOCCHI.Automator.Data.Goals;
+using BOCCHI.Automator.Data;
 using BOCCHI.Common.Data.Goals;
 
 namespace BOCCHI.Automator.Services.Goals;

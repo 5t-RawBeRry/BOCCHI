@@ -1,4 +1,4 @@
-﻿namespace BOCCHI.Automator.Data.StateMemory;
+﻿namespace BOCCHI.Common.Data.StateMemory;
 
 public sealed class IdleStateMemory
 {

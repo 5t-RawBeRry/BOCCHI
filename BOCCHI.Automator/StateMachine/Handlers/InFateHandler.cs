@@ -1,6 +1,4 @@
-﻿using BOCCHI.Automator.Data;
-using BOCCHI.Automator.Data.Goals;
-using BOCCHI.Automator.Data.StateMemory;
+using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Goals;

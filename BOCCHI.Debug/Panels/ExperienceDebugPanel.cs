@@ -27,12 +27,14 @@ public sealed class ExperienceDebugPanel(
 
         ui.LabelledValue("Current Job", current.Data.Name.ToString());
         ui.LabelledValue("Level", $"{current.Level} ({current.TotalExperience})");
-        ui.LabelledValue("Experience Per Hour", tracker.ExperiencePerHour.ToString("f2"));
 
-        TrackerPlotHelper.PlotPerHourHistory(
+        TrackerRateRenderer.RenderPerHour(
+            ui,
+            "Experience Per Hour",
+            tracker.ExperiencePerHour,
             tracker.GetExperienceHistory(TimeSpan.FromSeconds(config.GraphBucketSize)),
             "##debug_xp_history",
-            height: 60f
+            plotHeight: 60f
         );
     }
 }

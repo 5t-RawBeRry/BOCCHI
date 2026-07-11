@@ -1,5 +1,4 @@
 ﻿using BOCCHI.Automator.Data;
-using BOCCHI.Automator.Data.StateMemory;
 using BOCCHI.Automator.Services.Goals;
 using BOCCHI.Automator.Services.Paths;
 using BOCCHI.Common.Data.CriticalEncounters;

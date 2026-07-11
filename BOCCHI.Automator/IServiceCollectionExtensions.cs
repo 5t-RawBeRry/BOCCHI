@@ -1,9 +1,10 @@
-﻿using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Data.Goals;
 using BOCCHI.Automator.Services;
 using BOCCHI.Automator.Services.Goals;
 using BOCCHI.Automator.Services.Paths;
 using BOCCHI.Common;
+using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.Services.Paths;
 using Microsoft.Extensions.DependencyInjection;

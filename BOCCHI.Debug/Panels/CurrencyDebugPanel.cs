@@ -17,10 +17,22 @@ public sealed class CurrencyDebugPanel(
     {
         var bucketSize = TimeSpan.FromSeconds(config.GraphBucketSize);
 
-        ui.LabelledValue("Gold Per Hour", tracker.GoldPerHour.ToString("f2"));
-        TrackerPlotHelper.PlotPerHourHistory(tracker.GetGoldHistory(bucketSize), "##debug_gold_history", height: 60f);
+        TrackerRateRenderer.RenderPerHour(
+            ui,
+            "Gold Per Hour",
+            tracker.GoldPerHour,
+            tracker.GetGoldHistory(bucketSize),
+            "##debug_gold_history",
+            plotHeight: 60f
+        );
 
-        ui.LabelledValue("Silver Per Hour", tracker.SilverPerHour.ToString("f2"));
-        TrackerPlotHelper.PlotPerHourHistory(tracker.GetSilverHistory(bucketSize), "##debug_silver_history", height: 60f);
+        TrackerRateRenderer.RenderPerHour(
+            ui,
+            "Silver Per Hour",
+            tracker.SilverPerHour,
+            tracker.GetSilverHistory(bucketSize),
+            "##debug_silver_history",
+            plotHeight: 60f
+        );
     }
 }

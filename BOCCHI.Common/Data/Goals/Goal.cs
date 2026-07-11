@@ -1,6 +1,4 @@
-﻿using BOCCHI.Common.Data.Goals;
-
-namespace BOCCHI.Automator.Data.Goals;
+namespace BOCCHI.Common.Data.Goals;
 
 public class Goal : IGoal
 {

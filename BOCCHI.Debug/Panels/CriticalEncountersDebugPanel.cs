@@ -1,7 +1,6 @@
-using System;
 using BOCCHI.Common;
 using BOCCHI.Common.Services;
-using Dalamud.Bindings.ImGui;
+using BOCCHI.Common.UI;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using Ocelot.Services.UI;
 
@@ -19,17 +18,15 @@ public sealed class CriticalEncountersDebugPanel(
     {
         foreach (var encounter in criticalEncounters.Snapshot())
         {
-            ui.Text(encounter.Name, branding.DalamudYellow);
-            ImGui.SameLine();
-            ImGui.TextUnformatted(FormatState(encounter.State, encounter.Progress));
-
-            ImGui.Indent(32);
-
-            ui.LabelledValue("Id", encounter.Id);
-            ui.LabelledValue("Position", encounter.Position.ToString("f2"));
-            ui.LabelledValue("Radius", encounter.Radius);
-
-            ImGui.Unindent(32);
+            ActivitySnapshotRenderer.Render(
+                ui,
+                branding.DalamudYellow,
+                encounter.Name,
+                FormatState(encounter.State, encounter.Progress),
+                ("Id", encounter.Id),
+                ("Position", encounter.Position.ToString("f2")),
+                ("Radius", encounter.Radius)
+            );
         }
     }
 

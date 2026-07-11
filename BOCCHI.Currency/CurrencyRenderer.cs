@@ -22,17 +22,23 @@ public class CurrencyRenderer(
 
         var graphBucketSize = TimeSpan.FromSeconds(config.GraphBucketSize);
 
-        ui.LabelledValue("Gold Per Hour", tracker.GoldPerHour.ToString("f2"));
-        if (uiConfig.ShowCurrencyTrackerGraph)
-        {
-            TrackerPlotHelper.PlotPerHourHistory(tracker.GetGoldHistory(graphBucketSize), "##gold_history");
-        }
+        TrackerRateRenderer.RenderPerHour(
+            ui,
+            "Gold Per Hour",
+            tracker.GoldPerHour,
+            tracker.GetGoldHistory(graphBucketSize),
+            "##gold_history",
+            uiConfig.ShowCurrencyTrackerGraph
+        );
 
-        ui.LabelledValue("Silver Per Hour", tracker.SilverPerHour.ToString("f2"));
-        if (uiConfig.ShowCurrencyTrackerGraph)
-        {
-            TrackerPlotHelper.PlotPerHourHistory(tracker.GetSilverHistory(graphBucketSize), "##silver_history");
-        }
+        TrackerRateRenderer.RenderPerHour(
+            ui,
+            "Silver Per Hour",
+            tracker.SilverPerHour,
+            tracker.GetSilverHistory(graphBucketSize),
+            "##silver_history",
+            uiConfig.ShowCurrencyTrackerGraph
+        );
     }
 
     public bool ShouldRender()

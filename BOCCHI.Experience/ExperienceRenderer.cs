@@ -33,16 +33,13 @@ public class ExperienceRenderer(
 
         ui.Render(left, right);
 
-        ui.LabelledValue("Experience Per Hour", tracker.ExperiencePerHour.ToString("f2"));
-
-        if (!uiConfig.ShowExperienceTrackerGraph)
-        {
-            return;
-        }
-
-        TrackerPlotHelper.PlotPerHourHistory(
+        TrackerRateRenderer.RenderPerHour(
+            ui,
+            "Experience Per Hour",
+            tracker.ExperiencePerHour,
             tracker.GetExperienceHistory(TimeSpan.FromSeconds(config.GraphBucketSize)),
-            "##xp_history"
+            "##xp_history",
+            uiConfig.ShowExperienceTrackerGraph
         );
     }
 

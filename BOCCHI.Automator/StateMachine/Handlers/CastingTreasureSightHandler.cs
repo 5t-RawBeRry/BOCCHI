@@ -1,5 +1,4 @@
-﻿using BOCCHI.Automator.Data;
-using BOCCHI.Automator.Data.StateMemory;
+using BOCCHI.Automator.Data;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.SupportJobs;

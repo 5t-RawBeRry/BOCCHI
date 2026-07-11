@@ -1,6 +1,6 @@
 using BOCCHI.Common.Data.SupportJobs;
 
-namespace BOCCHI.Automator.Data.StateMemory;
+namespace BOCCHI.Common.Data.StateMemory;
 
 public class BuffSupportJobMemory(SupportJobId job)
 {

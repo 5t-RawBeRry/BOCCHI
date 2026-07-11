@@ -1,6 +1,6 @@
 using BOCCHI.Common;
 using BOCCHI.Common.Services;
-using Dalamud.Bindings.ImGui;
+using BOCCHI.Common.UI;
 using Ocelot.Services.UI;
 
 namespace BOCCHI.Debug.Panels;
@@ -17,16 +17,17 @@ public sealed class FatesDebugPanel(
     {
         foreach (var fate in fates.Snapshot())
         {
-            ui.Text(fate.Name, branding.DalamudYellow);
-            ImGui.Indent(32);
-
-            ui.LabelledValue("Id", fate.Id);
-            ui.LabelledValue("Position", fate.Position.ToString("f2"));
-            ui.LabelledValue("State", fate.State);
-            ui.LabelledValue("Progress", fate.Progress);
-            ui.LabelledValue("Radius", fate.Radius);
-
-            ImGui.Unindent(32);
+            ActivitySnapshotRenderer.Render(
+                ui,
+                branding.DalamudYellow,
+                fate.Name,
+                null,
+                ("Id", fate.Id),
+                ("Position", fate.Position.ToString("f2")),
+                ("State", fate.State),
+                ("Progress", fate.Progress),
+                ("Radius", fate.Radius)
+            );
         }
     }
 }
