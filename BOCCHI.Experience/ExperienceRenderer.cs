@@ -9,7 +9,7 @@ namespace BOCCHI.Experience;
 
 public class ExperienceRenderer(
     IExperienceTracker tracker,
-    ExperienceConfig config,
+    TrackerConfig config,
     UIConfig uiConfig,
     ISupportJobFactory supportJobs,
     IBrandingService branding,

@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Services;
+using BOCCHI.Common.Services.Data;
 using BOCCHI.Fates.Data;
 using Dalamud.Game.ClientState.Fates;
 using FateState = Dalamud.Game.ClientState.Fates.FateState;
@@ -38,22 +39,7 @@ public class FateRepository(
             .Select(factory.Create)
             .ToDictionary(f => f.Id, f => f);
 
-        foreach (var (id, fate) in current)
-        {
-            if (data.TryAdd(id, fate))
-            {
-                FateAdded?.Invoke(fate);
-            }
-        }
-
-        var despawned = data.GetKeys().Except(current.Keys).ToList();
-        foreach (var id in despawned)
-        {
-            if (data.Remove(id))
-            {
-                FateRemoved?.Invoke(id);
-            }
-        }
+        RepositorySync.ApplySnapshot(data, current, FateAdded, FateRemoved);
 
         foreach (var fate in data.GetAll())
         {

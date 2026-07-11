@@ -21,7 +21,6 @@ using BOCCHI.Renderers;
 using BOCCHI.Debug;
 #endif
 using BOCCHI.Services;
-using BOCCHI.Services.Materia;
 using BOCCHI.Services.Repair;
 using Dalamud.Configuration;
 using Dalamud.Plugin;
@@ -37,9 +36,7 @@ using Ocelot.Services.WindowManager;
 using Ocelot.UI.Services;
 using Ocelot.Chain.Services;
 using Ocelot.ECommons.Services;
-// using Ocelot.Mechanic.Services;
 using Ocelot.Pictomancy.Services;
-// using Ocelot.Rotation.Services;
 
 namespace BOCCHI;
 
@@ -55,10 +52,6 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
     {
         BootstrapOcelotModules(services);
         BootstrapConfiguration(services, plugin, logger);
-
-        // services.AddSingleton<IEventHost, OnEnterOccultCrescentZoneHost>();
-        // Why this crash :/
-        // services.AddSingleton<IEventHost, OnAutomatorToggledHost>();
 
         services.AddSingleton<TranslationLoader>();
 
@@ -77,8 +70,6 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<UnmountStep>();
         services.AddSingleton<RepairStep>();
         services.AddSingleton<IRepairService, RepairService>();
-        services.AddSingleton<ExtractStep>();
-        services.AddSingleton<IMateriaExtractionService, MateriaExtractionService>();
 
         services.AddSingleton<TeleportToAethernetChain>();
 
@@ -108,8 +99,6 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.LoadECommons();
         services.LoadPictomancy();
         services.LoadPathfinding();
-        // services.LoadMechanics();
-        // services.LoadRotations();
         services.LoadChain();
         services.LoadUI();
     }

@@ -8,7 +8,7 @@ namespace BOCCHI.Currency;
 
 public class CurrencyRenderer(
     ICurrencyTracker tracker,
-    CurrencyConfig config,
+    TrackerConfig config,
     UIConfig uiConfig,
     IUIService ui
 ) : IDynamicRenderer

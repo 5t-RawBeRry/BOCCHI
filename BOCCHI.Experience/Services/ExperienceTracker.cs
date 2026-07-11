@@ -7,7 +7,7 @@ using Ocelot.Lifecycle;
 namespace BOCCHI.Experience.Services;
 
 public class ExperienceTracker(
-    ExperienceConfig config,
+    TrackerConfig config,
     ISupportJobFactory supportJobs
 ) : IExperienceTracker, IOnUpdate
 {

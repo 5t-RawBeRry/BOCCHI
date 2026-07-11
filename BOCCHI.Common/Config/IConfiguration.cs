@@ -4,9 +4,7 @@ namespace BOCCHI.Common.Config;
 
 public interface IConfiguration : IPluginConfiguration
 {
-    ExperienceConfig ExperienceConfig { get; set; }
-
-    CurrencyConfig CurrencyConfig { get; set; }
+    TrackerConfig TrackerConfig { get; set; }
 
     UIConfig UIConfig { get; set; }
 

@@ -9,7 +9,7 @@ namespace BOCCHI.Debug.Panels;
 
 public sealed class ExperienceDebugPanel(
     IExperienceTracker tracker,
-    ExperienceConfig config,
+    TrackerConfig config,
     ISupportJobFactory supportJobs,
     IBrandingService branding,
     IUIService ui

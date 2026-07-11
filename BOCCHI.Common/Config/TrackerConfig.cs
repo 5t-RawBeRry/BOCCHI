@@ -1,11 +1,11 @@
-﻿using Ocelot.Config;
+using Ocelot.Config;
 using Ocelot.Config.Fields;
 
 namespace BOCCHI.Common.Config;
 
 [Serializable]
 [ConfigGroup("trackers")]
-public class ExperienceConfig : IAutoConfig
+public class TrackerConfig : IAutoConfig
 {
     [IntRange(1, 180)] public int TrackedDuration { get; set; } = 5;
 

@@ -7,7 +7,7 @@ namespace BOCCHI.Debug.Panels;
 
 public sealed class CurrencyDebugPanel(
     ICurrencyTracker tracker,
-    CurrencyConfig config,
+    TrackerConfig config,
     IUIService ui
 ) : IDebugPanel
 {

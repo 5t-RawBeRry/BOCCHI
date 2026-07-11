@@ -5,7 +5,7 @@ using Ocelot.Lifecycle;
 
 namespace BOCCHI.Currency.Services;
 
-public class CurrencyTracker(CurrencyConfig config) : ICurrencyTracker, IOnUpdate
+public class CurrencyTracker(TrackerConfig config) : ICurrencyTracker, IOnUpdate
 {
     private readonly DeltaRateTracker goldTracker = new(() => TimeSpan.FromMinutes(config.TrackedDuration));
 

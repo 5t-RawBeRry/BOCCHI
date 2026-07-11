@@ -1,5 +1,6 @@
 ﻿using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Services;
+using BOCCHI.Common.Services.Data;
 using BOCCHI.CriticalEncounters.Data;
 using ECommons;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
@@ -37,11 +38,11 @@ public class CriticalEncounterRepository(
         var oc = PublicContentOccultCrescent.GetInstance();
         if (oc == null)
         {
-            var ids = data.GetKeys();
-            foreach (var id in ids)
+            foreach (var id in data.GetKeys().ToList())
             {
                 data.Remove(id);
             }
+
             return;
         }
 
@@ -51,26 +52,11 @@ public class CriticalEncounterRepository(
             .Select(factory.Create)
             .ToDictionary(k => k.Id, v => v);
 
-        foreach (var (id, criticalEncounter) in current)
-        {
-            if (data.TryAdd(id, criticalEncounter))
-            {
-                CriticalEncounterAdded?.Invoke(criticalEncounter);
-            }
-        }
-
-        var despawned = data.GetKeys().Except(current.Keys).ToList();
-        foreach (var id in despawned)
-        {
-            if (data.Remove(id))
-            {
-                CriticalEncounterRemoved?.Invoke(id);
-            }
-        }
+        RepositorySync.ApplySnapshot(data, current, CriticalEncounterAdded, CriticalEncounterRemoved);
 
         foreach (var criticalEncounter in data.GetAll())
         {
-            var ev = oc->DynamicEventContainer.Events.ToArray().FirstOrNull(e => e.DynamicEventId ==  criticalEncounter.Id.Value);
+            var ev = oc->DynamicEventContainer.Events.ToArray().FirstOrNull(e => e.DynamicEventId == criticalEncounter.Id.Value);
             if (ev == null)
             {
                 continue;
