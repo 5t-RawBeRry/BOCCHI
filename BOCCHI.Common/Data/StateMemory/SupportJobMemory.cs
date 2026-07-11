@@ -2,7 +2,12 @@
 
 namespace BOCCHI.Automator.Data.StateMemory;
 
-public class SupportJobMemory(SupportJobId job)
+public class BuffSupportJobMemory(SupportJobId job)
+{
+    public readonly SupportJobId Job = job;
+}
+
+public class TreasureSightSupportJobMemory(SupportJobId job)
 {
     public readonly SupportJobId Job = job;
 }

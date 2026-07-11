@@ -34,6 +34,11 @@ public class CastingTreasureSightHandler(
             return StatePriority.MediumHigh;
         }
 
+        if (memory.TryRemember<ApplyingBuffsMemory>(out _))
+        {
+            return StatePriority.Never;
+        }
+
         var freelancer = supportJobs.Create(SupportJobId.PhantomFreelancer);
         if (freelancer.Level < 10)
         {
@@ -54,7 +59,7 @@ public class CastingTreasureSightHandler(
 
         if (supportJobs.TryGetCurrent(out var current))
         {
-            memory.TryAdd(new SupportJobMemory(current.Id));
+            memory.TryAdd(new TreasureSightSupportJobMemory(current.Id));
         }
 
         memory.TryAdd<CastingTreasureSightMemory>();

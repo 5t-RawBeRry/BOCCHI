@@ -2,6 +2,8 @@
 using BOCCHI.Automator.Data.Goals;
 using BOCCHI.Automator.Data.StateMemory;
 using BOCCHI.Automator.Services;
+using BOCCHI.Buff.Services;
+using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
@@ -13,12 +15,24 @@ public class ChoosingActivityHandler(
     IAutomatorMemory memory,
     ICriticalEncounterRepository criticalEncounterRepository,
     IFateRepository fateRepository,
-    IGoalFactory goalFactory
+    IGoalFactory goalFactory,
+    IBuffProvider buffs,
+    BuffConfig buffConfig
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.ChoosingActivity)
 {
     public override StatePriority GetScore()
     {
         if (memory.TryRemember<GoalMemory>(out var _))
+        {
+            return StatePriority.Never;
+        }
+
+        if (buffConfig.ShouldAutomateBuffs && buffs.ShouldRefreshAny())
+        {
+            return StatePriority.Never;
+        }
+
+        if (memory.TryRemember<ApplyingBuffsMemory>(out _))
         {
             return StatePriority.Never;
         }

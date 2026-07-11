@@ -35,9 +35,8 @@ public class SupportJobChanger(
         {
             return chains.Create("SupportJobChanger")
                 .IfThen(
-                    // If we can't get our current job, or we are already that job
-                    _ => !supportJobs.TryGetCurrent(out SupportJob current) || current.Id == id,
-                    // Break from this chain
+                    // Already on the requested job.
+                    _ => supportJobs.TryGetCurrent(out SupportJob current) && current.Id == id,
                     _ => ValueTask.FromResult(StepResult.Break()),
                     "SupportJobChanger::CheckCurrentJob"
                 )

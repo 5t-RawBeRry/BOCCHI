@@ -10,7 +10,6 @@ using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using Ocelot.Extensions;
 using Ocelot.Services.Logger;
-using Ocelot.Services.PlayerState;
 using Ocelot.States;
 using Ocelot.States.Score;
 
@@ -20,7 +19,6 @@ public class ApplyingBuffsHandler(
     Func<IStateMachine<BuffState>> factory,
     IBuffProvider buffs,
     IZoneProvider zones,
-    IPlayer player,
     IAutomatorMemory memory,
     ISupportJobFactory jobs,
     BuffConfig config,
@@ -47,14 +45,12 @@ public class ApplyingBuffsHandler(
             return StatePriority.Never;
         }
 
-        var crystals = zone.GetNearbyKnowledgeCrystals().ToList();
-        if (crystals.Count == 0)
+        if (!zone.GetNearbyKnowledgeCrystals().Any())
         {
             return StatePriority.Never;
         }
 
-        var closest = crystals.OrderBy(c => player.Position.Distance2D(c.Position)).First();
-        return player.Position.Distance2D(closest.Position) <= config.KnowledgeCrystalDistance ? StatePriority.MediumHigh : StatePriority.Never;
+        return StatePriority.MediumHigh;
     }
 
     public override void Enter()
@@ -64,7 +60,7 @@ public class ApplyingBuffsHandler(
         memory.TryAdd<ApplyingBuffsMemory>();
         if (jobs.TryGetCurrent(out var job))
         {
-            memory.TryAdd(new SupportJobMemory(job.Id));
+            memory.TryAdd(new BuffSupportJobMemory(job.Id));
         }
     }
 

@@ -1,4 +1,5 @@
 ﻿using BOCCHI.Buff.Data;
+using BOCCHI.Buff.Services;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Services;
 using Dalamud.Plugin.Services;
@@ -11,7 +12,8 @@ namespace BOCCHI.Buff.StateMachine.Handlers;
 public class CastingInquiringMindHandler(
     IObjectTable objects,
     ISupportJobChanger changer,
-    ISupportJobFactory supportJobs
+    ISupportJobFactory supportJobs,
+    IBuffProvider buffs
 ) : FlowStateHandler<BuffState>(BuffState.CastingInquiringMind)
 {
     private DateTime lastCast = DateTime.MinValue;
@@ -34,7 +36,7 @@ public class CastingInquiringMindHandler(
             return BuffState.ChoosingBuffToApply;
         }
 
-        if (!supportJobs.TryGetCurrent(out var supportJob) && supportJob.Id == SupportJobId.PhantomFreelancer)
+        if (!supportJobs.TryGetCurrent(out var supportJob) || supportJob.Id != SupportJobId.PhantomFreelancer)
         {
             if (!changer.IsBusy())
             {
@@ -63,7 +65,7 @@ public class CastingInquiringMindHandler(
 
         // @TODO replace .All with IBuffProvider.GetBuffs()
         uint lowest = 30;
-        foreach (var buff in BuffData.All)
+        foreach (var buff in buffs.GetBuffs())
         {
             if (!player.StatusList.TryGet(buff.StatusId, out var status))
             {
