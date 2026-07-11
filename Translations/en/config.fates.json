@@ -1,0 +1,22 @@
+{
+  "label": "Fates",
+  "tooltip": "Settings for FATE automation and pot chest farming.",
+  "fields": {
+    "should_do_fates": {
+      "label": "Do FATEs",
+      "tooltip": "Allow the automator to select and run FATE goals."
+    },
+    "prefer_pot_fates": {
+      "label": "Prefer pot FATEs",
+      "tooltip": "Boost scoring for Persistent Pots and Pleading Pots when choosing a FATE."
+    },
+    "should_farm_pot_chests": {
+      "label": "Farm pot chests after pot FATEs",
+      "tooltip": "After completing a pot FATE, walk to linked chest positions and open them before choosing a new activity."
+    },
+    "should_farm_reroll_pot_chests": {
+      "label": "Include reroll pot chests",
+      "tooltip": "Also farm the shared reroll chest positions after a pot FATE."
+    }
+  }
+}

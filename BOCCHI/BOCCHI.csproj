@@ -32,6 +32,7 @@
         <ProjectReference Include="../BOCCHI.Fates/BOCCHI.Fates.csproj"/>
         <ProjectReference Include="../BOCCHI.CriticalEncounters/BOCCHI.CriticalEncounters.csproj"/>
         <ProjectReference Include="../BOCCHI.MobFarmer/BOCCHI.MobFarmer.csproj"/>
+        <ProjectReference Include="../BOCCHI.Treasure/BOCCHI.Treasure.csproj"/>
     </ItemGroup>
 
     <ItemGroup Condition="'$(Configuration)' == 'Debug'">

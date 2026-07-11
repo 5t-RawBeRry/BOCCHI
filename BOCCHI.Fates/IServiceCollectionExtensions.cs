@@ -14,5 +14,6 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<IFateRepository, FateRepository>();
         services.AddSingleton<IFateFactory, FateFactory>();
         services.AddSingleton<IFateContext, FateContext>();
+        services.AddSingleton<IFateScorer, FateScorer>();
     }
 }

@@ -15,4 +15,8 @@ public interface IConfiguration : IPluginConfiguration
     CombatConfig CombatConfig { get; set; }
 
     MobFarmerConfig MobFarmerConfig { get; set; }
+
+    FatesConfig FatesConfig { get; set; }
+
+    TreasureConfig TreasureConfig { get; set; }
 }

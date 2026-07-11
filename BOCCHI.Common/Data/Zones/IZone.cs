@@ -47,6 +47,11 @@ public interface IZone
 
     float GetCriticalEncounterRadius(int eventId);
 
+    bool IsPotFate(int fateId)
+    {
+        return GetPotFateData().Any(f => f.Id == fateId);
+    }
+
     List<ActivityData> GetNormalFateData()
     {
         return [];

@@ -40,6 +40,12 @@ public class AutomatorRenderer(
             ui.LabelledValue("Goal", goalMemory.Goal.Describe());
         }
 
+        if (memory.TryRemember<PotChestFarmMemory>(out var potFarm))
+        {
+            ui.LabelledValue("Pot chest farm", $"Fate {potFarm.FateId.Value}");
+            ui.LabelledValue("Chests remaining", $"{potFarm.RemainingChests}/{potFarm.TotalChests}");
+        }
+
         if (memory.TryRemember<GoalPathStepMemory>(out var goalPathStepMemory))
         {
             foreach (var step in goalPathStepMemory.PathSteps)

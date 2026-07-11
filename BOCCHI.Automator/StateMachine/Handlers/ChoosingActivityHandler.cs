@@ -1,8 +1,8 @@
 using BOCCHI.Automator.Data;
-using BOCCHI.Common.Data.Goals;
 using BOCCHI.Automator.Services;
 using BOCCHI.Buff.Services;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
@@ -16,7 +16,9 @@ public class ChoosingActivityHandler(
     IFateRepository fateRepository,
     IGoalFactory goalFactory,
     IBuffProvider buffs,
-    BuffConfig buffConfig
+    BuffConfig buffConfig,
+    FatesConfig fatesConfig,
+    IFateScorer fateScorer
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.ChoosingActivity)
 {
     public override StatePriority GetScore()
@@ -36,10 +38,15 @@ public class ChoosingActivityHandler(
             return StatePriority.Never;
         }
 
-        var fates = fateRepository.Snapshot().Count;
+        if (memory.TryRemember<PotChestFarmMemory>(out _))
+        {
+            return StatePriority.Never;
+        }
+
+        var enabledFates = fateRepository.Snapshot().Count(f => fatesConfig.IsFateEnabled(f.Id.Value));
         var criticalEncounters = criticalEncounterRepository.SnapshotWithoutForkedTower().Count(ce => ce.State == DynamicEventState.Register);
 
-        if (fates <= 0 && criticalEncounters <= 0)
+        if (enabledFates <= 0 && criticalEncounters <= 0)
         {
             return StatePriority.Never;
         }
@@ -57,10 +64,7 @@ public class ChoosingActivityHandler(
             return;
         }
 
-
-        // @TODO: We can design a fate scoring system later
-        var fates = fateRepository.Snapshot();
-        var fate = fates.FirstOrDefault();
+        var fate = fateScorer.SelectBest(fateRepository.Snapshot());
         if (fate != null)
         {
             var goal = goalFactory.Fate(fate.Id);

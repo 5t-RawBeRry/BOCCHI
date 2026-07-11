@@ -20,4 +20,8 @@ public class Configuration : IConfiguration
     public CombatConfig CombatConfig { get; set; } = new();
 
     public MobFarmerConfig MobFarmerConfig { get; set; } = new();
+
+    public FatesConfig FatesConfig { get; set; } = new();
+
+    public TreasureConfig TreasureConfig { get; set; } = new();
 }

@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ocelot.ECommons", "Ocelot\O
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ocelot.Pictomancy", "Ocelot\Ocelot.Pictomancy\Ocelot.Pictomancy.csproj", "{A270021C-F893-486A-90B6-DF6225A97E1D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BOCCHI.Treasure", "BOCCHI.Treasure\BOCCHI.Treasure.csproj", "{67C9B588-083E-47E0-8014-21531E23B3AF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -229,6 +231,18 @@ Global
 		{A270021C-F893-486A-90B6-DF6225A97E1D}.Release|x64.Build.0 = Release|x64
 		{A270021C-F893-486A-90B6-DF6225A97E1D}.Release|x86.ActiveCfg = Release|x64
 		{A270021C-F893-486A-90B6-DF6225A97E1D}.Release|x86.Build.0 = Release|x64
+		{67C9B588-083E-47E0-8014-21531E23B3AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67C9B588-083E-47E0-8014-21531E23B3AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67C9B588-083E-47E0-8014-21531E23B3AF}.Debug|x64.ActiveCfg = Debug|x64
+		{67C9B588-083E-47E0-8014-21531E23B3AF}.Debug|x64.Build.0 = Debug|x64
+		{67C9B588-083E-47E0-8014-21531E23B3AF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{67C9B588-083E-47E0-8014-21531E23B3AF}.Debug|x86.Build.0 = Debug|Any CPU
+		{67C9B588-083E-47E0-8014-21531E23B3AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67C9B588-083E-47E0-8014-21531E23B3AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67C9B588-083E-47E0-8014-21531E23B3AF}.Release|x64.ActiveCfg = Release|x64
+		{67C9B588-083E-47E0-8014-21531E23B3AF}.Release|x64.Build.0 = Release|x64
+		{67C9B588-083E-47E0-8014-21531E23B3AF}.Release|x86.ActiveCfg = Release|Any CPU
+		{67C9B588-083E-47E0-8014-21531E23B3AF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

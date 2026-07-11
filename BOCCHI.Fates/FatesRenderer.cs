@@ -7,6 +7,7 @@ namespace BOCCHI.Fates;
 
 public class FatesRenderer(
     IFateRepository fates,
+    IFateScorer fateScorer,
     IBrandingService branding,
     IUIService ui
 ) : IDynamicRenderer
@@ -15,14 +16,17 @@ public class FatesRenderer(
     {
         foreach (var fate in fates.Snapshot())
         {
+            var score = fateScorer.Score(fate);
+
             ActivitySnapshotRenderer.Render(
                 ui,
                 branding.DalamudYellow,
                 fate.Name,
-                null,
+                $"Score: {score}",
                 ("Id", fate.Id),
                 ("Position", fate.Position.ToString("f2")),
                 ("State", fate.State),
+                ("Progress", fate.Progress),
                 ("Radius", fate.Radius)
             );
         }

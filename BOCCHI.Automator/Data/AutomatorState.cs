@@ -16,4 +16,5 @@ public enum AutomatorState
     WaitingForCriticalEncounter,
     InCriticalEncounter,
     ReturningToJob,
+    FarmingPotChests,
 }

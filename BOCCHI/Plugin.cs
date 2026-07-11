@@ -16,6 +16,7 @@ using BOCCHI.Data;
 using BOCCHI.Experience;
 using BOCCHI.Fates;
 using BOCCHI.MobFarmer;
+using BOCCHI.Treasure;
 using BOCCHI.Renderers;
 #if DEBUG
 using BOCCHI.Debug;
@@ -88,6 +89,7 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
 
         services.LoadAutomatorModule();
         services.LoadMobFarmerModule();
+        services.LoadTreasureModule();
 
 #if DEBUG
         services.LoadDebugModule();
