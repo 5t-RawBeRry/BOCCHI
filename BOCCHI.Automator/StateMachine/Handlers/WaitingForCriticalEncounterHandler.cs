@@ -31,7 +31,7 @@ public class WaitingForCriticalEncounterHandler(
             return StatePriority.Never;
         }
 
-        // See if we have a goal in memeory and that goal is a CE
+        // See if we have a goal in memory and that goal is a CE
         if (!memory.TryRemember<GoalMemory>(out var goal) || goal.Goal.GoalType is not CriticalEncounterGoal ceGoal)
         {
             return StatePriority.Never;

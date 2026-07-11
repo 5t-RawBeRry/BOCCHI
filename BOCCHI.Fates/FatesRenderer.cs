@@ -1,9 +1,5 @@
-﻿using System.Numerics;
-using BOCCHI.Common;
-using BOCCHI.Common.Config;
-using BOCCHI.Common.Data.SupportJobs;
+﻿using BOCCHI.Common;
 using BOCCHI.Common.Services;
-using BOCCHI.Fates.Services;
 using Dalamud.Bindings.ImGui;
 using Ocelot.Services.UI;
 
@@ -11,8 +7,6 @@ namespace BOCCHI.Fates;
 
 public class FatesRenderer(
     IFateRepository fates,
-    // UIConfig uiConfig,
-    // ISupportJobFactory supportJobs,
     IBrandingService branding,
     IUIService ui
 ) : IDynamicRenderer

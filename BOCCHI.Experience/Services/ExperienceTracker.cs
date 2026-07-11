@@ -1,6 +1,6 @@
 ﻿using BOCCHI.Common.Config;
+using BOCCHI.Common.Data;
 using BOCCHI.Common.Data.SupportJobs;
-using BOCCHI.Experience.Data;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using Ocelot.Lifecycle;
 

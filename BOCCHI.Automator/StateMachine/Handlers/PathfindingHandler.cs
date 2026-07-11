@@ -2,31 +2,20 @@
 using BOCCHI.Automator.Data.StateMemory;
 using BOCCHI.Automator.Services;
 using BOCCHI.Automator.Services.Paths;
-using BOCCHI.Common.Data.Paths;
-using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.Services.Paths;
-using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
-using ECommons.Throttlers;
-using Ocelot.Actions;
 using Ocelot.Chain;
-using Ocelot.Extensions;
 using Ocelot.Services.Logger;
-using Ocelot.Services.Pathfinding;
-using Ocelot.Services.UI;
 using Ocelot.States.Score;
-using Action = System.Action;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
 public class PathfindingHandler(
-    IChainManager manager,
     IAutomatorMemory memory,
     IPathStepExecutor pathStepExecutor,
     IObjectTable objects,
-    ICondition conditions,
     ILogger<PathfindingHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Pathfinding)
 {

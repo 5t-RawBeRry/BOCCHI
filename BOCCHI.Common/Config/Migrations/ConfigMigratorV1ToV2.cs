@@ -19,14 +19,12 @@ public class ConfigMigratorV1ToV2: IMigrator
                 ["$type"] = "BOCCHI.Common.Config.ExperienceConfig, BOCCHI.Common",
                 ["TrackedDuration"] = 5,
                 ["GraphBucketSize"] = 15,
-                ["ResetOnZoneChange"] = true,
             },
             ["CurrencyConfig"] = new JObject
             {
                 ["$type"] = "BOCCHI.Common.Config.CurrencyConfig, BOCCHI.Common",
                 ["TrackedDuration"] = 5,
                 ["GraphBucketSize"] = 15,
-                ["ResetOnZoneChange"] = true,
             },
             ["UIConfig"] = new JObject
             {

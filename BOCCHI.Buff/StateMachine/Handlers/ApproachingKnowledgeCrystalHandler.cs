@@ -1,7 +1,6 @@
 ﻿using BOCCHI.Buff.Data;
 using BOCCHI.Common.Data.Zones;
 using Ocelot.Extensions;
-using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
 using Ocelot.States.Flow;
@@ -11,8 +10,7 @@ namespace BOCCHI.Buff.StateMachine.Handlers;
 public class ApproachingKnowledgeCrystalHandler(
     IZoneProvider zones,
     IPlayer player,
-    IPathfinder pathfinder,
-    ILogger<ApproachingKnowledgeCrystalHandler> logger
+    IPathfinder pathfinder
 ) : FlowStateHandler<BuffState>(BuffState.ApproachingKnowledgeCrystal)
 {
     private const float InteractionRange = 5f;

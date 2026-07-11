@@ -43,7 +43,7 @@ public class InCombatHandler(
 
         if (conditions[ConditionFlag.Mounted])
         {
-            if (EzThrottler.Throttle("InFate::Unmount") && Actions.Unmount.CanCast())
+            if (EzThrottler.Throttle("InCombat::Unmount") && Actions.Unmount.CanCast())
             {
                 Actions.Unmount.Cast();
                 pathfinder.Stop();

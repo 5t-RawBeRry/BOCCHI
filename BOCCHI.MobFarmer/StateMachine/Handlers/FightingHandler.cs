@@ -1,7 +1,6 @@
 using BOCCHI.Common.Config;
 using BOCCHI.MobFarmer.Data;
 using BOCCHI.MobFarmer.Services;
-using BOCCHI.MobFarmer.Services;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
 using ECommons.Throttlers;

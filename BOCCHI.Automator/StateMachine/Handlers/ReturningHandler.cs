@@ -13,8 +13,6 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using Ocelot.Actions;
 using Ocelot.Extensions;
 using Ocelot.Services.Gate;
-using Ocelot.Services.Logger;
-using Ocelot.Services.UI;
 using Ocelot.States.Score;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
@@ -25,8 +23,7 @@ public class ReturningHandler(
     ICondition conditions,
     IAddonLifecycle addons,
     AutomatorConfig config,
-    IGateService gate,
-    ILogger logger
+    IGateService gate
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Returning)
 {
     public override StatePriority GetScore()

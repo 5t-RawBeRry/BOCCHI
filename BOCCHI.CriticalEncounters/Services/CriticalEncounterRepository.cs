@@ -51,11 +51,11 @@ public class CriticalEncounterRepository(
             .Select(factory.Create)
             .ToDictionary(k => k.Id, v => v);
 
-        foreach (var (id, fate) in current)
+        foreach (var (id, criticalEncounter) in current)
         {
-            if (data.TryAdd(id, fate))
+            if (data.TryAdd(id, criticalEncounter))
             {
-                CriticalEncounterAdded?.Invoke(fate);
+                CriticalEncounterAdded?.Invoke(criticalEncounter);
             }
         }
 

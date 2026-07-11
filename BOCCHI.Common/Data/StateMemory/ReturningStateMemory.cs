@@ -4,7 +4,7 @@ public sealed class ReturningStateMemory
 {
     public DateTimeOffset QueuedAt { get; } = DateTimeOffset.UtcNow;
 
-    public TimeSpan GeTimeQueued()
+    public TimeSpan GetTimeQueued()
     {
         return DateTimeOffset.UtcNow - QueuedAt;
     }

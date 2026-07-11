@@ -8,21 +8,17 @@ using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
 using Ocelot.Actions;
-using Ocelot.Services.Logger;
-using Ocelot.Services.PlayerState;
 using Ocelot.States.Score;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
 public class CastingTreasureSightHandler(
-    IObjectTable objects,
     ICondition conditions,
     IZoneProvider zone,
     ISupportJobFactory supportJobs,
     ISupportJobChanger changer,
     IAutomatorMemory memory,
-    AutomatorConfig config,
-    ILogger<CastingTreasureSightHandler> logger
+    AutomatorConfig config
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.CastingTreasureSight)
 {
     private DateTime lastCast = DateTime.MinValue;

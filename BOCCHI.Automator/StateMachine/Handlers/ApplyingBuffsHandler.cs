@@ -9,7 +9,6 @@ using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using Ocelot.Extensions;
-using Ocelot.Services.Logger;
 using Ocelot.States;
 using Ocelot.States.Score;
 
@@ -21,8 +20,7 @@ public class ApplyingBuffsHandler(
     IZoneProvider zones,
     IAutomatorMemory memory,
     ISupportJobFactory jobs,
-    BuffConfig config,
-    ILogger<ApplyingBuffsHandler> logger
+    BuffConfig config
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.ApplyingBuffs)
 {
     private IStateMachine<BuffState>? stateMachine;

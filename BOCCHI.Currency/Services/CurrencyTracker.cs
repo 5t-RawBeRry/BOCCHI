@@ -1,6 +1,6 @@
-﻿using BOCCHI.Common.Config;
+using BOCCHI.Common.Config;
+using BOCCHI.Common.Data;
 using BOCCHI.Common.Services;
-using BOCCHI.Currency.Data;
 using Ocelot.Lifecycle;
 
 namespace BOCCHI.Currency.Services;
