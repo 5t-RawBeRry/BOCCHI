@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using BOCCHI.Common.Data;
 using ECommons;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using FFXIVClientStructs.FFXIV.Client.LayoutEngine;
@@ -19,7 +20,7 @@ public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev)
 
     public byte Progress { get; private set; } = ev.Progress;
 
-    public readonly CriticalEncounterProgressTracker ProgressTracker = new();
+    public readonly ActivityProgressTracker ProgressTracker = new();
 
     public float Radius {
         // Not that each CE has a padding of 7 yalms. 2 yalms are a border and 5 yalms are the kill zone.
@@ -82,7 +83,7 @@ public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev)
         State = ev.State;
         Progress = ev.Progress;
 
-        ProgressTracker.Observe(this);
+        ProgressTracker.Observe(Progress);
     }
 
     public bool IsPreparing()

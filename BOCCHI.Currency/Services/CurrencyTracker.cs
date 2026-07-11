@@ -7,13 +7,9 @@ namespace BOCCHI.Currency.Services;
 
 public class CurrencyTracker(CurrencyConfig config) : ICurrencyTracker, IOnUpdate
 {
-    private long TotalGold = 0;
+    private readonly DeltaRateTracker goldTracker = new(() => TimeSpan.FromMinutes(config.TrackedDuration));
 
-    private long TotalSilver = 0;
-
-    private readonly List<DeltaSnapshot> goldSnapshots = [];
-
-    private readonly List<DeltaSnapshot> silverSnapshots = [];
+    private readonly DeltaRateTracker silverTracker = new(() => TimeSpan.FromMinutes(config.TrackedDuration));
 
     public UpdateLimit UpdateLimit
     {
@@ -24,29 +20,18 @@ public class CurrencyTracker(CurrencyConfig config) : ICurrencyTracker, IOnUpdat
         };
     }
 
-    private TimeSpan Duration
-    {
-        get => TimeSpan.FromMinutes(config.TrackedDuration);
-    }
+    public double GoldPerHour => goldTracker.PerHour;
 
-    public double GoldPerHour
-    {
-        get => GetPerHourRate(goldSnapshots);
-    }
-
-    public double SilverPerHour
-    {
-        get => GetPerHourRate(silverSnapshots);
-    }
+    public double SilverPerHour => silverTracker.PerHour;
 
     public float[] GetGoldHistory(TimeSpan sampleDuration)
     {
-        return GetHistory(sampleDuration, goldSnapshots);
+        return goldTracker.GetHistory(sampleDuration);
     }
 
     public float[] GetSilverHistory(TimeSpan sampleDuration)
     {
-        return GetHistory(sampleDuration, silverSnapshots);
+        return silverTracker.GetHistory(sampleDuration);
     }
 
     public void Update()
@@ -56,145 +41,18 @@ public class CurrencyTracker(CurrencyConfig config) : ICurrencyTracker, IOnUpdat
             return;
         }
 
-        PruneOldSnapshots(goldSnapshots);
-        PruneOldSnapshots(silverSnapshots);
-
         var gold = GetCurrentGold();
         var silver = GetCurrentSilver();
 
-        if (TotalGold <= 0 && TotalSilver <= 0)
+        if (!goldTracker.HasValue && !silverTracker.HasValue)
         {
-            TotalGold = gold;
-            TotalSilver = silver;
+            goldTracker.SyncBaseline(gold);
+            silverTracker.SyncBaseline(silver);
             return;
         }
 
-        if (gold != TotalGold)
-        {
-            var delta = gold - TotalGold;
-            TotalGold = gold;
-            if (delta > 0)
-            {
-                goldSnapshots.Add(new DeltaSnapshot(delta, DateTime.UtcNow));
-            }
-        }
-
-        if (silver != TotalSilver)
-        {
-            var delta = silver - TotalSilver;
-            TotalSilver = silver;
-            if (delta > 0)
-            {
-                silverSnapshots.Add(new DeltaSnapshot(delta, DateTime.UtcNow));
-            }
-        }
-    }
-
-    private void PruneOldSnapshots(List<DeltaSnapshot> snapshots)
-    {
-        if (snapshots.Count == 0)
-        {
-            return;
-        }
-
-        var cutoff = DateTime.UtcNow - Duration;
-
-        var index = 0;
-        while (index < snapshots.Count && snapshots[index].Time < cutoff)
-        {
-            index++;
-        }
-
-        if (index > 0)
-        {
-            snapshots.RemoveRange(0, index);
-        }
-    }
-
-    private double GetPerHourRate(List<DeltaSnapshot> snapshots)
-    {
-        if (snapshots.Count == 0)
-        {
-            return 0;
-        }
-
-        var now = DateTime.UtcNow;
-        var windowStart = now - Duration;
-
-        var start = snapshots[0].Time > windowStart ? snapshots[0].Time : windowStart;
-
-        var elapsed = now - start;
-
-        if (elapsed < TimeSpan.FromSeconds(10))
-        {
-            return 0;
-        }
-
-        var hours = elapsed.TotalHours;
-        if (hours <= 0)
-        {
-            return 0;
-        }
-
-        return snapshots.Sum(s => s.Delta) / hours;
-    }
-
-    private float[] GetHistory(TimeSpan sampleDuration, List<DeltaSnapshot> snapshots)
-    {
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(sampleDuration, TimeSpan.Zero);
-
-        var now = DateTime.UtcNow;
-        var start = now - Duration;
-
-        var relevant = snapshots
-            .Where(s => s.Time >= start)
-            .OrderBy(s => s.Time)
-            .ToList();
-
-        if (relevant.Count == 0)
-        {
-            return [];
-        }
-
-        var bucketCount = (int)Math.Floor(Duration.TotalSeconds / sampleDuration.TotalSeconds);
-        if (bucketCount <= 0)
-        {
-            return [];
-        }
-
-        var bucketXp = new double[bucketCount];
-
-        foreach (var s in relevant)
-        {
-            var secondsFromStart = (s.Time - start).TotalSeconds;
-            var index = (int)(secondsFromStart / sampleDuration.TotalSeconds);
-
-            if (index < 0 || index >= bucketCount)
-            {
-                continue;
-            }
-
-            bucketXp[index] += s.Delta;
-        }
-
-        var result = new float[bucketCount];
-        var bucketSeconds = sampleDuration.TotalSeconds;
-
-        for (var i = 0; i < bucketCount; i++)
-        {
-            var xp = bucketXp[i];
-
-            if (xp <= 0)
-            {
-                result[i] = 0f;
-                continue;
-            }
-
-            var xpPerHour = xp / bucketSeconds * 3600.0;
-            result[i] = (float)xpPerHour;
-        }
-
-        return result;
+        goldTracker.RecordPositiveDelta(gold);
+        silverTracker.RecordPositiveDelta(silver);
     }
 
     private static int GetCurrentGold()

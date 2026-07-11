@@ -1,4 +1,4 @@
-﻿namespace BOCCHI.Common.Data.CriticalEncounters;
+namespace BOCCHI.Common.Data;
 
 public class ProgressEstimate
 {
@@ -14,32 +14,21 @@ public class ProgressEstimate
 
 public readonly record struct ProgressEntry(DateTimeOffset Timestamp, byte Progress);
 
-public sealed class CriticalEncounterProgressTracker
+public sealed class ActivityProgressTracker
 {
-    private byte previous = 0;
+    private byte previous;
 
-    private byte first = 0;
+    private readonly List<ProgressEntry> entries = [];
 
-    private DateTimeOffset Start = DateTimeOffset.MinValue;
-
-    private List<ProgressEntry> entries = [];
-
-    public void Observe(CriticalEncounter criticalEncounter)
+    public void Observe(byte progress)
     {
-        var current = criticalEncounter.Progress;
-        if (current <= previous)
+        if (progress <= previous)
         {
             return;
         }
 
-        previous = current;
-        if (first == 0)
-        {
-            first = current;
-            Start = DateTimeOffset.Now;
-        }
-
-        entries.Add(new ProgressEntry(DateTimeOffset.Now, current));
+        previous = progress;
+        entries.Add(new ProgressEntry(DateTimeOffset.Now, progress));
     }
 
     public ProgressEstimate? Estimate()

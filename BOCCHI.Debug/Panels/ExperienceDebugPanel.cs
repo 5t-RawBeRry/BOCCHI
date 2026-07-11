@@ -1,10 +1,8 @@
-using System;
-using System.Numerics;
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.SupportJobs;
+using BOCCHI.Common.UI;
 using BOCCHI.Experience.Services;
-using Dalamud.Bindings.ImGui;
 using Ocelot.Services.UI;
 
 namespace BOCCHI.Debug.Panels;
@@ -31,27 +29,10 @@ public sealed class ExperienceDebugPanel(
         ui.LabelledValue("Level", $"{current.Level} ({current.TotalExperience})");
         ui.LabelledValue("Experience Per Hour", tracker.ExperiencePerHour.ToString("f2"));
 
-        var history = tracker.GetExperienceHistory(TimeSpan.FromSeconds(config.GraphBucketSize));
-        if (history.Length <= 0)
-        {
-            return;
-        }
-
-        var max = history.Max();
-        if (max <= 0f)
-        {
-            max = 1f;
-        }
-
-        ImGui.PlotLines(
+        TrackerPlotHelper.PlotPerHourHistory(
+            tracker.GetExperienceHistory(TimeSpan.FromSeconds(config.GraphBucketSize)),
             "##debug_xp_history",
-            history.AsSpan(),
-            history.Length,
-            string.Empty,
-            0f,
-            max,
-            new Vector2(ImGui.GetContentRegionAvail().X, 60),
-            sizeof(float)
+            height: 60f
         );
     }
 }

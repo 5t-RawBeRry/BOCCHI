@@ -1,9 +1,8 @@
-﻿using System.Numerics;
-using BOCCHI.Common;
+﻿using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.SupportJobs;
+using BOCCHI.Common.UI;
 using BOCCHI.Experience.Services;
-using Dalamud.Bindings.ImGui;
 using Ocelot.Services.UI;
 
 namespace BOCCHI.Experience;
@@ -41,30 +40,9 @@ public class ExperienceRenderer(
             return;
         }
 
-        var history = tracker.GetExperienceHistory(TimeSpan.FromSeconds(config.GraphBucketSize));
-
-        if (history.Length <= 0)
-        {
-            return;
-        }
-
-        var max = history.Max();
-        if (max <= 0f)
-        {
-            max = 1f;
-        }
-
-        var size = new Vector2(ImGui.GetContentRegionAvail().X, 30);
-
-        ImGui.PlotLines(
-            "##xp_history",
-            history.AsSpan(),
-            history.Length,
-            string.Empty,
-            0f,
-            max,
-            size,
-            sizeof(float)
+        TrackerPlotHelper.PlotPerHourHistory(
+            tracker.GetExperienceHistory(TimeSpan.FromSeconds(config.GraphBucketSize)),
+            "##xp_history"
         );
     }
 

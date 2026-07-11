@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using BOCCHI.Common.Data;
 using Dalamud.Game.ClientState.Fates;
 using Ocelot.Services.Data;
 using FateData = Lumina.Excel.Sheets.Fate;
@@ -19,7 +20,7 @@ public class Fate(FateId id, IFate context, IDataRepository<FateData> fateDataRe
 
     public byte Progress { get; private set; } = context.Progress;
 
-    public readonly FateProgressTracker ProgressTracker = new();
+    public readonly ActivityProgressTracker ProgressTracker = new();
 
     public readonly FateData GameData = fateDataRepository.Get(context.FateId);
 
@@ -29,6 +30,6 @@ public class Fate(FateId id, IFate context, IDataRepository<FateData> fateDataRe
         State = context.State;
         Progress = context.Progress;
 
-        ProgressTracker.Observe(this);
+        ProgressTracker.Observe(Progress);
     }
 }

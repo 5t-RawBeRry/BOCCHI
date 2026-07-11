@@ -1,8 +1,7 @@
-﻿using System.Numerics;
-using BOCCHI.Common;
+﻿using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Currency.Services;
-using Dalamud.Bindings.ImGui;
+using BOCCHI.Common.UI;
 using Ocelot.Services.UI;
 
 namespace BOCCHI.Currency;
@@ -23,48 +22,21 @@ public class CurrencyRenderer(
 
         var graphBucketSize = TimeSpan.FromSeconds(config.GraphBucketSize);
 
-
         ui.LabelledValue("Gold Per Hour", tracker.GoldPerHour.ToString("f2"));
-        RenderGraph(tracker.GetGoldHistory(graphBucketSize), "gold_history");
+        if (uiConfig.ShowCurrencyTrackerGraph)
+        {
+            TrackerPlotHelper.PlotPerHourHistory(tracker.GetGoldHistory(graphBucketSize), "##gold_history");
+        }
 
         ui.LabelledValue("Silver Per Hour", tracker.SilverPerHour.ToString("f2"));
-        RenderGraph(tracker.GetSilverHistory(graphBucketSize), "silver_history");
+        if (uiConfig.ShowCurrencyTrackerGraph)
+        {
+            TrackerPlotHelper.PlotPerHourHistory(tracker.GetSilverHistory(graphBucketSize), "##silver_history");
+        }
     }
 
     public bool ShouldRender()
     {
         return uiConfig.ShowCurrencyTracker;
-    }
-
-    private void RenderGraph(float[] history, string id)
-    {
-        if (!uiConfig.ShowCurrencyTrackerGraph)
-        {
-            return;
-        }
-
-        if (history.Length <= 0)
-        {
-            return;
-        }
-
-        var max = history.Max();
-        if (max <= 0f)
-        {
-            max = 1f;
-        }
-
-        var size = new Vector2(ImGui.GetContentRegionAvail().X, 30);
-
-        ImGui.PlotLines(
-            $"##{id}",
-            history.AsSpan(),
-            history.Length,
-            string.Empty,
-            0f,
-            max,
-            size,
-            sizeof(float)
-        );
     }
 }

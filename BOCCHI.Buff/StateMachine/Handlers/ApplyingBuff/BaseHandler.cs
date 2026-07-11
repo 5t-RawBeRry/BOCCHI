@@ -1,12 +1,11 @@
 ﻿using BOCCHI.Buff.Data;
 using BOCCHI.Buff.Services;
 using BOCCHI.Common.Data.SupportJobs;
+using BOCCHI.Common.Extensions;
 using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using Ocelot.Actions;
-using Ocelot.Extensions;
 using Ocelot.Services.PlayerState;
 using Ocelot.States.Flow;
 
@@ -33,9 +32,13 @@ public abstract class BaseHandler(
 
     public override BuffState? Handle()
     {
+        if (objects.LocalPlayer is not { } player)
+        {
+            return null;
+        }
+
         var buff = GetBuffData();
-        var remaining = GetMinutesRemainingForBuff(buff);
-        if (remaining >= 29)
+        if (player.GetRemainingMinutes(buff.StatusId) >= 29)
         {
             return BuffState.ChoosingBuffToApply;
         }
@@ -75,22 +78,7 @@ public abstract class BaseHandler(
         return buffs.GetBuffForState(state);
     }
 
-    private uint GetMinutesRemainingForBuff(BuffData buff)
-    {
-        if (objects.LocalPlayer is not { } player)
-        {
-            return 0;
-        }
-
-        if (!player.StatusList.TryGet(buff.StatusId, out var status))
-        {
-            return 0;
-        }
-
-        return (uint)TimeSpan.FromSeconds(status.RemainingTime).TotalMinutes;
-    }
-
-    private  bool IsCorrectJob()
+    private bool IsCorrectJob()
     {
         return supportJobs.TryGetCurrent(out var supportJob) && supportJob.Id == GetBuffData().SupportJobId;
     }

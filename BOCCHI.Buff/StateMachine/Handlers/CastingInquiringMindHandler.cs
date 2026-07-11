@@ -1,10 +1,14 @@
 ﻿using BOCCHI.Buff.Data;
 using BOCCHI.Buff.Services;
 using BOCCHI.Common.Data.SupportJobs;
+using BOCCHI.Common.Extensions;
 using BOCCHI.Common.Services;
+using Dalamud.Game.ClientState.Objects.SubKinds;
+using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using Ocelot.Actions;
 using Ocelot.Extensions;
+using Ocelot.Services.PlayerState;
 using Ocelot.States.Flow;
 
 namespace BOCCHI.Buff.StateMachine.Handlers;
@@ -26,12 +30,12 @@ public class CastingInquiringMindHandler(
 
     public override BuffState? Handle()
     {
-        if (objects.LocalPlayer == null)
+        if (objects.LocalPlayer is not { } player)
         {
             return null;
         }
 
-        if (GetMinutesRemainingForLowestBuff() >= 29)
+        if (GetMinutesRemainingForLowestBuff(player) >= 29)
         {
             return BuffState.ChoosingBuffToApply;
         }
@@ -56,24 +60,17 @@ public class CastingInquiringMindHandler(
         return null;
     }
 
-    private uint GetMinutesRemainingForLowestBuff()
+    private uint GetMinutesRemainingForLowestBuff(IPlayerCharacter player)
     {
-        if (objects.LocalPlayer is not { } player)
-        {
-            return 0;
-        }
-
-        // @TODO replace .All with IBuffProvider.GetBuffs()
         uint lowest = 30;
         foreach (var buff in buffs.GetBuffs())
         {
-            if (!player.StatusList.TryGet(buff.StatusId, out var status))
+            if (!player.StatusList.TryGet(buff.StatusId, out _))
             {
                 return 0;
             }
 
-
-            var time = (uint)TimeSpan.FromSeconds(status.RemainingTime).TotalMinutes;
+            var time = player.GetRemainingMinutes(buff.StatusId);
             if (time < lowest)
             {
                 lowest = time;

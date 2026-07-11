@@ -1,8 +1,6 @@
-using System;
-using System.Numerics;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.UI;
 using BOCCHI.Currency.Services;
-using Dalamud.Bindings.ImGui;
 using Ocelot.Services.UI;
 
 namespace BOCCHI.Debug.Panels;
@@ -20,34 +18,9 @@ public sealed class CurrencyDebugPanel(
         var bucketSize = TimeSpan.FromSeconds(config.GraphBucketSize);
 
         ui.LabelledValue("Gold Per Hour", tracker.GoldPerHour.ToString("f2"));
-        RenderGraph(tracker.GetGoldHistory(bucketSize), "##debug_gold_history");
+        TrackerPlotHelper.PlotPerHourHistory(tracker.GetGoldHistory(bucketSize), "##debug_gold_history", height: 60f);
 
         ui.LabelledValue("Silver Per Hour", tracker.SilverPerHour.ToString("f2"));
-        RenderGraph(tracker.GetSilverHistory(bucketSize), "##debug_silver_history");
-    }
-
-    private static void RenderGraph(float[] history, string id)
-    {
-        if (history.Length <= 0)
-        {
-            return;
-        }
-
-        var max = history.Max();
-        if (max <= 0f)
-        {
-            max = 1f;
-        }
-
-        ImGui.PlotLines(
-            id,
-            history.AsSpan(),
-            history.Length,
-            string.Empty,
-            0f,
-            max,
-            new Vector2(ImGui.GetContentRegionAvail().X, 60),
-            sizeof(float)
-        );
+        TrackerPlotHelper.PlotPerHourHistory(tracker.GetSilverHistory(bucketSize), "##debug_silver_history", height: 60f);
     }
 }
