@@ -27,7 +27,7 @@ public class AddPotChestsStep : IGraphBuildStep
                 {
                     Type = NodeType.PotChest,
                     Position = chest.Position,
-                    Metadata = new PotChestNodeMetaData
+                    Metadata = new PotChestNodeMetadata
                     {
                         FateId = fateId,
                         Level = chest.Level,
@@ -41,7 +41,7 @@ public class AddPotChestsStep : IGraphBuildStep
         {
             var relevant = chests.Where(chest =>
             {
-                if (chest.Metadata is not PotChestNodeMetaData meta)
+                if (chest.Metadata is not PotChestNodeMetadata meta)
                 {
                     return false;
                 }
@@ -63,7 +63,7 @@ public class AddPotChestsStep : IGraphBuildStep
             {
                 Type = NodeType.PostChestReroll,
                 Position = chest.Position,
-                Metadata = new RerollPotChestNodeMetaData
+                Metadata = new RerollPotChestNodeMetadata
                 {
                     Level = chest.Level,
                 },

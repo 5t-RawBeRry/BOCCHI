@@ -204,7 +204,7 @@ public class ZoneGraph
 
     public Node? GetBaseCampReturnPositionNode()
     {
-        return GetNodesByTypes(NodeType.BaseCampeReturnPosition).FirstOrDefault();
+        return GetNodesByTypes(NodeType.BaseCampReturnPosition).FirstOrDefault();
     }
 
     public Node? GetBaseCampAetheryteNode()

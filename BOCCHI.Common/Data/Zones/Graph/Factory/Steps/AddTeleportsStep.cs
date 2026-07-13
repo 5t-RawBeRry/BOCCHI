@@ -9,7 +9,7 @@ public class AddTeleportsStep : IGraphBuildStep
     {
         var start = new Node
         {
-            Type = NodeType.BaseCampeReturnPosition,
+            Type = NodeType.BaseCampReturnPosition,
             Position = zone.GetStartingPosition(),
             Metadata = new TeleportNodeMetadata
             {

@@ -12,7 +12,7 @@ public class AddCarrotsStep : IGraphBuildStep
             {
                 Type = NodeType.Carrot,
                 Position = carrot.Position,
-                Metadata = new CarrotNodeMetaData { Level = carrot.Level },
+                Metadata = new CarrotNodeMetadata { Level = carrot.Level },
             });
         }
 

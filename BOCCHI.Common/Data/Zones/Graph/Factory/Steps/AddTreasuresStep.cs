@@ -53,7 +53,7 @@ public class AddTreasuresStep(IDataRepository<Treasure> treasureSheet) : IGraphB
                 {
                     Type = NodeType.Treasure,
                     Position = position,
-                    Metadata = new TreasureNodeMetaData
+                    Metadata = new TreasureNodeMetadata
                     {
                         Type = sgbId == 1596 ? TreasureType.Bronze : TreasureType.Silver,
                         Level = level,

@@ -27,12 +27,14 @@ public class DrawCEs(IOverlayRenderer overlay, ICriticalEncounterRepository ces,
             overlay.StrokeCircle(crystal.Position, 5f, new Color(1f, 0f, 1f));
         }
 
-        foreach (var points in GraphConfig.Lines)
+#if DEBUG
+        foreach (var points in GraphConfig.DebugPathLines)
         {
             for (var i = 0; i < points.Count - 1; i++)
             {
                 overlay.StrokeLine(points[i], points[i + 1], new Color(1f, 0f, 0f));
             }
         }
+#endif
     }
 }

@@ -1,0 +1,9 @@
+<Project>
+    <PropertyGroup>
+        <OcelotRefSet Condition="'$(OcelotRefSet)' == ''">Full</OcelotRefSet>
+    </PropertyGroup>
+
+    <Import
+        Project="$(MSBuildThisFileDirectory)Directory.Build.Ocelot.$(OcelotRefSet).props"
+        Condition="!$(MSBuildProjectName.StartsWith('Ocelot'))"/>
+</Project>

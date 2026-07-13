@@ -6,19 +6,19 @@ public interface INodeMetadata;
 
 public class BlankNodeMetadata : INodeMetadata;
 
-public class CarrotNodeMetaData : INodeMetadata
+public class CarrotNodeMetadata : INodeMetadata
 {
     public int Level { get; set; }
 }
 
-public class PotChestNodeMetaData : INodeMetadata
+public class PotChestNodeMetadata : INodeMetadata
 {
     public int FateId { get; set; }
 
     public int Level { get; set; }
 }
 
-public class RerollPotChestNodeMetaData : INodeMetadata
+public class RerollPotChestNodeMetadata : INodeMetadata
 {
     public int Level { get; set; }
 }
@@ -47,7 +47,7 @@ public enum TreasureType
     Bronze,
 }
 
-public class TreasureNodeMetaData : INodeMetadata
+public class TreasureNodeMetadata : INodeMetadata
 {
     public TreasureType Type { get; set; }
 

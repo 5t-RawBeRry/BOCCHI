@@ -16,6 +16,7 @@ public class TreasureRenderer(
     ITreasureTracker tracker,
     ITreasureHunter hunter,
     TreasureConfig config,
+    UIConfig uiConfig,
     IPlayer player,
     IUIService ui,
     ITranslator<MainWindow> translator
@@ -37,7 +38,7 @@ public class TreasureRenderer(
 
     public bool ShouldRender()
     {
-        return config.Enabled;
+        return uiConfig.ShowTreasureSection && config.Enabled;
     }
 
     private void DrawHuntPanel()

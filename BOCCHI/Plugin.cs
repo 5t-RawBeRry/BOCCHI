@@ -54,7 +54,7 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
 
     public override string Name { get; } = "BOCCHI";
 
-    protected override void Boostrap(IServiceCollection services)
+    protected override void Bootstrap(IServiceCollection services)
     {
         BootstrapOcelotModules(services);
         BootstrapConfiguration(services, plugin, logger);
@@ -82,10 +82,8 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
 
         services.AddSingleton<TeleportToAethernetChain>();
 
-        services.AddSingleton<DrawCEs>();
-
-
 #if DEBUG
+        services.AddSingleton<DrawCEs>();
         services.AddSingleton<OpenWindows>();
 #endif
 

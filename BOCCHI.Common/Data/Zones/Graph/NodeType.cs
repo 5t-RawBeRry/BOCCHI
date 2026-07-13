@@ -3,7 +3,7 @@
 public enum NodeType
 {
     // Teleports
-    BaseCampeReturnPosition, // Where you end up when you cast return
+    BaseCampReturnPosition, // Where you end up when you cast return
     BaseCampAetheryte, // The main zone aetheryte
     AethernetShard, // Other shards around the zone
 

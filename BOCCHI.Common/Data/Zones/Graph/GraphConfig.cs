@@ -14,22 +14,24 @@ public record PotChestData(Vector3 Position, int Level);
 
 public class GraphConfig(IPathfinder pathfinder, ILogger logger)
 {
-
-    public readonly static List<List<Vector3>> Lines = [[]];
-
+#if DEBUG
+    public static readonly List<List<Vector3>> DebugPathLines = [];
+#endif
 
     public float TeleportCost { get; init; } = 10f;
 
     public async Task<float> GetWalkingCost(Vector3 from, Vector3 to)
     {
-        logger.Info($"Calculating walking cost (from = {from:f2},  to = {to:f2})");
+        logger.Debug($"Calculating walking cost (from = {from:f2}, to = {to:f2})");
         var result = await pathfinder.Pathfind(new PathfinderConfig(to)
         {
             From = from,
             AllowFlying = false,
         });
 
-        Lines.Add(result.Nodes.ToList());
+#if DEBUG
+        DebugPathLines.Add(result.Nodes.ToList());
+#endif
 
         return result.Distance;
     }

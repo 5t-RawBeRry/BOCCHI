@@ -18,7 +18,7 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <Platforms>AnyCPU;x64</Platforms>
+        <Platforms>x64</Platforms>
         <PlatformTarget>x64</PlatformTarget>
     </PropertyGroup>
 
@@ -35,16 +35,5 @@
         <Reference Include="FFXIVClientStructs" HintPath="$(DalamudLibPath)FFXIVClientStructs.dll" Private="False"/>
         <Reference Include="InteropGenerator.Runtime" HintPath="$(DalamudLibPath)InteropGenerator.Runtime.dll" Private="False"/>
         <Reference Include="Newtonsoft.Json" HintPath="$(DalamudLibPath)Newtonsoft.Json.dll" Private="False"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="../Ocelot/Ocelot/Ocelot.csproj"/>
-        <ProjectReference Include="../Ocelot/Ocelot.Chain/Ocelot.Chain.csproj" />
-        <ProjectReference Include="../Ocelot/Ocelot.ECommons/Ocelot.ECommons.csproj" />
-        <!-- <ProjectReference Include="../Ocelot/Ocelot.Mechanic/Ocelot.Mechanic.csproj" /> -->
-        <ProjectReference Include="../Ocelot/Ocelot.Pathfinding/Ocelot.Pathfinding.csproj"/>
-        <ProjectReference Include="../Ocelot/Ocelot.Pictomancy/Ocelot.Pictomancy.csproj" />
-        <!-- <ProjectReference Include="../Ocelot/Ocelot.Rotation/Ocelot.Rotation.csproj" /> -->
-        <ProjectReference Include="../Ocelot/Ocelot.UI/Ocelot.UI.csproj"/>
     </ItemGroup>
 </Project>

@@ -18,4 +18,6 @@ public class UIConfig : IAutoConfig
     [Checkbox] public bool ShowWorldSection { get; set; } = true;
 
     [Checkbox] public bool ShowAutomationSection { get; set; } = true;
+
+    [Checkbox] public bool ShowTreasureSection { get; set; } = true;
 }
