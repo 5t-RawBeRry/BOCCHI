@@ -1,5 +1,6 @@
 using System.Numerics;
 using BOCCHI.Common.Data.Zones;
+using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 
 namespace BOCCHI.Treasure.Hunt;
@@ -12,11 +13,12 @@ public class TreasureHuntPathfinder : HuntRoutePlanner
 
     public TreasureHuntPathfinder(
         ZoneId zoneId,
+        IDalamudPluginInterface plugin,
         List<TreasureLayoutDatum> treasure,
         IPluginLog log,
         float returnCost,
         float teleportCost
-    ) : base(zoneId, log, returnCost, teleportCost)
+    ) : base(zoneId, plugin, log, returnCost, teleportCost)
     {
         this.treasure = treasure;
         LoadFile("precomputed_treasure_hunt_data.json");

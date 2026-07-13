@@ -1,14 +1,15 @@
 using BOCCHI.Common.Data.Mobs;
+using BOCCHI.Common.Config.Fields;
 using Ocelot.Config;
 using Ocelot.Config.Fields;
 
 namespace BOCCHI.Common.Config;
 
 [Serializable]
-[ConfigGroup("mob_farmer")]
+[ConfigGroup("mob_farmer", GroupOrder = 20)]
 public class MobFarmerConfig : IAutoConfig
 {
-    [ConfigHidden]
+    [MobMultiSelect]
     public List<Mob> Mobs { get; set; } = [];
 
     [Checkbox]

@@ -22,7 +22,7 @@ public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
         }
 
         var baseCampAetheryte = graph.GetBaseCampAetheryteNode();
-        if (baseCampAetheryte != null && start.Distance2D(baseCampAetheryte.Position) <= AethernetData.InteractRadius)
+        if (baseCampAetheryte != null && start.Distance2D(baseCampAetheryte.GetInteractPosition()) <= AethernetData.InteractRadius)
         {
             return null;
         }
@@ -61,7 +61,7 @@ public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
             GraphTraverser.ReturnCost + toBaseCampNodeEdge.Cost + GraphTraverser.TeleportCost + walkToGoalFromInbound.Cost,
             [
                 PathStep.Return(),
-                PathStep.Pathfind(baseCampNode.Position.GetApproachPosition(returnNode.Position, meta.InteractRange, 30f)),
+                PathStep.Pathfind(baseCampNode.GetInteractPosition(), AethernetNavigation.PathfindArrivalRadius),
                 PathStep.Teleport(meta.AetheryteId),
                 PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, inbound.Position)),
 

@@ -1,4 +1,5 @@
-﻿using Ocelot.Extensions;
+﻿using BOCCHI.Common.Data.Aethernet;
+using Ocelot.Extensions;
 
 namespace BOCCHI.Common.Data.Zones.Graph.Factory.Steps;
 
@@ -21,7 +22,7 @@ public class AddTeleportsStep : IGraphBuildStep
         {
             Type = NodeType.BaseCampAetheryte,
             Position = zone.GetAetherytePosition(),
-            Metadata = new TeleportNodeMetadata { AetheryteId = mainAetheryte.Id, Destination = mainAetheryte.Position},
+            Metadata = new TeleportNodeMetadata { AetheryteId = mainAetheryte.Id, Destination = mainAetheryte.GetInteractPosition()},
         };
 
         var aethernet = new List<Node>();

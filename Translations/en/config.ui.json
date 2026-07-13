@@ -1,6 +1,6 @@
 {
   "label": "UI",
-  "tooltip": "Choose which tracker widgets appear in the main window.",
+  "tooltip": "Choose which panels appear in the main window.",
   "fields": {
     "show_experience_tracker": {
       "label": "Show experience tracker",
@@ -17,6 +17,14 @@
     "show_currency_tracker_graph": {
       "label": "Show currency tracker graph",
       "tooltip": "Display the currency graph under the tracker."
+    },
+    "show_world_section": {
+      "label": "Show world section",
+      "tooltip": "Display active FATEs and critical encounters in the main window."
+    },
+    "show_automation_section": {
+      "label": "Show automation section",
+      "tooltip": "Display automator and mob farmer controls in the main window."
     }
   }
 }

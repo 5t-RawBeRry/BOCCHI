@@ -1,4 +1,20 @@
+using BOCCHI.Common.Data.CriticalEncounters;
+using BOCCHI.Common.Data.Fates;
+
 namespace BOCCHI.Common.Data.Goals;
+
+public interface IGoal
+{
+    GoalType GoalType { get; }
+
+    string Describe();
+}
+
+public abstract record GoalType;
+
+public sealed record FateGoal(FateId id) : GoalType;
+
+public sealed record CriticalEncounterGoal(CriticalEncounterId id) : GoalType;
 
 public class Goal : IGoal
 {

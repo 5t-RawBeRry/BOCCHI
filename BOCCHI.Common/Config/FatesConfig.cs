@@ -1,10 +1,11 @@
+using BOCCHI.Common.Config.Fields;
 using Ocelot.Config;
 using Ocelot.Config.Fields;
 
 namespace BOCCHI.Common.Config;
 
 [Serializable]
-[ConfigGroup("automation")]
+[ConfigGroup("automation", GroupOrder = 10, Order = 1)]
 public class FatesConfig : IAutoConfig
 {
     [Checkbox]
@@ -19,7 +20,7 @@ public class FatesConfig : IAutoConfig
     [Checkbox]
     public bool ShouldFarmRerollPotChests { get; set; } = true;
 
-    [ConfigHidden]
+    [DisabledFateIds]
     public HashSet<uint> DisabledFateIds { get; set; } =
     [
         1965, // The Winged Terror

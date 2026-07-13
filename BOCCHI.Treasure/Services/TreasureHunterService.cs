@@ -9,6 +9,7 @@ using BOCCHI.Treasure.Hunt;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.LayoutEngine;
 using Lumina.Excel.Sheets;
@@ -17,6 +18,7 @@ using Ocelot.Actions;
 using Ocelot.Extensions;
 using Ocelot.Ipc.VNavmesh;
 using Ocelot.Lifecycle;
+using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
@@ -27,12 +29,14 @@ public class TreasureHunterService(
     TreasureConfig config,
     IZoneProvider zones,
     IVNavmeshIpc vnav,
+    IPathfinder pathfinder,
     IChainFactory chains,
     IChainManager chainManager,
     IObjectTable objects,
     ICondition conditions,
     IPlayer player,
     IDataManager data,
+    IDalamudPluginInterface plugin,
     IPluginLog log
 ) : ITreasureHunter, IOnUpdate
 {
@@ -59,19 +63,20 @@ public class TreasureHunterService(
 
     public TimeSpan Elapsed => stopwatch.Elapsed;
 
-    public bool IsVnavReady => vnav.IsReady();
+    public bool IsVnavAvailable => vnav.IsAvailable();
+
+    public bool IsVnavReady => vnav.IsNavmeshReady();
 
     public void Toggle()
     {
-        if (!config.EnableTreasureHunt)
+        if (running)
         {
+            StopHunt();
             return;
         }
 
-        running = !running;
-        if (!running)
+        if (!config.EnableTreasureHunt)
         {
-            Teardown();
             return;
         }
 
@@ -87,7 +92,13 @@ public class TreasureHunterService(
             return;
         }
 
+        running = true;
         planningRoute = true;
+    }
+
+    private void StopHunt()
+    {
+        Teardown();
     }
 
     public HuntPathfinderStep? GetCurrentStep()
@@ -265,7 +276,7 @@ public class TreasureHunterService(
 
         if (inCombat && !vnav.IsRunning())
         {
-            vnav.PathfindAndMoveTo(zone.GetMainAetheryte().Position, false);
+            vnav.PathfindAndMoveTo(zone.GetMainAetheryte().GetInteractPosition(), false);
             return false;
         }
 
@@ -416,6 +427,7 @@ public class TreasureHunterService(
         var zone = zones.GetZone();
         return new TreasureHuntPathfinder(
             zone.ZoneId,
+            plugin,
             layoutTreasure,
             log,
             config.HuntReturnCost,
@@ -431,16 +443,19 @@ public class TreasureHunterService(
 
     private void Teardown()
     {
-        stopwatch.Stop();
         running = false;
+        planningRoute = false;
+        activeChain = null;
+
+        chainManager.CancelWhere(name => name.StartsWith("TreasureHunt", StringComparison.Ordinal));
+        pathfinder.Stop();
+        vnav.Stop();
+
+        stopwatch.Stop();
         stepIndex = 0;
         stepDistance = 0f;
         steps.Clear();
         layoutTreasure.Clear();
         pathPlanner = null;
-        planningRoute = false;
-        vnav.Stop();
-        chainManager.CancelAll();
-        activeChain = null;
     }
 }

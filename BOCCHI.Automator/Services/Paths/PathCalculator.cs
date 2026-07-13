@@ -75,9 +75,12 @@ public class PathCalculator(
 
         logger.Info("running pathfind");
         var steps = await traverser.FindPath(player.Position, goalNode);
+        var resolvedSteps = steps
+            .Select(step => AethernetNavigation.ResolveAetherytePathStep(step, zone))
+            .ToList();
 
         logger.Info("Done with PathCalculator");
-        return new Queue<IPathStep>(steps);
+        return new Queue<IPathStep>(resolvedSteps);
     }
 
     private Node GetGoalNode(IGoal goal, ZoneGraph graph)

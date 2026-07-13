@@ -39,6 +39,8 @@ public class Automator(
         get => context.Enabled;
     }
 
+    public AutomatorState? CurrentState => Enabled ? StateMachine.State : null;
+
     public void Toggle()
     {
         context.Toggle();

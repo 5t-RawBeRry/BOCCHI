@@ -4,7 +4,7 @@ using Ocelot.Config.Fields;
 namespace BOCCHI.Common.Config;
 
 [Serializable]
-[ConfigGroup("treasure")]
+[ConfigGroup("treasure", GroupOrder = 40)]
 public class TreasureConfig : IAutoConfig
 {
     [Checkbox]

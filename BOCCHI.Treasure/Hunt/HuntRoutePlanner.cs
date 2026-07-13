@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Text.Json;
 using BOCCHI.Common.Data.Zones;
+using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 
 namespace BOCCHI.Treasure.Hunt;
@@ -14,6 +15,7 @@ public interface IHuntRoutePlanner
 
 public abstract class HuntRoutePlanner(
     ZoneId zoneId,
+    IDalamudPluginInterface plugin,
     IPluginLog log,
     float returnCost = 300f,
     float teleportCost = 50f
@@ -50,7 +52,7 @@ public abstract class HuntRoutePlanner(
     {
         State = HuntPathfinderState.LoadingFile;
 
-        var file = HuntDataPaths.GetDataFile(zoneId, filename);
+        var file = GetDataFile(plugin, zoneId, filename);
         if (!File.Exists(file))
         {
             log.Error($"Required hunt data file not found: {file}");
@@ -264,5 +266,34 @@ public abstract class HuntRoutePlanner(
         }
 
         log.Info($"== Total treasures visited: {treasureCount} ==");
+    }
+
+    private static string GetDataFile(IDalamudPluginInterface plugin, ZoneId zoneId, string filename)
+    {
+        var zoneFolder = zoneId switch
+        {
+            ZoneId.SouthHorn => "SouthHorn",
+            _ => throw new NotSupportedException($"No hunt data for zone {zoneId}"),
+        };
+
+        var pluginDir = GetPluginDirectory(plugin);
+        return Path.Combine(pluginDir, "Data", zoneFolder, filename);
+    }
+
+    private static string GetPluginDirectory(IDalamudPluginInterface plugin)
+    {
+        var pluginDir = plugin.AssemblyLocation.DirectoryName;
+        if (!string.IsNullOrEmpty(pluginDir))
+        {
+            return pluginDir;
+        }
+
+        var assemblyDir = Path.GetDirectoryName(plugin.GetType().Assembly.Location);
+        if (!string.IsNullOrEmpty(assemblyDir))
+        {
+            return assemblyDir;
+        }
+
+        throw new InvalidOperationException("Unable to resolve the BOCCHI plugin directory for hunt data files.");
     }
 }

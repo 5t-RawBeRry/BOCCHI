@@ -43,8 +43,8 @@
       },
       "Pictomancy": {
         "type": "Transitive",
-        "resolved": "1.0.3",
-        "contentHash": "S/fLDASI7BcGjGNelma9O6Fd5ljBX6ZX5mm8OrnUuVorBnTFTe+A/zHX/V59+ZQhdezAa2b95NhGWtdVN+lZcQ==",
+        "resolved": "1.0.10",
+        "contentHash": "xHRbKtdyT15T58oZH4QSHdsnjlRMc3Vi4DbrnnIWeeZfDX3yyBu0CiVYUR37ALIGcOd1sl0bpX/9GpLl+PEMTg==",
         "dependencies": {
           "KamiToolKit": "1.1.2",
           "SharpDX.D3DCompiler": "4.2.0",
@@ -144,7 +144,7 @@
         "type": "Project",
         "dependencies": {
           "FFXIVOcelot": "[1.0.0, )",
-          "Pictomancy": "[1.0.3, )"
+          "Pictomancy": "[1.0.10, )"
         }
       },
       "FFXIVOcelot.UI": {

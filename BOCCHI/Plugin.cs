@@ -3,6 +3,8 @@ using BOCCHI.Automator;
 using BOCCHI.Automator.ChainRecipes;
 using BOCCHI.Buff;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Config.Fields;
+using BOCCHI.Common.Config.Renderers;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph.Factory;
@@ -18,6 +20,7 @@ using BOCCHI.Fates;
 using BOCCHI.MobFarmer;
 using BOCCHI.Treasure;
 using BOCCHI.Renderers;
+using BOCCHI.UI;
 #if DEBUG
 using BOCCHI.Debug;
 #endif
@@ -32,6 +35,8 @@ using Lumina.Excel.Sheets;
 using Microsoft.Extensions.DependencyInjection;
 using Ocelot;
 using Ocelot.Config;
+using Ocelot.Config.Fields;
+using Ocelot.Config.Renderers;
 using Ocelot.Pathfinding.Services;
 using Ocelot.Services.WindowManager;
 using Ocelot.UI.Services;
@@ -58,6 +63,9 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
 
         services.AddSingleton<IMainRenderer, MainRenderer>();
         services.AddSingleton<IConfigRenderer, ConfigRenderer>();
+        services.AddSingleton<OperationalStatusBar>();
+        services.AddSingleton<IFieldRenderer<MobMultiSelectAttribute>, MobMultiSelectRenderer>();
+        services.AddSingleton<IFieldRenderer<DisabledFateIdsAttribute>, DisabledFateIdsRenderer>();
 
         services.AddSingleton<ISupportJobFactory, SupportJobFactory>();
         services.AddSingleton<ISupportJobChanger, SupportJobChanger>();

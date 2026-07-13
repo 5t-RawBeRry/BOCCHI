@@ -49,6 +49,11 @@
     "stacking_timeout_seconds": {
       "label": "Stacking timeout (seconds)",
       "tooltip": "Maximum time to spend walking to stack mobs before starting combat anyway."
+    },
+    "mobs": {
+      "label": "Target mobs",
+      "tooltip": "Mobs the farmer will pull and count when stacking.",
+      "search_hint": "Search name or ID..."
     }
   }
 }

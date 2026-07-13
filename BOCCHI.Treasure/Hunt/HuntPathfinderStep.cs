@@ -1,5 +1,31 @@
 namespace BOCCHI.Treasure.Hunt;
 
+public enum HuntPathfinderStepType
+{
+    WalkToNode,
+    ReturnToBaseCamp,
+    WalkToAethernet,
+    TeleportToAethernet,
+}
+
+public enum HuntPathfinderState
+{
+    None,
+    LoadingFile,
+    FileLoaded,
+    Pathfinding,
+    PathfindingDone,
+}
+
+public enum HuntAethernet : uint
+{
+    BaseCamp = 4944,
+    TheWanderersHaven = 4936,
+    CrystallizedCaverns = 4929,
+    Eldergrowth = 4930,
+    Stonemarsh = 4942,
+}
+
 public class HuntPathfinderStep
 {
     public HuntPathfinderStepType Type;

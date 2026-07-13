@@ -4,6 +4,32 @@ using Ocelot.Chain;
 
 namespace BOCCHI.Common.Data.Paths;
 
+public interface IPathStep
+{
+    PathStepType PathStepData { get; }
+
+    PathStepKind Kind { get; init; }
+
+    string Describe();
+
+    bool TryExecute(IPathStepExecutor executor);
+}
+
+public abstract record PathStepType;
+
+public sealed record Teleport(uint id) : PathStepType;
+
+public sealed record Pathfind(Vector3 destination, float range) : PathStepType;
+
+public sealed record Return : PathStepType;
+
+public enum PathStepKind
+{
+    Teleport,
+    Pathfind,
+    Return,
+}
+
 public class PathStep : IPathStep
 {
     private Task<ChainResult>? task = null;
@@ -23,7 +49,6 @@ public class PathStep : IPathStep
         };
     }
 
-    // Returns true when finished executing
     public bool TryExecute(IPathStepExecutor executor)
     {
         if (task != null)

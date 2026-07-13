@@ -6,6 +6,19 @@ namespace BOCCHI.Common.UI;
 
 public static class ActivitySnapshotRenderer
 {
+    public static void RenderCompact(
+        IUIService ui,
+        Color? titleColor,
+        Color? detailColor,
+        string title,
+        string details
+    )
+    {
+        ui.Text(title, titleColor);
+        ImGui.SameLine(0f, 6f);
+        ui.Text(details, detailColor);
+    }
+
     public static void Render(
         IUIService ui,
         Color? titleColor,

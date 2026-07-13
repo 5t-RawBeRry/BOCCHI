@@ -1,5 +1,6 @@
 using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services;
+using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
@@ -61,9 +62,9 @@ public class IdleHandler(
             return;
         }
 
-        var aetheryte = zone.GetAetherytePosition();
-        var distance = player.Position.Distance2D(aetheryte);
-        const float maxInteractDistance = 3.5f;
+        var interactPosition = zone.GetMainAetheryte().GetInteractPosition();
+        var distance = player.Position.Distance2D(interactPosition);
+        const float maxInteractDistance = AethernetData.InteractRadius - 0.5f;
 
         if (distance <= maxInteractDistance)
         {
@@ -71,8 +72,12 @@ public class IdleHandler(
         }
 
         // This 0.7f stops any jitter with the above distance check
-        var goal = aetheryte.GetApproachPosition(player.Position, maxInteractDistance - 0.7f, 30f);
-        pathfinder.PathfindAndMoveTo(new PathfinderConfig(goal));
+        var goal = interactPosition.GetApproachPosition(player.Position, maxInteractDistance - 0.7f, 30f);
+        pathfinder.PathfindAndMoveTo(new PathfinderConfig(goal)
+        {
+            DistanceThreshold = 1f,
+            ShouldSnapToFloor = true,
+        });
     }
 
     public override void Render()

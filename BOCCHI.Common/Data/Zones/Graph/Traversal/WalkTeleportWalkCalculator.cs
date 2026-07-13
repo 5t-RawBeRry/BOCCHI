@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Paths;
 using BOCCHI.Common.Data.Zones;
 using Ocelot.Extensions;
@@ -41,7 +42,7 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
                 return new TraversalCandidate(
                     walkToNearestAethernetCost + GraphTraverser.TeleportCost + walkToGoalFromInbound.Cost,
                     [
-                        PathStep.Pathfind(node.Position.GetApproachPosition(start, meta.InteractRange)),
+                        PathStep.Pathfind(node.GetInteractPosition(), AethernetNavigation.PathfindArrivalRadius),
                         PathStep.Teleport(meta.AetheryteId),
                         PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, inbound.Position)),
                     ]);
@@ -63,7 +64,7 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
                 return new TraversalCandidate(
                     walkToNearestAethernetCost + GraphTraverser.TeleportCost + walkToGoalFromInbound.Cost,
                     [
-                        PathStep.Pathfind(nearestAethernet.Position),
+                        PathStep.Pathfind(nearestAethernet.GetInteractPosition(), AethernetNavigation.PathfindArrivalRadius),
                         PathStep.Teleport(meta.AetheryteId),
                         PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, inbound.Position)),
                     ]);
@@ -85,7 +86,7 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
         return new TraversalCandidate(
             walkToNearestTeleportPath.Distance + GraphTraverser.TeleportCost + walkToGoalFromInbound.Cost,
             [
-                PathStep.Pathfind(nearestTeleport.Position),
+                PathStep.Pathfind(nearestTeleport.GetInteractPosition(), AethernetNavigation.PathfindArrivalRadius),
                 PathStep.Teleport(meta.AetheryteId),
                 PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, inbound.Position)),
             ]);

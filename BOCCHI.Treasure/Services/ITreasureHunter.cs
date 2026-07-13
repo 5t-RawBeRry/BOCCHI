@@ -14,6 +14,8 @@ public interface ITreasureHunter
 
     TimeSpan Elapsed { get; }
 
+    bool IsVnavAvailable { get; }
+
     bool IsVnavReady { get; }
 
     void Toggle();

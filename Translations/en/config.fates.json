@@ -17,6 +17,11 @@
     "should_farm_reroll_pot_chests": {
       "label": "Include reroll pot chests",
       "tooltip": "Also farm the shared reroll chest positions after a pot FATE."
+    },
+    "disabled_fate_ids": {
+      "label": "FATE availability",
+      "tooltip": "Uncheck a FATE to exclude it from automator selection.",
+      "empty": "No FATEs defined for the current zone."
     }
   }
 }

@@ -1,11 +1,14 @@
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.UI;
 using BOCCHI.Treasure.Hunt;
 using BOCCHI.Treasure.Services;
 using Dalamud.Bindings.ImGui;
 using Ocelot.Extensions;
 using Ocelot.Services.PlayerState;
+using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
+using Ocelot.Windows;
 
 namespace BOCCHI.Treasure;
 
@@ -14,10 +17,11 @@ public class TreasureRenderer(
     ITreasureHunter hunter,
     TreasureConfig config,
     IPlayer player,
-    IUIService ui
+    IUIService ui,
+    ITranslator<MainWindow> translator
 ) : IDynamicRenderer
 {
-    public uint Order => 30;
+    public MainWindowSection Section => MainWindowSection.Treasure;
 
     public void Render()
     {
@@ -26,35 +30,9 @@ public class TreasureRenderer(
             return;
         }
 
-        ui.Text("Treasure");
-        ImGui.Indent();
-
         DrawActiveChests();
         DrawHuntPanel();
-
-        if (tracker.Treasures.Count <= 0)
-        {
-            ImGui.TextUnformatted("No nearby Treasure.");
-            ImGui.Unindent();
-            return;
-        }
-
-        foreach (var treasure in tracker.Treasures)
-        {
-            if (!treasure.IsValid())
-            {
-                continue;
-            }
-
-            var pos = treasure.GetPosition();
-            ImGui.TextUnformatted(treasure.GetName());
-            ImGui.Indent();
-            ImGui.TextUnformatted($"({pos.X:F2}, {pos.Y:F2}, {pos.Z:F2})");
-            ImGui.TextUnformatted($"({player.Position.Distance(pos):F2})");
-            ImGui.Unindent();
-        }
-
-        ImGui.Unindent();
+        DrawNearbyTreasures();
     }
 
     public bool ShouldRender()
@@ -70,33 +48,76 @@ public class TreasureRenderer(
         }
 
         ImGui.Separator();
-        ui.Text("Treasure Hunter");
+        ui.Text(translator.T(".treasure.title"));
 
-        if (!hunter.IsVnavReady)
+        if (!hunter.IsVnavAvailable)
         {
-            ImGui.TextUnformatted("Requires vnavmesh.");
+            ImGui.TextUnformatted(translator.T(".treasure.requires_vnav"));
             return;
         }
 
-        if (ImGui.Button(hunter.Running ? "Stop" : "Start"))
+        if (!hunter.IsVnavReady)
+        {
+            ImGui.TextUnformatted(translator.T(".treasure.waiting_navmesh"));
+            return;
+        }
+
+        if (ImGui.Button(hunter.Running
+                ? translator.T(".treasure.stop_hunt")
+                : translator.T(".treasure.start_hunt")))
         {
             hunter.Toggle();
         }
 
         if (hunter.Elapsed > TimeSpan.Zero)
         {
-            ui.LabelledValue("Elapsed", $"{hunter.Elapsed:mm\\:ss}");
+            ui.LabelledValue(translator.T(".treasure.elapsed"), $"{hunter.Elapsed:mm\\:ss}");
         }
 
         if (hunter.Running && hunter.StepCount > 0)
         {
-            ui.LabelledValue("Progress", $"{hunter.StepIndex}/{hunter.StepCount}");
+            ui.LabelledValue(translator.T(".treasure.progress"), $"{hunter.StepIndex}/{hunter.StepCount}");
 
             var current = hunter.GetCurrentStep();
             if (current?.Type == HuntPathfinderStepType.WalkToNode)
             {
-                ui.LabelledValue("Distance to chest", $"{hunter.StepDistance:F2}/{config.HuntDetectionRange:F2}");
+                ui.LabelledValue(
+                    translator.T(".treasure.distance_to_chest"),
+                    $"{hunter.StepDistance:F2}/{config.HuntDetectionRange:F2}");
             }
+        }
+    }
+
+    private void DrawNearbyTreasures()
+    {
+        ImGui.Separator();
+        ui.Text(translator.T(".treasure.nearby_title"));
+
+        if (tracker.Treasures.Count <= 0)
+        {
+            ImGui.TextUnformatted(translator.T(".treasure.none_nearby"));
+            return;
+        }
+
+        var treasures = tracker.Treasures
+            .Where(t => t.IsValid())
+            .OrderBy(t => player.Position.Distance(t.GetPosition()))
+            .ToList();
+
+        using var list = ImGuiSectionHelper.BoundedList("##nearby_treasures", 160f);
+        if (!list.IsOpen)
+        {
+            return;
+        }
+
+        foreach (var treasure in treasures)
+        {
+            var pos = treasure.GetPosition();
+            ImGui.TextUnformatted(treasure.GetName());
+            ImGui.Indent();
+            ImGui.TextUnformatted($"Distance: {player.Position.Distance(pos):F1}y");
+            ImGui.TextUnformatted($"({pos.X:F1}, {pos.Y:F1}, {pos.Z:F1})");
+            ImGui.Unindent();
         }
     }
 
@@ -107,7 +128,7 @@ public class TreasureRenderer(
             return;
         }
 
-        ui.LabelledValue("Active Bronze", $"{tracker.BronzeChests}/30");
+        ui.LabelledValue(translator.T(".treasure.active_bronze"), $"{tracker.BronzeChests}/30");
         if (config.ShowPercentageActiveTreasureCount)
         {
             var percentage = tracker.BronzeChests / 30f * 100f;
@@ -115,7 +136,7 @@ public class TreasureRenderer(
             ImGui.TextUnformatted($"({percentage:F2}%)");
         }
 
-        ui.LabelledValue("Active Silver", $"{tracker.SilverChests}/8");
+        ui.LabelledValue(translator.T(".treasure.active_silver"), $"{tracker.SilverChests}/8");
         if (config.ShowPercentageActiveTreasureCount)
         {
             var percentage = tracker.SilverChests / 8f * 100f;

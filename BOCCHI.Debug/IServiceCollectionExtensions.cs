@@ -10,8 +10,6 @@ public static class IServiceCollectionExtensions
     {
         services.AddSingleton<IDebugPanel, FatesDebugPanel>();
         services.AddSingleton<IDebugPanel, CriticalEncountersDebugPanel>();
-        services.AddSingleton<IDebugPanel, ExperienceDebugPanel>();
-        services.AddSingleton<IDebugPanel, CurrencyDebugPanel>();
         services.AddSingleton<IDebugPanel, JobLevelsDebugPanel>();
 
         services.AddSingleton<DebugWindow>();
