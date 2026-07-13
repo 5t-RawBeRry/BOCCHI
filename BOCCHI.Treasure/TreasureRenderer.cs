@@ -115,8 +115,8 @@ public class TreasureRenderer(
             var pos = treasure.GetPosition();
             ImGui.TextUnformatted(treasure.GetName());
             ImGui.Indent();
-            ImGui.TextUnformatted($"Distance: {player.Position.Distance(pos):F1}y");
-            ImGui.TextUnformatted($"({pos.X:F1}, {pos.Y:F1}, {pos.Z:F1})");
+            ImGui.TextUnformatted(string.Format(translator.T(".treasure.distance"), player.Position.Distance(pos)));
+            ImGui.TextUnformatted(string.Format(translator.T(".treasure.position"), pos.X, pos.Y, pos.Z));
             ImGui.Unindent();
         }
     }

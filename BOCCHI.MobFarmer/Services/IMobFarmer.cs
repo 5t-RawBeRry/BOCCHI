@@ -1,17 +1,33 @@
 using System.Numerics;
-using BOCCHI.MobFarmer.Data;
+using Ocelot.Lifecycle;
+using Ocelot.Services.PlayerState;
+using Ocelot.States;
+using Ocelot.States.Flow;
 
-namespace BOCCHI.MobFarmer.Services;
-
-public interface IMobFarmer
+namespace BOCCHI.MobFarmer.Data
 {
-    bool Running { get; }
+    public enum FarmerPhase
+    {
+        Waiting,
+        Buffing,
+        Gathering,
+        Stacking,
+        Fighting,
+    }
+}
 
-    Vector3 StartingPoint { get; }
+namespace BOCCHI.MobFarmer.Services
+{
+    public interface IMobFarmer : IOnUpdate
+    {
+        bool Running { get; }
 
-    FarmerPhase Phase { get; }
+        Vector3 StartingPoint { get; }
 
-    void Toggle();
+        Data.FarmerPhase Phase { get; }
 
-    void Render();
+        void Toggle();
+
+        void Render();
+    }
 }

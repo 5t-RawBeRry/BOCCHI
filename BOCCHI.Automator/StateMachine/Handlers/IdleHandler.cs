@@ -9,8 +9,10 @@ using Ocelot.Chain;
 using Ocelot.Extensions;
 using Ocelot.Pathfinding.Extensions;
 using Ocelot.Services.Pathfinding;
+using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
 using Ocelot.States.Score;
+using Ocelot.Windows;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
@@ -20,7 +22,8 @@ public class IdleHandler(
     IObjectTable objects,
     IPathfinder pathfinder,
     IChainManager chains,
-    IUIService ui
+    IUIService ui,
+    ITranslator<MainWindow> translator
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Idle)
 {
     public override StatePriority GetScore()
@@ -86,7 +89,7 @@ public class IdleHandler(
 
         if (memory.TryRemember<IdleStateMemory>(out var idle))
         {
-            ui.LabelledValue("Time Idle", idle.GetIdleTime().Format());
+            ui.LabelledValue(translator.T(".automation.automator.time_idle"), idle.GetIdleTime().Format());
         }
     }
 }

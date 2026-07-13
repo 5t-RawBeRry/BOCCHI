@@ -1,11 +1,12 @@
-﻿using BOCCHI.Common.Services;
+﻿using BOCCHI.Common.Config;
+using BOCCHI.Common.Services;
 using BOCCHI.Common.Steps;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Ocelot.Chain;
 
 namespace BOCCHI.Services.Repair;
 
-public class RepairService(IChainFactory chains) : IRepairService
+public class RepairService(IChainFactory chains, CombatConfig config) : IRepairService
 {
     public unsafe bool ShouldRepair()
     {
@@ -22,8 +23,7 @@ public class RepairService(IChainFactory chains) : IRepairService
                 continue;
             }
 
-            //config.AutoRepairThreshold
-            if (Convert.ToInt32(Convert.ToDouble(item->Condition) / 30000.0 * 100.0) <= 99)
+            if (Convert.ToInt32(Convert.ToDouble(item->Condition) / 30000.0 * 100.0) <= config.AutoRepairThreshold)
             {
                 return true;
             }

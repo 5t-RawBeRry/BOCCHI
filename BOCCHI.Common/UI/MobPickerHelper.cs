@@ -13,6 +13,7 @@ public static class MobPickerHelper
         IUIService ui,
         ref string search,
         string searchHint,
+        string selectedLabel,
         string listId,
         float listHeight = ImGuiSectionHelper.DefaultListHeight
     )
@@ -25,7 +26,7 @@ public static class MobPickerHelper
             .Where(m => MobData.MatchesSearch(m, searchFilter, data))
             .ToList();
 
-        ui.LabelledValue("Selected", $"{selectedMobs.Count} / {selectableMobs.Count} shown");
+        ui.LabelledValue(selectedLabel, $"{selectedMobs.Count} / {selectableMobs.Count} shown");
 
         using var list = ImGuiSectionHelper.BoundedList(listId, listHeight);
         if (!list.IsOpen)

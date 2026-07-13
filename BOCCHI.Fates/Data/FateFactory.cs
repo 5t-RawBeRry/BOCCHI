@@ -1,6 +1,7 @@
 ﻿using BOCCHI.Common.Data.Fates;
 using Dalamud.Game.ClientState.Fates;
 using Ocelot.Services.Data;
+using FateData = Lumina.Excel.Sheets.Fate;
 
 namespace BOCCHI.Fates.Data;
 

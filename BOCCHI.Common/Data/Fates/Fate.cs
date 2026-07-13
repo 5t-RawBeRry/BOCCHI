@@ -6,6 +6,8 @@ using FateData = Lumina.Excel.Sheets.Fate;
 
 namespace BOCCHI.Common.Data.Fates;
 
+public readonly record struct FateId(ushort Value);
+
 public class Fate(FateId id, IFate context, IDataRepository<FateData> fateDataRepository)
 {
     public readonly FateId Id = id;

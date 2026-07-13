@@ -8,6 +8,8 @@ using Ocelot.Services.Logger;
 
 namespace BOCCHI.Common.Data.CriticalEncounters;
 
+public readonly record struct CriticalEncounterId(ushort Value);
+
 public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev, float radius)
 {
     public readonly CriticalEncounterId Id = id;

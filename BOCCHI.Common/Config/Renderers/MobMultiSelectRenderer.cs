@@ -40,12 +40,14 @@ namespace BOCCHI.Common.Config.Renderers
             prop.Tooltip(owner, translator);
 
             var searchHintKey = prop.GetFieldLabelKey(owner).Replace(".label", ".search_hint", StringComparison.Ordinal);
+            var selectedKey = prop.GetFieldLabelKey(owner).Replace(".label", ".selected", StringComparison.Ordinal);
             var changed = MobPickerHelper.Draw(
                 mobs,
                 data,
                 ui,
                 ref search,
                 translator.T(searchHintKey),
+                translator.T(selectedKey),
                 "##config_mob_picker_list",
                 220f);
 

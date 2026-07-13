@@ -1,5 +1,6 @@
 using BOCCHI.Automator.Services;
 using BOCCHI.Common.Data.StateMemory;
+using BOCCHI.Common.UI;
 using BOCCHI.Common.Services;
 using BOCCHI.MobFarmer.Services;
 using BOCCHI.Treasure.Services;
@@ -55,7 +56,7 @@ public class OperationalStatusBar(
 
         if (memory.TryRemember<GoalMemory>(out var goalMemory))
         {
-            ui.LabelledValue(translator.T(".status.goal"), goalMemory.Goal.Describe());
+            ui.LabelledValue(translator.T(".status.goal"), GoalFormatHelper.Describe(goalMemory.Goal, translator));
         }
 
         if (memory.TryRemember<PotChestFarmMemory>(out var potFarm))

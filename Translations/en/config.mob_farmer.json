@@ -53,7 +53,8 @@
     "mobs": {
       "label": "Target mobs",
       "tooltip": "Mobs the farmer will pull and count when stacking.",
-      "search_hint": "Search name or ID..."
+      "search_hint": "Search name or ID...",
+      "selected": "Selected"
     }
   }
 }

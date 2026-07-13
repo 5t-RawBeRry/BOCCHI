@@ -2,6 +2,7 @@ using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services;
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.UI;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
 using Dalamud.Bindings.ImGui;
@@ -63,7 +64,7 @@ public class AutomatorRenderer(
 
             if (memory.TryRemember<GoalMemory>(out var goalMemory))
             {
-                ui.LabelledValue(translator.T(".status.goal"), goalMemory.Goal.Describe());
+                ui.LabelledValue(translator.T(".status.goal"), GoalFormatHelper.Describe(goalMemory.Goal, translator));
             }
 
             if (memory.TryRemember<PotChestFarmMemory>(out var potFarm))

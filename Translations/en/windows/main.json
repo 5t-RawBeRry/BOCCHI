@@ -17,6 +17,10 @@
         "current_step": "Current step",
         "chests": "Pot chests"
     },
+    "goals": {
+        "fate": "Fate: {0}",
+        "critical_encounter": "Critical Encounter: {0}"
+    },
     "trackers": {
         "experience": {
             "current_job": "Current Job",
@@ -36,7 +40,8 @@
             "disable": "Disable Automator",
             "details": "Details",
             "pot_chest_farm": "Pot chest farm",
-            "chests_remaining": "Chests remaining"
+            "chests_remaining": "Chests remaining",
+            "time_idle": "Time idle"
         },
         "mob_farmer": {
             "title": "Mob Farmer",
@@ -70,6 +75,8 @@
         "nearby_title": "Nearby treasures",
         "none_nearby": "No nearby treasure.",
         "active_bronze": "Active Bronze",
-        "active_silver": "Active Silver"
+        "active_silver": "Active Silver",
+        "distance": "Distance: {0:F1}y",
+        "position": "({0:F1}, {1:F1}, {2:F1})"
     }
 }

@@ -154,16 +154,16 @@ public abstract class BaseZone(
 
         if (File.Exists(path))
         {
-            logger.Info("Loaded zone graph from path: " + path);
+            logger.Debug("Loaded zone graph from path: " + path);
             var json = await File.ReadAllTextAsync(path);
             return ZoneGraph.FromJson(json);
         }
 
-        logger.Info("Creating new zone graph");
-        logger.Info("Data: " + GetNormalFateData().Count);
+        logger.Debug("Creating new zone graph");
+        logger.Debug("Data: " + GetNormalFateData().Count);
         var config = new GraphConfig(pathfinder, logger);
         var graph = await graphs.BuildAsync(config, this);
-        logger.Info("Writing zone graph to: " + path);
+        logger.Debug("Writing zone graph to: " + path);
         await File.WriteAllTextAsync(path, graph.ToJson());
 
         return graph;

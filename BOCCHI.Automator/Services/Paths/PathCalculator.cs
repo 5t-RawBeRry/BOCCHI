@@ -23,7 +23,6 @@ public class PathCalculator(
 {
     public async Task<Queue<IPathStep>> Calculate(IGoal goal)
     {
-        logger.Info("Starting PathCalculator");
         if (objects.LocalPlayer is not { } player)
         {
             logger.Warn("No Player");
@@ -37,14 +36,7 @@ public class PathCalculator(
             return [];
         }
 
-        logger.Info("Getting Graph");
         var graph = await zone.GetGraph();
-        logger.Info("Got Graph");
-
-        logger.Info("Nodes: " + graph.Nodes.Count);
-        logger.Info("Edges: " + graph.Edges.Count);
-
-        logger.Info("Getting goal node.");
 
         Node goalNode;
         try
@@ -57,29 +49,25 @@ public class PathCalculator(
             return [];
         }
 
-        logger.Info("Got goal node.");
         var destination = goalNode.Position;
 
         if (player.Position.Distance2D(destination) <= 20f)
         {
-            logger.Warn("Too close to destination.");
+            logger.Debug("Too close to destination.");
             return [];
         }
 
-        logger.Info("Creating traverser");
         var traverser = new GraphTraverser(graph, pathfinder, logger);
         traverser.AddCalculator(new DirectWalkCalculator());
         traverser.AddCalculator(new WalkTeleportWalkCalculator());
         traverser.AddCalculator(new ReturnWalkCalculator());
         traverser.AddCalculator(new ReturnTeleportWalkCalculator());
 
-        logger.Info("running pathfind");
         var steps = await traverser.FindPath(player.Position, goalNode);
         var resolvedSteps = steps
             .Select(step => AethernetNavigation.ResolveAetherytePathStep(step, zone))
             .ToList();
 
-        logger.Info("Done with PathCalculator");
         return new Queue<IPathStep>(resolvedSteps);
     }
 
