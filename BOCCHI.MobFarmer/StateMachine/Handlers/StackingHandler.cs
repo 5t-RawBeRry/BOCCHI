@@ -14,8 +14,7 @@ public class StackingHandler(
     IMobScanner scanner,
     ITargetManager targets,
     IPathfinder pathfinder,
-    IPlayer player,
-    IRotationPlugin rotation
+    IPlayer player
 ) : FlowStateHandler<FarmerPhase>(FarmerPhase.Stacking)
 {
     private bool hasRunStack;
@@ -37,7 +36,6 @@ public class StackingHandler(
                 if (TimeInState >= TimeSpan.FromSeconds(config.StackingTimeoutSeconds))
                 {
                     pathfinder.Stop();
-                    rotation.PhantomJobOn();
                     return FarmerPhase.Fighting;
                 }
 
@@ -45,7 +43,6 @@ public class StackingHandler(
             }
 
             hasRunStack = false;
-            rotation.PhantomJobOn();
             return FarmerPhase.Fighting;
         }
 
@@ -56,7 +53,6 @@ public class StackingHandler(
 
         if (furthest == null)
         {
-            rotation.PhantomJobOn();
             return FarmerPhase.Fighting;
         }
 

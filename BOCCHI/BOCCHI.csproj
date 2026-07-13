@@ -26,11 +26,9 @@
         <ProjectReference Include="../BOCCHI.Common/BOCCHI.Common.csproj"/>
         <ProjectReference Include="../BOCCHI.Automator/BOCCHI.Automator.csproj"/>
 
-        <ProjectReference Include="../BOCCHI.Experience/BOCCHI.Experience.csproj"/>
-        <ProjectReference Include="../BOCCHI.Currency/BOCCHI.Currency.csproj"/>
+        <ProjectReference Include="../BOCCHI.Trackers/BOCCHI.Trackers.csproj"/>
+        <ProjectReference Include="../BOCCHI.World/BOCCHI.World.csproj"/>
         <ProjectReference Include="../BOCCHI.Buff/BOCCHI.Buff.csproj"/>
-        <ProjectReference Include="../BOCCHI.Fates/BOCCHI.Fates.csproj"/>
-        <ProjectReference Include="../BOCCHI.CriticalEncounters/BOCCHI.CriticalEncounters.csproj"/>
         <ProjectReference Include="../BOCCHI.MobFarmer/BOCCHI.MobFarmer.csproj"/>
         <ProjectReference Include="../BOCCHI.Treasure/BOCCHI.Treasure.csproj"/>
     </ItemGroup>

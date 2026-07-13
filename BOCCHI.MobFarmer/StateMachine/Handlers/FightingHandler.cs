@@ -18,8 +18,7 @@ public class FightingHandler(
     ITargetManager targets,
     ICondition conditions,
     IPathfinder pathfinder,
-    IPlayer player,
-    IRotationPlugin rotation
+    IPlayer player
 ) : FlowStateHandler<FarmerPhase>(FarmerPhase.Fighting)
 {
     public override FarmerPhase? Handle()
@@ -49,7 +48,6 @@ public class FightingHandler(
 
         if (!anyInCombat && !conditions[ConditionFlag.InCombat])
         {
-            rotation.PhantomJobOff();
             pathfinder.Stop();
             return FarmerPhase.Waiting;
         }

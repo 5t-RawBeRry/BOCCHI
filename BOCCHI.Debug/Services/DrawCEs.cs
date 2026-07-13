@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Common.Services;
@@ -7,7 +7,7 @@ using Ocelot.Lifecycle;
 using Ocelot.Pictomancy.Services;
 using Ocelot.Services.OverlayRenderer;
 
-namespace BOCCHI.Services;
+namespace BOCCHI.Debug.Services;
 
 public class DrawCEs(IOverlayRenderer overlay, ICriticalEncounterRepository ces, IZoneProvider zones) : IOnRender
 {
@@ -27,7 +27,6 @@ public class DrawCEs(IOverlayRenderer overlay, ICriticalEncounterRepository ces,
             overlay.StrokeCircle(crystal.Position, 5f, new Color(1f, 0f, 1f));
         }
 
-#if DEBUG
         foreach (var points in GraphConfig.DebugPathLines)
         {
             for (var i = 0; i < points.Count - 1; i++)
@@ -35,6 +34,5 @@ public class DrawCEs(IOverlayRenderer overlay, ICriticalEncounterRepository ces,
                 overlay.StrokeLine(points[i], points[i + 1], new Color(1f, 0f, 0f));
             }
         }
-#endif
     }
 }

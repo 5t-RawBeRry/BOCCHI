@@ -12,13 +12,11 @@ using BOCCHI.Common.Data.Zones.Implementations.SouthHorn;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.Steps;
 using BOCCHI.Config;
-using BOCCHI.CriticalEncounters;
-using BOCCHI.Currency;
 using BOCCHI.Data;
-using BOCCHI.Experience;
-using BOCCHI.Fates;
 using BOCCHI.MobFarmer;
 using BOCCHI.Treasure;
+using BOCCHI.Trackers;
+using BOCCHI.World;
 using BOCCHI.Renderers;
 using BOCCHI.UI;
 #if DEBUG
@@ -82,16 +80,9 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
 
         services.AddSingleton<TeleportToAethernetChain>();
 
-#if DEBUG
-        services.AddSingleton<DrawCEs>();
-        services.AddSingleton<OpenWindows>();
-#endif
-
-        services.LoadExperienceModule();
-        services.LoadCurrencyModule();
+        services.LoadTrackersModule();
+        services.LoadWorldModule();
         services.LoadBuffModule();
-        services.LoadFatesModule();
-        services.LoadCriticalEncountersModule();
 
         services.LoadAutomatorModule();
         services.LoadMobFarmerModule();

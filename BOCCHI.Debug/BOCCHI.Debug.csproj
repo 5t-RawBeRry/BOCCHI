@@ -1,7 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <ItemGroup>
         <ProjectReference Include="..\BOCCHI.Common\BOCCHI.Common.csproj"/>
-        <ProjectReference Include="..\BOCCHI.Experience\BOCCHI.Experience.csproj"/>
-        <ProjectReference Include="..\BOCCHI.Currency\BOCCHI.Currency.csproj"/>
     </ItemGroup>
 </Project>

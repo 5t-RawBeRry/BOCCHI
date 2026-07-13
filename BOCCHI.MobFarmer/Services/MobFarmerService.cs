@@ -10,7 +10,6 @@ namespace BOCCHI.MobFarmer.Services;
 public class MobFarmerService(
     IMobScanner scanner,
     Func<IStateMachine<FarmerPhase>> stateMachineFactory,
-    IRotationPlugin rotation,
     IPlayer player
 ) : IMobFarmer, IOnUpdate
 {
@@ -31,8 +30,6 @@ public class MobFarmerService(
         {
             flow.Reset();
         }
-
-        rotation.PhantomJobOff();
 
         if (!Running)
         {

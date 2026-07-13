@@ -14,7 +14,6 @@ public static class IServiceCollectionExtensions
         Registry.RegisterAssemblies(typeof(FarmerPhase).Assembly);
 
         services.AddSingleton<IMobScanner, MobScanner>();
-        services.AddSingleton<IRotationPlugin, BlankRotationPlugin>();
         services.AddSingleton<IMobFarmer, MobFarmerService>();
         services.AddSingleton<Func<IMobFarmer>>(sp => () => sp.GetRequiredService<IMobFarmer>());
         services.AddSingleton<IDynamicRenderer, MobFarmerRenderer>();

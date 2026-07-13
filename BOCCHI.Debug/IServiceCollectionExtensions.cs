@@ -1,4 +1,5 @@
 using BOCCHI.Debug.Panels;
+using BOCCHI.Debug.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Ocelot.Windows;
 
@@ -15,5 +16,8 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<DebugWindow>();
         services.AddSingleton<IDebugWindow>(sp => sp.GetRequiredService<DebugWindow>());
         services.AddSingleton<IWindow>(sp => sp.GetRequiredService<DebugWindow>());
+
+        services.AddSingleton<DrawCEs>();
+        services.AddSingleton<OpenWindows>();
     }
 }
