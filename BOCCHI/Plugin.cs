@@ -71,7 +71,6 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddZones()
             .AddZone<SouthHorn>();
 
-
         services.AddSingleton<IGraphFactory, GraphFactory>();
 
         services.AddSingleton<UnmountStep>();
