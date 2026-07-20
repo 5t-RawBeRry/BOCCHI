@@ -1,12 +1,14 @@
-using System.Reflection;
 using BOCCHI.Common.Config.Fields;
 using BOCCHI.Common.Data.Zones;
+using BOCCHI.Common.Data.Zones.Graph;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Plugin.Services;
+using Lumina.Excel;
 using Ocelot.Config.Renderers;
 using Ocelot.Extensions;
 using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
+using System.Reflection;
 using XIVFate = Lumina.Excel.Sheets.Fate;
 
 namespace BOCCHI.Common.Config.Renderers;
@@ -23,7 +25,7 @@ public class DisabledFateIdsRenderer(IZoneProvider zones, IDataManager data, IUI
                 $"{prop.DeclaringType?.Name}.{prop.Name} is {prop.PropertyType.Name}.");
         }
 
-        var disabled = (HashSet<uint>?)prop.GetValue(target) ?? [];
+        HashSet<uint> disabled = (HashSet<uint>?)prop.GetValue(target) ?? [];
         if (prop.GetValue(target) == null)
         {
             prop.SetValue(target, disabled);
@@ -32,27 +34,27 @@ public class DisabledFateIdsRenderer(IZoneProvider zones, IDataManager data, IUI
         prop.Label(owner, translator);
         prop.Tooltip(owner, translator);
 
-        var zone = zones.GetZone();
-        var fates = zone.GetNormalFateData()
+        IZone zone = zones.GetZone();
+        List<ActivityData> fates = zone.GetNormalFateData()
             .Concat(zone.GetPotFateData())
             .OrderBy(f => f.Id)
             .ToList();
 
         if (fates.Count == 0)
         {
-            var emptyKey = prop.GetFieldLabelKey(owner).Replace(".label", ".empty", StringComparison.Ordinal);
+            string emptyKey = prop.GetFieldLabelKey(owner).Replace(".label", ".empty", StringComparison.Ordinal);
             ui.Text(translator.T(emptyKey));
             return false;
         }
 
-        var changed = false;
-        var fateSheet = data.GetExcelSheet<XIVFate>();
+        bool changed = false;
+        ExcelSheet<XIVFate> fateSheet = data.GetExcelSheet<XIVFate>();
 
-        foreach (var fate in fates)
+        foreach(ActivityData fate in fates)
         {
-            var fateId = (uint)fate.Id;
-            var name = fateSheet.GetRow(fateId).Name.ToString();
-            var enabled = !disabled.Contains(fateId);
+            uint fateId = (uint)fate.Id;
+            string name = fateSheet.GetRow(fateId).Name.ToString();
+            bool enabled = !disabled.Contains(fateId);
 
             ImGui.PushID(fate.Id);
             if (ImGui.Checkbox($"{name} (#{fate.Id})", ref enabled))

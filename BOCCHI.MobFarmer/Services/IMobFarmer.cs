@@ -1,9 +1,6 @@
-using System.Numerics;
+using BOCCHI.MobFarmer.Data;
 using Ocelot.Lifecycle;
-using Ocelot.Services.PlayerState;
-using Ocelot.States;
-using Ocelot.States.Flow;
-
+using System.Numerics;
 namespace BOCCHI.MobFarmer.Data
 {
     public enum FarmerPhase
@@ -12,7 +9,7 @@ namespace BOCCHI.MobFarmer.Data
         Buffing,
         Gathering,
         Stacking,
-        Fighting,
+        Fighting
     }
 }
 
@@ -24,7 +21,7 @@ namespace BOCCHI.MobFarmer.Services
 
         Vector3 StartingPoint { get; }
 
-        Data.FarmerPhase Phase { get; }
+        FarmerPhase Phase { get; }
 
         void Toggle();
 

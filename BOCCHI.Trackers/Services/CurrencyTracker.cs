@@ -2,7 +2,6 @@ using BOCCHI.Common.Config;
 using BOCCHI.Common.Data;
 using BOCCHI.Common.Services;
 using Ocelot.Lifecycle;
-
 namespace BOCCHI.Currency.Services;
 
 public class CurrencyTracker(TrackerConfig config) : ICurrencyTracker, IOnUpdate
@@ -11,28 +10,20 @@ public class CurrencyTracker(TrackerConfig config) : ICurrencyTracker, IOnUpdate
 
     private readonly DeltaRateTracker silverTracker = new(() => TimeSpan.FromMinutes(config.TrackedDuration));
 
-    public UpdateLimit UpdateLimit
-    {
-        get => new()
-        {
-            Mode = UpdateLimitMode.Milliseconds,
-            Limit = 250,
-        };
-    }
-
     public double GoldPerHour => goldTracker.PerHour;
 
     public double SilverPerHour => silverTracker.PerHour;
 
-    public float[] GetGoldHistory(TimeSpan sampleDuration)
-    {
-        return goldTracker.GetHistory(sampleDuration);
-    }
+    public float[] GetGoldHistory(TimeSpan sampleDuration) => goldTracker.GetHistory(sampleDuration);
 
-    public float[] GetSilverHistory(TimeSpan sampleDuration)
-    {
-        return silverTracker.GetHistory(sampleDuration);
-    }
+    public float[] GetSilverHistory(TimeSpan sampleDuration) => silverTracker.GetHistory(sampleDuration);
+
+    public UpdateLimit UpdateLimit =>
+        new()
+        {
+            Mode = UpdateLimitMode.Milliseconds,
+            Limit = 250
+        };
 
     public void Update()
     {
@@ -41,8 +32,8 @@ public class CurrencyTracker(TrackerConfig config) : ICurrencyTracker, IOnUpdate
             return;
         }
 
-        var gold = GetCurrentGold();
-        var silver = GetCurrentSilver();
+        int gold = GetCurrentGold();
+        int silver = GetCurrentSilver();
 
         if (!goldTracker.HasValue && !silverTracker.HasValue)
         {
@@ -55,13 +46,7 @@ public class CurrencyTracker(TrackerConfig config) : ICurrencyTracker, IOnUpdate
         silverTracker.RecordPositiveDelta(silver);
     }
 
-    private static int GetCurrentGold()
-    {
-        return OccultCrescentHelper.GetGold();
-    }
+    private static int GetCurrentGold() => OccultCrescentHelper.GetGold();
 
-    private static int GetCurrentSilver()
-    {
-        return OccultCrescentHelper.GetSilver();
-    }
+    private static int GetCurrentSilver() => OccultCrescentHelper.GetSilver();
 }

@@ -7,10 +7,10 @@ using BOCCHI.Common.Extensions;
 using BOCCHI.Common.Services;
 using Dalamud.Plugin.Services;
 using Ocelot.States.Flow;
-
 namespace BOCCHI.Buff.StateMachine.Handlers;
 
-public class ChoosingBuffToApplyHandler(
+public class ChoosingBuffToApplyHandler
+(
     BuffConfig config,
     IObjectTable objects,
     IBuffProvider buffs,
@@ -25,15 +25,15 @@ public class ChoosingBuffToApplyHandler(
             return null;
         }
 
-        var freelancer = supportJobs.Create(SupportJobId.PhantomFreelancer);
+        SupportJob freelancer = supportJobs.Create(SupportJobId.PhantomFreelancer);
         if (config.ApplyBuffsUsingInquiringMind && freelancer.Level >= 15)
         {
             return BuffState.CastingInquiringMind;
         }
 
-        foreach (var buff in buffs.GetBuffs().Where(b => b.ShouldApply(config)))
+        foreach(BuffData buff in buffs.GetBuffs().Where(b => b.ShouldApply(config)))
         {
-            var job = supportJobs.Create(buff.SupportJobId);
+            SupportJob job = supportJobs.Create(buff.SupportJobId);
             if (job.Level < buff.RequiredLevel)
             {
                 continue;

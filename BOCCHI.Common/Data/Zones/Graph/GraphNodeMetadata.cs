@@ -1,9 +1,7 @@
 using System.Numerics;
-
 namespace BOCCHI.Common.Data.Zones.Graph;
 
 public interface INodeMetadata;
-
 public class BlankNodeMetadata : INodeMetadata;
 
 public class CarrotNodeMetadata : INodeMetadata
@@ -44,7 +42,7 @@ public class TeleportNodeMetadata : INodeMetadata
 public enum TreasureType
 {
     Silver,
-    Bronze,
+    Bronze
 }
 
 public class TreasureNodeMetadata : INodeMetadata

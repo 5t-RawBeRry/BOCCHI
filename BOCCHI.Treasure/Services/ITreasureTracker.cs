@@ -1,5 +1,3 @@
-using BOCCHI.Treasure.Data;
-
 namespace BOCCHI.Treasure.Services;
 
 public interface ITreasureTracker

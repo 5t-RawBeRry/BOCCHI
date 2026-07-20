@@ -9,10 +9,11 @@ using Ocelot.Services.PlayerState;
 using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
 using Ocelot.Windows;
-
+using System.Numerics;
 namespace BOCCHI.Treasure;
 
-public class TreasureRenderer(
+public class TreasureRenderer
+(
     ITreasureTracker tracker,
     ITreasureHunter hunter,
     TreasureConfig config,
@@ -36,10 +37,7 @@ public class TreasureRenderer(
         DrawNearbyTreasures();
     }
 
-    public bool ShouldRender()
-    {
-        return uiConfig.ShowTreasureSection && config.Enabled;
-    }
+    public bool ShouldRender() => uiConfig.ShowTreasureSection && config.Enabled;
 
     private void DrawHuntPanel()
     {
@@ -64,8 +62,8 @@ public class TreasureRenderer(
         }
 
         if (ImGui.Button(hunter.Running
-                ? translator.T(".treasure.stop_hunt")
-                : translator.T(".treasure.start_hunt")))
+            ? translator.T(".treasure.stop_hunt")
+            : translator.T(".treasure.start_hunt")))
         {
             hunter.Toggle();
         }
@@ -79,7 +77,7 @@ public class TreasureRenderer(
         {
             ui.LabelledValue(translator.T(".treasure.progress"), $"{hunter.StepIndex}/{hunter.StepCount}");
 
-            var current = hunter.GetCurrentStep();
+            HuntPathfinderStep? current = hunter.GetCurrentStep();
             if (current?.Type == HuntPathfinderStepType.WalkToNode)
             {
                 ui.LabelledValue(
@@ -100,20 +98,20 @@ public class TreasureRenderer(
             return;
         }
 
-        var treasures = tracker.Treasures
+        List<TreasureCoffer> treasures = tracker.Treasures
             .Where(t => t.IsValid())
             .OrderBy(t => player.Position.Distance(t.GetPosition()))
             .ToList();
 
-        using var list = ImGuiSectionHelper.BoundedList("##nearby_treasures", 160f);
+        using ImGuiSectionHelper.BoundedListScope list = ImGuiSectionHelper.BoundedList("##nearby_treasures", 160f);
         if (!list.IsOpen)
         {
             return;
         }
 
-        foreach (var treasure in treasures)
+        foreach(TreasureCoffer treasure in treasures)
         {
-            var pos = treasure.GetPosition();
+            Vector3 pos = treasure.GetPosition();
             ImGui.TextUnformatted(treasure.GetName());
             ImGui.Indent();
             ImGui.TextUnformatted(string.Format(translator.T(".treasure.distance"), player.Position.Distance(pos)));
@@ -132,7 +130,7 @@ public class TreasureRenderer(
         ui.LabelledValue(translator.T(".treasure.active_bronze"), $"{tracker.BronzeChests}/30");
         if (config.ShowPercentageActiveTreasureCount)
         {
-            var percentage = tracker.BronzeChests / 30f * 100f;
+            float percentage = tracker.BronzeChests / 30f * 100f;
             ImGui.SameLine();
             ImGui.TextUnformatted($"({percentage:F2}%)");
         }
@@ -140,7 +138,7 @@ public class TreasureRenderer(
         ui.LabelledValue(translator.T(".treasure.active_silver"), $"{tracker.SilverChests}/8");
         if (config.ShowPercentageActiveTreasureCount)
         {
-            var percentage = tracker.SilverChests / 8f * 100f;
+            float percentage = tracker.SilverChests / 8f * 100f;
             ImGui.SameLine();
             ImGui.TextUnformatted($"({percentage:F2}%)");
         }

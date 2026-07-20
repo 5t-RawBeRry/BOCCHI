@@ -8,10 +8,11 @@ using Ocelot.Graphics;
 using Ocelot.Lifecycle;
 using Ocelot.Services.OverlayRenderer;
 using Ocelot.Services.PlayerState;
-
+using System.Numerics;
 namespace BOCCHI.Treasure;
 
-public class TreasureRadarDrawer(
+public class TreasureRadarDrawer
+(
     ITreasureTracker tracker,
     TreasureConfig config,
     IZoneProvider zones,
@@ -42,11 +43,11 @@ public class TreasureRadarDrawer(
             return;
         }
 
-        var origin = player.Position;
+        Vector3 origin = player.Position;
 
-        foreach (var treasure in tracker.Treasures.Where(treasure => treasure.IsValid()))
+        foreach(TreasureCoffer treasure in tracker.Treasures.Where(treasure => treasure.IsValid()))
         {
-            var cofferType = treasure.GetCofferType();
+            CofferType cofferType = treasure.GetCofferType();
             if (config.DrawLineToBronzeChests && cofferType == CofferType.Bronze)
             {
                 overlay.StrokeLine(origin, treasure.GetPosition(), ToColor(treasure.GetColor()));
@@ -59,8 +60,5 @@ public class TreasureRadarDrawer(
         }
     }
 
-    private static Color ToColor(System.Numerics.Vector4 color)
-    {
-        return new Color(color.X, color.Y, color.Z, color.W);
-    }
+    private static Color ToColor(Vector4 color) => new(color.X, color.Y, color.Z, color.W);
 }

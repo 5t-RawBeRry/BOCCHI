@@ -1,7 +1,7 @@
 using BOCCHI.Automator.Services;
 using BOCCHI.Common.Data.StateMemory;
-using BOCCHI.Common.UI;
 using BOCCHI.Common.Services;
+using BOCCHI.Common.UI;
 using BOCCHI.MobFarmer.Services;
 using BOCCHI.Treasure.Services;
 using Dalamud.Bindings.ImGui;
@@ -9,10 +9,10 @@ using Ocelot.Graphics;
 using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
 using Ocelot.Windows;
-
 namespace BOCCHI.UI;
 
-public class OperationalStatusBar(
+public class OperationalStatusBar
+(
     Func<IAutomator> automatorFactory,
     Func<IMobFarmer> farmerFactory,
     ITreasureHunter hunter,
@@ -54,19 +54,19 @@ public class OperationalStatusBar(
             hunter.Running,
             hunter.Running && hunter.StepCount > 0 ? $"{hunter.StepIndex + 1}/{hunter.StepCount}" : null);
 
-        if (memory.TryRemember<GoalMemory>(out var goalMemory))
+        if (memory.TryRemember<GoalMemory>(out GoalMemory goalMemory))
         {
             ui.LabelledValue(translator.T(".status.goal"), GoalFormatHelper.Describe(goalMemory.Goal, translator));
         }
 
-        if (memory.TryRemember<PotChestFarmMemory>(out var potFarm))
+        if (memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory potFarm))
         {
             ui.LabelledValue(
                 translator.T(".status.chests"),
                 $"{potFarm.RemainingChests}/{potFarm.TotalChests} (Fate {potFarm.FateId.Value})");
         }
 
-        if (memory.TryRemember<GoalPathStepMemory>(out var pathMemory)
+        if (memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory pathMemory)
             && pathMemory.GetNextPathStep() is { } currentStep)
         {
             ui.LabelledValue(translator.T(".status.current_step"), currentStep.Describe());
@@ -77,8 +77,8 @@ public class OperationalStatusBar(
 
     private void DrawStatusChip(string label, bool active, string? detail)
     {
-        var status = active ? translator.T(".status.on") : translator.T(".status.off");
-        var color = active ? Color.Green : branding.DalamudGrey;
+        string status = active ? translator.T(".status.on") : translator.T(".status.off");
+        Color color = active ? Color.Green : branding.DalamudGrey;
         ui.Text($"{label}: {status}", color);
 
         if (!string.IsNullOrEmpty(detail))
@@ -89,7 +89,7 @@ public class OperationalStatusBar(
     }
 
     private static string FormatEnum<TEnum>(TEnum value)
-        where TEnum : struct, Enum
+    where TEnum : struct, Enum
     {
         return string.Concat(value.ToString().Select((c, i) => i > 0 && char.IsUpper(c) ? $" {c}" : c.ToString()));
     }

@@ -1,5 +1,4 @@
 using Ocelot.Services.UI;
-
 namespace BOCCHI.Common.UI;
 
 public static class TrackerRateRenderer

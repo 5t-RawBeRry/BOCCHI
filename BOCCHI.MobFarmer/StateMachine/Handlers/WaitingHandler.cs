@@ -4,10 +4,10 @@ using BOCCHI.MobFarmer.Services;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
 using Ocelot.States.Flow;
-
 namespace BOCCHI.MobFarmer.StateMachine.Handlers;
 
-public class WaitingHandler(
+public class WaitingHandler
+(
     MobFarmerConfig config,
     IMobScanner scanner,
     ICondition conditions

@@ -4,7 +4,6 @@ using BOCCHI.MobFarmer.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Ocelot;
 using Ocelot.States;
-
 namespace BOCCHI.MobFarmer;
 
 public static class IServiceCollectionExtensions
@@ -19,7 +18,7 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<IDynamicRenderer, MobFarmerRenderer>();
         services.AddSingleton<MobFarmerDebugDrawer>();
 
-        services.AddFlowStateMachine<FarmerPhase>(FarmerPhase.Waiting);
+        services.AddFlowStateMachine(FarmerPhase.Waiting);
         services.AddSingleton<Func<IStateMachine<FarmerPhase>>>(sp => () => sp.GetRequiredService<IStateMachine<FarmerPhase>>());
     }
 }

@@ -1,12 +1,12 @@
-using BOCCHI.Common;
+using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.UI;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using Ocelot.Services.UI;
-
 namespace BOCCHI.Debug.Panels;
 
-public sealed class CriticalEncountersDebugPanel(
+public sealed class CriticalEncountersDebugPanel
+(
     ICriticalEncounterRepository criticalEncounters,
     IBrandingService branding,
     IUIService ui
@@ -16,7 +16,7 @@ public sealed class CriticalEncountersDebugPanel(
 
     public void Render()
     {
-        foreach (var encounter in criticalEncounters.Snapshot())
+        foreach(CriticalEncounter encounter in criticalEncounters.Snapshot())
         {
             ActivitySnapshotRenderer.Render(
                 ui,
@@ -38,7 +38,7 @@ public sealed class CriticalEncountersDebugPanel(
             DynamicEventState.Register => "(Preparing)",
             DynamicEventState.Warmup => "(Starting)",
             DynamicEventState.Battle => $"({progress}%)",
-            _ => $"({state})",
+            var _ => $"({state})"
         };
     }
 }

@@ -2,18 +2,16 @@
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using Lumina.Excel.Sheets;
 using Ocelot.Services.Data;
-
 namespace BOCCHI.Data;
 
 public class SupportJobFactory : ISupportJobFactory
 {
-    private readonly IDataRepository<SupportJobId, SupportJob> repo;
+    private readonly Lazy<SupportJob[]> all;
 
     private readonly IDataRepository<MKDSupportJob> jobData;
 
     private readonly ISubrowDataRepository<MKDGrowDataSJob> jobGrowthData;
-
-    private readonly Lazy<SupportJob[]> all;
+    private readonly IDataRepository<SupportJobId, SupportJob> repo;
 
     public SupportJobFactory(
         IDataRepository<SupportJobId, SupportJob> repo,
@@ -24,20 +22,20 @@ public class SupportJobFactory : ISupportJobFactory
         this.repo = repo;
         this.jobData = jobData;
         this.jobGrowthData = jobGrowthData;
-        all = new Lazy<SupportJob[]>(() => Enum.GetValues<SupportJobId>().Select(Create).ToArray());
+        all = new(() => Enum.GetValues<SupportJobId>().Select(Create).ToArray());
     }
 
 
     public SupportJob Create(SupportJobId id)
     {
-        if (!repo.TryGet(id, out var supportJob))
+        if (!repo.TryGet(id, out SupportJob supportJob))
         {
-            var rowId = id.RowId();
-            supportJob = new SupportJob
+            uint rowId = id.RowId();
+            supportJob = new()
             {
                 Id = id,
                 Data = jobData.Get(rowId),
-                GrowthData = jobGrowthData.GetRow(rowId),
+                GrowthData = jobGrowthData.GetRow(rowId)
             };
 
             repo.Add(id, supportJob);
@@ -49,13 +47,13 @@ public class SupportJobFactory : ISupportJobFactory
     public unsafe bool TryGetCurrent(out SupportJob current)
     {
         current = null!;
-        var state = PublicContentOccultCrescent.GetState();
+        OccultCrescentState* state = PublicContentOccultCrescent.GetState();
         if (state == null)
         {
             return false;
         }
 
-        var raw = (int)state->CurrentSupportJob;
+        int raw = state->CurrentSupportJob;
 
         if (!Enum.IsDefined(typeof(SupportJobId), raw))
         {
@@ -66,8 +64,5 @@ public class SupportJobFactory : ISupportJobFactory
         return true;
     }
 
-    public IEnumerable<SupportJob> All()
-    {
-        return all.Value;
-    }
+    public IEnumerable<SupportJob> All() => all.Value;
 }

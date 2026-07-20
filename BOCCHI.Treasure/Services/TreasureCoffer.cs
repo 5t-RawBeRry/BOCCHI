@@ -1,8 +1,8 @@
-using System.Numerics;
 using BOCCHI.Treasure.Data;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using System.Numerics;
 using XIVTreasure = Lumina.Excel.Sheets.Treasure;
 using TreasureFlags = FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.TreasureFlags;
 
@@ -12,7 +12,7 @@ namespace BOCCHI.Treasure.Data
     {
         Unknown,
         Bronze,
-        Silver,
+        Silver
     }
 
     public static class TreasureColors
@@ -29,47 +29,37 @@ namespace BOCCHI.Treasure.Services
 {
     public class TreasureCoffer(IGameObject obj, IDataManager data)
     {
-        public uint Id => obj.BaseId;
-
         private TreasureFlags lastFlags = TreasureFlags.None;
+        public uint Id => obj.BaseId;
 
         public unsafe bool CheckOpened()
         {
-            var gameObject = (GameObject*)(void*)obj.Address;
+            GameObject* gameObject = (GameObject*)(void*)obj.Address;
             if (gameObject == null)
             {
                 return false;
             }
 
-            var instance = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
-            var currentFlags = instance->Flags;
+            FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure* instance = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
+            TreasureFlags currentFlags = instance->Flags;
 
             if (currentFlags == lastFlags)
             {
                 return false;
             }
 
-            var wasNotOpened = !lastFlags.HasFlag(TreasureFlags.Opened);
-            var isNowOpened = currentFlags.HasFlag(TreasureFlags.Opened);
+            bool wasNotOpened = !lastFlags.HasFlag(TreasureFlags.Opened);
+            bool isNowOpened = currentFlags.HasFlag(TreasureFlags.Opened);
             lastFlags = currentFlags;
 
             return wasNotOpened && isNowOpened;
         }
 
-        public bool IsValid()
-        {
-            return obj.IsValid() && obj is { IsDead: false, IsTargetable: true };
-        }
+        public bool IsValid() => obj.IsValid() && obj is { IsDead: false, IsTargetable: true };
 
-        public Vector3 GetPosition()
-        {
-            return obj.Position;
-        }
+        public Vector3 GetPosition() => obj.Position;
 
-        private uint? GetModelId()
-        {
-            return data.GetExcelSheet<XIVTreasure>().GetRow(obj.BaseId).SGB.RowId;
-        }
+        private uint? GetModelId() => data.GetExcelSheet<XIVTreasure>().GetRow(obj.BaseId).SGB.RowId;
 
         public CofferType GetCofferType()
         {
@@ -77,7 +67,7 @@ namespace BOCCHI.Treasure.Services
             {
                 1597 => CofferType.Silver,
                 1596 => CofferType.Bronze,
-                _ => CofferType.Unknown,
+                var _ => CofferType.Unknown
             };
         }
 
@@ -87,7 +77,7 @@ namespace BOCCHI.Treasure.Services
             {
                 CofferType.Bronze => TreasureColors.Bronze,
                 CofferType.Silver => TreasureColors.Silver,
-                _ => TreasureColors.Unknown,
+                var _ => TreasureColors.Unknown
             };
         }
 
@@ -97,7 +87,7 @@ namespace BOCCHI.Treasure.Services
             {
                 CofferType.Bronze => "Bronze Treasure Coffer",
                 CofferType.Silver => "Silver Treasure Coffer",
-                _ => "Unknown Treasure Coffer",
+                var _ => "Unknown Treasure Coffer"
             };
         }
     }

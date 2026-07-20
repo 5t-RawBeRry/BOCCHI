@@ -1,6 +1,5 @@
-using System.Numerics;
 using Ocelot.Extensions;
-
+using System.Numerics;
 namespace BOCCHI.Common.Data.Zones;
 
 public static class NavigationConstants
@@ -20,8 +19,8 @@ public static class NavigationApproach
 {
     public static Vector3 GetEventPosition(Vector3 destination, Vector3 from)
     {
-        var range = NavigationConstants.EventApproachMinRadius
-                    + Random.Shared.NextSingle() * (NavigationConstants.EventApproachMaxRadius - NavigationConstants.EventApproachMinRadius);
+        float range = NavigationConstants.EventApproachMinRadius
+                      + Random.Shared.NextSingle() * (NavigationConstants.EventApproachMaxRadius - NavigationConstants.EventApproachMinRadius);
 
         return destination.GetApproachPosition(from, range, NavigationConstants.CampApproachJitter);
     }

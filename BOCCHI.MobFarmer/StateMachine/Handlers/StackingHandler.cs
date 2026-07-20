@@ -1,15 +1,16 @@
 using BOCCHI.Common.Config;
 using BOCCHI.MobFarmer.Data;
 using BOCCHI.MobFarmer.Services;
+using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
 using Ocelot.States.Flow;
-
 namespace BOCCHI.MobFarmer.StateMachine.Handlers;
 
-public class StackingHandler(
+public class StackingHandler
+(
     MobFarmerConfig config,
     IMobScanner scanner,
     ITargetManager targets,
@@ -27,7 +28,7 @@ public class StackingHandler(
 
     public override FarmerPhase? Handle()
     {
-        var pathState = pathfinder.GetState();
+        PathfindingState pathState = pathfinder.GetState();
 
         if (hasRunStack)
         {
@@ -46,7 +47,7 @@ public class StackingHandler(
             return FarmerPhase.Fighting;
         }
 
-        var furthest = scanner.InCombat
+        IBattleNpc? furthest = scanner.InCombat
             .Where(o => o.GameObjectId != targets.Target?.GameObjectId)
             .OrderBy(o => player.Position.Distance2D(o.Position))
             .LastOrDefault();
@@ -56,9 +57,9 @@ public class StackingHandler(
             return FarmerPhase.Fighting;
         }
 
-        pathfinder.PathfindAndMoveTo(new PathfinderConfig(furthest.Position)
+        pathfinder.PathfindAndMoveTo(new(furthest.Position)
         {
-            AllowFlying = false,
+            AllowFlying = false
         });
         hasRunStack = true;
 

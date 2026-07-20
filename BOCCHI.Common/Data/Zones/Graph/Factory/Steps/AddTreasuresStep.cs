@@ -1,9 +1,10 @@
-﻿using System.Runtime.CompilerServices;
-using FFXIVClientStructs.FFXIV.Client.LayoutEngine;
+﻿using FFXIVClientStructs.FFXIV.Client.LayoutEngine;
+using FFXIVClientStructs.Interop;
+using FFXIVClientStructs.STD;
 using Lumina.Excel.Sheets;
-using Ocelot.Extensions;
 using Ocelot.Services.Data;
-
+using System.Numerics;
+using System.Runtime.CompilerServices;
 namespace BOCCHI.Common.Data.Zones.Graph.Factory.Steps;
 
 public class AddTreasuresStep(IDataRepository<Treasure> treasureSheet) : IGraphBuildStep
@@ -12,35 +13,35 @@ public class AddTreasuresStep(IDataRepository<Treasure> treasureSheet) : IGraphB
     {
         unsafe
         {
-            var layout = LayoutWorld.Instance()->ActiveLayout;
+            LayoutManager* layout = LayoutWorld.Instance()->ActiveLayout;
             if (layout == null)
             {
                 return;
             }
 
-            if (!layout->InstancesByType.TryGetValue(InstanceType.Treasure, out var mapPtr, false))
+            if (!layout->InstancesByType.TryGetValue(InstanceType.Treasure, out Pointer<StdMap<ulong, Pointer<ILayoutInstance>>> mapPtr, false))
             {
                 return;
             }
 
-            foreach (ILayoutInstance* instance in mapPtr.Value->Values)
+            foreach(ILayoutInstance* instance in mapPtr.Value->Values)
             {
-                var transform = instance->GetTransformImpl();
-                var position = transform->Translation;
+                Transform* transform = instance->GetTransformImpl();
+                Vector3 position = transform->Translation;
                 if (position.Y <= -10f)
                 {
                     continue;
                 }
 
-                var treasureRowId = Unsafe.Read<uint>((byte*)instance + 0x30);
-                var sgbId = treasureSheet.Get(treasureRowId).SGB.RowId;
+                uint treasureRowId = Unsafe.Read<uint>((byte*)instance + 0x30);
+                uint sgbId = treasureSheet.Get(treasureRowId).SGB.RowId;
                 if (sgbId != 1596 && sgbId != 1597)
                 {
                     continue;
                 }
 
-                var level = 99;
-                foreach (var datum in zone.GetTreasureData())
+                int level = 99;
+                foreach(TreasureData datum in zone.GetTreasureData())
                 {
                     if (datum.Id == treasureRowId)
                     {
@@ -49,20 +50,20 @@ public class AddTreasuresStep(IDataRepository<Treasure> treasureSheet) : IGraphB
                     }
                 }
 
-                graph.AddNode(new Node
+                graph.AddNode(new()
                 {
                     Type = NodeType.Treasure,
                     Position = position,
                     Metadata = new TreasureNodeMetadata
                     {
                         Type = sgbId == 1596 ? TreasureType.Bronze : TreasureType.Silver,
-                        Level = level,
-                    },
+                        Level = level
+                    }
                 });
             }
         }
 
-        var treasures = graph.GetNodesByTypes(NodeType.Treasure).ToList();
+        List<Node> treasures = graph.GetNodesByTypes(NodeType.Treasure).ToList();
 
         await graph.ConnectToNearestTeleports(treasures, config);
         await graph.ConnectToNearestAlike(treasures, config, 4);

@@ -6,7 +6,6 @@ using ECommons.Throttlers;
 using Ocelot.Actions;
 using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
-
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
 internal static class CombatActivityHandler
@@ -27,7 +26,7 @@ internal static class CombatActivityHandler
             return;
         }
 
-        var target = targets[0];
+        IGameObject target = targets[0];
         if (combat.ShouldHandleTargeting
             && EzThrottler.Throttle($"{throttlePrefix}::Target")
             && targetManager.Target?.GameObjectId != target.GameObjectId)
@@ -35,7 +34,7 @@ internal static class CombatActivityHandler
             targetManager.Target = target;
         }
 
-        var distance = player.Position.Distance2D(target.Position) - target.HitboxRadius;
+        float distance = player.Position.Distance2D(target.Position) - target.HitboxRadius;
         if (distance <= 5f && conditions[ConditionFlag.Mounted])
         {
             if (EzThrottler.Throttle($"{throttlePrefix}::Unmount") && Actions.Unmount.CanCast())

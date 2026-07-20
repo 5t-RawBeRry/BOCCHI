@@ -1,7 +1,6 @@
 using BOCCHI.Common.Config.Fields;
 using Ocelot.Config;
 using Ocelot.Config.Fields;
-
 namespace BOCCHI.Common.Config;
 
 [Serializable]
@@ -25,11 +24,8 @@ public class FatesConfig : IAutoConfig
     [
         1965, // The Winged Terror
         1976, // Persistent Pots
-        1977, // Pleading Pots
+        1977 // Pleading Pots
     ];
 
-    public bool IsFateEnabled(uint fateId)
-    {
-        return ShouldDoFates && !DisabledFateIds.Contains(fateId);
-    }
+    public bool IsFateEnabled(uint fateId) => ShouldDoFates && !DisabledFateIds.Contains(fateId);
 }

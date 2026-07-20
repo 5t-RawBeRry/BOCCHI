@@ -1,6 +1,5 @@
 ﻿using BOCCHI.Common.Config;
 using Ocelot.Config;
-
 namespace BOCCHI.Config;
 
 public class Configuration : IConfiguration

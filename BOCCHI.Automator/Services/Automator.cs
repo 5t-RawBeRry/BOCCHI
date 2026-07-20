@@ -1,29 +1,34 @@
 ﻿using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services.Goals;
-using BOCCHI.Automator.Services.Paths;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
+using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.Services.Paths;
 using Dalamud.Plugin.Services;
 using Ocelot.Chain;
 using Ocelot.Extensions;
+using Ocelot.Ipc.VNavmesh;
 using Ocelot.Lifecycle;
 using Ocelot.Services.Logger;
+using Ocelot.Services.Pathfinding;
 using Ocelot.States;
-
+using System.Numerics;
 namespace BOCCHI.Automator.Services;
 
-public class Automator(
+public class Automator
+(
     IAutomatorMemory memory,
     Func<IStateMachine<AutomatorState>> stateMachineFactory,
     IPathCalculator calculator,
     IGoalValidator validator,
     IAutomatorContext context,
     IChainManager manager,
+    IPathfinder pathfinder,
+    IVNavmeshIpc vnav,
     IZoneProvider zones,
     IObjectTable objects,
     FatesConfig fatesConfig,
@@ -34,16 +39,17 @@ public class Automator(
 
     private IStateMachine<AutomatorState> StateMachine => stateMachine ??= stateMachineFactory();
 
-    public bool Enabled
-    {
-        get => context.Enabled;
-    }
+    public bool Enabled => context.Enabled;
 
     public AutomatorState? CurrentState => Enabled ? StateMachine.State : null;
 
     public void Toggle()
     {
         context.Toggle();
+        if (!Enabled)
+        {
+            StopAutomation();
+        }
     }
 
     public void Render()
@@ -55,12 +61,10 @@ public class Automator(
     {
         if (!Enabled)
         {
-            memory.Wipe();
-            manager.CancelAll();
             return;
         }
 
-        if (memory.TryRemember<GoalMemory>(out var goal))
+        if (memory.TryRemember<GoalMemory>(out GoalMemory goal))
         {
             if (!validator.Validate(goal.Goal))
             {
@@ -69,12 +73,17 @@ public class Automator(
                     TryStartPotChestFarm(fateGoal.id);
                 }
 
+                logger.Info("Goal no longer valid — aborting pathfinding");
                 memory.Forget<GoalMemory>();
+                memory.Forget<GoalPathStepMemory>();
                 memory.Forget<WaitingForCriticalEncounterMemory>();
+                manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
+                pathfinder.Stop();
+                vnav.Stop();
             }
-            else if (!memory.TryRemember<GoalPathStepMemory>(out var _)
-                     && !memory.TryRemember<WaitingForCriticalEncounterMemory>(out var _)
-                     && !memory.TryRemember<ApplyingBuffsMemory>(out var _))
+            else if (!memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _)
+                     && !memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory _)
+                     && !memory.TryRemember<ApplyingBuffsMemory>(out ApplyingBuffsMemory _))
             {
                 memory.TryAdd(new GoalPathStepMemory(goal.Goal, calculator, logger));
             }
@@ -83,25 +92,33 @@ public class Automator(
         StateMachine.Update();
     }
 
+    private void StopAutomation()
+    {
+        memory.Wipe();
+        manager.CancelAll();
+        pathfinder.Stop();
+        vnav.Stop();
+    }
+
     private void TryStartPotChestFarm(FateId fateId)
     {
-        if (!fatesConfig.ShouldFarmPotChests || memory.TryRemember<PotChestFarmMemory>(out _))
+        if (!fatesConfig.ShouldFarmPotChests || memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _))
         {
             return;
         }
 
-        var zone = zones.GetZone();
+        IZone zone = zones.GetZone();
         if (!zone.IsPotFate(fateId.Value))
         {
             return;
         }
 
-        if (!zone.GetPotChestData().TryGetValue((int)fateId.Value, out var chestData))
+        if (!zone.GetPotChestData().TryGetValue(fateId.Value, out List<PotChestData>? chestData))
         {
             return;
         }
 
-        var positions = chestData.Select(chest => chest.Position).ToList();
+        List<Vector3> positions = chestData.Select(chest => chest.Position).ToList();
         if (fatesConfig.ShouldFarmRerollPotChests)
         {
             positions.AddRange(zone.GetRerollPotChestData().Select(chest => chest.Position));
@@ -125,4 +142,3 @@ public class Automator(
         memory.TryAdd(new PotChestFarmMemory(fateId, positions));
     }
 }
-

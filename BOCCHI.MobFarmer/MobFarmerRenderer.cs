@@ -5,10 +5,10 @@ using Dalamud.Bindings.ImGui;
 using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
 using Ocelot.Windows;
-
 namespace BOCCHI.MobFarmer;
 
-public class MobFarmerRenderer(
+public class MobFarmerRenderer
+(
     Func<IMobFarmer> farmerFactory,
     IMobScanner scanner,
     MobFarmerConfig config,
@@ -30,8 +30,8 @@ public class MobFarmerRenderer(
     public void Render()
     {
         if (ImGui.Button(Farmer.Running
-                ? translator.T(".automation.mob_farmer.stop")
-                : translator.T(".automation.mob_farmer.start")))
+            ? translator.T(".automation.mob_farmer.stop")
+            : translator.T(".automation.mob_farmer.start")))
         {
             Farmer.Toggle();
         }
@@ -47,8 +47,5 @@ public class MobFarmerRenderer(
         }
     }
 
-    public bool ShouldRender()
-    {
-        return uiConfig.ShowAutomationSection;
-    }
+    public bool ShouldRender() => uiConfig.ShowAutomationSection;
 }

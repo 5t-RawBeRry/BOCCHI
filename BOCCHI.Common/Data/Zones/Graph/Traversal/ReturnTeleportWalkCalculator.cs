@@ -1,71 +1,78 @@
-﻿using System.Numerics;
-using BOCCHI.Common.Data.Aethernet;
+﻿using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Paths;
-using BOCCHI.Common.Data.Zones;
 using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
-
+using System.Numerics;
 namespace BOCCHI.Common.Data.Zones.Graph.Traversal;
 
 public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
 {
-    public string Key()
-    {
-        return "ReturnTeleportWalk";
-    }
+    public string Key() => "ReturnTeleportWalk";
 
-    public async Task<TraversalCandidate?> CalculateAsync(ZoneGraph graph, Vector3 start, Node goal, IPathfinder pathfinder)
+    public Task<TraversalCandidate?> CalculateAsync(ZoneGraph graph, Vector3 start, Node goal, IPathfinder pathfinder)
     {
-        if (graph.TryGetNode(start, AethernetData.InteractRadius, out var nearby) && nearby.IsTeleport())
+        if (graph.TryGetNode(start, AethernetData.InteractRadius, out Node nearby) && nearby.IsTeleport())
         {
-            return null;
+            return Task.FromResult<TraversalCandidate?>(null);
         }
 
-        var baseCampAetheryte = graph.GetBaseCampAetheryteNode();
+        Node? baseCampAetheryte = graph.GetBaseCampAetheryteNode();
         if (baseCampAetheryte != null && start.Distance2D(baseCampAetheryte.GetInteractPosition()) <= AethernetData.InteractRadius)
         {
-            return null;
+            return Task.FromResult<TraversalCandidate?>(null);
         }
 
-        var returnNode = graph.GetBaseCampReturnPositionNode();
+        Node? returnNode = graph.GetBaseCampReturnPositionNode();
         if (returnNode == null)
         {
-            return null;
+            return Task.FromResult<TraversalCandidate?>(null);
         }
 
-        var baseCampNode = graph.GetBaseCampAetheryteNode();
+        Node? baseCampNode = graph.GetBaseCampAetheryteNode();
         if (baseCampNode == null)
         {
-            return null;
+            return Task.FromResult<TraversalCandidate?>(null);
         }
 
-        var toBaseCampNodeEdge = graph.GetEdge(returnNode, baseCampNode);
+        Edge? toBaseCampNodeEdge = graph.GetEdge(returnNode, baseCampNode);
         if (toBaseCampNodeEdge == null)
         {
-            return null;
+            return Task.FromResult<TraversalCandidate?>(null);
         }
 
-        var inbound = graph.GetInboundTeleport(goal);
+        Node? inbound = graph.GetInboundTeleport(goal);
         if (inbound?.Metadata is not TeleportNodeMetadata meta)
         {
-            return null;
+            return Task.FromResult<TraversalCandidate?>(null);
         }
 
-        var walkToGoalFromInbound = graph.GetEdge(inbound, goal);
+        Edge? walkToGoalFromInbound = graph.GetEdge(inbound, goal);
         if (walkToGoalFromInbound == null)
         {
-            return null;
+            return Task.FromResult<TraversalCandidate?>(null);
         }
 
-        return new TraversalCandidate(
+        // Goal is served from base camp — Return lands you there; no aethernet hop needed.
+        if (inbound.Type == NodeType.BaseCampAetheryte)
+        {
+            return Task.FromResult<TraversalCandidate?>(new(
+                GraphTraverser.ReturnCost + toBaseCampNodeEdge.Cost + walkToGoalFromInbound.Cost,
+                [
+                    PathStep.Return(),
+                    PathStep.Pathfind(
+                        NavigationApproach.GetEventPosition(goal.Position, returnNode.Position),
+                        NavigationConstants.EventApproachMaxRadius)
+                ]));
+        }
+
+        return Task.FromResult<TraversalCandidate?>(new(
             GraphTraverser.ReturnCost + toBaseCampNodeEdge.Cost + GraphTraverser.TeleportCost + walkToGoalFromInbound.Cost,
             [
                 PathStep.Return(),
-                PathStep.Pathfind(baseCampNode.GetInteractPosition(), AethernetNavigation.PathfindArrivalRadius),
                 PathStep.Teleport(meta.AetheryteId),
-                PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, inbound.Position)),
-
-            ]
-        );
+                PathStep.Pathfind(
+                    NavigationApproach.GetEventPosition(goal.Position, inbound.Position),
+                    NavigationConstants.EventApproachMaxRadius)
+            ]));
     }
 }

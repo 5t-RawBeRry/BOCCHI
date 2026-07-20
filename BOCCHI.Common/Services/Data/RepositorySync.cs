@@ -1,5 +1,4 @@
 using Ocelot.Services.Data;
-
 namespace BOCCHI.Common.Services.Data;
 
 public static class RepositorySync
@@ -10,9 +9,9 @@ public static class RepositorySync
         Action<TEntity>? onAdded = null,
         Action<TId>? onRemoved = null
     )
-        where TId : notnull
+    where TId : notnull
     {
-        foreach (var (id, entity) in current)
+        foreach((TId id, TEntity entity) in current)
         {
             if (data.TryAdd(id, entity))
             {
@@ -20,7 +19,7 @@ public static class RepositorySync
             }
         }
 
-        foreach (var id in data.GetKeys().Except(current.Keys).ToList())
+        foreach(TId id in data.GetKeys().Except(current.Keys).ToList())
         {
             if (data.Remove(id))
             {

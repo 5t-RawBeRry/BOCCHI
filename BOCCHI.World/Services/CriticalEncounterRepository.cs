@@ -7,10 +7,10 @@ using ECommons;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using Ocelot.Lifecycle;
 using Ocelot.Services.Data;
-
 namespace BOCCHI.CriticalEncounters.Services;
 
-public class CriticalEncounterRepository(
+public class CriticalEncounterRepository
+(
     IDataRepository<CriticalEncounterId, CriticalEncounter> data,
     ICriticalEncounterFactory factory,
     IZoneProvider zones
@@ -20,28 +20,22 @@ public class CriticalEncounterRepository(
 
     public event Action<CriticalEncounterId>? CriticalEncounterRemoved;
 
-    public IReadOnlyList<CriticalEncounter> Snapshot()
-    {
-        return data.GetAll().ToList();
-    }
+    public IReadOnlyList<CriticalEncounter> Snapshot() => data.GetAll().ToList();
 
     public IReadOnlyList<CriticalEncounter> SnapshotWithoutForkedTower()
     {
-        var forkedTowerId = zones.GetZone().ForkedTowerEventId;
+        ushort forkedTowerId = zones.GetZone().ForkedTowerEventId;
         return data.Where(e => e.Id.Value != forkedTowerId).ToList().AsReadOnly();
     }
 
-    public bool HasCriticalEncounter(CriticalEncounterId id)
-    {
-        return data.ContainsKey(id);
-    }
+    public bool HasCriticalEncounter(CriticalEncounterId id) => data.ContainsKey(id);
 
     public unsafe void Update()
     {
-        var oc = PublicContentOccultCrescent.GetInstance();
+        PublicContentOccultCrescent* oc = PublicContentOccultCrescent.GetInstance();
         if (oc == null)
         {
-            foreach (var id in data.GetKeys().ToList())
+            foreach(CriticalEncounterId id in data.GetKeys().ToList())
             {
                 data.Remove(id);
             }
@@ -49,7 +43,7 @@ public class CriticalEncounterRepository(
             return;
         }
 
-        var current = oc->DynamicEventContainer.Events
+        Dictionary<CriticalEncounterId, CriticalEncounter> current = oc->DynamicEventContainer.Events
             .ToArray()
             .Where(e => e.State != DynamicEventState.Inactive)
             .Select(factory.Create)
@@ -57,9 +51,9 @@ public class CriticalEncounterRepository(
 
         RepositorySync.ApplySnapshot(data, current, CriticalEncounterAdded, CriticalEncounterRemoved);
 
-        foreach (var criticalEncounter in data.GetAll())
+        foreach(CriticalEncounter criticalEncounter in data.GetAll())
         {
-            var ev = oc->DynamicEventContainer.Events.ToArray().FirstOrNull(e => e.DynamicEventId == criticalEncounter.Id.Value);
+            DynamicEvent? ev = oc->DynamicEventContainer.Events.ToArray().FirstOrNull(e => e.DynamicEventId == criticalEncounter.Id.Value);
             if (ev == null)
             {
                 continue;

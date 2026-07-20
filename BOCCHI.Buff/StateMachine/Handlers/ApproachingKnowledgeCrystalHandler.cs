@@ -1,13 +1,15 @@
 ﻿using BOCCHI.Buff.Data;
+using BOCCHI.Common.Data.KnowledgeCrystals;
 using BOCCHI.Common.Data.Zones;
 using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
 using Ocelot.States.Flow;
-
+using System.Numerics;
 namespace BOCCHI.Buff.StateMachine.Handlers;
 
-public class ApproachingKnowledgeCrystalHandler(
+public class ApproachingKnowledgeCrystalHandler
+(
     IZoneProvider zones,
     IPlayer player,
     IPathfinder pathfinder
@@ -17,7 +19,7 @@ public class ApproachingKnowledgeCrystalHandler(
 
     public override BuffState? Handle()
     {
-        var zone = zones.GetZone();
+        IZone zone = zones.GetZone();
         if (!zone.IsOccultCrescentZone())
         {
             return null;
@@ -29,24 +31,24 @@ public class ApproachingKnowledgeCrystalHandler(
         }
 
         // @todo this seems bugged and returns CE spawns too...
-        var crystals = zone.GetNearbyKnowledgeCrystals().ToList();
+        List<KnowledgeCrystalData> crystals = zone.GetNearbyKnowledgeCrystals().ToList();
         if (crystals.Count == 0)
         {
             return BuffState.NoCrystalsFound;
         }
 
-        var closest = crystals.First();
-        var distance = player.Position.Distance2D(closest.Position);
+        KnowledgeCrystalData closest = crystals.First();
+        float distance = player.Position.Distance2D(closest.Position);
         if (distance <= InteractionRange)
         {
             return BuffState.ChoosingBuffToApply;
         }
 
 
-        var destination = closest.Position.GetApproachPosition(player.Position, InteractionRange - 0.2f);
-        pathfinder.PathfindAndMoveTo(new PathfinderConfig(destination)
+        Vector3 destination = closest.Position.GetApproachPosition(player.Position, InteractionRange - 0.2f);
+        pathfinder.PathfindAndMoveTo(new(destination)
         {
-            ShouldSnapToFloor = true,
+            ShouldSnapToFloor = true
         });
 
         return null;

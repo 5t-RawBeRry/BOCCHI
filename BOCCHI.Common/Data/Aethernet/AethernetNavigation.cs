@@ -1,26 +1,29 @@
-using System.Numerics;
-using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Paths;
-using BOCCHI.Common.Services.Paths;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph;
 using Ocelot.Extensions;
-
+using System.Numerics;
 namespace BOCCHI.Common.Data.Aethernet;
 
 public static class AethernetNavigation
 {
     /// <summary>
-    /// How close vnav should try to get to the interact point before handing off to Lifestream.
+    ///     Coarse threshold for graph routing when exact interact points are unreachable.
     /// </summary>
-    public const float PathfindArrivalRadius = AethernetData.InteractRadius - 1f;
+    public const float AetherytePathfindArrivalRadius = 3.5f;
 
-    public const float DestinationMatchRadius = 15f;
+    /// <summary>
+    ///     Soft vnav stop distance while closing in for Lifestream.
+    /// </summary>
+    public const float PathfindArrivalRadius = 0.5f;
 
-    public static Vector3 GetInteractPosition(this AethernetData data)
-    {
-        return data.Destination != Vector3.Zero ? data.Destination : data.Position;
-    }
+    /// <summary>
+    ///     Idle / Lifestream stand-off from the crystal. Outside the stone base, inside
+    ///     <see cref="AethernetData.LifestreamInteractRadius"/> so a camp spot can teleport.
+    /// </summary>
+    public const float CampApproachRadius = 3.0f;
+
+    public static Vector3 GetInteractPosition(this AethernetData data) => data.Destination != Vector3.Zero ? data.Destination : data.Position;
 
     public static Vector3 GetInteractPosition(this Node node)
     {
@@ -32,15 +35,62 @@ public static class AethernetNavigation
         return node.Position;
     }
 
-    public static IEnumerable<AethernetData> EnumerateAetherytes(this IZone zone)
-    {
-        return zone.GetAetherytes().Concat(zone.GetAethernetShards());
-    }
+    public static IEnumerable<AethernetData> EnumerateAetherytes(this IZone zone) => zone.GetAetherytes().Concat(zone.GetAethernetShards());
 
     public static bool IsWithinInteractRange(this IZone zone, Vector3 position)
     {
         return zone.EnumerateAetherytes()
-            .Any(aetheryte => position.Distance2D(aetheryte.GetInteractPosition()) <= AethernetData.InteractRadius);
+            .Any(aetheryte => position.Distance2D(aetheryte.GetInteractPosition()) <= AethernetData.InteractRadius
+                              || position.Distance2D(aetheryte.Position) <= AethernetData.InteractRadius);
+    }
+
+    public static bool IsWithinLifestreamRange(this IZone zone, Vector3 position)
+    {
+        return zone.EnumerateAetherytes()
+            .Any(aetheryte => position.Distance2D(aetheryte.Position) <= AethernetData.LifestreamInteractRadius);
+    }
+
+    /// <summary>
+    ///     Camp parking spots that are also close enough for Lifestream.
+    /// </summary>
+    public static IEnumerable<Vector3> GetApproachCandidates(this IZone zone, Vector3 from)
+    {
+        AethernetData? nearest = zone.EnumerateAetherytes()
+            .OrderBy(aetheryte => from.Distance2D(aetheryte.Position))
+            .FirstOrDefault();
+
+        if (nearest == null)
+        {
+            yield break;
+        }
+
+        Vector3 crystal = nearest.Position;
+        Vector3 interact = nearest.GetInteractPosition();
+
+        // Only use authored Destination when it is already inside Lifestream range.
+        // Base camp Destination is ~4.7y out — parking there left Pathfinding stuck unable to teleport.
+        float maxPadDistance = AethernetData.LifestreamInteractRadius - PathfindArrivalRadius;
+        if (interact.Distance2D(crystal) > 0.5f && interact.Distance2D(crystal) <= maxPadDistance)
+        {
+            yield return new Vector3(interact.X, crystal.Y, interact.Z);
+        }
+
+        Vector3 toPlayer = from - crystal;
+        toPlayer.Y = 0f;
+        if (toPlayer.LengthSquared() > 0.25f)
+        {
+            yield return crystal + Vector3.Normalize(toPlayer) * CampApproachRadius;
+        }
+
+        const int steps = 12;
+        for (int i = 0; i < steps; i++)
+        {
+            float angle = i * 2f * MathF.PI / steps;
+            yield return crystal + new Vector3(
+                MathF.Cos(angle) * CampApproachRadius,
+                0f,
+                MathF.Sin(angle) * CampApproachRadius);
+        }
     }
 
     public static Vector3 GetNearestInteractPosition(this IZone zone, Vector3 position)
@@ -51,15 +101,15 @@ public static class AethernetNavigation
             .FirstOrDefault();
     }
 
-    public static Vector3 ResolveInteractDestination(Vector3 destination, IZone zone, float matchRadius = DestinationMatchRadius)
+    public static Vector3 ResolveInteractDestination(Vector3 destination, IZone zone)
     {
-        foreach (var aetheryte in zone.EnumerateAetherytes())
+        foreach(AethernetData aetheryte in zone.EnumerateAetherytes())
         {
-            var interact = aetheryte.GetInteractPosition();
-            if (destination.Distance2D(interact) <= matchRadius
-                || destination.Distance2D(aetheryte.Position) <= matchRadius)
+            // Only rewrite paths aimed at the crystal itself — not event approaches
+            // that happen to sit near a camp pad.
+            if (destination.Distance2D(aetheryte.Position) <= 3f)
             {
-                return interact;
+                return aetheryte.GetInteractPosition();
             }
         }
 
@@ -73,7 +123,7 @@ public static class AethernetNavigation
             return (PathStep)step;
         }
 
-        var resolved = ResolveInteractDestination(destination, zone);
+        Vector3 resolved = ResolveInteractDestination(destination, zone);
         if (resolved == destination)
         {
             return pathStep;
@@ -81,7 +131,7 @@ public static class AethernetNavigation
 
         return PathStep.Pathfind(
             resolved,
-            range > 0f ? range : PathfindArrivalRadius);
+            range > 0f ? range : AetherytePathfindArrivalRadius);
     }
 
     public static AethernetData? FindAetheryte(this IZone zone, uint placeNameId)

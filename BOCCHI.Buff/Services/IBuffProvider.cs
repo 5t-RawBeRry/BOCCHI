@@ -1,5 +1,4 @@
 ﻿using BOCCHI.Buff.Data;
-
 namespace BOCCHI.Buff.Services;
 
 public interface IBuffProvider

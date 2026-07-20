@@ -1,10 +1,9 @@
-using BOCCHI.Automator.Data;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Services;
-
 namespace BOCCHI.Automator.Services.Goals;
 
-public class GoalValidator(
+public class GoalValidator
+(
     ICriticalEncounterRepository criticalEncounterRepository,
     IFateRepository fateRepository
 ) : IGoalValidator
@@ -15,7 +14,7 @@ public class GoalValidator(
         {
             CriticalEncounterGoal(var id) => criticalEncounterRepository.HasCriticalEncounter(id),
             FateGoal(var id) => fateRepository.HasFate(id),
-            _ => throw new ArgumentOutOfRangeException(nameof(GoalType))
+            var _ => throw new ArgumentOutOfRangeException(nameof(GoalType))
         };
     }
 }

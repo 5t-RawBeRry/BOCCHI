@@ -3,21 +3,20 @@ using BOCCHI.Common.Services;
 using BOCCHI.Common.Steps;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Ocelot.Chain;
-
 namespace BOCCHI.Services.Repair;
 
 public class RepairService(IChainFactory chains, CombatConfig config) : IRepairService
 {
     public unsafe bool ShouldRepair()
     {
-        if (!TryGetEquipped(out var equipped))
+        if (!TryGetEquipped(out InventoryContainer* equipped))
         {
             return false;
         }
 
-        for (var i = 0; i < equipped->Size; i++)
+        for(int i = 0; i < equipped->Size; i++)
         {
-            var item = equipped->GetInventorySlot(i);
+            InventoryItem* item = equipped->GetInventorySlot(i);
             if (item is null)
             {
                 continue;
@@ -34,7 +33,7 @@ public class RepairService(IChainFactory chains, CombatConfig config) : IRepairS
 
     public IChain Repair()
     {
-        var chain = chains.Create("Repairs");
+        IChain chain = chains.Create("Repairs");
 
         chain.Then<UnmountStep>();
         chain.Then<RepairStep>();
@@ -46,7 +45,7 @@ public class RepairService(IChainFactory chains, CombatConfig config) : IRepairS
     {
         equipped = null;
 
-        var inventory = InventoryManager.Instance();
+        InventoryManager* inventory = InventoryManager.Instance();
         if (inventory == null)
         {
             return false;

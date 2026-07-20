@@ -5,25 +5,16 @@ public enum MainWindowSection
     Trackers = 0,
     Automation = 1,
     World = 2,
-    Treasure = 3,
+    Treasure = 3
 }
 
 public interface IDynamicRenderer
 {
-    uint Order
-    {
-        get => 0;
-    }
+    uint Order => 0;
 
-    MainWindowSection Section
-    {
-        get => MainWindowSection.Automation;
-    }
+    MainWindowSection Section => MainWindowSection.Automation;
 
-    string? SubsectionTitle
-    {
-        get => null;
-    }
+    string? SubsectionTitle => null;
 
     void Render();
 

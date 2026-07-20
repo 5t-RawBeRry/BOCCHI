@@ -4,16 +4,15 @@ using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Extensions;
 using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Objects.SubKinds;
-using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Game.ClientState.Statuses;
 using Dalamud.Plugin.Services;
 using Ocelot.Actions;
 using Ocelot.Extensions;
-using Ocelot.Services.PlayerState;
 using Ocelot.States.Flow;
-
 namespace BOCCHI.Buff.StateMachine.Handlers;
 
-public class CastingInquiringMindHandler(
+public class CastingInquiringMindHandler
+(
     IObjectTable objects,
     ISupportJobChanger changer,
     ISupportJobFactory supportJobs,
@@ -40,7 +39,7 @@ public class CastingInquiringMindHandler(
             return BuffState.ChoosingBuffToApply;
         }
 
-        if (!supportJobs.TryGetCurrent(out var supportJob) || supportJob.Id != SupportJobId.PhantomFreelancer)
+        if (!supportJobs.TryGetCurrent(out SupportJob supportJob) || supportJob.Id != SupportJobId.PhantomFreelancer)
         {
             if (!changer.IsBusy())
             {
@@ -50,7 +49,7 @@ public class CastingInquiringMindHandler(
             return null;
         }
 
-        var time = DateTime.UtcNow - lastCast;
+        TimeSpan time = DateTime.UtcNow - lastCast;
         if (Actions.PhantomActionIII.CanCast() && time.TotalSeconds >= 3)
         {
             lastCast = DateTime.UtcNow;
@@ -63,14 +62,14 @@ public class CastingInquiringMindHandler(
     private uint GetMinutesRemainingForLowestBuff(IPlayerCharacter player)
     {
         uint lowest = 30;
-        foreach (var buff in buffs.GetBuffs())
+        foreach(BuffData buff in buffs.GetBuffs())
         {
-            if (!player.StatusList.TryGet(buff.StatusId, out _))
+            if (!player.StatusList.TryGet(buff.StatusId, out IStatus _))
             {
                 return 0;
             }
 
-            var time = player.GetRemainingMinutes(buff.StatusId);
+            uint time = player.GetRemainingMinutes(buff.StatusId);
             if (time < lowest)
             {
                 lowest = time;

@@ -74,5 +74,5 @@ public enum Mob
     Fool = 13943,
     Sculpture = 13917,
     Isleblazer = 13920,
-    OccultGolem = 13929,
+    OccultGolem = 13929
 }

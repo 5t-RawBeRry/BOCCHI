@@ -3,7 +3,6 @@ using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using Ocelot.Chain;
 using Ocelot.States.Score;
-
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
 public class RepairingHandler(IZoneProvider zones, IRepairService repair) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Repairing)
@@ -32,7 +31,6 @@ public class RepairingHandler(IZoneProvider zones, IRepairService repair) : Scor
         base.Exit(next);
         if (task is { IsCompleted: true })
         {
-            task.Dispose();
             task = null;
         }
     }

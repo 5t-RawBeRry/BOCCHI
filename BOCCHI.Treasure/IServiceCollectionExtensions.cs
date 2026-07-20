@@ -2,7 +2,6 @@ using BOCCHI.Common;
 using BOCCHI.Treasure.ChainRecipes;
 using BOCCHI.Treasure.Services;
 using Microsoft.Extensions.DependencyInjection;
-
 namespace BOCCHI.Treasure;
 
 public static class IServiceCollectionExtensions

@@ -13,13 +13,7 @@ public class FateScore
         sources[source] = value;
     }
 
-    public static implicit operator float(FateScore score)
-    {
-        return score.Value;
-    }
+    public static implicit operator float(FateScore score) => score.Value;
 
-    public override string ToString()
-    {
-        return Value.ToString("F2");
-    }
+    public override string ToString() => Value.ToString("F2");
 }

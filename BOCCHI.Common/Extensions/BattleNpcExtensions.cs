@@ -1,6 +1,6 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
-
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
 namespace BOCCHI.Common.Extensions;
 
 public static unsafe class BattleNpcExtensions
@@ -22,7 +22,7 @@ public static unsafe class BattleNpcExtensions
             return false;
         }
 
-        var playerId = ((BattleChara*)player.Address)->GetGameObjectId();
+        GameObjectId playerId = ((BattleChara*)player.Address)->GetGameObjectId();
         return ((BattleChara*)obj.Address)->GetTargetId() == playerId;
     }
 }

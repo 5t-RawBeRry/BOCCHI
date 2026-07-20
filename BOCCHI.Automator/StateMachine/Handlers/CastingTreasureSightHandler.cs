@@ -8,10 +8,10 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
 using Ocelot.Actions;
 using Ocelot.States.Score;
-
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
-public class CastingTreasureSightHandler(
+public class CastingTreasureSightHandler
+(
     ICondition conditions,
     IZoneProvider zone,
     ISupportJobFactory supportJobs,
@@ -24,23 +24,23 @@ public class CastingTreasureSightHandler(
 
     public override StatePriority GetScore()
     {
-        if (memory.TryRemember<CastingTreasureSightMemory>(out var _))
+        if (memory.TryRemember<CastingTreasureSightMemory>(out CastingTreasureSightMemory _))
         {
             return StatePriority.MediumHigh;
         }
 
-        if (memory.TryRemember<ApplyingBuffsMemory>(out _))
+        if (memory.TryRemember<ApplyingBuffsMemory>(out ApplyingBuffsMemory _))
         {
             return StatePriority.Never;
         }
 
-        var freelancer = supportJobs.Create(SupportJobId.PhantomFreelancer);
+        SupportJob freelancer = supportJobs.Create(SupportJobId.PhantomFreelancer);
         if (freelancer.Level < 10)
         {
             return StatePriority.Never;
         }
 
-        if (zone.GetZone().IsInBasecamp() && config.ShouldCastTreasureSight  && GetLastCastDeltaSeconds() >= config.TreasureSightRecastIntervalSeconds)
+        if (zone.GetZone().IsInBasecamp() && config.ShouldCastTreasureSight && GetLastCastDeltaSeconds() >= config.TreasureSightRecastIntervalSeconds)
         {
             return StatePriority.Always;
         }
@@ -52,7 +52,7 @@ public class CastingTreasureSightHandler(
     {
         base.Enter();
 
-        if (supportJobs.TryGetCurrent(out var current))
+        if (supportJobs.TryGetCurrent(out SupportJob current))
         {
             memory.TryAdd(new TreasureSightSupportJobMemory(current.Id));
         }
@@ -62,7 +62,7 @@ public class CastingTreasureSightHandler(
 
     public override void Handle()
     {
-        if (!supportJobs.TryGetCurrent(out var current))
+        if (!supportJobs.TryGetCurrent(out SupportJob current))
         {
             return;
         }
@@ -97,8 +97,5 @@ public class CastingTreasureSightHandler(
         }
     }
 
-    private int GetLastCastDeltaSeconds()
-    {
-        return (DateTime.Now - lastCast).Seconds;
-    }
+    private int GetLastCastDeltaSeconds() => (DateTime.Now - lastCast).Seconds;
 }

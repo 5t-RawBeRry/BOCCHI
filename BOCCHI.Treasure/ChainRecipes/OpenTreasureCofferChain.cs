@@ -1,5 +1,3 @@
-using System.Numerics;
-using DalamudObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
@@ -11,11 +9,14 @@ using Ocelot.Chain.Middleware.Chain;
 using Ocelot.Chain.Middleware.Step;
 using Ocelot.Extensions;
 using Ocelot.Services.PlayerState;
+using System.Numerics;
+using DalamudObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 using TreasureFlags = FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.TreasureFlags;
 
 namespace BOCCHI.Treasure.ChainRecipes;
 
-public class OpenTreasureCofferChain(
+public class OpenTreasureCofferChain
+(
     IChainFactory chains,
     IObjectTable objects,
     ITargetManager targets,
@@ -47,7 +48,7 @@ public class OpenTreasureCofferChain(
             return false;
         }
 
-        var chest = GetChestAt(targetPosition);
+        IGameObject? chest = GetChestAt(targetPosition);
         if (chest == null)
         {
             return true;
@@ -61,8 +62,8 @@ public class OpenTreasureCofferChain(
         unsafe
         {
             targets.Target = chest;
-            var gameObject = (GameObject*)(void*)chest.Address;
-            var instance = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
+            GameObject* gameObject = (GameObject*)(void*)chest.Address;
+            FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure* instance = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
             TargetSystem.Instance()->InteractWithObject(gameObject);
 
             if (instance->Flags.HasFlag(TreasureFlags.Opened))

@@ -8,10 +8,10 @@ using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
 using Ocelot.Services.WindowManager;
 using Ocelot.Windows;
-
 namespace BOCCHI.Renderers;
 
-public class MainRenderer(
+public class MainRenderer
+(
     IServiceProvider services,
     IZoneProvider zones,
     IUIService ui,
@@ -38,19 +38,19 @@ public class MainRenderer(
         statusBar.Render();
         ImGui.Spacing();
 
-        foreach (var section in Enum.GetValues<MainWindowSection>())
+        foreach(MainWindowSection section in Enum.GetValues<MainWindowSection>())
         {
-            var sectionRenderers = OrderedRenderers.Where(r => r.Section == section).ToList();
+            List<IDynamicRenderer> sectionRenderers = OrderedRenderers.Where(r => r.Section == section).ToList();
             if (sectionRenderers.Count == 0)
             {
                 continue;
             }
 
-            var defaultOpen = section switch
+            bool defaultOpen = section switch
             {
                 MainWindowSection.Automation => statusBar.AnyAutomationActive,
                 MainWindowSection.World => false,
-                _ => true,
+                var _ => true
             };
 
             ImGui.SetNextItemOpen(defaultOpen, ImGuiCond.FirstUseEver);
@@ -62,7 +62,7 @@ public class MainRenderer(
 
             ImGui.Indent();
 
-            foreach (var renderer in sectionRenderers)
+            foreach(IDynamicRenderer renderer in sectionRenderers)
             {
                 if (renderer.SubsectionTitle is { } title)
                 {
@@ -84,8 +84,5 @@ public class MainRenderer(
         }
     }
 
-    private string GetSectionTitle(MainWindowSection section)
-    {
-        return translator.T($".sections.{section.ToString().ToLowerInvariant()}");
-    }
+    private string GetSectionTitle(MainWindowSection section) => translator.T($".sections.{section.ToString().ToLowerInvariant()}");
 }

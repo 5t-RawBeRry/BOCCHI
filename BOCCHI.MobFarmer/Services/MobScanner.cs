@@ -1,16 +1,17 @@
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Mobs;
 using BOCCHI.Common.Extensions;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using ECommons.GameFunctions;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Ocelot.Extensions;
 using Ocelot.Services.PlayerState;
-
 namespace BOCCHI.MobFarmer.Services;
 
-public class MobScanner(
+public class MobScanner
+(
     MobFarmerConfig config,
     IObjectTable objects,
     IPlayer player
@@ -22,15 +23,12 @@ public class MobScanner(
     {
         get
         {
-            var localPlayer = objects.LocalPlayer;
+            IPlayerCharacter? localPlayer = objects.LocalPlayer;
             return Mobs.Where(o => o.IsTargetingPlayer(localPlayer));
         }
     }
 
-    public IEnumerable<IBattleNpc> NotInCombat
-    {
-        get => Mobs.Where(o => !o.HasTarget());
-    }
+    public IEnumerable<IBattleNpc> NotInCombat => Mobs.Where(o => !o.HasTarget());
 
     public unsafe void Update()
     {
@@ -46,7 +44,7 @@ public class MobScanner(
             .Where(o => player.Position.Distance2D(o.Position) <= config.MaxEuclideanDistance)
             .Where(o =>
             {
-                var battleChara = (BattleChara*)o.Address;
+                BattleChara* battleChara = (BattleChara*)o.Address;
                 if (battleChara->ForayInfo.Level > config.MaxMobLevel)
                 {
                     return false;
@@ -62,7 +60,7 @@ public class MobScanner(
                     return false;
                 }
 
-                return MobData.TryFromNameId(o.NameId, out var mob) && MobData.MobsWithSpawnCondition.Contains(mob);
+                return MobData.TryFromNameId(o.NameId, out Mob mob) && MobData.MobsWithSpawnCondition.Contains(mob);
             })
             .ToList();
     }

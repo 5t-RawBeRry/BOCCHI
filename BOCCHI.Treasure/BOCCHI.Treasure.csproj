@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <ProjectReference Include="..\BOCCHI.Common\BOCCHI.Common.csproj"/>
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\BOCCHI.Common\BOCCHI.Common.csproj"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <None Include="Data\**\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+    <ItemGroup>
+        <None Include="Data\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 </Project>

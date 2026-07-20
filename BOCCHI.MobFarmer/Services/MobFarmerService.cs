@@ -1,15 +1,17 @@
-using System.Numerics;
 using BOCCHI.MobFarmer.Data;
 using Ocelot.Lifecycle;
+using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
 using Ocelot.States;
 using Ocelot.States.Flow;
-
+using System.Numerics;
 namespace BOCCHI.MobFarmer.Services;
 
-public class MobFarmerService(
+public class MobFarmerService
+(
     IMobScanner scanner,
     Func<IStateMachine<FarmerPhase>> stateMachineFactory,
+    IPathfinder pathfinder,
     IPlayer player
 ) : IMobFarmer, IOnUpdate
 {
@@ -33,6 +35,7 @@ public class MobFarmerService(
 
         if (!Running)
         {
+            pathfinder.Stop();
             return;
         }
 

@@ -1,8 +1,5 @@
-using BOCCHI.Common.Data.CriticalEncounters;
-using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using Ocelot.Services.Translation;
-
 namespace BOCCHI.Common.UI;
 
 public static class GoalFormatHelper
@@ -13,7 +10,7 @@ public static class GoalFormatHelper
         {
             FateGoal(var id) => string.Format(translator.T(".goals.fate"), id),
             CriticalEncounterGoal(var id) => string.Format(translator.T(".goals.critical_encounter"), id),
-            _ => goal.Describe(),
+            var _ => goal.Describe()
         };
     }
 }

@@ -1,31 +1,34 @@
-using System.Diagnostics;
-using System.Numerics;
-using System.Runtime.CompilerServices;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Treasure.ChainRecipes;
 using BOCCHI.Treasure.Hunt;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.LayoutEngine;
-using Lumina.Excel.Sheets;
-using TreasureSheet = Lumina.Excel.Sheets.Treasure;
+using FFXIVClientStructs.Interop;
+using FFXIVClientStructs.STD;
 using Ocelot.Actions;
+using Ocelot.Chain;
+using Ocelot.Chain.Extensions;
 using Ocelot.Extensions;
 using Ocelot.Ipc.VNavmesh;
 using Ocelot.Lifecycle;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
-using Ocelot.Chain;
-using Ocelot.Chain.Extensions;
+using System.Diagnostics;
+using System.Numerics;
+using System.Runtime.CompilerServices;
+using TreasureSheet = Lumina.Excel.Sheets.Treasure;
+using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
 namespace BOCCHI.Treasure.Services;
 
-public class TreasureHunterService(
+public class TreasureHunterService
+(
     TreasureConfig config,
     IZoneProvider zones,
     IVNavmeshIpc vnav,
@@ -41,80 +44,25 @@ public class TreasureHunterService(
 ) : ITreasureHunter, IOnUpdate
 {
     private const float ChestSearchRadius = 5f;
-
-    private readonly Stopwatch stopwatch = new();
     private readonly List<TreasureLayoutDatum> layoutTreasure = [];
     private readonly List<HuntPathfinderStep> steps = [];
 
-    private IHuntRoutePlanner? pathPlanner;
+    private readonly Stopwatch stopwatch = new();
     private Task<ChainResult>? activeChain;
-    private int stepIndex;
-    private float stepDistance;
-    private bool running;
+
+    private IHuntRoutePlanner? pathPlanner;
     private bool planningRoute;
 
-    public bool Running => running;
-
-    public int StepIndex => stepIndex;
-
-    public int StepCount => steps.Count;
-
-    public float StepDistance => stepDistance;
-
-    public TimeSpan Elapsed => stopwatch.Elapsed;
-
-    public bool IsVnavAvailable => vnav.IsAvailable();
-
-    public bool IsVnavReady => vnav.IsNavmeshReady();
-
-    public void Toggle()
+    public void Update()
     {
-        if (running)
+        if (!Running)
         {
-            StopHunt();
             return;
         }
 
         if (!config.EnableTreasureHunt)
         {
-            return;
-        }
-
-        stopwatch.Restart();
-        stepIndex = 0;
-        steps.Clear();
-        layoutTreasure.Clear();
-        pathPlanner = CreatePathPlanner();
-        if (pathPlanner == null || pathPlanner.State != HuntPathfinderState.FileLoaded)
-        {
-            log.Error("Failed to initialize treasure hunt path data");
             Teardown();
-            return;
-        }
-
-        running = true;
-        planningRoute = true;
-    }
-
-    private void StopHunt()
-    {
-        Teardown();
-    }
-
-    public HuntPathfinderStep? GetCurrentStep()
-    {
-        if (stepIndex < 0 || stepIndex >= steps.Count)
-        {
-            return null;
-        }
-
-        return steps[stepIndex];
-    }
-
-    public void Update()
-    {
-        if (!running || !config.EnableTreasureHunt)
-        {
             return;
         }
 
@@ -128,7 +76,18 @@ public class TreasureHunterService(
             return;
         }
 
-        activeChain = null;
+        if (activeChain is { IsCompleted: true })
+        {
+            if (steps.Count > 0
+                && StepIndex < steps.Count
+                && TryAdvanceCurrentStep())
+            {
+                StepIndex++;
+                StepDistance = 0f;
+            }
+
+            return;
+        }
 
         TryInteractWithNearbyChest();
 
@@ -145,11 +104,11 @@ public class TreasureHunterService(
             }
 
             planningRoute = false;
-            var validNodes = GetValidNodes(config.HuntMaxLevel);
+            List<uint> validNodes = GetValidNodes(config.HuntMaxLevel);
             steps.Clear();
             steps.AddRange(pathPlanner.FindPath(player.Position, validNodes).GetAwaiter().GetResult());
             pathPlanner = null;
-            stepIndex = 0;
+            StepIndex = 0;
             return;
         }
 
@@ -158,7 +117,7 @@ public class TreasureHunterService(
             return;
         }
 
-        if (stepIndex >= steps.Count)
+        if (StepIndex >= steps.Count)
         {
             Teardown();
             return;
@@ -166,9 +125,67 @@ public class TreasureHunterService(
 
         if (TryAdvanceCurrentStep())
         {
-            stepIndex++;
-            stepDistance = 0f;
+            StepIndex++;
+            StepDistance = 0f;
         }
+    }
+
+    public bool Running { get; private set; }
+
+    public int StepIndex { get; private set; }
+
+    public int StepCount => steps.Count;
+
+    public float StepDistance { get; private set; }
+
+    public TimeSpan Elapsed => stopwatch.Elapsed;
+
+    public bool IsVnavAvailable => vnav.IsAvailable();
+
+    public bool IsVnavReady => vnav.IsNavmeshReady();
+
+    public void Toggle()
+    {
+        if (Running)
+        {
+            StopHunt();
+            return;
+        }
+
+        if (!config.EnableTreasureHunt)
+        {
+            return;
+        }
+
+        stopwatch.Restart();
+        StepIndex = 0;
+        steps.Clear();
+        layoutTreasure.Clear();
+        pathPlanner = CreatePathPlanner();
+        if (pathPlanner == null || pathPlanner.State != HuntPathfinderState.FileLoaded)
+        {
+            log.Error("Failed to initialize treasure hunt path data");
+            Teardown();
+            return;
+        }
+
+        Running = true;
+        planningRoute = true;
+    }
+
+    public HuntPathfinderStep? GetCurrentStep()
+    {
+        if (StepIndex < 0 || StepIndex >= steps.Count)
+        {
+            return null;
+        }
+
+        return steps[StepIndex];
+    }
+
+    private void StopHunt()
+    {
+        Teardown();
     }
 
     private void TryInteractWithNearbyChest()
@@ -178,7 +195,7 @@ public class TreasureHunterService(
             return;
         }
 
-        var nearby = GetValidChests()
+        IGameObject? nearby = GetValidChests()
             .FirstOrDefault(o => player.Position.Distance(o.Position) <= ChestSearchRadius);
 
         if (nearby == null)
@@ -194,20 +211,26 @@ public class TreasureHunterService(
 
     private bool TryAdvanceCurrentStep()
     {
-        var step = steps[stepIndex];
+        HuntPathfinderStep step = steps[StepIndex];
         return step.Type switch
         {
             HuntPathfinderStepType.WalkToNode => HandleWalkToNode(step),
             HuntPathfinderStepType.ReturnToBaseCamp => HandleReturnToBaseCamp(),
             HuntPathfinderStepType.WalkToAethernet => HandleWalkToAethernet(step),
             HuntPathfinderStepType.TeleportToAethernet => HandleTeleportToAethernet(step),
-            _ => true,
+            var _ => true
         };
     }
 
     private bool HandleWalkToNode(HuntPathfinderStep step)
     {
-        var destination = layoutTreasure.First(t => t.Id == step.NodeId).Position;
+        if (!Running)
+        {
+            vnav.Stop();
+            return true;
+        }
+
+        Vector3 destination = layoutTreasure.First(t => t.Id == step.NodeId).Position;
 
         if (!vnav.IsRunning())
         {
@@ -216,13 +239,13 @@ public class TreasureHunterService(
 
         MaybeMount(destination);
 
-        stepDistance = player.Position.Distance(destination);
-        if (stepDistance > config.HuntDetectionRange)
+        StepDistance = player.Position.Distance(destination);
+        if (StepDistance > config.HuntDetectionRange)
         {
             return false;
         }
 
-        var chest = GetValidChests()
+        IGameObject? chest = GetValidChests()
             .FirstOrDefault(o => Vector3.Distance(destination, o.Position) <= ChestSearchRadius);
 
         if (IsChestComplete(destination))
@@ -237,7 +260,7 @@ public class TreasureHunterService(
             return true;
         }
 
-        if (stepDistance > OpenTreasureCofferChain.InteractDistance)
+        if (StepDistance > OpenTreasureCofferChain.InteractDistance)
         {
             return false;
         }
@@ -252,7 +275,7 @@ public class TreasureHunterService(
 
     private bool IsChestComplete(Vector3 destination)
     {
-        var chest = GetValidChests()
+        IGameObject? chest = GetValidChests()
             .FirstOrDefault(o => Vector3.Distance(destination, o.Position) <= ChestSearchRadius);
 
         if (chest == null)
@@ -262,17 +285,17 @@ public class TreasureHunterService(
 
         unsafe
         {
-            var gameObject = (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)(void*)chest.Address;
-            var instance = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
+            GameObject* gameObject = (GameObject*)(void*)chest.Address;
+            FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure* instance = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
             return instance->Flags.HasFlag(FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.TreasureFlags.Opened);
         }
     }
 
     private bool HandleReturnToBaseCamp()
     {
-        stepDistance = 0f;
-        var zone = zones.GetZone();
-        var inCombat = conditions[ConditionFlag.InCombat];
+        StepDistance = 0f;
+        IZone zone = zones.GetZone();
+        bool inCombat = conditions[ConditionFlag.InCombat];
 
         if (inCombat && !vnav.IsRunning())
         {
@@ -295,7 +318,19 @@ public class TreasureHunterService(
             return true;
         }
 
-        _ = chainManager.Manage(
+        if (activeChain != null)
+        {
+            if (!activeChain.IsCompleted)
+            {
+                return false;
+            }
+
+            bool returned = activeChain.IsCompletedSuccessfully && zone.IsInBasecamp();
+            activeChain = null;
+            return returned;
+        }
+
+        activeChain = chainManager.Manage(
             chains.Create("TreasureHunt::Return")
                 .Then(_ =>
                 {
@@ -314,12 +349,18 @@ public class TreasureHunterService(
                 )
         );
 
-        return true;
+        return false;
     }
 
     private bool HandleWalkToAethernet(HuntPathfinderStep step)
     {
-        var destination = ResolveAethernet(step.Aethernet).Position;
+        if (!Running)
+        {
+            vnav.Stop();
+            return true;
+        }
+
+        Vector3 destination = ResolveAethernet(step.Aethernet).Position;
 
         if (!vnav.IsRunning())
         {
@@ -328,21 +369,33 @@ public class TreasureHunterService(
 
         MaybeMount(destination);
 
-        stepDistance = player.Position.Distance(destination);
-        return stepDistance <= 4f;
+        StepDistance = player.Position.Distance(destination);
+        return StepDistance <= AethernetData.LifestreamInteractRadius;
     }
 
     private bool HandleTeleportToAethernet(HuntPathfinderStep step)
     {
-        stepDistance = 0f;
-        var placeNameId = (uint)step.Aethernet;
+        StepDistance = 0f;
 
-        _ = chainManager.Manage(
+        if (activeChain != null)
+        {
+            if (!activeChain.IsCompleted)
+            {
+                return false;
+            }
+
+            bool teleported = activeChain.IsCompletedSuccessfully;
+            activeChain = null;
+            return teleported;
+        }
+
+        uint placeNameId = (uint)step.Aethernet;
+        activeChain = chainManager.Manage(
             chains.Create($"TreasureHunt::Teleport({placeNameId})")
                 .Then<HuntTeleportChain, uint>(placeNameId)
         );
 
-        return true;
+        return false;
     }
 
     private void MaybeMount(Vector3 destination)
@@ -364,7 +417,7 @@ public class TreasureHunterService(
         {
             ObjectKind: ObjectKind.Treasure,
             IsDead: false,
-            IsTargetable: true,
+            IsTargetable: true
         } && o.IsValid());
     }
 
@@ -383,36 +436,36 @@ public class TreasureHunterService(
 
         unsafe
         {
-            var layout = LayoutWorld.Instance()->ActiveLayout;
+            LayoutManager* layout = LayoutWorld.Instance()->ActiveLayout;
             if (layout == null)
             {
                 log.Warning("No active layout for treasure hunt");
                 return null;
             }
 
-            if (!layout->InstancesByType.TryGetValue(InstanceType.Treasure, out var mapPtr, false))
+            if (!layout->InstancesByType.TryGetValue(InstanceType.Treasure, out Pointer<StdMap<ulong, Pointer<ILayoutInstance>>> mapPtr, false))
             {
                 log.Warning("No active treasure layout instances");
                 return null;
             }
 
-            foreach (ILayoutInstance* instance in mapPtr.Value->Values)
+            foreach(ILayoutInstance* instance in mapPtr.Value->Values)
             {
-                var transform = instance->GetTransformImpl();
-                var position = transform->Translation;
+                Transform* transform = instance->GetTransformImpl();
+                Vector3 position = transform->Translation;
                 if (position.Y <= -10f)
                 {
                     continue;
                 }
 
-                var treasureRowId = Unsafe.Read<uint>((byte*)instance + 0x30);
-                var sgbId = data.GetExcelSheet<TreasureSheet>().GetRow(treasureRowId).SGB.RowId;
+                uint treasureRowId = Unsafe.Read<uint>((byte*)instance + 0x30);
+                uint sgbId = data.GetExcelSheet<TreasureSheet>().GetRow(treasureRowId).SGB.RowId;
                 if (sgbId != 1596 && sgbId != 1597)
                 {
                     continue;
                 }
 
-                layoutTreasure.Add(new TreasureLayoutDatum(treasureRowId, position, sgbId));
+                layoutTreasure.Add(new(treasureRowId, position, sgbId));
             }
         }
 
@@ -424,8 +477,8 @@ public class TreasureHunterService(
 
         layoutTreasure.Sort((a, b) => a.Id.CompareTo(b.Id));
 
-        var zone = zones.GetZone();
-        return new TreasureHuntPathfinder(
+        IZone zone = zones.GetZone();
+        return new(
             zone.ZoneId,
             plugin,
             layoutTreasure,
@@ -437,23 +490,25 @@ public class TreasureHunterService(
 
     private AethernetData ResolveAethernet(HuntAethernet aethernet)
     {
-        var placeNameId = (uint)aethernet;
+        uint placeNameId = (uint)aethernet;
         return zones.GetZone().GetAetherytes().First(a => a.Id == placeNameId);
     }
 
     private void Teardown()
     {
-        running = false;
+        Running = false;
         planningRoute = false;
-        activeChain = null;
 
         chainManager.CancelWhere(name => name.StartsWith("TreasureHunt", StringComparison.Ordinal));
+
         pathfinder.Stop();
         vnav.Stop();
 
+        activeChain = null;
+
         stopwatch.Stop();
-        stepIndex = 0;
-        stepDistance = 0f;
+        StepIndex = 0;
+        StepDistance = 0f;
         steps.Clear();
         layoutTreasure.Clear();
         pathPlanner = null;

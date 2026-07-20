@@ -1,4 +1,3 @@
-using System.Reflection;
 using BOCCHI.Common.Config.Fields;
 using BOCCHI.Common.Data.Mobs;
 using BOCCHI.Common.UI;
@@ -7,7 +6,7 @@ using Ocelot.Config.Renderers;
 using Ocelot.Extensions;
 using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
-
+using System.Reflection;
 namespace BOCCHI.Common.Config.Renderers;
 
 public class MobMultiSelectRenderer(IDataManager data, IUIService ui) : IFieldRenderer<MobMultiSelectAttribute>
@@ -23,7 +22,7 @@ public class MobMultiSelectRenderer(IDataManager data, IUIService ui) : IFieldRe
                 $"{prop.DeclaringType?.Name}.{prop.Name} is {prop.PropertyType.Name}.");
         }
 
-        var mobs = (List<Mob>?)prop.GetValue(target) ?? [];
+        List<Mob> mobs = (List<Mob>?)prop.GetValue(target) ?? [];
         if (prop.GetValue(target) == null)
         {
             prop.SetValue(target, mobs);
@@ -32,9 +31,9 @@ public class MobMultiSelectRenderer(IDataManager data, IUIService ui) : IFieldRe
         prop.Label(owner, translator);
         prop.Tooltip(owner, translator);
 
-        var searchHintKey = prop.GetFieldLabelKey(owner).Replace(".label", ".search_hint", StringComparison.Ordinal);
-        var selectedKey = prop.GetFieldLabelKey(owner).Replace(".label", ".selected", StringComparison.Ordinal);
-        var changed = MobPickerHelper.Draw(
+        string searchHintKey = prop.GetFieldLabelKey(owner).Replace(".label", ".search_hint", StringComparison.Ordinal);
+        string selectedKey = prop.GetFieldLabelKey(owner).Replace(".label", ".selected", StringComparison.Ordinal);
+        bool changed = MobPickerHelper.Draw(
             mobs,
             data,
             ui,

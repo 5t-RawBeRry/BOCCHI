@@ -6,16 +6,24 @@ using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Extensions;
 using Ocelot.Lifecycle;
-
 namespace BOCCHI.Services;
 
-public class SupportJobChanger(
+public class SupportJobChanger
+(
     IChainManager chainManager,
     ISupportJobFactory supportJobs,
     IObjectTable objects
 ) : ISupportJobChanger, IOnUpdate
 {
     private Task<ChainResult>? task;
+
+    public void Update()
+    {
+        if (task?.IsCompleted == true)
+        {
+            task = null;
+        }
+    }
 
     public void Change(SupportJobId id)
     {
@@ -29,7 +37,7 @@ public class SupportJobChanger(
             return;
         }
 
-        var job = supportJobs.Create(id);
+        SupportJob job = supportJobs.Create(id);
 
         task = chainManager.ExecuteAsync(chains =>
         {
@@ -46,22 +54,9 @@ public class SupportJobChanger(
                     TimeSpan.FromSeconds(5),
                     TimeSpan.FromMilliseconds(250),
                     "SupportJobChanger::WaitForChange"
-
                 );
         });
     }
 
-    public bool IsBusy()
-    {
-        return task is { IsCompleted: false };
-    }
-
-    public void Update()
-    {
-        if (task?.IsCompleted == true)
-        {
-            task.Dispose();
-            task = null;
-        }
-    }
+    public bool IsBusy() => task is { IsCompleted: false };
 }

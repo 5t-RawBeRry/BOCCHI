@@ -1,20 +1,19 @@
-﻿using System.Numerics;
-using BOCCHI.Common.Data.Aethernet;
+﻿using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.Paths;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Common.Data.Zones.Graph.Traversal;
-using BOCCHI.Common.Services;
 using BOCCHI.Common.Services.Paths;
 using Dalamud.Plugin.Services;
 using Ocelot.Extensions;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
-
+using System.Numerics;
 namespace BOCCHI.Automator.Services.Paths;
 
-public class PathCalculator(
+public class PathCalculator
+(
     IPathfinder pathfinder,
     IObjectTable objects,
     IZoneProvider zones,
@@ -29,27 +28,27 @@ public class PathCalculator(
             return [];
         }
 
-        var zone = zones.GetZone();
+        IZone zone = zones.GetZone();
         if (!zone.IsOccultCrescentZone())
         {
             logger.Warn("In wrong zone");
             return [];
         }
 
-        var graph = await zone.GetGraph();
+        ZoneGraph graph = await zone.GetGraph();
 
         Node goalNode;
         try
         {
             goalNode = GetGoalNode(goal, graph);
         }
-        catch (ArgumentOutOfRangeException ex)
+        catch(ArgumentOutOfRangeException ex)
         {
             logger.Error(ex.Message);
             return [];
         }
 
-        var destination = goalNode.Position;
+        Vector3 destination = goalNode.Position;
 
         if (player.Position.Distance2D(destination) <= 20f)
         {
@@ -57,18 +56,18 @@ public class PathCalculator(
             return [];
         }
 
-        var traverser = new GraphTraverser(graph, pathfinder, logger);
+        GraphTraverser traverser = new(graph, pathfinder, logger);
         traverser.AddCalculator(new DirectWalkCalculator());
         traverser.AddCalculator(new WalkTeleportWalkCalculator());
         traverser.AddCalculator(new ReturnWalkCalculator());
         traverser.AddCalculator(new ReturnTeleportWalkCalculator());
 
-        var steps = await traverser.FindPath(player.Position, goalNode);
-        var resolvedSteps = steps
+        List<PathStep> steps = await traverser.FindPath(player.Position, goalNode);
+        List<PathStep> resolvedSteps = steps
             .Select(step => AethernetNavigation.ResolveAetherytePathStep(step, zone))
             .ToList();
 
-        return new Queue<IPathStep>(resolvedSteps);
+        return new(resolvedSteps);
     }
 
     private Node GetGoalNode(IGoal goal, ZoneGraph graph)
@@ -77,13 +76,13 @@ public class PathCalculator(
         {
             CriticalEncounterGoal(var id) => GetActivityNode(id.Value, graph, NodeType.CriticalEncounter),
             FateGoal(var id) => GetActivityNode(id.Value, graph, NodeType.NormalFate, NodeType.PotFate),
-            _ => throw new ArgumentOutOfRangeException(),
+            var _ => throw new ArgumentOutOfRangeException()
         };
     }
 
     private Node GetActivityNode(int id, ZoneGraph graph, params NodeType[] types)
     {
-        var nodes = graph.GetNodesByTypes(types).Where(n =>
+        List<Node> nodes = graph.GetNodesByTypes(types).Where(n =>
         {
             if (n.Metadata is not ActivityNodeMetadata meta)
             {
@@ -93,6 +92,6 @@ public class PathCalculator(
             return meta.Id == id;
         }).ToList();
 
-        return nodes.Count == 0 ? throw new Exception("No nodes for Activity") : nodes.First();
+        return nodes.Count == 0 ? throw new("No nodes for Activity") : nodes.First();
     }
 }

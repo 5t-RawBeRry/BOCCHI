@@ -1,6 +1,4 @@
-using System.Numerics;
 using Dalamud.Bindings.ImGui;
-
 namespace BOCCHI.Common.UI;
 
 public static class TrackerPlotHelper
@@ -12,7 +10,7 @@ public static class TrackerPlotHelper
             return;
         }
 
-        var max = history.Max();
+        float max = history.Max();
         if (max <= 0f)
         {
             max = 1f;
@@ -25,8 +23,7 @@ public static class TrackerPlotHelper
             string.Empty,
             0f,
             max,
-            new Vector2(ImGui.GetContentRegionAvail().X, height),
-            sizeof(float)
+            new(ImGui.GetContentRegionAvail().X, height)
         );
     }
 }

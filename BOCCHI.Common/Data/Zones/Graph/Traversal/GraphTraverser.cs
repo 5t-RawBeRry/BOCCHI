@@ -1,15 +1,14 @@
-﻿using System.Numerics;
-using BOCCHI.Common.Data.Paths;
+﻿using BOCCHI.Common.Data.Paths;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
-
+using System.Numerics;
 namespace BOCCHI.Common.Data.Zones.Graph.Traversal;
 
 public record TraversalCandidate(float TotalCost, List<PathStep> Steps);
 
 public class GraphTraverser(ZoneGraph graph, IPathfinder pathfinder, ILogger logger)
 {
-    public const float ReturnCost = 90f;
+    public const float ReturnCost = 40f;
 
     public const float TeleportCost = 10f;
 
@@ -22,12 +21,12 @@ public class GraphTraverser(ZoneGraph graph, IPathfinder pathfinder, ILogger log
 
     public async Task<List<PathStep>> FindPath(Vector3 start, Node goal)
     {
-        var candidates = new List<TraversalCandidate>();
+        List<TraversalCandidate> candidates = new();
 
-        foreach (var calculator in calculators)
+        foreach(IGraphCandidateCalculator calculator in calculators)
         {
             logger.Info($"Running Calculator: {calculator.Key()}");
-            var candidate = await calculator.CalculateAsync(graph, start, goal, pathfinder);
+            TraversalCandidate? candidate = await calculator.CalculateAsync(graph, start, goal, pathfinder);
             if (candidate != null)
             {
                 logger.Info($"  Cost:  {candidate.TotalCost}");

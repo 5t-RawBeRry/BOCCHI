@@ -4,41 +4,11 @@ public readonly record struct DeltaSnapshot(long Delta, DateTime Time);
 
 public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
 {
-    private long lastValue;
-
-    private bool hasValue;
-
     private readonly List<DeltaSnapshot> snapshots = [];
 
-    public bool HasValue => hasValue;
+    private long lastValue;
 
-    public void SyncBaseline(long value)
-    {
-        lastValue = value;
-        hasValue = true;
-    }
-
-    public void RecordPositiveDelta(long current)
-    {
-        Prune();
-
-        if (!hasValue)
-        {
-            lastValue = current;
-            hasValue = true;
-            return;
-        }
-
-        var delta = current - lastValue;
-        lastValue = current;
-
-        if (delta <= 0)
-        {
-            return;
-        }
-
-        snapshots.Add(new DeltaSnapshot(delta, DateTime.UtcNow));
-    }
+    public bool HasValue { get; private set; }
 
     public double PerHour
     {
@@ -49,21 +19,21 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
                 return 0;
             }
 
-            var duration = getTrackedWindow();
-            var now = DateTime.UtcNow;
-            var windowStart = now - duration;
+            TimeSpan duration = getTrackedWindow();
+            DateTime now = DateTime.UtcNow;
+            DateTime windowStart = now - duration;
 
-            var oldest = snapshots[0].Time;
-            var start = oldest > windowStart ? oldest : windowStart;
+            DateTime oldest = snapshots[0].Time;
+            DateTime start = oldest > windowStart ? oldest : windowStart;
 
-            var elapsed = now - start;
+            TimeSpan elapsed = now - start;
 
             if (elapsed < TimeSpan.FromSeconds(10))
             {
                 return 0;
             }
 
-            var hours = elapsed.TotalHours;
+            double hours = elapsed.TotalHours;
             if (hours <= 0)
             {
                 return 0;
@@ -73,15 +43,43 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
         }
     }
 
+    public void SyncBaseline(long value)
+    {
+        lastValue = value;
+        HasValue = true;
+    }
+
+    public void RecordPositiveDelta(long current)
+    {
+        Prune();
+
+        if (!HasValue)
+        {
+            lastValue = current;
+            HasValue = true;
+            return;
+        }
+
+        long delta = current - lastValue;
+        lastValue = current;
+
+        if (delta <= 0)
+        {
+            return;
+        }
+
+        snapshots.Add(new(delta, DateTime.UtcNow));
+    }
+
     public float[] GetHistory(TimeSpan sampleDuration)
     {
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(sampleDuration, TimeSpan.Zero);
 
-        var duration = getTrackedWindow();
-        var now = DateTime.UtcNow;
-        var start = now - duration;
+        TimeSpan duration = getTrackedWindow();
+        DateTime now = DateTime.UtcNow;
+        DateTime start = now - duration;
 
-        var relevant = snapshots
+        List<DeltaSnapshot> relevant = snapshots
             .Where(s => s.Time >= start)
             .OrderBy(s => s.Time)
             .ToList();
@@ -91,18 +89,18 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
             return [];
         }
 
-        var bucketCount = (int)Math.Floor(duration.TotalSeconds / sampleDuration.TotalSeconds);
+        int bucketCount = (int)Math.Floor(duration.TotalSeconds / sampleDuration.TotalSeconds);
         if (bucketCount <= 0)
         {
             return [];
         }
 
-        var bucketTotals = new double[bucketCount];
+        double[] bucketTotals = new double[bucketCount];
 
-        foreach (var snapshot in relevant)
+        foreach(DeltaSnapshot snapshot in relevant)
         {
-            var secondsFromStart = (snapshot.Time - start).TotalSeconds;
-            var index = (int)(secondsFromStart / sampleDuration.TotalSeconds);
+            double secondsFromStart = (snapshot.Time - start).TotalSeconds;
+            int index = (int)(secondsFromStart / sampleDuration.TotalSeconds);
 
             if (index < 0 || index >= bucketCount)
             {
@@ -112,12 +110,12 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
             bucketTotals[index] += snapshot.Delta;
         }
 
-        var result = new float[bucketCount];
-        var bucketSeconds = sampleDuration.TotalSeconds;
+        float[] result = new float[bucketCount];
+        double bucketSeconds = sampleDuration.TotalSeconds;
 
-        for (var i = 0; i < bucketCount; i++)
+        for(int i = 0; i < bucketCount; i++)
         {
-            var amount = bucketTotals[i];
+            double amount = bucketTotals[i];
 
             if (amount <= 0)
             {
@@ -138,10 +136,10 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
             return;
         }
 
-        var cutoff = DateTime.UtcNow - getTrackedWindow();
+        DateTime cutoff = DateTime.UtcNow - getTrackedWindow();
 
-        var index = 0;
-        while (index < snapshots.Count && snapshots[index].Time < cutoff)
+        int index = 0;
+        while(index < snapshots.Count && snapshots[index].Time < cutoff)
         {
             index++;
         }

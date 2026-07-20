@@ -2,7 +2,6 @@ using BOCCHI.Common.Data.Mobs;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Plugin.Services;
 using Ocelot.Services.UI;
-
 namespace BOCCHI.Common.UI;
 
 public static class MobPickerHelper
@@ -21,23 +20,23 @@ public static class MobPickerHelper
         ImGui.SetNextItemWidth(-1);
         ImGui.InputTextWithHint("##mob_search", searchHint, ref search, 128);
 
-        var searchFilter = search;
-        var selectableMobs = MobData.GetSelectableMobs()
+        string searchFilter = search;
+        List<Mob> selectableMobs = MobData.GetSelectableMobs()
             .Where(m => MobData.MatchesSearch(m, searchFilter, data))
             .ToList();
 
         ui.LabelledValue(selectedLabel, $"{selectedMobs.Count} / {selectableMobs.Count} shown");
 
-        using var list = ImGuiSectionHelper.BoundedList(listId, listHeight);
+        using ImGuiSectionHelper.BoundedListScope list = ImGuiSectionHelper.BoundedList(listId, listHeight);
         if (!list.IsOpen)
         {
             return false;
         }
 
-        var changed = false;
-        foreach (var mob in selectableMobs)
+        bool changed = false;
+        foreach(Mob mob in selectableMobs)
         {
-            var isSelected = selectedMobs.Contains(mob);
+            bool isSelected = selectedMobs.Contains(mob);
             if (!ImGui.Checkbox($"{MobData.GetDisplayName(mob, data)}###mob_{(uint)mob}", ref isSelected))
             {
                 continue;

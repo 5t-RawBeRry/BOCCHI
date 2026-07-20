@@ -1,82 +1,82 @@
 {
-    "title": "BOCCHI",
-    "unsupported_zone": "Not in a supported Occult Crescent Zone.",
-    "sections": {
-        "trackers": "Trackers",
-        "automation": "Automation",
-        "world": "World",
-        "treasure": "Treasure"
+  "title": "BOCCHI",
+  "unsupported_zone": "Not in a supported Occult Crescent Zone.",
+  "sections": {
+    "trackers": "Trackers",
+    "automation": "Automation",
+    "world": "World",
+    "treasure": "Treasure"
+  },
+  "status": {
+    "automator": "Automator",
+    "mob_farmer": "Mob Farmer",
+    "treasure_hunt": "Treasure Hunt",
+    "on": "On",
+    "off": "Off",
+    "goal": "Goal",
+    "current_step": "Current step",
+    "chests": "Pot chests"
+  },
+  "goals": {
+    "fate": "Fate: {0}",
+    "critical_encounter": "Critical Encounter: {0}"
+  },
+  "trackers": {
+    "experience": {
+      "current_job": "Current Job",
+      "no_job": "No jobs found",
+      "level": "Level: {0} ({1})",
+      "per_hour": "Experience Per Hour"
     },
-    "status": {
-        "automator": "Automator",
-        "mob_farmer": "Mob Farmer",
-        "treasure_hunt": "Treasure Hunt",
-        "on": "On",
-        "off": "Off",
-        "goal": "Goal",
-        "current_step": "Current step",
-        "chests": "Pot chests"
-    },
-    "goals": {
-        "fate": "Fate: {0}",
-        "critical_encounter": "Critical Encounter: {0}"
-    },
-    "trackers": {
-        "experience": {
-            "current_job": "Current Job",
-            "no_job": "No jobs found",
-            "level": "Level: {0} ({1})",
-            "per_hour": "Experience Per Hour"
-        },
-        "currency": {
-            "gold_per_hour": "Gold Per Hour",
-            "silver_per_hour": "Silver Per Hour"
-        }
-    },
-    "automation": {
-        "automator": {
-            "title": "Automator",
-            "enable": "Enable Automator",
-            "disable": "Disable Automator",
-            "details": "Details",
-            "pot_chest_farm": "Pot chest farm",
-            "chests_remaining": "Chests remaining",
-            "time_idle": "Time idle"
-        },
-        "mob_farmer": {
-            "title": "Mob Farmer",
-            "start": "Start Mob Farmer",
-            "stop": "Stop Mob Farmer",
-            "not_engaged": "Not engaged",
-            "engaged": "Engaged",
-            "selected_mobs": "Selected mobs",
-            "configure_mobs": "Configure target mobs in /bocchi-config → Mob Farmer."
-        }
-    },
-    "world": {
-        "fates": {
-            "title": "Fates",
-            "none": "No active FATEs."
-        },
-        "critical_encounters": {
-            "title": "Critical Encounters",
-            "none": "No active critical encounters."
-        }
-    },
-    "treasure": {
-        "title": "Treasure Hunter",
-        "requires_vnav": "Requires vnavmesh plugin.",
-        "waiting_navmesh": "Waiting for navmesh...",
-        "start_hunt": "Start Hunt",
-        "stop_hunt": "Stop Hunt",
-        "elapsed": "Elapsed",
-        "progress": "Progress",
-        "distance_to_chest": "Distance to chest",
-        "nearby_title": "Nearby treasures",
-        "none_nearby": "No nearby treasure.",
-        "active_bronze": "Active Bronze",
-        "active_silver": "Active Silver",
-        "distance": "Distance: {0:F1}y",
-        "position": "({0:F1}, {1:F1}, {2:F1})"
+    "currency": {
+      "gold_per_hour": "Gold Per Hour",
+      "silver_per_hour": "Silver Per Hour"
     }
+  },
+  "automation": {
+    "automator": {
+      "title": "Automator",
+      "enable": "Enable Automator",
+      "disable": "Disable Automator",
+      "details": "Details",
+      "pot_chest_farm": "Pot chest farm",
+      "chests_remaining": "Chests remaining",
+      "time_idle": "Time idle"
+    },
+    "mob_farmer": {
+      "title": "Mob Farmer",
+      "start": "Start Mob Farmer",
+      "stop": "Stop Mob Farmer",
+      "not_engaged": "Not engaged",
+      "engaged": "Engaged",
+      "selected_mobs": "Selected mobs",
+      "configure_mobs": "Configure target mobs in /bocchi-config → Mob Farmer."
+    }
+  },
+  "world": {
+    "fates": {
+      "title": "Fates",
+      "none": "No active FATEs."
+    },
+    "critical_encounters": {
+      "title": "Critical Encounters",
+      "none": "No active critical encounters."
+    }
+  },
+  "treasure": {
+    "title": "Treasure Hunter",
+    "requires_vnav": "Requires vnavmesh plugin.",
+    "waiting_navmesh": "Waiting for navmesh...",
+    "start_hunt": "Start Hunt",
+    "stop_hunt": "Stop Hunt",
+    "elapsed": "Elapsed",
+    "progress": "Progress",
+    "distance_to_chest": "Distance to chest",
+    "nearby_title": "Nearby treasures",
+    "none_nearby": "No nearby treasure.",
+    "active_bronze": "Active Bronze",
+    "active_silver": "Active Silver",
+    "distance": "Distance: {0:F1}y",
+    "position": "({0:F1}, {1:F1}, {2:F1})"
+  }
 }

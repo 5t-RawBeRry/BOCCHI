@@ -1,5 +1,4 @@
 using BOCCHI.Automator.Data;
-using BOCCHI.Automator.Services;
 using BOCCHI.Buff.Data;
 using BOCCHI.Buff.Services;
 using BOCCHI.Common.Config;
@@ -7,13 +6,12 @@ using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
-using Ocelot.Extensions;
 using Ocelot.States;
 using Ocelot.States.Score;
-
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
-public class ApplyingBuffsHandler(
+public class ApplyingBuffsHandler
+(
     Func<IStateMachine<BuffState>> factory,
     IBuffProvider buffs,
     IZoneProvider zones,
@@ -26,7 +24,7 @@ public class ApplyingBuffsHandler(
 
     public override StatePriority GetScore()
     {
-        if (memory.TryRemember<ApplyingBuffsMemory>(out var _))
+        if (memory.TryRemember<ApplyingBuffsMemory>(out ApplyingBuffsMemory _))
         {
             return StatePriority.VeryHigh;
         }
@@ -36,7 +34,7 @@ public class ApplyingBuffsHandler(
             return StatePriority.Never;
         }
 
-        var zone = zones.GetZone();
+        IZone zone = zones.GetZone();
         if (!zone.IsOccultCrescentZone())
         {
             return StatePriority.Never;
@@ -55,7 +53,7 @@ public class ApplyingBuffsHandler(
         stateMachine = factory();
 
         memory.TryAdd<ApplyingBuffsMemory>();
-        if (jobs.TryGetCurrent(out var job))
+        if (jobs.TryGetCurrent(out SupportJob job))
         {
             memory.TryAdd(new BuffSupportJobMemory(job.Id));
         }

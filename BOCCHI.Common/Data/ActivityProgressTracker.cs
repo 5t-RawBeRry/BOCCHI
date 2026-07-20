@@ -6,19 +6,15 @@ public class ProgressEstimate
 
     public double RSquared { get; set; }
 
-    public TimeSpan Time
-    {
-        get => CompletionTime?.Subtract(DateTime.Now) ?? TimeSpan.Zero;
-    }
+    public TimeSpan Time => CompletionTime?.Subtract(DateTime.Now) ?? TimeSpan.Zero;
 }
 
 public readonly record struct ProgressEntry(DateTimeOffset Timestamp, byte Progress);
 
 public sealed class ActivityProgressTracker
 {
-    private byte previous;
-
     private readonly List<ProgressEntry> entries = [];
+    private byte previous;
 
     public void Observe(byte progress)
     {
@@ -28,7 +24,7 @@ public sealed class ActivityProgressTracker
         }
 
         previous = progress;
-        entries.Add(new ProgressEntry(DateTimeOffset.Now, progress));
+        entries.Add(new(DateTimeOffset.Now, progress));
     }
 
     public ProgressEstimate? Estimate()
@@ -38,34 +34,35 @@ public sealed class ActivityProgressTracker
             return null;
         }
 
-        var x = entries.Select(p => (p.Timestamp - entries[0].Timestamp).TotalMinutes).ToArray();
-        var y = entries.Select(p => (double)p.Progress).ToArray();
+        double[] x = entries.Select(p => (p.Timestamp - entries[0].Timestamp).TotalMinutes).ToArray();
+        double[] y = entries.Select(p => (double)p.Progress).ToArray();
 
-        var xMean = x.Average();
-        var yMean = y.Average();
+        double xMean = x.Average();
+        double yMean = y.Average();
 
-        var numerator = x.Zip(y, (xi, yi) => (xi - xMean) * (yi - yMean)).Sum();
-        var denominator = x.Sum(xi => Math.Pow(xi - xMean, 2));
+        double numerator = x.Zip(y, (xi, yi) => (xi - xMean) * (yi - yMean)).Sum();
+        double denominator = x.Sum(xi => Math.Pow(xi - xMean, 2));
 
-        var slope = numerator / denominator;
-        var intercept = yMean - slope * xMean;
+        double slope = numerator / denominator;
+        double intercept = yMean - slope * xMean;
 
-        var ssTotal = y.Sum(yi => Math.Pow(yi - yMean, 2));
-        var ssResidual = x.Zip(y, (xi, yi) => Math.Pow(yi - (slope * xi + intercept), 2)).Sum();
-        var rSquared = 1 - ssResidual / ssTotal;
+        double ssTotal = y.Sum(yi => Math.Pow(yi - yMean, 2));
+        double ssResidual = x.Zip(y, (xi, yi) => Math.Pow(yi - (slope * xi + intercept), 2)).Sum();
+        double rSquared = 1 - ssResidual / ssTotal;
 
         if (slope <= 0)
         {
-            return new ProgressEstimate { CompletionTime = null, RSquared = rSquared };
+            return new()
+                { CompletionTime = null, RSquared = rSquared };
         }
 
-        var minutesTo100 = (100 - intercept) / slope;
-        var completionTime = entries[0].Timestamp.AddMinutes(minutesTo100);
+        double minutesTo100 = (100 - intercept) / slope;
+        DateTimeOffset completionTime = entries[0].Timestamp.AddMinutes(minutesTo100);
 
-        return new ProgressEstimate
+        return new()
         {
             CompletionTime = completionTime,
-            RSquared = rSquared,
+            RSquared = rSquared
         };
     }
 }

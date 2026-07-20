@@ -3,10 +3,10 @@ using BOCCHI.Buff.Services;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Services;
 using Dalamud.Plugin.Services;
-
 namespace BOCCHI.Buff.StateMachine.Handlers.ApplyingBuff;
 
-public class ApplyingRomeosBalladHandler(
+public class ApplyingRomeosBalladHandler
+(
     IBuffProvider buffs,
     IObjectTable objects,
     ICondition conditions,
@@ -14,7 +14,8 @@ public class ApplyingRomeosBalladHandler(
     ISupportJobChanger changer
 ) : BaseHandler(BuffState.ApplyingRomeosBallad, buffs, objects, conditions, supportJobs, changer);
 
-public class ApplyingEnduringFortitudeHandler(
+public class ApplyingEnduringFortitudeHandler
+(
     IBuffProvider buffs,
     IObjectTable objects,
     ICondition conditions,
@@ -22,7 +23,8 @@ public class ApplyingEnduringFortitudeHandler(
     ISupportJobChanger changer
 ) : BaseHandler(BuffState.ApplyingEnduringFortitude, buffs, objects, conditions, supportJobs, changer);
 
-public class ApplyingFleetfootedHandler(
+public class ApplyingFleetfootedHandler
+(
     IBuffProvider buffs,
     IObjectTable objects,
     ICondition conditions,
@@ -30,7 +32,8 @@ public class ApplyingFleetfootedHandler(
     ISupportJobChanger changer
 ) : BaseHandler(BuffState.ApplyingFleetfooted, buffs, objects, conditions, supportJobs, changer);
 
-public class ApplyingQuickerStepHandler(
+public class ApplyingQuickerStepHandler
+(
     IBuffProvider buffs,
     IObjectTable objects,
     ICondition conditions,

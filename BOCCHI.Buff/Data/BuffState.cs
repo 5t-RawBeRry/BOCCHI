@@ -11,5 +11,5 @@ public enum BuffState
     ApplyingFleetfooted,
     ApplyingQuickerStep,
 
-    CastingInquiringMind,
+    CastingInquiringMind
 }

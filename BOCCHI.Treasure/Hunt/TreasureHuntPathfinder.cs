@@ -1,8 +1,7 @@
-using System.Numerics;
 using BOCCHI.Common.Data.Zones;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-
+using System.Numerics;
 namespace BOCCHI.Treasure.Hunt;
 
 public readonly record struct TreasureLayoutDatum(uint Id, Vector3 Position, uint ModelId);
@@ -26,17 +25,17 @@ public class TreasureHuntPathfinder : HuntRoutePlanner
 
     protected override uint GetStartingNode(Vector3 start, List<uint> nodes)
     {
-        var closestDistance = float.MaxValue;
-        var startTreasure = treasure[0];
+        float closestDistance = float.MaxValue;
+        TreasureLayoutDatum startTreasure = treasure[0];
 
-        foreach (var treasureData in treasure)
+        foreach(TreasureLayoutDatum treasureData in treasure)
         {
             if (!nodes.Contains(treasureData.Id))
             {
                 continue;
             }
 
-            var distance = Vector3.Distance(start, treasureData.Position);
+            float distance = Vector3.Distance(start, treasureData.Position);
             if (distance < closestDistance)
             {
                 closestDistance = distance;

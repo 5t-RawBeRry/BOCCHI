@@ -1,9 +1,8 @@
-using System.Numerics;
-using System.Text.Json;
 using BOCCHI.Common.Data.Zones;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-
+using System.Numerics;
+using System.Text.Json;
 namespace BOCCHI.Treasure.Hunt;
 
 public interface IHuntRoutePlanner
@@ -13,7 +12,8 @@ public interface IHuntRoutePlanner
     Task<List<HuntPathfinderStep>> FindPath(Vector3 start, List<uint> nodes);
 }
 
-public abstract class HuntRoutePlanner(
+public abstract class HuntRoutePlanner
+(
     ZoneId zoneId,
     IDalamudPluginInterface plugin,
     IPluginLog log,
@@ -21,11 +21,8 @@ public abstract class HuntRoutePlanner(
     float teleportCost = 50f
 ) : IHuntRoutePlanner
 {
-    public HuntPathfinderState State { get; private set; } = HuntPathfinderState.None;
-
     private HuntNodeDataSchema data = new();
-
-    protected abstract uint GetStartingNode(Vector3 start, List<uint> nodes);
+    public HuntPathfinderState State { get; private set; } = HuntPathfinderState.None;
 
     public Task<List<HuntPathfinderStep>> FindPath(Vector3 start, List<uint> nodes)
     {
@@ -36,10 +33,10 @@ public abstract class HuntRoutePlanner(
 
         State = HuntPathfinderState.Pathfinding;
 
-        var startNode = GetStartingNode(start, nodes);
-        var graph = BuildCostGraph(nodes);
-        var ordered = SolveTspNearestInsertion(startNode, nodes, graph);
-        var steps = BuildStepPath(ordered, graph);
+        uint startNode = GetStartingNode(start, nodes);
+        Dictionary<uint, Dictionary<uint, (float Cost, List<HuntPathfinderStep> Steps)>> graph = BuildCostGraph(nodes);
+        List<uint> ordered = SolveTspNearestInsertion(startNode, nodes, graph);
+        List<HuntPathfinderStep> steps = BuildStepPath(ordered, graph);
 
         steps.Insert(0, HuntPathfinderStep.WalkToDestination(startNode));
 
@@ -48,30 +45,32 @@ public abstract class HuntRoutePlanner(
         return Task.FromResult(steps);
     }
 
+    protected abstract uint GetStartingNode(Vector3 start, List<uint> nodes);
+
     protected void LoadFile(string filename)
     {
         State = HuntPathfinderState.LoadingFile;
 
-        var file = GetDataFile(plugin, zoneId, filename);
+        string file = GetDataFile(plugin, zoneId, filename);
         if (!File.Exists(file))
         {
             log.Error($"Required hunt data file not found: {file}");
             return;
         }
 
-        var json = File.ReadAllText(file);
+        string json = File.ReadAllText(file);
         data = JsonSerializer.Deserialize<HuntNodeDataSchema>(json) ?? new HuntNodeDataSchema();
         State = HuntPathfinderState.FileLoaded;
     }
 
     protected (float Cost, List<HuntPathfinderStep> Steps) GetBestSteps(uint fromId, uint toId)
     {
-        var bestCost = float.MaxValue;
+        float bestCost = float.MaxValue;
         List<HuntPathfinderStep> bestSteps = [];
 
-        if (data.NodeToNodeDistances.TryGetValue(fromId, out var directList))
+        if (data.NodeToNodeDistances.TryGetValue(fromId, out List<HuntToNode>? directList))
         {
-            var direct = directList.FirstOrDefault(x => x.Id == toId);
+            HuntToNode direct = directList.FirstOrDefault(x => x.Id == toId);
             if (direct.Id == toId)
             {
                 bestCost = direct.Distance;
@@ -79,18 +78,18 @@ public abstract class HuntRoutePlanner(
             }
         }
 
-        if (data.NodeToAethernetDistances.TryGetValue(fromId, out var shardList) && shardList.Count > 0)
+        if (data.NodeToAethernetDistances.TryGetValue(fromId, out List<HuntToAethernet>? shardList) && shardList.Count > 0)
         {
-            var fromShard = shardList.OrderBy(x => x.Distance).First();
-            foreach (var (aethernet, list) in data.AethernetToNodeDistances)
+            HuntToAethernet fromShard = shardList.OrderBy(x => x.Distance).First();
+            foreach((HuntAethernet aethernet, List<HuntToNode> list) in data.AethernetToNodeDistances)
             {
-                var to = list.FirstOrDefault(x => x.Id == toId);
+                HuntToNode to = list.FirstOrDefault(x => x.Id == toId);
                 if (to.Id != toId)
                 {
                     continue;
                 }
 
-                var cost = fromShard.Distance + teleportCost + to.Distance;
+                float cost = fromShard.Distance + teleportCost + to.Distance;
                 if (cost < bestCost)
                 {
                     bestCost = cost;
@@ -98,21 +97,21 @@ public abstract class HuntRoutePlanner(
                     [
                         HuntPathfinderStep.WalkToAethernet(fromShard.Aethernet),
                         HuntPathfinderStep.TeleportToAethernet(aethernet),
-                        HuntPathfinderStep.WalkToDestination(toId),
+                        HuntPathfinderStep.WalkToDestination(toId)
                     ];
                 }
             }
         }
 
-        foreach (var (aethernet, list) in data.AethernetToNodeDistances)
+        foreach((HuntAethernet aethernet, List<HuntToNode> list) in data.AethernetToNodeDistances)
         {
-            var to = list.FirstOrDefault(x => x.Id == toId);
+            HuntToNode to = list.FirstOrDefault(x => x.Id == toId);
             if (to.Id != toId)
             {
                 continue;
             }
 
-            var cost = returnCost + teleportCost + to.Distance;
+            float cost = returnCost + teleportCost + to.Distance;
             if (cost >= bestCost)
             {
                 continue;
@@ -123,13 +122,13 @@ public abstract class HuntRoutePlanner(
                 ?
                 [
                     HuntPathfinderStep.ReturnToBaseCamp(),
-                    HuntPathfinderStep.WalkToDestination(toId),
+                    HuntPathfinderStep.WalkToDestination(toId)
                 ]
                 :
                 [
                     HuntPathfinderStep.ReturnToBaseCamp(),
                     HuntPathfinderStep.TeleportToAethernet(aethernet),
-                    HuntPathfinderStep.WalkToDestination(toId),
+                    HuntPathfinderStep.WalkToDestination(toId)
                 ];
         }
 
@@ -138,12 +137,12 @@ public abstract class HuntRoutePlanner(
 
     private Dictionary<uint, Dictionary<uint, (float Cost, List<HuntPathfinderStep> Steps)>> BuildCostGraph(List<uint> nodes)
     {
-        var graph = new Dictionary<uint, Dictionary<uint, (float, List<HuntPathfinderStep>)>>();
+        Dictionary<uint, Dictionary<uint, (float, List<HuntPathfinderStep>)>> graph = new();
 
-        foreach (var from in nodes)
+        foreach(uint from in nodes)
         {
-            graph[from] = new Dictionary<uint, (float, List<HuntPathfinderStep>)>();
-            foreach (var to in nodes)
+            graph[from] = new();
+            foreach(uint to in nodes)
             {
                 if (from == to)
                 {
@@ -168,23 +167,24 @@ public abstract class HuntRoutePlanner(
             return [start, nodes[0]];
         }
 
-        var route = new List<uint> { start };
-        var unvisited = new HashSet<uint>(nodes.Where(n => n != start));
+        List<uint> route = new()
+            { start };
+        HashSet<uint> unvisited = new(nodes.Where(n => n != start));
 
-        while (unvisited.Count > 0)
+        while(unvisited.Count > 0)
         {
-            var bestInsertionCost = float.MaxValue;
-            var bestIndex = -1;
+            float bestInsertionCost = float.MaxValue;
+            int bestIndex = -1;
             uint bestNode = 0;
 
-            foreach (var nodeToInsert in unvisited)
+            foreach(uint nodeToInsert in unvisited)
             {
-                for (var i = 0; i < route.Count; i++)
+                for(int i = 0; i < route.Count; i++)
                 {
-                    var from = route[i];
+                    uint from = route[i];
                     if (i == route.Count - 1)
                     {
-                        var costAtEnd = graph[from][nodeToInsert].Cost;
+                        float costAtEnd = graph[from][nodeToInsert].Cost;
                         if (costAtEnd < bestInsertionCost)
                         {
                             bestInsertionCost = costAtEnd;
@@ -194,8 +194,8 @@ public abstract class HuntRoutePlanner(
                     }
                     else
                     {
-                        var to = route[i + 1];
-                        var addedCost = graph[from][nodeToInsert].Cost + graph[nodeToInsert][to].Cost - graph[from][to].Cost;
+                        uint to = route[i + 1];
+                        float addedCost = graph[from][nodeToInsert].Cost + graph[nodeToInsert][to].Cost - graph[from][to].Cost;
                         if (addedCost < bestInsertionCost)
                         {
                             bestInsertionCost = addedCost;
@@ -225,11 +225,11 @@ public abstract class HuntRoutePlanner(
     {
         List<HuntPathfinderStep> steps = [];
 
-        for (var i = 0; i < orderedNodes.Count - 1; i++)
+        for(int i = 0; i < orderedNodes.Count - 1; i++)
         {
-            var from = orderedNodes[i];
-            var to = orderedNodes[i + 1];
-            if (graph.TryGetValue(from, out var edges) && edges.TryGetValue(to, out var segment))
+            uint from = orderedNodes[i];
+            uint to = orderedNodes[i + 1];
+            if (graph.TryGetValue(from, out Dictionary<uint, (float Cost, List<HuntPathfinderStep> Steps)>? edges) && edges.TryGetValue(to, out (float Cost, List<HuntPathfinderStep> Steps) segment))
             {
                 steps.AddRange(segment.Steps);
             }
@@ -242,18 +242,18 @@ public abstract class HuntRoutePlanner(
     {
         log.Info("== Treasure Hunt Steps ==");
 
-        var index = 1;
-        var treasureCount = 0;
+        int index = 1;
+        int treasureCount = 0;
 
-        foreach (var step in steps)
+        foreach(HuntPathfinderStep step in steps)
         {
-            var message = step.Type switch
+            string message = step.Type switch
             {
                 HuntPathfinderStepType.WalkToNode => $"[{index}] Walk to Destination: {step.NodeId}",
                 HuntPathfinderStepType.WalkToAethernet => $"[{index}] Walk to Aethernet: {step.Aethernet}",
                 HuntPathfinderStepType.TeleportToAethernet => $"[{index}] Teleport to Aethernet: {step.Aethernet}",
                 HuntPathfinderStepType.ReturnToBaseCamp => $"[{index}] Return to Base Camp",
-                _ => $"[{index}] Unknown Step Type",
+                var _ => $"[{index}] Unknown Step Type"
             };
 
             if (step.Type == HuntPathfinderStepType.WalkToNode)
@@ -270,25 +270,25 @@ public abstract class HuntRoutePlanner(
 
     private static string GetDataFile(IDalamudPluginInterface plugin, ZoneId zoneId, string filename)
     {
-        var zoneFolder = zoneId switch
+        string zoneFolder = zoneId switch
         {
             ZoneId.SouthHorn => "SouthHorn",
-            _ => throw new NotSupportedException($"No hunt data for zone {zoneId}"),
+            var _ => throw new NotSupportedException($"No hunt data for zone {zoneId}")
         };
 
-        var pluginDir = GetPluginDirectory(plugin);
+        string pluginDir = GetPluginDirectory(plugin);
         return Path.Combine(pluginDir, "Data", zoneFolder, filename);
     }
 
     private static string GetPluginDirectory(IDalamudPluginInterface plugin)
     {
-        var pluginDir = plugin.AssemblyLocation.DirectoryName;
+        string? pluginDir = plugin.AssemblyLocation.DirectoryName;
         if (!string.IsNullOrEmpty(pluginDir))
         {
             return pluginDir;
         }
 
-        var assemblyDir = Path.GetDirectoryName(plugin.GetType().Assembly.Location);
+        string? assemblyDir = Path.GetDirectoryName(plugin.GetType().Assembly.Location);
         if (!string.IsNullOrEmpty(assemblyDir))
         {
             return assemblyDir;

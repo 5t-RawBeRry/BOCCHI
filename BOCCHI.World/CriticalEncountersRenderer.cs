@@ -1,14 +1,15 @@
 ﻿using BOCCHI.Common;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.UI;
 using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
 using Ocelot.Windows;
-
 namespace BOCCHI.CriticalEncounters;
 
-public class CriticalEncountersRenderer(
+public class CriticalEncountersRenderer
+(
     ICriticalEncounterRepository criticalEncounters,
     UIConfig uiConfig,
     IBrandingService branding,
@@ -22,22 +23,22 @@ public class CriticalEncountersRenderer(
 
     public void Render()
     {
-        var snapshots = criticalEncounters.SnapshotWithoutForkedTower().ToList();
+        List<CriticalEncounter> snapshots = criticalEncounters.SnapshotWithoutForkedTower().ToList();
         if (snapshots.Count == 0)
         {
             ui.Text(translator.T(".world.critical_encounters.none"));
             return;
         }
 
-        using var list = ImGuiSectionHelper.BoundedList("##ce_list", 120f);
+        using ImGuiSectionHelper.BoundedListScope list = ImGuiSectionHelper.BoundedList("##ce_list", 120f);
         if (!list.IsOpen)
         {
             return;
         }
 
-        foreach (var criticalEncounter in snapshots)
+        foreach(CriticalEncounter criticalEncounter in snapshots)
         {
-            var details =
+            string details =
                 $"{criticalEncounter.State} · #{criticalEncounter.Id.Value} · {criticalEncounter.Position:f0}";
 
             ActivitySnapshotRenderer.RenderCompact(
@@ -49,8 +50,5 @@ public class CriticalEncountersRenderer(
         }
     }
 
-    public bool ShouldRender()
-    {
-        return uiConfig.ShowWorldSection;
-    }
+    public bool ShouldRender() => uiConfig.ShowWorldSection;
 }

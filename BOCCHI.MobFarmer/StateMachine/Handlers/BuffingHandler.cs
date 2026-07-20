@@ -6,10 +6,10 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
 using Ocelot.Actions;
 using Ocelot.States.Flow;
-
 namespace BOCCHI.MobFarmer.StateMachine.Handlers;
 
-public class BuffingHandler(
+public class BuffingHandler
+(
     MobFarmerConfig config,
     ICondition conditions,
     ISupportJobFactory supportJobs,
@@ -71,8 +71,5 @@ public class BuffingHandler(
         return FarmerPhase.Gathering;
     }
 
-    private bool IsGeomancer()
-    {
-        return supportJobs.TryGetCurrent(out var job) && job.Id == SupportJobId.PhantomGeomancer;
-    }
+    private bool IsGeomancer() => supportJobs.TryGetCurrent(out SupportJob job) && job.Id == SupportJobId.PhantomGeomancer;
 }

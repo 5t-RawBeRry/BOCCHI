@@ -1,138 +1,26 @@
 ﻿using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Zones;
-using BOCCHI.Common.Services;
 using Dalamud.Plugin.Services;
 using Ocelot.Chain;
-using Ocelot.Chain.Extensions;
-using Ocelot.Chain.Middleware.Chain;
-using Ocelot.Chain.Middleware.Step;
-using Ocelot.Extensions;
 using Ocelot.Ipc.BossMod;
+using Ocelot.Ipc.VNavmesh;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
-
 namespace BOCCHI.Automator.ChainRecipes;
 
-public class TeleportToAethernetChain(
+public class TeleportToAethernetChain
+(
     IChainFactory chains,
     ILifestreamIpc lifestream,
     IZoneProvider zones,
     IObjectTable objects,
     IPathfinder pathfinder,
+    IVNavmeshIpc vnav,
     ILogger<TeleportToAethernetChain> logger
 ) : ChainRecipe<uint>(chains)
 {
     public override string Name { get; } = "Teleport to Aethernet Chain";
 
-    protected override IChain Compose(IChain chain, uint id)
-    {
-        var aetheryte = zones.GetZone().FindAetheryte(id);
-        var arrivalPosition = aetheryte?.Destination ?? aetheryte?.Position ?? System.Numerics.Vector3.Zero;
-        var arrivalRadius = aetheryte?.DeadRadius ?? 5f;
-
-        return chain
-                .UseMiddleware<LogChainMiddleware>()
-                .UseMiddleware(new RetryChainMiddleware(logger)
-                {
-                    DelayMs = 500,
-                    MaxAttempts = 5,
-                })
-                .UseStepMiddleware<LogStepMiddleware>()
-                .UseStepMiddleware<RunOnMainThreadMiddleware>()
-                .Then(_ =>
-                {
-                    if (objects.LocalPlayer is not { } player)
-                    {
-                        return StepResult.Failure("No local player.");
-                    }
-
-                    var zone = zones.GetZone();
-                    if (zone.IsWithinInteractRange(player.Position))
-                    {
-                        return StepResult.Success();
-                    }
-
-                    var interact = zone.GetNearestInteractPosition(player.Position);
-                    if (interact == System.Numerics.Vector3.Zero)
-                    {
-                        return StepResult.Failure("No aetheryte interact position found.");
-                    }
-
-                    pathfinder.Stop();
-                    pathfinder.PathfindAndMoveTo(new PathfinderConfig(interact)
-                    {
-                        DistanceThreshold = AethernetNavigation.PathfindArrivalRadius,
-                        ShouldSnapToFloor = true,
-                    });
-
-                    return StepResult.Success();
-                }, "TeleportToAethernetChain::ApproachAetheryte")
-                .WaitUntil(
-                    _ =>
-                    {
-                        if (objects.LocalPlayer is not { } player)
-                        {
-                            return ValueTask.FromResult(false);
-                        }
-
-                        return ValueTask.FromResult(
-                            zones.GetZone().IsWithinInteractRange(player.Position)
-                            || pathfinder.GetState() == PathfindingState.Idle);
-                    },
-                    TimeSpan.FromSeconds(60),
-                    TimeSpan.FromMilliseconds(250),
-                    "TeleportToAethernetChain::WaitUntilNearAetheryte"
-                )
-                .Then(_ =>
-                {
-                    if (objects.LocalPlayer is not { } player)
-                    {
-                        return StepResult.Failure("No local player.");
-                    }
-
-                    if (!zones.GetZone().IsWithinInteractRange(player.Position))
-                    {
-                        return StepResult.Failure("Not close enough to an aetheryte for Lifestream.");
-                    }
-
-                    return StepResult.Success();
-                }, "TeleportToAethernetChain::VerifyAetheryteRange")
-                .WaitUntil(
-                    _ => ValueTask.FromResult(!lifestream.IsBusy()),
-                    TimeSpan.FromSeconds(10),
-                    TimeSpan.FromMilliseconds(250),
-                    "TeleportToAethernetChain::WaitUntilLifestreamIsFree"
-                )
-                .Then(_ =>
-                {
-                    if (!lifestream.AethernetTeleportByPlaceNameId(id))
-                    {
-                        return StepResult.Failure("Lifestream rejected aethernet teleport.");
-                    }
-
-                    return StepResult.Success();
-                }, "TeleportToAethernetChain::Teleport")
-                .WaitUntil(
-                    _ => ValueTask.FromResult(HasArrived(arrivalPosition, arrivalRadius)),
-                    TimeSpan.FromSeconds(15),
-                    TimeSpan.FromMilliseconds(250),
-                    "TeleportToAethernetChain::WaitUntilArrived"
-                )
-                .Wait(TimeSpan.FromMilliseconds(500));
-    }
-
-    private bool HasArrived(System.Numerics.Vector3 destination, float radius)
-    {
-        if (lifestream.IsBusy())
-        {
-            return false;
-        }
-
-        if (objects.LocalPlayer is not { } player)
-        {
-            return false;
-        }
-
-        return player.Position.Distance2D(destination) <= radius;
-    }
+    protected override IChain Compose(IChain chain, uint id) =>
+        AethernetTeleport.BuildChain(chain, Chains, zones, objects, pathfinder, vnav, lifestream, logger, id);
 }

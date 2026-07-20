@@ -2,15 +2,15 @@ using BOCCHI.Common.Config;
 using BOCCHI.Common.Extensions;
 using BOCCHI.MobFarmer.Data;
 using BOCCHI.MobFarmer.Services;
+using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
-using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
 using Ocelot.States.Flow;
-
 namespace BOCCHI.MobFarmer.StateMachine.Handlers;
 
-public class GatheringHandler(
+public class GatheringHandler
+(
     MobFarmerConfig config,
     IMobScanner scanner,
     IObjectTable objects,
@@ -20,8 +20,8 @@ public class GatheringHandler(
 {
     public override FarmerPhase? Handle()
     {
-        var inCombat = scanner.InCombat.ToList();
-        var notInCombat = scanner.NotInCombat.ToList();
+        List<IBattleNpc> inCombat = scanner.InCombat.ToList();
+        List<IBattleNpc> notInCombat = scanner.NotInCombat.ToList();
 
         if (inCombat.Count >= config.MinimumMobsToStartFight || notInCombat.Count == 0)
         {
@@ -35,7 +35,7 @@ public class GatheringHandler(
             pathfinder.Stop();
         }
 
-        var next = notInCombat.FirstOrDefault();
+        IBattleNpc? next = notInCombat.FirstOrDefault();
         if (next == null)
         {
             return null;
@@ -48,14 +48,14 @@ public class GatheringHandler(
             return null;
         }
 
-        if (!next.IsTargetingPlayer(objects.LocalPlayer) && !EzThrottler.Throttle("MobFarmer::Gathering::Repath", 500))
+        if (!next.IsTargetingPlayer(objects.LocalPlayer) && !EzThrottler.Throttle("MobFarmer::Gathering::Repath"))
         {
             return null;
         }
 
-        pathfinder.PathfindAndMoveTo(new PathfinderConfig(next.Position)
+        pathfinder.PathfindAndMoveTo(new(next.Position)
         {
-            AllowFlying = false,
+            AllowFlying = false
         });
 
         return null;

@@ -1,11 +1,11 @@
-using BOCCHI.Common;
+using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.UI;
 using Ocelot.Services.UI;
-
 namespace BOCCHI.Debug.Panels;
 
-public sealed class FatesDebugPanel(
+public sealed class FatesDebugPanel
+(
     IFateRepository fates,
     IBrandingService branding,
     IUIService ui
@@ -15,7 +15,7 @@ public sealed class FatesDebugPanel(
 
     public void Render()
     {
-        foreach (var fate in fates.Snapshot())
+        foreach(Fate fate in fates.Snapshot())
         {
             ActivitySnapshotRenderer.Render(
                 ui,

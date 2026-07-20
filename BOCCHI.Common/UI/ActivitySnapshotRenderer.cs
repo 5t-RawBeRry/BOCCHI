@@ -1,7 +1,6 @@
 using Dalamud.Bindings.ImGui;
 using Ocelot.Graphics;
 using Ocelot.Services.UI;
-
 namespace BOCCHI.Common.UI;
 
 public static class ActivitySnapshotRenderer
@@ -37,7 +36,7 @@ public static class ActivitySnapshotRenderer
 
         ImGui.Indent(32);
 
-        foreach (var (label, value) in fields)
+        foreach((var label, var value) in fields)
         {
             ui.LabelledValue(label, value);
         }

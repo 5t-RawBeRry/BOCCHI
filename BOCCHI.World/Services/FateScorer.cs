@@ -4,10 +4,10 @@ using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using Dalamud.Plugin.Services;
 using Ocelot.Extensions;
-
 namespace BOCCHI.Fates.Services;
 
-public class FateScorer(
+public class FateScorer
+(
     FatesConfig config,
     IZoneProvider zones,
     IObjectTable objects
@@ -17,7 +17,7 @@ public class FateScorer(
 
     public FateScore Score(Fate fate)
     {
-        var score = new FateScore();
+        FateScore score = new();
 
         if (!config.IsFateEnabled(fate.Id.Value))
         {
@@ -29,7 +29,7 @@ public class FateScorer(
             return score;
         }
 
-        var distance = player.Position.Distance2D(fate.Position);
+        float distance = player.Position.Distance2D(fate.Position);
         score.Add("distance", 1000f / (distance + 1f));
         score.Add("progress", Math.Max(0, 100 - fate.Progress));
 
@@ -49,16 +49,16 @@ public class FateScorer(
         }
 
         Fate? best = null;
-        var bestScore = float.MinValue;
+        float bestScore = float.MinValue;
 
-        foreach (var fate in fates)
+        foreach(Fate fate in fates)
         {
             if (!config.IsFateEnabled(fate.Id.Value))
             {
                 continue;
             }
 
-            var score = Score(fate);
+            FateScore score = Score(fate);
             if (score.Value > bestScore)
             {
                 bestScore = score.Value;

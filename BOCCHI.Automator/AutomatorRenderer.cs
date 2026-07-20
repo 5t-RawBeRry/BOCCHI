@@ -1,22 +1,20 @@
-using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services;
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
-using BOCCHI.Common.UI;
+using BOCCHI.Common.Data.Paths;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
+using BOCCHI.Common.UI;
 using Dalamud.Bindings.ImGui;
-using Ocelot.Services.Pathfinding;
 using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
 using Ocelot.Windows;
-
 namespace BOCCHI.Automator;
 
-public class AutomatorRenderer(
+public class AutomatorRenderer
+(
     Func<IAutomator> automatorFactory,
     IAutomatorMemory memory,
-    IPathfinder pathfinder,
     UIConfig uiConfig,
     IUIService ui,
     ITranslator<MainWindow> translator
@@ -33,15 +31,10 @@ public class AutomatorRenderer(
     public void Render()
     {
         if (ImGui.Button(Automator.Enabled
-                ? translator.T(".automation.automator.disable")
-                : translator.T(".automation.automator.enable")))
+            ? translator.T(".automation.automator.disable")
+            : translator.T(".automation.automator.enable")))
         {
             Automator.Toggle();
-            if (!Automator.Enabled)
-            {
-                memory.Wipe();
-                pathfinder.Stop();
-            }
         }
 
         if (!Automator.Enabled && !HasDetails())
@@ -52,8 +45,8 @@ public class AutomatorRenderer(
         ImGui.Spacing();
 
         if (ImGui.CollapsingHeader(
-                translator.T(".automation.automator.details"),
-                HasDetails() ? ImGuiTreeNodeFlags.DefaultOpen : ImGuiTreeNodeFlags.None))
+            translator.T(".automation.automator.details"),
+            HasDetails() ? ImGuiTreeNodeFlags.DefaultOpen : ImGuiTreeNodeFlags.None))
         {
             ImGui.Indent();
 
@@ -62,12 +55,12 @@ public class AutomatorRenderer(
                 Automator.Render();
             }
 
-            if (memory.TryRemember<GoalMemory>(out var goalMemory))
+            if (memory.TryRemember<GoalMemory>(out GoalMemory goalMemory))
             {
                 ui.LabelledValue(translator.T(".status.goal"), GoalFormatHelper.Describe(goalMemory.Goal, translator));
             }
 
-            if (memory.TryRemember<PotChestFarmMemory>(out var potFarm))
+            if (memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory potFarm))
             {
                 ui.LabelledValue(translator.T(".automation.automator.pot_chest_farm"), $"Fate {potFarm.FateId.Value}");
                 ui.LabelledValue(
@@ -75,10 +68,10 @@ public class AutomatorRenderer(
                     $"{potFarm.RemainingChests}/{potFarm.TotalChests}");
             }
 
-            if (memory.TryRemember<GoalPathStepMemory>(out var goalPathStepMemory))
+            if (memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory goalPathStepMemory))
             {
-                var stepIndex = 1;
-                foreach (var step in goalPathStepMemory.PathSteps)
+                int stepIndex = 1;
+                foreach(IPathStep step in goalPathStepMemory.PathSteps)
                 {
                     ui.LabelledValue($"{translator.T(".status.current_step")} {stepIndex++}", step.Describe());
                 }
@@ -88,16 +81,11 @@ public class AutomatorRenderer(
         }
     }
 
-    public bool ShouldRender()
-    {
-        return uiConfig.ShowAutomationSection;
-    }
+    public bool ShouldRender() => uiConfig.ShowAutomationSection;
 
-    private bool HasDetails()
-    {
-        return Automator.Enabled
-               || memory.TryRemember<GoalMemory>(out _)
-               || memory.TryRemember<PotChestFarmMemory>(out _)
-               || memory.TryRemember<GoalPathStepMemory>(out _);
-    }
+    private bool HasDetails() =>
+        Automator.Enabled
+        || memory.TryRemember<GoalMemory>(out GoalMemory _)
+        || memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _)
+        || memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _);
 }

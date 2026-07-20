@@ -10,7 +10,6 @@ using BOCCHI.Common.Services.Paths;
 using Microsoft.Extensions.DependencyInjection;
 using Ocelot;
 using Ocelot.States;
-
 namespace BOCCHI.Automator;
 
 public static class IServiceCollectionExtensions

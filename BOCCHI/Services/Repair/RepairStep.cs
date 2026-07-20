@@ -6,10 +6,10 @@ using Ocelot.Actions;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Chain.Middleware.Step;
-
 namespace BOCCHI.Services.Repair;
 
-public class RepairStep(
+public class RepairStep
+(
     IChainFactory chains,
     ICondition condition,
     IGameGui gui
@@ -23,7 +23,7 @@ public class RepairStep(
             .UseStepMiddleware(new RetryStepMiddleware
             {
                 DelayMs = 100,
-                MaxAttempts = 30,
+                MaxAttempts = 30
             })
             .Then(_ =>
             {
@@ -34,13 +34,13 @@ public class RepairStep(
 
                 unsafe
                 {
-                    var repair = gui.GetAddonByName<AddonRepair>("Repair", 1);
+                    AddonRepair* repair = gui.GetAddonByName<AddonRepair>("Repair");
                     if (repair == null || !repair->AtkUnitBase.IsVisible || !repair->RepairAllButton->IsEnabled)
                     {
                         Actions.Repair.Cast();
                     }
 
-                    repair = gui.GetAddonByName<AddonRepair>("Repair", 1);
+                    repair = gui.GetAddonByName<AddonRepair>("Repair");
                     if (repair == null || !repair->AtkUnitBase.IsVisible || !repair->RepairAllButton->IsEnabled)
                     {
                         return StepResult.Failure("Repair not open");
@@ -58,13 +58,13 @@ public class RepairStep(
 
                 unsafe
                 {
-                    var repair = gui.GetAddonByName<AddonRepair>("Repair", 1);
+                    AddonRepair* repair = gui.GetAddonByName<AddonRepair>("Repair");
                     if (repair == null || !repair->AtkUnitBase.IsVisible || !repair->RepairAllButton->IsEnabled)
                     {
                         return StepResult.Failure("Repair Addon not found");
                     }
 
-                    new AddonMaster.Repair((IntPtr)repair).RepairAll();
+                    new AddonMaster.Repair((nint)repair).RepairAll();
 
                     return StepResult.Success();
                 }
@@ -78,13 +78,13 @@ public class RepairStep(
 
                 unsafe
                 {
-                    var repair = gui.GetAddonByName<AddonRepair>("Repair", 1);
+                    AddonRepair* repair = gui.GetAddonByName<AddonRepair>("Repair");
                     if (repair == null || !repair->AtkUnitBase.IsVisible || !repair->RepairAllButton->IsEnabled)
                     {
                         return StepResult.Failure("Repair Addon not found");
                     }
 
-                    var yesno = gui.GetAddonByName<AddonSelectYesno>("SelectYesno", 1);
+                    AddonSelectYesno* yesno = gui.GetAddonByName<AddonSelectYesno>("SelectYesno");
                     if (yesno == null || !yesno->AtkUnitBase.IsVisible || !yesno->AtkUnitBase.UldManager.NodeList[15]->IsVisible())
                     {
                         return StepResult.Failure("SelectYesno Addon not found");
@@ -92,10 +92,10 @@ public class RepairStep(
 
                     try
                     {
-                        new AddonMaster.SelectYesno((IntPtr)yesno).Yes();
+                        new AddonMaster.SelectYesno((nint)yesno).Yes();
                         return StepResult.Success();
                     }
-                    catch (Exception ex)
+                    catch(Exception ex)
                     {
                         return StepResult.Failure(ex);
                     }

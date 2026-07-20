@@ -4,24 +4,20 @@ using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Extensions;
 using Dalamud.Plugin.Services;
 using Lumina.Extensions;
-using Ocelot.Services.PlayerState;
-
 namespace BOCCHI.Buff.Services;
 
-public class BuffProvider(
+public class BuffProvider
+(
     IObjectTable objects,
     BuffConfig config,
     ISupportJobFactory supportJobs
 ) : IBuffProvider
 {
-    public IEnumerable<BuffData> GetBuffs()
-    {
-        return BuffData.All;
-    }
+    public IEnumerable<BuffData> GetBuffs() => BuffData.All;
 
     public BuffData GetBuffForState(BuffState state)
     {
-        var buff = GetBuffs().FirstOrNull(b => b.State == state);
+        BuffData? buff = GetBuffs().FirstOrNull(b => b.State == state);
         if (buff == null)
         {
             throw new ArgumentOutOfRangeException();
@@ -30,14 +26,11 @@ public class BuffProvider(
         return buff.Value;
     }
 
-    public bool ShouldRefreshAny()
-    {
-        return GetBuffs().Any(ShouldRefreshBuff);
-    }
+    public bool ShouldRefreshAny() => GetBuffs().Any(ShouldRefreshBuff);
 
     private bool CanRefreshBuff(BuffData buff)
     {
-        var job = supportJobs.Create(buff.SupportJobId);
+        SupportJob job = supportJobs.Create(buff.SupportJobId);
 
         return job.Level >= buff.RequiredLevel;
     }
@@ -50,7 +43,7 @@ public class BuffProvider(
         }
 
         return buff.ShouldApply(config)
-            && CanRefreshBuff(buff)
-            && player.GetRemainingMinutes(buff.StatusId) <= config.ReapplyThreshold;
+               && CanRefreshBuff(buff)
+               && player.GetRemainingMinutes(buff.StatusId) <= config.ReapplyThreshold;
     }
 }

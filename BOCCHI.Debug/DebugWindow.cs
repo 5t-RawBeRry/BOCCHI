@@ -1,14 +1,12 @@
-using System.Numerics;
-using BOCCHI.Common;
 using BOCCHI.Common.Data.Zones;
-using BOCCHI.Common.Services;
 using Dalamud.Bindings.ImGui;
 using Ocelot.Services.UI;
 using Ocelot.Windows;
-
+using System.Numerics;
 namespace BOCCHI.Debug;
 
-public sealed class DebugWindow(
+public sealed class DebugWindow
+(
     IEnumerable<IDebugPanel> panels,
     IZoneProvider zones,
     IUIService ui
@@ -32,13 +30,13 @@ public sealed class DebugWindow(
             return;
         }
 
-        var panelWidth = 200f;
-        var spacing = ImGui.GetStyle().ItemSpacing.X;
+        float panelWidth = 200f;
+        float spacing = ImGui.GetStyle().ItemSpacing.X;
 
         ImGui.BeginGroup();
 
-        ImGui.BeginChild("PanelList", new Vector2(panelWidth, 0), true);
-        for (var i = 0; i < panels.Length; i++)
+        ImGui.BeginChild("PanelList", new(panelWidth, 0), true);
+        for(int i = 0; i < panels.Length; i++)
         {
             if (ImGui.Selectable(panels[i].Name, i == selectedPanelIndex))
             {
@@ -51,7 +49,7 @@ public sealed class DebugWindow(
         ImGui.SameLine(0, spacing);
 
         ImGui.BeginGroup();
-        ImGui.BeginChild("PanelContent", Vector2.Zero, false);
+        ImGui.BeginChild("PanelContent", Vector2.Zero);
         panels[selectedPanelIndex].Render();
         ImGui.EndChild();
         ImGui.EndGroup();

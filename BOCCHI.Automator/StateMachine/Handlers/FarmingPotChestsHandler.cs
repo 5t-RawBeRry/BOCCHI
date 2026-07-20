@@ -1,13 +1,10 @@
-using System.Numerics;
 using BOCCHI.Automator.Data;
-using BOCCHI.Automator.Services;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
 using BOCCHI.Treasure.ChainRecipes;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
-using DalamudObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Ocelot.Chain;
 using Ocelot.Extensions;
@@ -15,11 +12,14 @@ using Ocelot.Pathfinding.Extensions;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
 using Ocelot.States.Score;
+using System.Numerics;
+using DalamudObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 using TreasureFlags = FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.TreasureFlags;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
-public class FarmingPotChestsHandler(
+public class FarmingPotChestsHandler
+(
     IAutomatorMemory memory,
     IChainFactory chains,
     IChainManager chainManager,
@@ -35,12 +35,12 @@ public class FarmingPotChestsHandler(
 
     public override StatePriority GetScore()
     {
-        if (memory.TryRemember<GoalPathStepMemory>(out _))
+        if (memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _))
         {
             return StatePriority.Never;
         }
 
-        return memory.TryRemember<PotChestFarmMemory>(out _) ? StatePriority.Normal : StatePriority.Never;
+        return memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _) ? StatePriority.Normal : StatePriority.Never;
     }
 
     public override void Enter()
@@ -61,7 +61,7 @@ public class FarmingPotChestsHandler(
 
     public override void Handle()
     {
-        if (!memory.TryRemember<PotChestFarmMemory>(out var farm))
+        if (!memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory farm))
         {
             return;
         }
@@ -79,9 +79,9 @@ public class FarmingPotChestsHandler(
             return;
         }
 
-        while (farm.Chests.Count > 0)
+        while(farm.Chests.Count > 0)
         {
-            var target = farm.Chests.Peek();
+            Vector3 target = farm.Chests.Peek();
             if (!HasChestAt(target) || IsChestComplete(target))
             {
                 farm.Chests.Dequeue();
@@ -97,14 +97,14 @@ public class FarmingPotChestsHandler(
             return;
         }
 
-        var chestPosition = farm.Chests.Peek();
-        var distance = player.Position.Distance(chestPosition);
+        Vector3 chestPosition = farm.Chests.Peek();
+        float distance = player.Position.Distance(chestPosition);
 
         if (distance > OpenTreasureCofferChain.InteractDistance)
         {
             if (pathfinder.IsIdle())
             {
-                pathfinder.PathfindAndMoveTo(new PathfinderConfig(chestPosition));
+                pathfinder.PathfindAndMoveTo(new(chestPosition));
             }
 
             return;
@@ -121,9 +121,8 @@ public class FarmingPotChestsHandler(
     {
         base.Render();
 
-        if (!memory.TryRemember<PotChestFarmMemory>(out var farm))
+        if (!memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory farm))
         {
-            return;
         }
 
         // Rendered by AutomatorRenderer via memory inspection
@@ -135,7 +134,7 @@ public class FarmingPotChestsHandler(
         {
             ObjectKind: DalamudObjectKind.Treasure,
             IsDead: false,
-            IsTargetable: true,
+            IsTargetable: true
         } && o.IsValid());
     }
 
@@ -147,7 +146,7 @@ public class FarmingPotChestsHandler(
 
     private bool IsChestComplete(Vector3 position)
     {
-        var chest = GetValidChests()
+        IGameObject? chest = GetValidChests()
             .FirstOrDefault(o => Vector3.Distance(o.Position, position) <= ChestSearchRadius);
 
         if (chest == null)
@@ -157,8 +156,8 @@ public class FarmingPotChestsHandler(
 
         unsafe
         {
-            var gameObject = (GameObject*)(void*)chest.Address;
-            var instance = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
+            GameObject* gameObject = (GameObject*)(void*)chest.Address;
+            FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure* instance = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
             return instance->Flags.HasFlag(TreasureFlags.Opened);
         }
     }

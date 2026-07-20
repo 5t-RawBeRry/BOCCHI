@@ -3,26 +3,26 @@ using BOCCHI.Common.Data;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Services;
 using Ocelot.Lifecycle;
-
 namespace BOCCHI.Experience.Services;
 
-public class ExperienceTracker(
+public class ExperienceTracker
+(
     TrackerConfig config,
     ISupportJobFactory supportJobs
 ) : IExperienceTracker, IOnUpdate
 {
     private readonly DeltaRateTracker tracker = new(() => TimeSpan.FromMinutes(config.TrackedDuration));
 
-    public UpdateLimit UpdateLimit
-    {
-        get => new()
+    public double ExperiencePerHour => tracker.PerHour;
+
+    public float[] GetExperienceHistory(TimeSpan sampleDuration) => tracker.GetHistory(sampleDuration);
+
+    public UpdateLimit UpdateLimit =>
+        new()
         {
             Mode = UpdateLimitMode.Milliseconds,
-            Limit = 250,
+            Limit = 250
         };
-    }
-
-    public double ExperiencePerHour => tracker.PerHour;
 
     public void Update()
     {
@@ -37,10 +37,5 @@ public class ExperienceTracker(
     private long GetCurrentTotalExperience()
     {
         return supportJobs.All().Sum(j => j.TotalExperience);
-    }
-
-    public float[] GetExperienceHistory(TimeSpan sampleDuration)
-    {
-        return tracker.GetHistory(sampleDuration);
     }
 }

@@ -3,7 +3,7 @@
 public enum EdgeType
 {
     Teleport,
-    Walk,
+    Walk
 }
 
 public class Edge

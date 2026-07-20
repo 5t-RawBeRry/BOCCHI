@@ -1,6 +1,5 @@
 using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Fates;
-
 namespace BOCCHI.Common.Data.Goals;
 
 public interface IGoal
@@ -11,9 +10,7 @@ public interface IGoal
 }
 
 public abstract record GoalType;
-
 public sealed record FateGoal(FateId id) : GoalType;
-
 public sealed record CriticalEncounterGoal(CriticalEncounterId id) : GoalType;
 
 public class Goal : IGoal
@@ -26,7 +23,7 @@ public class Goal : IGoal
         {
             FateGoal(var id) => $"Fate: {id}",
             CriticalEncounterGoal(var id) => $"Critical Encounter: {id}",
-            _ => throw new ArgumentOutOfRangeException(nameof(GoalType))
+            var _ => throw new ArgumentOutOfRangeException(nameof(GoalType))
         };
     }
 }

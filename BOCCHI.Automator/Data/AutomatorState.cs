@@ -16,7 +16,7 @@ public enum AutomatorState
     WaitingForCriticalEncounter,
     InCriticalEncounter,
     ReturningToJob,
-    FarmingPotChests,
+    FarmingPotChests
 }
 
 public enum StatePriority
@@ -43,5 +43,5 @@ public enum StatePriority
 
     VeryHigh = 300,
 
-    Critical = 1000,
+    Critical = 1000
 }

@@ -1,5 +1,4 @@
 ﻿using Dalamud.Configuration;
-
 namespace BOCCHI.Common.Config;
 
 public interface IConfiguration : IPluginConfiguration

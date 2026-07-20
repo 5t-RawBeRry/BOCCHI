@@ -19,5 +19,5 @@ public enum NodeType
     PotChest,
     _PotChestB, // unused (left for type id)
     PostChestReroll, // Getting a reroll on any pot chest from any pool (including this one) will roll in this pool
-    Carrot,
+    Carrot
 }

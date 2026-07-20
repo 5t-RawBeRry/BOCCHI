@@ -5,6 +5,6 @@
         <ProjectReference Include="..\BOCCHI.Treasure\BOCCHI.Treasure.csproj"/>
     </ItemGroup>
     <ItemGroup>
-      <Folder Include="Data\Paths\" />
+        <Folder Include="Data\Paths\"/>
     </ItemGroup>
 </Project>

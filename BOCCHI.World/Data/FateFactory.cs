@@ -9,8 +9,8 @@ public class FateFactory(IDataRepository<FateData> fateDataRepository) : IFateFa
 {
     public Fate Create(IFate context)
     {
-        var id = new FateId(context.FateId);
+        FateId id = new(context.FateId);
 
-        return new Fate(id, context, fateDataRepository);
+        return new(id, context, fateDataRepository);
     }
 }

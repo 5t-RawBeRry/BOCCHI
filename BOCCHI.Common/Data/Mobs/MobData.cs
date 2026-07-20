@@ -1,7 +1,6 @@
-using System.Globalization;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
-
+using System.Globalization;
 namespace BOCCHI.Common.Data.Mobs;
 
 public static class MobData
@@ -14,7 +13,7 @@ public static class MobData
         { Mob.Taurus, Mob.Taurus2 },
         { Mob.Headstone, Mob.Headstone2 },
         { Mob.Garula, Mob.Garula2 },
-        { Mob.VoidViper, Mob.VoidViper2 },
+        { Mob.VoidViper, Mob.VoidViper2 }
     };
 
     private static readonly HashSet<Mob> HiddenLegacyMobs = LegacyToCrescent.Keys.ToHashSet();
@@ -32,7 +31,7 @@ public static class MobData
         Mob.Gourmand,
         Mob.Mimic,
         Mob.Mousse,
-        Mob.Troubadour,
+        Mob.Troubadour
     ];
 
     public static IEnumerable<Mob> GetSelectableMobs()
@@ -54,7 +53,7 @@ public static class MobData
 
     public static bool IsSelected(uint nameId, IReadOnlyCollection<Mob> selected)
     {
-        if (!TryFromNameId(nameId, out var mob))
+        if (!TryFromNameId(nameId, out Mob mob))
         {
             return false;
         }
@@ -64,12 +63,12 @@ public static class MobData
             return true;
         }
 
-        if (LegacyToCrescent.TryGetValue(mob, out var crescent) && selected.Contains(crescent))
+        if (LegacyToCrescent.TryGetValue(mob, out Mob crescent) && selected.Contains(crescent))
         {
             return true;
         }
 
-        foreach (var (legacy, crescentMob) in LegacyToCrescent)
+        foreach((Mob legacy, Mob crescentMob) in LegacyToCrescent)
         {
             if (mob == crescentMob && selected.Contains(legacy))
             {
@@ -82,14 +81,14 @@ public static class MobData
 
     public static string GetDisplayName(Mob mob, IDataManager data)
     {
-        if (NameCache.TryGetValue(mob, out var cached))
+        if (NameCache.TryGetValue(mob, out string? cached))
         {
             return FormatDisplayName(mob, cached);
         }
 
-        if (data.GetExcelSheet<BNpcName>().TryGetRow((uint)mob, out var row))
+        if (data.GetExcelSheet<BNpcName>().TryGetRow((uint)mob, out BNpcName row))
         {
-            var titleCase = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(row.Singular.ToString().ToLower());
+            string titleCase = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(row.Singular.ToString().ToLower());
             NameCache[mob] = titleCase;
             return FormatDisplayName(mob, titleCase);
         }
@@ -104,8 +103,8 @@ public static class MobData
             return true;
         }
 
-        var comparison = StringComparison.OrdinalIgnoreCase;
-        var displayName = GetDisplayName(mob, data);
+        StringComparison comparison = StringComparison.OrdinalIgnoreCase;
+        string displayName = GetDisplayName(mob, data);
 
         return displayName.Contains(search, comparison)
                || mob.ToString().Contains(search, comparison)

@@ -1,5 +1,4 @@
 using BOCCHI.Treasure.Hunt;
-
 namespace BOCCHI.Treasure.Services;
 
 public interface ITreasureHunter

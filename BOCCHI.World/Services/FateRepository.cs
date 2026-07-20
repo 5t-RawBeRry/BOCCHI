@@ -1,17 +1,18 @@
-﻿using System.Numerics;
-using BOCCHI.Common.Data.Fates;
+﻿using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.Services.Data;
 using BOCCHI.Fates.Data;
 using Dalamud.Game.ClientState.Fates;
-using FateState = Dalamud.Game.ClientState.Fates.FateState;
 using Dalamud.Plugin.Services;
 using Ocelot.Lifecycle;
 using Ocelot.Services.Data;
+using System.Numerics;
+using FateState = Dalamud.Game.ClientState.Fates.FateState;
 
 namespace BOCCHI.Fates.Services;
 
-public class FateRepository(
+public class FateRepository
+(
     IDataRepository<FateId, Fate> data,
     IFateTable fates,
     IFateFactory factory
@@ -21,19 +22,13 @@ public class FateRepository(
 
     public event Action<FateId>? FateRemoved;
 
-    public IReadOnlyList<Fate> Snapshot()
-    {
-        return data.GetAll().ToList();
-    }
+    public IReadOnlyList<Fate> Snapshot() => data.GetAll().ToList();
 
-    public bool HasFate(FateId id)
-    {
-        return data.ContainsKey(id);
-    }
+    public bool HasFate(FateId id) => data.ContainsKey(id);
 
     public void Update()
     {
-        var current = fates
+        Dictionary<FateId, Fate> current = fates
             .Where(f => f.State is FateState.Preparing or FateState.Running)
             .Where(f => f.Position != Vector3.Zero && f.Position != Vector3.NaN)
             .Select(factory.Create)
@@ -41,9 +36,9 @@ public class FateRepository(
 
         RepositorySync.ApplySnapshot(data, current, FateAdded, FateRemoved);
 
-        foreach (var fate in data.GetAll())
+        foreach(Fate fate in data.GetAll())
         {
-            var context = fates.FirstOrDefault(f => f.FateId == fate.Id.Value);
+            IFate? context = fates.FirstOrDefault(f => f.FateId == fate.Id.Value);
             if (context == null)
             {
                 continue;

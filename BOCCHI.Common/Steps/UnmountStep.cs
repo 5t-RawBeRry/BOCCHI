@@ -3,7 +3,6 @@ using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Chain.Middleware.Step;
 using Ocelot.Services.PlayerState;
-
 namespace BOCCHI.Common.Steps;
 
 public class UnmountStep(IChainFactory chains, IPlayer player) : ChainRecipe(chains)
@@ -16,7 +15,7 @@ public class UnmountStep(IChainFactory chains, IPlayer player) : ChainRecipe(cha
             .UseStepMiddleware(new RetryStepMiddleware
             {
                 DelayMs = 100,
-                MaxAttempts = 30,
+                MaxAttempts = 30
             })
             .Then(_ =>
             {
