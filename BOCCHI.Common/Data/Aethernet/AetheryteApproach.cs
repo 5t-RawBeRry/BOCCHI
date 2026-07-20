@@ -125,7 +125,15 @@ public static class AetheryteApproach
         return zone.IsWithinLifestreamRange(position);
     }
 
-    public static bool IsAlreadyAtAetheryte(AethernetData? aetheryte, Vector3 position) =>
-        aetheryte != null
-        && position.Distance2D(aetheryte.Position) <= AethernetData.LifestreamInteractRadius;
+    public static bool IsAlreadyAtAetheryte(AethernetData? aetheryte, Vector3 position)
+    {
+        if (aetheryte == null)
+        {
+            return false;
+        }
+
+        float pad = MathF.Max(aetheryte.DeadRadius, AethernetData.InteractRadius);
+        return position.Distance2D(aetheryte.Position) <= pad
+               || position.Distance2D(aetheryte.GetInteractPosition()) <= pad;
+    }
 }

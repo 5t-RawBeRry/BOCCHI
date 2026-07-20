@@ -4,12 +4,10 @@ using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Chain.Middleware.Chain;
 using Ocelot.Chain.Middleware.Step;
-using Ocelot.Extensions;
 using Ocelot.Ipc.BossMod;
 using Ocelot.Ipc.VNavmesh;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
-using System.Numerics;
 namespace BOCCHI.Common.Data.Aethernet;
 
 public static class AethernetTeleport
@@ -26,10 +24,6 @@ public static class AethernetTeleport
         uint placeNameId)
     {
         string chainName = chain.Name;
-        IZone zone = zones.GetZone();
-        AethernetData? aetheryte = zone.FindAetheryte(placeNameId);
-        Vector3 arrivalPosition = aetheryte?.GetInteractPosition() ?? aetheryte?.Position ?? Vector3.Zero;
-        float arrivalRadius = aetheryte?.DeadRadius ?? 5f;
 
         return chain
             .UseMiddleware<LogChainMiddleware>()
@@ -42,8 +36,10 @@ public static class AethernetTeleport
             .UseStepMiddleware<RunOnMainThreadMiddleware>()
             .Then(_ =>
                 {
+                    // Re-resolve in case zone data was stale at compose time.
+                    AethernetData? target = zones.GetZone().FindAetheryte(placeNameId);
                     if (objects.LocalPlayer is { } player
-                        && AetheryteApproach.IsAlreadyAtAetheryte(aetheryte, player.Position))
+                        && AetheryteApproach.IsAlreadyAtAetheryte(target, player.Position))
                     {
                         logger.Info("Already at aetheryte {Id} — skipping teleport", placeNameId);
                         return StepResult.Break();
@@ -53,7 +49,7 @@ public static class AethernetTeleport
                 }, $"{chainName}::SkipIfAlreadyThere")
             .Then(AetheryteApproach.BuildApproachChain(
                 chains,
-                zone,
+                zones.GetZone(),
                 objects,
                 pathfinder,
                 vnav,
@@ -66,7 +62,7 @@ public static class AethernetTeleport
                         return StepResult.Failure("No local player.");
                     }
 
-                    if (!AetheryteApproach.IsReadyForLifestream(zone, lifestream, player.Position))
+                    if (!AetheryteApproach.IsReadyForLifestream(zones.GetZone(), lifestream, player.Position))
                     {
                         return StepResult.Failure("Not close enough to an aetheryte for Lifestream.");
                     }
@@ -80,6 +76,14 @@ public static class AethernetTeleport
                 $"{chainName}::WaitUntilLifestreamIsFree")
             .Then(_ =>
             {
+                AethernetData? target = zones.GetZone().FindAetheryte(placeNameId);
+                if (objects.LocalPlayer is { } player
+                    && AetheryteApproach.IsAlreadyAtAetheryte(target, player.Position))
+                {
+                    logger.Info("Already at destination aetheryte {Id} — skip Lifestream call", placeNameId);
+                    return StepResult.Success();
+                }
+
                 if (!lifestream.AethernetTeleportByPlaceNameId(placeNameId))
                 {
                     return StepResult.Failure("Lifestream rejected aethernet teleport.");
@@ -100,7 +104,8 @@ public static class AethernetTeleport
                         return ValueTask.FromResult(false);
                     }
 
-                    return ValueTask.FromResult(player.Position.Distance2D(arrivalPosition) <= arrivalRadius);
+                    AethernetData? target = zones.GetZone().FindAetheryte(placeNameId);
+                    return ValueTask.FromResult(AetheryteApproach.IsAlreadyAtAetheryte(target, player.Position));
                 },
                 TimeSpan.FromSeconds(15),
                 TimeSpan.FromMilliseconds(250),
