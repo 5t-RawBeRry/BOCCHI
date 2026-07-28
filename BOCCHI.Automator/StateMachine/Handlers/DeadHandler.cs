@@ -2,6 +2,7 @@
 using Dalamud.Game.ClientState.Conditions;
 using Ocelot.Services.PlayerState;
 using Ocelot.States.Score;
+
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
 public class DeadHandler(IPlayer player) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Dead)
