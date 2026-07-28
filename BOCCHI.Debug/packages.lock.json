@@ -4,8 +4,8 @@
     "net10.0-windows7.0": {
       "ECommons": {
         "type": "Transitive",
-        "resolved": "3.2.1.15",
-        "contentHash": "2BowPSMoVC1v8E/jivCnbqbDLaNMN2uy2lih/hrEIANoh2B7PfydUb7zT/EOl86fEK6Hw88k1Vzvmoe/cHb3EA=="
+        "resolved": "3.2.1.16",
+        "contentHash": "Ifq1cHrBXL9h+94hWhocehklrl3DamafhYTfxgwzOGc6yc/3AkDvwLjYQG2EHEv1Rrgrf5FkdxlnJzcVfiBesQ=="
       },
       "KamiToolKit": {
         "type": "Transitive",
@@ -124,34 +124,10 @@
           "FFXIVOcelot.UI": "[1.0.0, )"
         }
       },
-      "bocchi.currency": {
-        "type": "Project",
-        "dependencies": {
-          "BOCCHI.Common": "[1.0.0, )",
-          "FFXIVOcelot": "[1.0.0, )",
-          "FFXIVOcelot.Chain": "[1.0.0, )",
-          "FFXIVOcelot.ECommons": "[1.0.0, )",
-          "FFXIVOcelot.Pathfinding": "[1.0.0, )",
-          "FFXIVOcelot.Pictomancy": "[1.0.0, )",
-          "FFXIVOcelot.UI": "[1.0.0, )"
-        }
-      },
-      "bocchi.experience": {
-        "type": "Project",
-        "dependencies": {
-          "BOCCHI.Common": "[1.0.0, )",
-          "FFXIVOcelot": "[1.0.0, )",
-          "FFXIVOcelot.Chain": "[1.0.0, )",
-          "FFXIVOcelot.ECommons": "[1.0.0, )",
-          "FFXIVOcelot.Pathfinding": "[1.0.0, )",
-          "FFXIVOcelot.Pictomancy": "[1.0.0, )",
-          "FFXIVOcelot.UI": "[1.0.0, )"
-        }
-      },
       "FFXIVOcelot": {
         "type": "Project",
         "dependencies": {
-          "ECommons": "[3.2.1.15, )",
+          "ECommons": "[3.2.1.16, )",
           "Microsoft.Extensions.DependencyInjection": "[10.0.7, )"
         }
       },
@@ -165,7 +141,7 @@
       "FFXIVOcelot.ECommons": {
         "type": "Project",
         "dependencies": {
-          "ECommons": "[3.2.1.15, )",
+          "ECommons": "[3.2.1.16, )",
           "FFXIVOcelot": "[1.0.0, )"
         }
       },
