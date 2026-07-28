@@ -4,6 +4,7 @@ using BOCCHI.Currency.Services;
 using BOCCHI.Experience;
 using BOCCHI.Experience.Services;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace BOCCHI.Trackers;
 
 public static class IServiceCollectionExtensions

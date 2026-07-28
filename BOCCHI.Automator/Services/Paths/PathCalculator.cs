@@ -10,6 +10,7 @@ using Ocelot.Extensions;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
 using System.Numerics;
+
 namespace BOCCHI.Automator.Services.Paths;
 
 public class PathCalculator

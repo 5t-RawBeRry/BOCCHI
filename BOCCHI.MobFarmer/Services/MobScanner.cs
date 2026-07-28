@@ -8,6 +8,7 @@ using ECommons.GameFunctions;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Ocelot.Extensions;
 using Ocelot.Services.PlayerState;
+
 namespace BOCCHI.MobFarmer.Services;
 
 public class MobScanner

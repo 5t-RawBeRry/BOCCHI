@@ -1,5 +1,6 @@
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Services;
+
 namespace BOCCHI.Automator.Services.Goals;
 
 public class GoalValidator

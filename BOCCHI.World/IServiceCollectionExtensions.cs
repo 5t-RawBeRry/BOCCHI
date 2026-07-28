@@ -7,6 +7,7 @@ using BOCCHI.Fates;
 using BOCCHI.Fates.Data;
 using BOCCHI.Fates.Services;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace BOCCHI.World;
 
 public static class IServiceCollectionExtensions

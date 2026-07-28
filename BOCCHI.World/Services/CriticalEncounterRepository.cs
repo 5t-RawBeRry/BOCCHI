@@ -7,6 +7,7 @@ using ECommons;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using Ocelot.Lifecycle;
 using Ocelot.Services.Data;
+
 namespace BOCCHI.CriticalEncounters.Services;
 
 public class CriticalEncounterRepository

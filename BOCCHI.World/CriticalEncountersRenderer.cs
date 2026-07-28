@@ -6,6 +6,7 @@ using BOCCHI.Common.UI;
 using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
 using Ocelot.Windows;
+
 namespace BOCCHI.CriticalEncounters;
 
 public class CriticalEncountersRenderer

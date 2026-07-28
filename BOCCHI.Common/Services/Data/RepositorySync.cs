@@ -1,4 +1,5 @@
 using Ocelot.Services.Data;
+
 namespace BOCCHI.Common.Services.Data;
 
 public static class RepositorySync

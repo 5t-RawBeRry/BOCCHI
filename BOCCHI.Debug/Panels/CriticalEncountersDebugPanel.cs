@@ -3,6 +3,7 @@ using BOCCHI.Common.Services;
 using BOCCHI.Common.UI;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using Ocelot.Services.UI;
+
 namespace BOCCHI.Debug.Panels;
 
 public sealed class CriticalEncountersDebugPanel

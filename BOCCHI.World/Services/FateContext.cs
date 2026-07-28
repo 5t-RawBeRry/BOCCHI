@@ -7,6 +7,7 @@ using ECommons.GameFunctions;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 using Ocelot.Extensions;
+
 namespace BOCCHI.Fates.Services;
 
 public class FateContext(IObjectTable objects) : IFateContext

@@ -2,6 +2,7 @@ using BOCCHI.Debug.Panels;
 using BOCCHI.Debug.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Ocelot.Windows;
+
 namespace BOCCHI.Debug;
 
 public static class IServiceCollectionExtensions

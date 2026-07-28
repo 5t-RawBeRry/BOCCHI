@@ -45,7 +45,10 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
     private readonly IPluginLog logger = logger;
     private readonly IDalamudPluginInterface plugin = plugin;
 
-    public override string Name { get; } = "BOCCHI";
+    public override string Name
+    {
+        get => "BOCCHI";
+    }
 
     protected override void Bootstrap(IServiceCollection services)
     {

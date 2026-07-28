@@ -26,7 +26,10 @@ public abstract class BaseZone
 {
     protected abstract uint BasecampPlaceNameId { get; }
 
-    public ZoneId ZoneId { get; } = zoneId;
+    public ZoneId ZoneId
+    {
+        get => zoneId;
+    }
 
     public ushort TerritoryType => (ushort)ZoneId;
 

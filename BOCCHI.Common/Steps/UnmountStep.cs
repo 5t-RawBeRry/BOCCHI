@@ -3,11 +3,15 @@ using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Chain.Middleware.Step;
 using Ocelot.Services.PlayerState;
+
 namespace BOCCHI.Common.Steps;
 
 public class UnmountStep(IChainFactory chains, IPlayer player) : ChainRecipe(chains)
 {
-    public override string Name { get; } = "Unmount";
+    public override string Name
+    {
+        get => "Unmount";
+    }
 
     protected override IChain Compose(IChain chain)
     {

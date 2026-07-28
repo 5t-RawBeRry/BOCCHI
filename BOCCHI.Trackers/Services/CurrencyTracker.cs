@@ -2,6 +2,7 @@ using BOCCHI.Common.Config;
 using BOCCHI.Common.Data;
 using BOCCHI.Common.Services;
 using Ocelot.Lifecycle;
+
 namespace BOCCHI.Currency.Services;
 
 public class CurrencyTracker(TrackerConfig config) : ICurrencyTracker, IOnUpdate

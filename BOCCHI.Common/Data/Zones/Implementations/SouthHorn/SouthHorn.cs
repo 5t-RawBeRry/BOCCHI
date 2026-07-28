@@ -6,6 +6,7 @@ using Dalamud.Plugin.Services;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
 using System.Numerics;
+
 namespace BOCCHI.Common.Data.Zones.Implementations.SouthHorn;
 
 public class SouthHorn
@@ -61,7 +62,10 @@ public class SouthHorn
         Destination = new(-384f, 97.2f, 278.1f),
         DeadRadius = 3.2f
     };
-    protected override uint BasecampPlaceNameId { get; } = 4944;
+    protected override uint BasecampPlaceNameId
+    {
+        get => 4944;
+    }
 
     private IEnumerable<uint> KnowledgeCrystalLayoutIds =>
     [

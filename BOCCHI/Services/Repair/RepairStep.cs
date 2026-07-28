@@ -6,6 +6,7 @@ using Ocelot.Actions;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Chain.Middleware.Step;
+
 namespace BOCCHI.Services.Repair;
 
 public class RepairStep
@@ -15,7 +16,10 @@ public class RepairStep
     IGameGui gui
 ) : ChainRecipe(chains)
 {
-    public override string Name { get; } = "Repair";
+    public override string Name
+    {
+        get => "Repair";
+    }
 
     protected override IChain Compose(IChain chain)
     {

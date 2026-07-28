@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+
 namespace BOCCHI.Common.Data.Zones.Graph;
 
 public class Vector3Converter : JsonConverter<Vector3>

@@ -2,6 +2,7 @@
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
 using System.Numerics;
+
 namespace BOCCHI.Common.Data.Zones.Graph.Traversal;
 
 public record TraversalCandidate(float TotalCost, List<PathStep> Steps);

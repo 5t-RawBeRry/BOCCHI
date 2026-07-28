@@ -2,6 +2,7 @@
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
 using Ocelot.Extensions;
+
 namespace BOCCHI.Common.Services;
 
 public interface ICriticalEncounterContext

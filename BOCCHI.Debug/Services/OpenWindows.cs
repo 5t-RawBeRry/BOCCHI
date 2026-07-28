@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Ocelot.Lifecycle;
 using Ocelot.Windows;
+
 namespace BOCCHI.Debug.Services;
 
 public class OpenWindows(IServiceProvider services) : IOnUpdate

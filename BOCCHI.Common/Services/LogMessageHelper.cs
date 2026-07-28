@@ -1,6 +1,7 @@
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
 using System.Text.RegularExpressions;
+
 namespace BOCCHI.Common.Services;
 
 public static class LogMessageHelper

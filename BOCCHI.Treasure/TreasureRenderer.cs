@@ -10,6 +10,7 @@ using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
 using Ocelot.Windows;
 using System.Numerics;
+
 namespace BOCCHI.Treasure;
 
 public class TreasureRenderer

@@ -6,6 +6,7 @@ using Ocelot.Ipc.BossMod;
 using Ocelot.Ipc.VNavmesh;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
+
 namespace BOCCHI.Treasure.ChainRecipes;
 
 public class HuntTeleportChain
@@ -19,7 +20,10 @@ public class HuntTeleportChain
     ILogger<HuntTeleportChain> logger
 ) : ChainRecipe<uint>(chains)
 {
-    public override string Name { get; } = "Hunt Teleport Chain";
+    public override string Name
+    {
+        get => "Hunt Teleport Chain";
+    }
 
     protected override IChain Compose(IChain chain, uint placeNameId) =>
         AethernetTeleport.BuildChain(chain, Chains, zones, objects, pathfinder, vnav, lifestream, logger, placeNameId);

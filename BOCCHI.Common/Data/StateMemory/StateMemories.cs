@@ -5,6 +5,7 @@ using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Services.Paths;
 using Ocelot.Services.Logger;
 using System.Numerics;
+
 namespace BOCCHI.Common.Data.StateMemory;
 
 public sealed class ApplyingBuffsMemory;
@@ -13,12 +14,15 @@ public class WaitingForCriticalEncounterMemory;
 
 public sealed class GoalMemory(IGoal goal)
 {
-    public IGoal Goal { get; } = goal;
+    public IGoal Goal
+    {
+        get => goal;
+    }
 }
 
 public sealed class IdleStateMemory
 {
-    public DateTimeOffset Entered { get; } = DateTimeOffset.UtcNow;
+    public readonly DateTimeOffset Entered = DateTimeOffset.UtcNow;
 
     public int ApproachCandidateIndex { get; set; }
 
@@ -27,7 +31,7 @@ public sealed class IdleStateMemory
 
 public sealed class ReturningStateMemory
 {
-    public DateTimeOffset QueuedAt { get; } = DateTimeOffset.UtcNow;
+    public readonly DateTimeOffset QueuedAt = DateTimeOffset.UtcNow;
 
     public TimeSpan GetTimeQueued() => DateTimeOffset.UtcNow - QueuedAt;
 }
@@ -44,11 +48,14 @@ public class TreasureSightSupportJobMemory(SupportJobId job)
 
 public sealed class PotChestFarmMemory(FateId fateId, IEnumerable<Vector3> chestPositions)
 {
-    public FateId FateId { get; } = fateId;
+    public FateId FateId
+    {
+        get => fateId;
+    }
 
-    public Queue<Vector3> Chests { get; } = new(chestPositions);
+    public readonly Queue<Vector3> Chests = new(chestPositions);
 
-    public int TotalChests { get; } = chestPositions.Count();
+    public readonly int TotalChests = chestPositions.Count();
 
     public int RemainingChests => Chests.Count;
 }

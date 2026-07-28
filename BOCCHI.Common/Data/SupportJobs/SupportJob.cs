@@ -1,6 +1,7 @@
 ﻿using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
+
 namespace BOCCHI.Common.Data.SupportJobs;
 
 public class SupportJob

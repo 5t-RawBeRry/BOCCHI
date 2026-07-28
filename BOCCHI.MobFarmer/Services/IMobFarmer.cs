@@ -1,6 +1,7 @@
 using BOCCHI.MobFarmer.Data;
 using Ocelot.Lifecycle;
 using System.Numerics;
+
 namespace BOCCHI.MobFarmer.Data
 {
     public enum FarmerPhase

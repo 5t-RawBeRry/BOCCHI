@@ -2,6 +2,7 @@ using BOCCHI.Common.Data.Zones;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using System.Numerics;
+
 namespace BOCCHI.Treasure.Hunt;
 
 public readonly record struct TreasureLayoutDatum(uint Id, Vector3 Position, uint ModelId);

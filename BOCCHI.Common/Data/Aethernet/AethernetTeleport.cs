@@ -8,6 +8,7 @@ using Ocelot.Ipc.BossMod;
 using Ocelot.Ipc.VNavmesh;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
+
 namespace BOCCHI.Common.Data.Aethernet;
 
 public static class AethernetTeleport

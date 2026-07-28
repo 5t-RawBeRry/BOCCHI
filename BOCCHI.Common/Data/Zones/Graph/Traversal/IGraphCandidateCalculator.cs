@@ -1,5 +1,6 @@
 ﻿using Ocelot.Services.Pathfinding;
 using System.Numerics;
+
 namespace BOCCHI.Common.Data.Zones.Graph.Traversal;
 
 public interface IGraphCandidateCalculator

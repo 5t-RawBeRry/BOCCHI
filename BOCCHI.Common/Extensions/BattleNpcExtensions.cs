@@ -1,6 +1,7 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
+
 namespace BOCCHI.Common.Extensions;
 
 public static unsafe class BattleNpcExtensions

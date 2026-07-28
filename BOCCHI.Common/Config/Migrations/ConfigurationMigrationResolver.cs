@@ -1,8 +1,11 @@
 ﻿using Newtonsoft.Json.Linq;
+
 namespace BOCCHI.Common.Config.Migrations;
 
 public class ConfigurationMigrationResolver : IConfigurationMigrationResolver
 {
+    private readonly Dictionary<int, IMigrator> migratorMap = [];
+
     public ConfigurationMigrationResolver(IEnumerable<IMigrator> migrators)
     {
         foreach(IMigrator migrator in migrators)
@@ -13,7 +16,6 @@ public class ConfigurationMigrationResolver : IConfigurationMigrationResolver
             }
         }
     }
-    private Dictionary<int, IMigrator> migratorMap { get; } = [];
 
     public IMigrator? Resolve(int from) => migratorMap.TryGetValue(from, out IMigrator? migrator) ? migrator : null;
 

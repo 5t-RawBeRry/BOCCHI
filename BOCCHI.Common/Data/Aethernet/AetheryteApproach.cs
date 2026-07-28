@@ -7,6 +7,7 @@ using Ocelot.Ipc.BossMod;
 using Ocelot.Ipc.VNavmesh;
 using Ocelot.Services.Pathfinding;
 using System.Numerics;
+
 namespace BOCCHI.Common.Data.Aethernet;
 
 public static class AetheryteApproach

@@ -3,6 +3,7 @@ using Dalamud.Bindings.ImGui;
 using Ocelot.Services.UI;
 using Ocelot.Windows;
 using System.Numerics;
+
 namespace BOCCHI.Debug;
 
 public sealed class DebugWindow

@@ -3,6 +3,7 @@ using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph;
 using Ocelot.Extensions;
 using System.Numerics;
+
 namespace BOCCHI.Common.Data.Aethernet;
 
 public static class AethernetNavigation

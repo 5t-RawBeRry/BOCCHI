@@ -1,4 +1,5 @@
 using Dalamud.Bindings.ImGui;
+
 namespace BOCCHI.Common.UI;
 
 public static class ImGuiSectionHelper

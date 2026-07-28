@@ -1,5 +1,6 @@
 ﻿using BOCCHI.Automator.Data;
 using Ocelot.States.Score;
+
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
 public class EntryHandler() : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Entry)

@@ -4,6 +4,7 @@ using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using Dalamud.Plugin.Services;
 using Ocelot.Extensions;
+
 namespace BOCCHI.Fates.Services;
 
 public class FateScorer

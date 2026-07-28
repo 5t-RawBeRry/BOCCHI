@@ -1,6 +1,7 @@
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Statuses;
 using Ocelot.Extensions;
+
 namespace BOCCHI.Common.Extensions;
 
 public static class CharacterStatusExtensions

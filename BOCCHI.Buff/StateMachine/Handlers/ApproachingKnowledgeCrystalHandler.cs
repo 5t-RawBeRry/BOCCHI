@@ -6,6 +6,7 @@ using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
 using Ocelot.States.Flow;
 using System.Numerics;
+
 namespace BOCCHI.Buff.StateMachine.Handlers;
 
 public class ApproachingKnowledgeCrystalHandler

@@ -9,6 +9,7 @@ using Dalamud.Plugin.Services;
 using Ocelot.Actions;
 using Ocelot.Extensions;
 using Ocelot.States.Flow;
+
 namespace BOCCHI.Buff.StateMachine.Handlers;
 
 public class CastingInquiringMindHandler

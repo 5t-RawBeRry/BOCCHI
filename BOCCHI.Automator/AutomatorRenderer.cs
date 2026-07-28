@@ -9,6 +9,7 @@ using Dalamud.Bindings.ImGui;
 using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
 using Ocelot.Windows;
+
 namespace BOCCHI.Automator;
 
 public class AutomatorRenderer

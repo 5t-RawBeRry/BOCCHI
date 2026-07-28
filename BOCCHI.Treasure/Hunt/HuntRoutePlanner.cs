@@ -3,6 +3,7 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using System.Numerics;
 using System.Text.Json;
+
 namespace BOCCHI.Treasure.Hunt;
 
 public interface IHuntRoutePlanner

@@ -2,6 +2,7 @@
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using Lumina.Excel.Sheets;
 using Ocelot.Services.Data;
+
 namespace BOCCHI.Data;
 
 public class SupportJobFactory : ISupportJobFactory

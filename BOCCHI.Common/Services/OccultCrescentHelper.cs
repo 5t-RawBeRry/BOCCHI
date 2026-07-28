@@ -1,4 +1,5 @@
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
+
 namespace BOCCHI.Common.Services;
 
 public static unsafe class OccultCrescentHelper

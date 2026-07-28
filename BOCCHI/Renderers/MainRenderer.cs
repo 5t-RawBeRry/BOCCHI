@@ -8,6 +8,7 @@ using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
 using Ocelot.Services.WindowManager;
 using Ocelot.Windows;
+
 namespace BOCCHI.Renderers;
 
 public class MainRenderer

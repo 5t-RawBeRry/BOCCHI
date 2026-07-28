@@ -5,6 +5,7 @@ using BOCCHI.Currency.Services;
 using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
 using Ocelot.Windows;
+
 namespace BOCCHI.Currency;
 
 public class CurrencyRenderer

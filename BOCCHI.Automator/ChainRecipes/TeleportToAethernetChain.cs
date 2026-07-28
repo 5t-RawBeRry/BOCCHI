@@ -6,6 +6,7 @@ using Ocelot.Ipc.BossMod;
 using Ocelot.Ipc.VNavmesh;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
+
 namespace BOCCHI.Automator.ChainRecipes;
 
 public class TeleportToAethernetChain
@@ -19,7 +20,10 @@ public class TeleportToAethernetChain
     ILogger<TeleportToAethernetChain> logger
 ) : ChainRecipe<uint>(chains)
 {
-    public override string Name { get; } = "Teleport to Aethernet Chain";
+    public override string Name
+    {
+        get => "Teleport to Aethernet Chain";
+    }
 
     protected override IChain Compose(IChain chain, uint id) =>
         AethernetTeleport.BuildChain(chain, Chains, zones, objects, pathfinder, vnav, lifestream, logger, id);

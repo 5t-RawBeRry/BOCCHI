@@ -1,5 +1,6 @@
 using BOCCHI.Common.Data.SupportJobs;
 using Ocelot.Services.UI;
+
 namespace BOCCHI.Debug.Panels;
 
 public sealed class JobLevelsDebugPanel

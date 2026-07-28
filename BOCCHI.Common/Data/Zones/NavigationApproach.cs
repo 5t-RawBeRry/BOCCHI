@@ -1,5 +1,6 @@
 using Ocelot.Extensions;
 using System.Numerics;
+
 namespace BOCCHI.Common.Data.Zones;
 
 public static class NavigationConstants

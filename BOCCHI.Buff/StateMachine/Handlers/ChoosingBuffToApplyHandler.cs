@@ -7,6 +7,7 @@ using BOCCHI.Common.Extensions;
 using BOCCHI.Common.Services;
 using Dalamud.Plugin.Services;
 using Ocelot.States.Flow;
+
 namespace BOCCHI.Buff.StateMachine.Handlers;
 
 public class ChoosingBuffToApplyHandler

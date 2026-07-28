@@ -1,6 +1,7 @@
 ﻿using BOCCHI.Common.Data.Zones.Graph.Factory.Steps;
 using Lumina.Excel.Sheets;
 using Ocelot.Services.Data;
+
 namespace BOCCHI.Common.Data.Zones.Graph.Factory;
 
 public class GraphFactory : IGraphFactory

@@ -3,6 +3,7 @@ using BOCCHI.Common.Data.Paths;
 using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
 using System.Numerics;
+
 namespace BOCCHI.Common.Data.Zones.Graph.Traversal;
 
 public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator

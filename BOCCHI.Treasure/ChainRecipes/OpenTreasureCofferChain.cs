@@ -25,7 +25,10 @@ public class OpenTreasureCofferChain
 {
     public const float InteractDistance = 2f;
 
-    public override string Name { get; } = "Open Treasure Coffer";
+    public override string Name
+    {
+        get => "Open Treasure Coffer";
+    }
 
     protected override IChain Compose(IChain chain, Vector3 targetPosition)
     {

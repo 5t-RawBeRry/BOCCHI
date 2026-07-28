@@ -11,6 +11,7 @@ using Ocelot.Extensions;
 using Ocelot.Lifecycle;
 using Ocelot.Services.PlayerState;
 using System.Text.RegularExpressions;
+
 namespace BOCCHI.Treasure.Services;
 
 public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable

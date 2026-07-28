@@ -1,4 +1,5 @@
 using Dalamud.Plugin.Services;
+
 namespace BOCCHI.Common.Data.Zones;
 
 public class ZoneProvider(IClientState client, IEnumerable<IZone> zones) : IZoneProvider

@@ -9,6 +9,7 @@ using Ocelot.Lifecycle;
 using Ocelot.Services.OverlayRenderer;
 using Ocelot.Services.PlayerState;
 using System.Numerics;
+
 namespace BOCCHI.Treasure;
 
 public class TreasureRadarDrawer

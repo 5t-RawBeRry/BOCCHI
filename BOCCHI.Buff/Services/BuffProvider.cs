@@ -4,6 +4,7 @@ using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Extensions;
 using Dalamud.Plugin.Services;
 using Lumina.Extensions;
+
 namespace BOCCHI.Buff.Services;
 
 public class BuffProvider

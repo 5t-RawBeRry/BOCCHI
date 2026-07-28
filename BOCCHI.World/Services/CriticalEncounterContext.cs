@@ -8,6 +8,7 @@ using ECommons.GameFunctions;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using Ocelot.Extensions;
+
 namespace BOCCHI.CriticalEncounters.Services;
 
 public class CriticalEncounterContext(IObjectTable objects) : ICriticalEncounterContext

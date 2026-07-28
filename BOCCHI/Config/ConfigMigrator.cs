@@ -3,6 +3,7 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+
 namespace BOCCHI.Config;
 
 public class ConfigMigrator(IDalamudPluginInterface plugin, IPluginLog logger)

@@ -1,6 +1,7 @@
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
 using System.Globalization;
+
 namespace BOCCHI.Common.Data.Mobs;
 
 public static class MobData
@@ -18,21 +19,24 @@ public static class MobData
 
     private static readonly HashSet<Mob> HiddenLegacyMobs = LegacyToCrescent.Keys.ToHashSet();
 
-    public static IReadOnlyList<Mob> MobsWithSpawnCondition { get; } =
-    [
-        Mob.Armor,
-        Mob.Bomb,
-        Mob.Caoineag,
-        Mob.Dhruva,
-        Mob.Dullahan,
-        Mob.Fool,
-        Mob.Geshunpest,
-        Mob.Ghost,
-        Mob.Gourmand,
-        Mob.Mimic,
-        Mob.Mousse,
-        Mob.Troubadour
-    ];
+    public static IReadOnlyList<Mob> MobsWithSpawnCondition
+    {
+        get =>
+        [
+            Mob.Armor,
+            Mob.Bomb,
+            Mob.Caoineag,
+            Mob.Dhruva,
+            Mob.Dullahan,
+            Mob.Fool,
+            Mob.Geshunpest,
+            Mob.Ghost,
+            Mob.Gourmand,
+            Mob.Mimic,
+            Mob.Mousse,
+            Mob.Troubadour
+        ];
+    }
 
     public static IEnumerable<Mob> GetSelectableMobs()
     {

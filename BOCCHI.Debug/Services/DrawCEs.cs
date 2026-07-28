@@ -7,6 +7,7 @@ using Ocelot.Graphics;
 using Ocelot.Lifecycle;
 using Ocelot.Services.OverlayRenderer;
 using System.Numerics;
+
 namespace BOCCHI.Debug.Services;
 
 public class DrawCEs(IOverlayRenderer overlay, ICriticalEncounterRepository ces, IZoneProvider zones) : IOnRender

@@ -4,6 +4,7 @@ using FFXIVClientStructs.FFXIV.Client.LayoutEngine;
 using FFXIVClientStructs.Interop;
 using FFXIVClientStructs.STD;
 using System.Numerics;
+
 namespace BOCCHI.Common.Data.CriticalEncounters;
 
 public readonly record struct CriticalEncounterId(ushort Value);

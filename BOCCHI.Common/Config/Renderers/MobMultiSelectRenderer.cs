@@ -7,6 +7,7 @@ using Ocelot.Extensions;
 using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
 using System.Reflection;
+
 namespace BOCCHI.Common.Config.Renderers;
 
 public class MobMultiSelectRenderer(IDataManager data, IUIService ui) : IFieldRenderer<MobMultiSelectAttribute>

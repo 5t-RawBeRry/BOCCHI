@@ -5,6 +5,7 @@ using Lumina.Excel.Sheets;
 using Ocelot.Services.Data;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+
 namespace BOCCHI.Common.Data.Zones.Graph.Factory.Steps;
 
 public class AddTreasuresStep(IDataRepository<Treasure> treasureSheet) : IGraphBuildStep

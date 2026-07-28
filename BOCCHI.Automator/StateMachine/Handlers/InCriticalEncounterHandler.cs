@@ -5,6 +5,7 @@ using BOCCHI.Common.Services;
 using Dalamud.Plugin.Services;
 using Ocelot.Services.Pathfinding;
 using Ocelot.States.Score;
+
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
 public class InCriticalEncounterHandler

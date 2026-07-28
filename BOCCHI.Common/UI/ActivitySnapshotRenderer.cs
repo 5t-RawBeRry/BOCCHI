@@ -1,6 +1,7 @@
 using Dalamud.Bindings.ImGui;
 using Ocelot.Graphics;
 using Ocelot.Services.UI;
+
 namespace BOCCHI.Common.UI;
 
 public static class ActivitySnapshotRenderer

@@ -8,6 +8,7 @@ using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using Ocelot.States.Score;
+
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
 public class ChoosingActivityHandler

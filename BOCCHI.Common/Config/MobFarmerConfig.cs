@@ -2,6 +2,7 @@ using BOCCHI.Common.Config.Fields;
 using BOCCHI.Common.Data.Mobs;
 using Ocelot.Config;
 using Ocelot.Config.Fields;
+
 namespace BOCCHI.Common.Config;
 
 [Serializable]

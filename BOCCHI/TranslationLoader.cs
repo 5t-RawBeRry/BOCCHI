@@ -1,5 +1,6 @@
 ﻿using Ocelot.Lifecycle;
 using Ocelot.Services.Translation;
+
 namespace BOCCHI;
 
 public class TranslationLoader(ITranslationRepository translations) : IOnStart

@@ -12,6 +12,7 @@ using Ocelot.Extensions;
 using Ocelot.Pathfinding.Extensions;
 using Ocelot.Services.Pathfinding;
 using Ocelot.States.Score;
+
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
 public class WaitingForCriticalEncounterHandler

@@ -2,6 +2,7 @@
 using BOCCHI.Common.Data.KnowledgeCrystals;
 using BOCCHI.Common.Data.Zones.Graph;
 using System.Numerics;
+
 namespace BOCCHI.Common.Data.Zones;
 
 public interface IZone

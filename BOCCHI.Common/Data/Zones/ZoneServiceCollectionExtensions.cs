@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+
 namespace BOCCHI.Common.Data.Zones;
 
 public static class ZoneServiceCollectionExtensions

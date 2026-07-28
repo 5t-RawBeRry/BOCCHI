@@ -17,6 +17,7 @@ using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
 using Ocelot.States;
 using System.Numerics;
+
 namespace BOCCHI.Automator.Services;
 
 public class Automator

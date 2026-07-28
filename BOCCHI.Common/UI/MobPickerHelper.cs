@@ -2,6 +2,7 @@ using BOCCHI.Common.Data.Mobs;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Plugin.Services;
 using Ocelot.Services.UI;
+
 namespace BOCCHI.Common.UI;
 
 public static class MobPickerHelper

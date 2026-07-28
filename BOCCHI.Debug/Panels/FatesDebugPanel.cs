@@ -2,6 +2,7 @@ using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.UI;
 using Ocelot.Services.UI;
+
 namespace BOCCHI.Debug.Panels;
 
 public sealed class FatesDebugPanel

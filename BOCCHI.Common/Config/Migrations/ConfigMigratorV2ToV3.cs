@@ -1,11 +1,18 @@
 using Newtonsoft.Json.Linq;
+
 namespace BOCCHI.Common.Config.Migrations;
 
 public class ConfigMigratorV2ToV3 : IMigrator
 {
-    public int FromVersion { get; } = 2;
+    public int FromVersion
+    {
+        get => 2;
+    }
 
-    public int ToVersion { get; } = 3;
+    public int ToVersion
+    {
+        get => 3;
+    }
 
     public JObject Migrate(JObject oldConfig)
     {

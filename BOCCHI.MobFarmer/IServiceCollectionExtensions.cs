@@ -4,6 +4,7 @@ using BOCCHI.MobFarmer.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Ocelot;
 using Ocelot.States;
+
 namespace BOCCHI.MobFarmer;
 
 public static class IServiceCollectionExtensions

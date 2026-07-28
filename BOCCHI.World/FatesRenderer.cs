@@ -6,6 +6,7 @@ using BOCCHI.Common.UI;
 using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
 using Ocelot.Windows;
+
 namespace BOCCHI.Fates;
 
 public class FatesRenderer

@@ -8,6 +8,7 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
 using Ocelot.Actions;
 using Ocelot.States.Score;
+
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
 public class CastingTreasureSightHandler

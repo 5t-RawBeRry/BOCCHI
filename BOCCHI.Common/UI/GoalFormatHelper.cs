@@ -1,5 +1,6 @@
 using BOCCHI.Common.Data.Goals;
 using Ocelot.Services.Translation;
+
 namespace BOCCHI.Common.UI;
 
 public static class GoalFormatHelper
