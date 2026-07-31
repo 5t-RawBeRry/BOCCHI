@@ -119,7 +119,7 @@ public abstract class HuntRoutePlanner
             }
 
             bestCost = cost;
-            bestSteps = aethernet == HuntAethernet.BaseCamp
+            bestSteps = aethernet.IsBaseCamp()
                 ?
                 [
                     HuntPathfinderStep.ReturnToBaseCamp(),
@@ -274,6 +274,7 @@ public abstract class HuntRoutePlanner
         string zoneFolder = zoneId switch
         {
             ZoneId.SouthHorn => "SouthHorn",
+            ZoneId.NorthHorn => "NorthHorn",
             var _ => throw new NotSupportedException($"No hunt data for zone {zoneId}")
         };
 

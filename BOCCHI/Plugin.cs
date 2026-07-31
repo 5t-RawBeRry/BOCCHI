@@ -1,4 +1,4 @@
-﻿using BOCCHI.Automator;
+using BOCCHI.Automator;
 using BOCCHI.Automator.ChainRecipes;
 using BOCCHI.Buff;
 using BOCCHI.Common.Config;
@@ -7,6 +7,7 @@ using BOCCHI.Common.Config.Renderers;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph.Factory;
+using BOCCHI.Common.Data.Zones.Implementations.NorthHorn;
 using BOCCHI.Common.Data.Zones.Implementations.SouthHorn;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.Steps;
@@ -67,7 +68,8 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<ISupportJobChanger, SupportJobChanger>();
 
         services.AddZones()
-            .AddZone<SouthHorn>();
+            .AddZone<SouthHorn>()
+            .AddZone<NorthHorn>();
 
         services.AddSingleton<IGraphFactory, GraphFactory>();
 

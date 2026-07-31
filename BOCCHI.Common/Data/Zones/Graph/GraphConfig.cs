@@ -7,7 +7,14 @@ namespace BOCCHI.Common.Data.Zones.Graph;
 
 public record ActivityData(int Id, Vector3 Position, float? CombatRadius = null);
 public record CarrotData(int Id, Vector3 Position, int Level);
-public record TreasureData(int Id, int Level);
+public record TreasureData(int Id, int Level, Vector3? Position = null)
+{
+    private const float PositionMatchDistanceSquared = 4f;
+
+    public bool Matches(uint treasureRowId, Vector3 worldPosition) =>
+        Id == treasureRowId
+        || Position is { } position && Vector3.DistanceSquared(position, worldPosition) <= PositionMatchDistanceSquared;
+}
 public record PotChestData(Vector3 Position, int Level);
 
 public class GraphConfig(IPathfinder pathfinder, ILogger logger)
