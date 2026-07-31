@@ -29,7 +29,7 @@ public static class AetheryteApproach
                 .Then(_ => StepResult.Failure("No local player."), $"{chainName}::NoPlayer");
         }
 
-        // Re-check at execute time — build-time position is often stale.
+        // Position may have changed since compose.
         return chains.Create(chainName)
             .Then(_ =>
                 {
@@ -120,7 +120,7 @@ public static class AetheryteApproach
         }
         catch
         {
-            // Fall through to distance check if IPC fails.
+            // IPC optional — fall through to distance check.
         }
 
         return zone.IsWithinLifestreamRange(position);

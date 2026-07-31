@@ -170,6 +170,7 @@
         "type": "Project",
         "dependencies": {
           "BOCCHI.Common": "[1.0.0, )",
+          "BOCCHI.Treasure": "[1.0.0, )",
           "FFXIVOcelot": "[1.0.0, )",
           "FFXIVOcelot.Chain": "[1.0.0, )",
           "FFXIVOcelot.ECommons": "[1.0.0, )",

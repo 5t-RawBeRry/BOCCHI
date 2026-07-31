@@ -25,10 +25,6 @@ public class NullZone : IZone
 
     public List<AethernetData> GetAethernetShards() => [];
 
-    public List<AethernetData> GetNearbyAethernetShards() => [];
-
-    public List<KnowledgeCrystalData> GetKnowledgeCrystals() => [];
-
     public List<KnowledgeCrystalData> GetNearbyKnowledgeCrystals() => [];
 
     public ushort ForkedTowerEventId => 0;

@@ -26,7 +26,7 @@ public enum HuntAethernet : uint
     Eldergrowth = 4930,
     Stonemarsh = 4942,
 
-    // North Horn (PlaceName IDs — same values Lifestream uses)
+    // North Horn
     NorthHornBaseCamp = 5571,
     SinkingSanctuary = 5572,
     SuspendedMasonry = 5573,

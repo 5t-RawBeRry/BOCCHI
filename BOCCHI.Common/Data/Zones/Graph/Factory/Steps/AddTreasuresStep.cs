@@ -56,7 +56,6 @@ public class AddTreasuresStep(IDataRepository<Treasure> treasureSheet) : IGraphB
                     }
                 }
 
-                // Position-based zones only keep known farm spots (skips underground junk layers).
                 if (hasPositionData && match == null)
                 {
                     continue;

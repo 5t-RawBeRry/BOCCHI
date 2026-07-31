@@ -53,7 +53,7 @@ public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
             return Task.FromResult<TraversalCandidate?>(null);
         }
 
-        // Goal is served from base camp — Return lands you there; no aethernet hop needed.
+        // Return already lands at base camp — no aethernet hop.
         if (inbound.Type == NodeType.BaseCampAetheryte)
         {
             return Task.FromResult<TraversalCandidate?>(new(

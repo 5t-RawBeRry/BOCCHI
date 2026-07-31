@@ -193,14 +193,27 @@ public sealed class AethernetDebugPanel
         try
         {
             uint active = lifestream.GetActiveCustomAetheryte();
-            if (active != 0)
+            // Lifestream can return huge non-PlaceName handles — only trust sheet row ids.
+            if (active != 0 && active < 100_000)
             {
                 placeNameId = active;
             }
         }
         catch
         {
-            // Lifestream optional for PlaceName; SubArea is the fallback.
+            // Lifestream optional; SubArea is the fallback.
+        }
+
+        // Proximity match to authored PlaceNames if SubArea/Lifestream missed.
+        if (placeNameId == 0)
+        {
+            AethernetData? nearest = zones.GetZone().GetAetherytes()
+                .OrderBy(a => Vector3.DistanceSquared(a.Position, target.Position))
+                .FirstOrDefault();
+            if (nearest != null && Vector3.Distance(nearest.Position, target.Position) < 50f && nearest.Id != 0)
+            {
+                placeNameId = nearest.Id;
+            }
         }
 
         Capture capture = new(

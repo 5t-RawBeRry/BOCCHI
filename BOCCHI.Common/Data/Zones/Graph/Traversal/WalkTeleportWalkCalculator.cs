@@ -68,15 +68,13 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
             walkToDepartureCost = walkToNearestTeleportPath.Distance;
         }
 
-        // Fate and CE often share the same inbound shard. Teleporting there is a no-op
-        // (walk to crystal → TP to where you already are). Just walk to the event.
+        // Same inbound shard as current = no-op teleport; just walk.
         if (IsSameAetheryte(departure, inbound, inboundMeta))
         {
             return BuildWalkOnly(start, goal, walkToDepartureCost + walkToGoalFromInbound.Cost);
         }
 
-        // Getting to base camp from the field via a nearby shard is almost always worse than Return.
-        // Leave those routes to ReturnTeleportWalk.
+        // Field → base camp via shard loses to Return; leave to ReturnTeleportWalk.
         if (inbound.Type == NodeType.BaseCampAetheryte && departure.Type != NodeType.BaseCampAetheryte)
         {
             return null;

@@ -37,7 +37,7 @@ public static class AethernetTeleport
             .UseStepMiddleware<RunOnMainThreadMiddleware>()
             .Then(_ =>
                 {
-                    // Re-resolve in case zone data was stale at compose time.
+                    // Zone data may be stale at compose time.
                     AethernetData? target = zones.GetZone().FindAetheryte(placeNameId);
                     if (objects.LocalPlayer is { } player
                         && AetheryteApproach.IsAlreadyAtAetheryte(target, player.Position))

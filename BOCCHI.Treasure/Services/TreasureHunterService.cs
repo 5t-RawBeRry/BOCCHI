@@ -427,7 +427,6 @@ public class TreasureHunterService
         List<TreasureData> treasureData = zones.GetZone().GetTreasureData();
         if (treasureData.Exists(d => d.Position.HasValue))
         {
-            // Resolve live Treasure sheet IDs by matching dump positions + aggro level.
             return layoutTreasure
                 .Where(t => treasureData.Any(d => d.Level <= maxLevel && d.Matches(t.Id, t.Position)))
                 .Select(t => t.Id)
