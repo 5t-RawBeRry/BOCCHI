@@ -16,7 +16,7 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ocelot.UI", "Ocelot\Ocelot.UI\Ocelot.UI.csproj", "{7BB27BE0-8A78-463C-95EE-8B74E2FE89CA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BOCCHI.Automator", "BOCCHI.Automator\BOCCHI.Automator.csproj", "{13621B80-05C9-46CF-A384-47CCDD497B9E}"
-EndProjectE0845o32
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ocelot.Chain", "Ocelot\Ocelot.Chain\Ocelot.Chain.csproj", "{E384F746-E294-48F8-BC26-FC74B06A66E4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ocelot.Pathfinding", "Ocelot\Ocelot.Pathfinding\Ocelot.Pathfinding.csproj", "{435D4FF3-6B95-46F5-8A9F-5E3885172A55}"
