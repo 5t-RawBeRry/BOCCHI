@@ -36,8 +36,9 @@ public static class ActivitySnapshotRenderer
     {
         RenderCompact(ui, titleColor, detailColor, title, details);
 
-        ImGui.SameLine(0f, 8f);
+        ImGui.Indent(12f);
         DrawActionButtons(navigation, destination, title, actionId);
+        ImGui.Unindent(12f);
     }
 
     public static void Render(
