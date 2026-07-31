@@ -1,3 +1,4 @@
+using BOCCHI.Common.Data.Zones;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
 using System.Globalization;
@@ -6,6 +7,8 @@ namespace BOCCHI.Common.Data.Mobs;
 
 public static class MobData
 {
+    public const uint NorthHornMinNameId = 14857;
+
     private static readonly Dictionary<Mob, string> NameCache = [];
 
     private static readonly Dictionary<Mob, Mob> LegacyToCrescent = new()
@@ -38,9 +41,18 @@ public static class MobData
         ];
     }
 
-    public static IEnumerable<Mob> GetSelectableMobs()
+    public static ZoneId GetZone(Mob mob) =>
+        (uint)mob >= NorthHornMinNameId ? ZoneId.NorthHorn : ZoneId.SouthHorn;
+
+    public static IEnumerable<Mob> GetSelectableMobs(ZoneId? zone = null)
     {
-        return Enum.GetValues<Mob>().Where(m => !HiddenLegacyMobs.Contains(m));
+        IEnumerable<Mob> mobs = Enum.GetValues<Mob>().Where(m => !HiddenLegacyMobs.Contains(m));
+        if (zone is { } filter && filter is ZoneId.SouthHorn or ZoneId.NorthHorn)
+        {
+            mobs = mobs.Where(m => GetZone(m) == filter);
+        }
+
+        return mobs;
     }
 
     public static bool TryFromNameId(uint nameId, out Mob mob)
@@ -120,6 +132,12 @@ public static class MobData
         if (LegacyToCrescent.ContainsValue(mob))
         {
             return $"{baseName} (Crescent)";
+        }
+
+        // Disambiguate shared sheet names when both horns are listed together.
+        if (GetZone(mob) == ZoneId.NorthHorn)
+        {
+            return $"{baseName} (North Horn)";
         }
 
         return baseName;

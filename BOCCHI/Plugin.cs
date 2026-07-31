@@ -73,6 +73,8 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
 
         services.AddSingleton<IGraphFactory, GraphFactory>();
 
+        services.AddSingleton<IActivityNavigation, ActivityNavigation>();
+
         services.AddSingleton<UnmountStep>();
         services.AddSingleton<RepairStep>();
         services.AddSingleton<IRepairService, RepairService>();

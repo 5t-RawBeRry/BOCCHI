@@ -33,6 +33,12 @@
       "silver_per_hour": "Silver Per Hour"
     }
   },
+  "buffs": {
+    "title": "Buffs",
+    "apply_tooltip": "Apply configured knowledge-crystal buffs",
+    "stop_tooltip": "Stop applying buffs",
+    "applying": "Applying…"
+  },
   "automation": {
     "automator": {
       "title": "Automator",
