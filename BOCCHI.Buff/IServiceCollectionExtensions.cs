@@ -1,6 +1,5 @@
 ﻿using BOCCHI.Buff.Data;
 using BOCCHI.Buff.Services;
-using BOCCHI.Common;
 using Microsoft.Extensions.DependencyInjection;
 using Ocelot;
 using Ocelot.States;
@@ -15,7 +14,6 @@ public static class IServiceCollectionExtensions
 
         services.AddSingleton<IBuffProvider, BuffProvider>();
         services.AddSingleton<IBuffRunner, BuffRunner>();
-        services.AddSingleton<IDynamicRenderer, BuffRenderer>();
         services.AddFlowStateMachine(BuffState.ApproachingKnowledgeCrystal, ServiceLifetime.Transient);
     }
 }
