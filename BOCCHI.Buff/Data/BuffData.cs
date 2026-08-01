@@ -1,4 +1,5 @@
 ﻿using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.OccultCrescent;
 using BOCCHI.Common.Data.SupportJobs;
 using Ocelot.Actions;
 using Action = Ocelot.Actions.Action;
@@ -21,7 +22,7 @@ public readonly struct BuffData
 
     public static readonly BuffData RomeosBallad = new()
     {
-        StatusId = 4244,
+        StatusId = PhantomBuffs.RomeosBallad,
         RequiredLevel = 2,
         SupportJobId = SupportJobId.PhantomBard,
         ShouldApply = config => config.ShouldApplyRomeosBallad(),
@@ -31,7 +32,7 @@ public readonly struct BuffData
 
     public static readonly BuffData Fleetfooted = new()
     {
-        StatusId = 4239,
+        StatusId = PhantomBuffs.Fleetfooted,
         RequiredLevel = 3,
         SupportJobId = SupportJobId.PhantomMonk,
         ShouldApply = config => config.ShouldApplyFleetfooted(),
@@ -41,7 +42,7 @@ public readonly struct BuffData
 
     public static readonly BuffData EnduringFortitude = new()
     {
-        StatusId = 4233,
+        StatusId = PhantomBuffs.EnduringFortitude,
         RequiredLevel = 2,
         SupportJobId = SupportJobId.PhantomKnight,
         ShouldApply = config => config.ShouldApplyEnduringFortitude(),
@@ -51,7 +52,7 @@ public readonly struct BuffData
 
     public static readonly BuffData QuickerStep = new()
     {
-        StatusId = 4799,
+        StatusId = PhantomBuffs.Quickstep,
         RequiredLevel = 2,
         SupportJobId = SupportJobId.PhantomDancer,
         ShouldApply = config => config.ShouldApplyQuickerStep(),
