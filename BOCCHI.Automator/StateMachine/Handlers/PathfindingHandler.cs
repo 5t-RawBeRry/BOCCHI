@@ -1,8 +1,11 @@
 using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Services;
+using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Paths;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.Services.Paths;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
 using Ocelot.Chain;
 using Ocelot.Services.Logger;
@@ -19,6 +22,8 @@ public class PathfindingHandler
     IObjectTable objects,
     IPathfinder pathfinder,
     ITargetManager targetManager,
+    AutomatorConfig config,
+    ICondition conditions,
     ILogger<PathfindingHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Pathfinding)
 {
@@ -73,6 +78,12 @@ public class PathfindingHandler
 
         if (currentPathTask != null)
         {
+            // Remount mid-route if Treasure Sight (or anything else) left us on foot.
+            if (path.GetNextPathStep()?.PathStepData is Pathfind(var destination, _))
+            {
+                AutoMount.MaybeRemount(config, conditions, objects, destination);
+            }
+
             if (currentPathTask.IsCompleted)
             {
                 if (currentPathTask.Status == TaskStatus.RanToCompletion)

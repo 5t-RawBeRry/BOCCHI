@@ -1,14 +1,13 @@
 using BOCCHI.Automator.ChainRecipes;
+using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Paths;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services.Paths;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
-using Ocelot.Actions;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Chain.Recipes;
-using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
 
 namespace BOCCHI.Automator.Services.Paths;
@@ -18,40 +17,15 @@ public class PathStepExecutor
     IChainFactory chains,
     IChainManager manager,
     IObjectTable objects,
-    ICondition conditions
+    ICondition conditions,
+    AutomatorConfig config
 ) : IPathStepExecutor
 {
-    private static readonly TimeSpan MountTimeout = TimeSpan.FromSeconds(12);
-
     public Task<ChainResult> Execute(IPathStep step)
     {
         IChain chain = step.PathStepData switch
         {
-            Pathfind(var destination, var range) => chains.Create($"PathStep::Pathfind({destination:f2}, {range:f2})")
-                .Then(_ =>
-                {
-                    if (ShouldSkipMount(destination))
-                    {
-                        return StepResult.Success();
-                    }
-
-                    if (Actions.MountRoulette.CanCast())
-                    {
-                        Actions.MountRoulette.Cast();
-                    }
-
-                    return StepResult.Success();
-                }, "PathStep::MaybeMount")
-                .WaitUntil(
-                    _ => ValueTask.FromResult(IsMountedOrShouldGiveUp(destination)),
-                    MountTimeout,
-                    TimeSpan.FromMilliseconds(250),
-                    "PathStep::WaitForMount")
-                .Then<PathfindToChain, PathfinderConfig>(new(destination)
-                {
-                    DistanceThreshold = range > 0f ? range : 2f,
-                    ShouldSnapToFloor = true
-                }),
+            Pathfind(var destination, var range) => BuildPathfindChain(destination, range),
 
             Teleport(var id) => chains.Create($"PathStep::Teleport({id})")
                 .Then<TeleportToAethernetChain, uint>(id),
@@ -64,55 +38,44 @@ public class PathStepExecutor
         return manager.Manage(chain);
     }
 
-    private bool ShouldSkipMount(System.Numerics.Vector3 destination)
+    private IChain BuildPathfindChain(System.Numerics.Vector3 destination, float range)
     {
-        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
-        {
-            return true;
-        }
+        // Set when MaybeMount runs so StartGrace is not burned at compose time.
+        DateTime mountStarted = DateTime.MinValue;
 
-        if (conditions[ConditionFlag.InCombat] || conditions[ConditionFlag.Unconscious])
-        {
-            return true;
-        }
+        return chains.Create($"PathStep::Pathfind({destination:f2}, {range:f2})")
+            .Then(_ =>
+            {
+                mountStarted = DateTime.UtcNow;
 
-        if (objects.LocalPlayer is not { } player)
-        {
-            return true;
-        }
+                if (MountWait.ShouldSkip(conditions, objects, destination, config.ShouldAutoMount))
+                {
+                    return StepResult.Success();
+                }
 
-        return player.Position.Distance(destination) <= NavigationConstants.MountMinDistance;
-    }
-
-    private bool IsMountedOrShouldGiveUp(System.Numerics.Vector3 destination)
-    {
-        if (conditions[ConditionFlag.Mounted])
-        {
-            return true;
-        }
-
-        // Still casting mount — do not treat Mounting as success (ShouldSkipMount does).
-        if (conditions[ConditionFlag.Mounting])
-        {
-            return false;
-        }
-
-        if (conditions[ConditionFlag.InCombat] || conditions[ConditionFlag.Unconscious])
-        {
-            return true;
-        }
-
-        if (objects.LocalPlayer is not { } player
-            || player.Position.Distance(destination) <= NavigationConstants.MountMinDistance)
-        {
-            return true;
-        }
-
-        if (Actions.MountRoulette.CanCast())
-        {
-            Actions.MountRoulette.Cast();
-        }
-
-        return false;
+                MountWait.TryCast((uint)Math.Max(0, config.PreferredMountId));
+                return StepResult.Success();
+            }, "PathStep::MaybeMount")
+            .WaitUntil(
+                _ =>
+                {
+                    DateTime started = mountStarted == DateTime.MinValue ? DateTime.UtcNow : mountStarted;
+                    return ValueTask.FromResult(
+                        MountWait.IsReadyOrGiveUp(
+                            conditions,
+                            objects,
+                            destination,
+                            started,
+                            config.ShouldAutoMount,
+                            (uint)Math.Max(0, config.PreferredMountId)));
+                },
+                MountWait.Timeout,
+                TimeSpan.FromMilliseconds(250),
+                "PathStep::WaitForMount")
+            .Then<PathfindToChain, PathfinderConfig>(new(destination)
+            {
+                DistanceThreshold = range > 0f ? range : 2f,
+                ShouldSnapToFloor = true
+            });
     }
 }

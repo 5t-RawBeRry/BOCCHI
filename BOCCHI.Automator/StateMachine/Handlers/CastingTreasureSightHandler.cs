@@ -53,8 +53,12 @@ public class CastingTreasureSightHandler
     {
         base.Enter();
 
-        if (supportJobs.TryGetCurrent(out SupportJob current))
+        // Only remember a non-Freelancer job — re-entering while already Freelancer must not
+        // overwrite a real previous job with Freelancer (TryAdd) or leave nothing to restore.
+        if (supportJobs.TryGetCurrent(out SupportJob current)
+            && current.Id != SupportJobId.PhantomFreelancer)
         {
+            memory.Forget<TreasureSightSupportJobMemory>();
             memory.TryAdd(new TreasureSightSupportJobMemory(current.Id));
         }
 
@@ -68,9 +72,9 @@ public class CastingTreasureSightHandler
             return;
         }
 
-        if (conditions[ConditionFlag.Mounted])
+        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
         {
-            if (Actions.Dismount.CanCast())
+            if (!conditions[ConditionFlag.Mounting])
             {
                 Actions.Dismount.Cast();
             }
@@ -94,6 +98,7 @@ public class CastingTreasureSightHandler
             {
                 lastCast = DateTime.Now;
                 memory.Forget<CastingTreasureSightMemory>();
+                // Job restore is ReturningToJobHandler (must beat Pathfinding priority).
             }
         }
     }

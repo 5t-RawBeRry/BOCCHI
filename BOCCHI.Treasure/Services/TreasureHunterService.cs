@@ -33,6 +33,7 @@ namespace BOCCHI.Treasure.Services;
 public class TreasureHunterService
 (
     TreasureConfig config,
+    AutomatorConfig automatorConfig,
     IZoneProvider zones,
     IVNavmeshIpc vnav,
     IPathfinder pathfinder,
@@ -82,14 +83,6 @@ public class TreasureHunterService
             return;
         }
 
-        // Finished chains must be cleared or nearby-interact / return get stuck.
-        if (activeChain is { IsCompleted: true })
-        {
-            activeChain = null;
-        }
-
-        TryInteractWithNearbyChest();
-
         if (pathPlanner != null)
         {
             if (pathPlanner.State != HuntPathfinderState.FileLoaded)
@@ -111,22 +104,25 @@ public class TreasureHunterService
             return;
         }
 
-        if (steps.Count == 0)
-        {
-            return;
-        }
-
-        if (StepIndex >= steps.Count)
+        if (steps.Count > 0 && StepIndex >= steps.Count)
         {
             Teardown();
             return;
         }
 
-        if (TryAdvanceCurrentStep())
+        // Step handlers (teleport/return) must see completed chains before we clear them.
+        if (steps.Count > 0 && StepIndex < steps.Count && TryAdvanceCurrentStep())
         {
             StepIndex++;
             StepDistance = 0f;
         }
+
+        if (activeChain is { IsCompleted: true })
+        {
+            activeChain = null;
+        }
+
+        TryInteractWithNearbyChest();
     }
 
     public bool Running { get; private set; }
@@ -416,7 +412,8 @@ public class TreasureHunterService
                 return false;
             }
 
-            bool teleported = activeChain.IsCompletedSuccessfully;
+            bool teleported = activeChain.IsCompletedSuccessfully
+                              && (activeChain.Result?.IsSuccess ?? false);
             activeChain = null;
             return teleported;
         }
@@ -432,6 +429,11 @@ public class TreasureHunterService
 
     private void MaybeMount(Vector3 destination)
     {
+        if (!automatorConfig.ShouldAutoMount)
+        {
+            return;
+        }
+
         if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
         {
             return;
@@ -439,7 +441,7 @@ public class TreasureHunterService
 
         if (player.Position.Distance(destination) > NavigationConstants.MountMinDistance)
         {
-            Actions.MountRoulette.Cast();
+            MountWait.TryCast((uint)Math.Max(0, automatorConfig.PreferredMountId));
         }
     }
 

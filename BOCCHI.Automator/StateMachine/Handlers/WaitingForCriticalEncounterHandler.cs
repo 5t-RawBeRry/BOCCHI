@@ -1,4 +1,6 @@
 using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Services;
+using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
@@ -13,6 +15,7 @@ using Ocelot.Extensions;
 using Ocelot.Pathfinding.Extensions;
 using Ocelot.Services.Pathfinding;
 using Ocelot.States.Score;
+using System.Numerics;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
@@ -23,7 +26,8 @@ public class WaitingForCriticalEncounterHandler
     ICondition conditions,
     IPathfinder pathfinder,
     IChainManager manager,
-    ICriticalEncounterRepository repo
+    ICriticalEncounterRepository repo,
+    AutomatorConfig config
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.WaitingForCriticalEncounter)
 {
     public override StatePriority GetScore()
@@ -110,9 +114,12 @@ public class WaitingForCriticalEncounterHandler
 
         if (percent >= 1.0f)
         {
+            Vector3 approach = ce.Position.GetApproachPosition(player.Position, combatRadius * 0.8f, 30f);
+            AutoMount.MaybeRemount(config, conditions, objects, approach);
+
             if (pathfinder.IsIdle())
             {
-                pathfinder.PathfindAndMoveTo(new(ce.Position.GetApproachPosition(player.Position, combatRadius * 0.8f, 30f)));
+                pathfinder.PathfindAndMoveTo(new(approach));
             }
 
             return;

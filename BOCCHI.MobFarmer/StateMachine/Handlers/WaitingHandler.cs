@@ -16,18 +16,18 @@ public class WaitingHandler
 {
     public override FarmerPhase? Handle()
     {
-        if (conditions[ConditionFlag.InCombat])
+        if (conditions[ConditionFlag.InCombat] || scanner.InCombat.Any())
         {
             return FarmerPhase.Fighting;
         }
 
-        // Require at least one free (untargeted) mob — contested packs still count toward
-        // Mobs but would otherwise bounce Buffing → Gathering → Waiting forever.
-        if (!scanner.NotInCombat.Any())
+        // Free (untargeted) selected mobs only — contested packs must not start a loop.
+        int free = scanner.NotInCombat.Count();
+        if (free == 0)
         {
             return null;
         }
 
-        return scanner.Mobs.Count >= config.MinimumMobsToStartLoop ? FarmerPhase.Buffing : null;
+        return free >= config.MinimumMobsToStartLoop ? FarmerPhase.Buffing : null;
     }
 }

@@ -65,15 +65,24 @@ public abstract class BaseZone
 
     public List<KnowledgeCrystalData> GetNearbyKnowledgeCrystals()
     {
-        // TODO: Fix Knowledge Crystal identification.
-        // The base id we use below isn't unique to knowledge crystals and seems to refer to any event object in OC, this includes the CE zone and CE spawn in zone
-        if (!IsInBasecamp())
+        if (objects.LocalPlayer is not { } player)
         {
             return [];
         }
 
+        // Do not gate on IsInBasecamp() — SubAreaPlaceNameId often does not match the
+        // authored BasecampPlaceNameId even while standing at camp. Same BaseId is also
+        // used by some CE event objects, so require proximity to the main aetheryte.
+        Vector3 playerPos = player.Position;
+        Vector3 camp = GetAetherytePosition();
+        const float playerRange = 60f;
+        const float campRange = 100f;
+
         return objects
             .Where(o => o is { ObjectKind: ObjectKind.EventObj, BaseId: KnowledgeCrystalData.BaseId })
+            .Where(o => Vector3.Distance(o.Position, camp) <= campRange)
+            .Where(o => Vector3.Distance(o.Position, playerPos) <= playerRange)
+            .OrderBy(o => Vector3.DistanceSquared(o.Position, playerPos))
             .Select(o => new KnowledgeCrystalData
             {
                 Position = o.Position

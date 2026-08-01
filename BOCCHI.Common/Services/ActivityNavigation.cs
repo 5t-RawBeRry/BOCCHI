@@ -1,8 +1,7 @@
+using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Zones;
-using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
-using Ocelot.Actions;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Chain.Recipes;
@@ -29,6 +28,7 @@ public class ActivityNavigation
     ICondition conditions,
     IPlayer player,
     IFramework framework,
+    AutomatorConfig automatorConfig,
     ILogger<ActivityNavigation> logger
 ) : IActivityNavigation
 {
@@ -151,31 +151,40 @@ public class ActivityNavigation
         }
     }
 
-    private static readonly TimeSpan MountTimeout = TimeSpan.FromSeconds(12);
-
     private IChain BuildPathChain(string name, Vector3 destination) =>
         AppendPath(chains.Create(name), name, destination);
 
     private IChain AppendPath(IChain chain, string name, Vector3 destination)
     {
+        DateTime mountStarted = DateTime.MinValue;
+
         return chain
             .Then(_ =>
             {
-                if (ShouldSkipMount(destination))
+                mountStarted = DateTime.UtcNow;
+
+                if (MountWait.ShouldSkip(conditions, objects, destination, automatorConfig.ShouldAutoMount))
                 {
                     return StepResult.Success();
                 }
 
-                if (Actions.MountRoulette.CanCast())
-                {
-                    Actions.MountRoulette.Cast();
-                }
-
+                MountWait.TryCast((uint)Math.Max(0, automatorConfig.PreferredMountId));
                 return StepResult.Success();
             }, $"{name}::MaybeMount")
             .WaitUntil(
-                _ => ValueTask.FromResult(IsMountedOrShouldGiveUp(destination)),
-                MountTimeout,
+                _ =>
+                {
+                    DateTime started = mountStarted == DateTime.MinValue ? DateTime.UtcNow : mountStarted;
+                    return ValueTask.FromResult(
+                        MountWait.IsReadyOrGiveUp(
+                            conditions,
+                            objects,
+                            destination,
+                            started,
+                            automatorConfig.ShouldAutoMount,
+                            (uint)Math.Max(0, automatorConfig.PreferredMountId)));
+                },
+                MountWait.Timeout,
                 TimeSpan.FromMilliseconds(250),
                 $"{name}::WaitForMount")
             .Then<PathfindToChain, PathfinderConfig>(new(destination)
@@ -183,58 +192,6 @@ public class ActivityNavigation
                 DistanceThreshold = 2f,
                 ShouldSnapToFloor = true
             });
-    }
-
-    private bool ShouldSkipMount(Vector3 destination)
-    {
-        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
-        {
-            return true;
-        }
-
-        if (conditions[ConditionFlag.InCombat] || conditions[ConditionFlag.Unconscious])
-        {
-            return true;
-        }
-
-        if (objects.LocalPlayer is not { } localPlayer)
-        {
-            return true;
-        }
-
-        return localPlayer.Position.Distance(destination) <= NavigationConstants.MountMinDistance;
-    }
-
-    private bool IsMountedOrShouldGiveUp(Vector3 destination)
-    {
-        if (conditions[ConditionFlag.Mounted])
-        {
-            return true;
-        }
-
-        // Still casting mount — do not treat Mounting as success (ShouldSkipMount does).
-        if (conditions[ConditionFlag.Mounting])
-        {
-            return false;
-        }
-
-        if (conditions[ConditionFlag.InCombat] || conditions[ConditionFlag.Unconscious])
-        {
-            return true;
-        }
-
-        if (objects.LocalPlayer is not { } localPlayer
-            || localPlayer.Position.Distance(destination) <= NavigationConstants.MountMinDistance)
-        {
-            return true;
-        }
-
-        if (Actions.MountRoulette.CanCast())
-        {
-            Actions.MountRoulette.Cast();
-        }
-
-        return false;
     }
 
     /// <summary>

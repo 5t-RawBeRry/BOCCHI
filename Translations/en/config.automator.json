@@ -2,6 +2,14 @@
   "label": "Automator",
   "tooltip": "Core automator behavior and idle handling.",
   "fields": {
+    "should_auto_mount": {
+      "label": "Auto-mount while traveling",
+      "tooltip": "Mount before long pathfinds and remount if you dismount mid-route (e.g. after Treasure Sight) while heading to a FATE or CE."
+    },
+    "preferred_mount_id": {
+      "label": "Preferred mount ID",
+      "tooltip": "Mount sheet row ID to use instead of Mount Roulette. 0 = Mount Roulette. Find IDs via Dalamud Data window (Mounts) or online mount lists."
+    },
     "should_cast_treasure_sight": {
       "label": "Cast Treasure Sight",
       "tooltip": "Automatically recast Treasure Sight while the automator is running."

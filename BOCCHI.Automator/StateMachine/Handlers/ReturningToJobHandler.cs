@@ -9,7 +9,8 @@ namespace BOCCHI.Automator.StateMachine.Handlers;
 
 public class ReturningToJobHandler(IAutomatorMemory memory, ISupportJobFactory jobs, ISupportJobChanger changer) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.ReturningToJob)
 {
-    public override StatePriority GetScore() => HasJobToRestore() ? StatePriority.AboveNormal : StatePriority.Never;
+    // Must beat Pathfinding (High) / InFate / InCombat so TS/buff job restore is not skipped.
+    public override StatePriority GetScore() => HasJobToRestore() ? StatePriority.VeryHigh : StatePriority.Never;
 
     public override void Handle()
     {
@@ -29,7 +30,10 @@ public class ReturningToJobHandler(IAutomatorMemory memory, ISupportJobFactory j
             return;
         }
 
-        changer.Change(jobId);
+        if (!changer.IsBusy())
+        {
+            changer.Change(jobId);
+        }
     }
 
     private bool HasJobToRestore() =>

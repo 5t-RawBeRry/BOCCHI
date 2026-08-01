@@ -25,6 +25,11 @@ public class FateScorer
             return score;
         }
 
+        if (IsPotFateBelowMinTime(fate))
+        {
+            return score;
+        }
+
         if (objects.LocalPlayer is not { } player)
         {
             return score;
@@ -52,9 +57,14 @@ public class FateScorer
         Fate? best = null;
         float bestScore = float.MinValue;
 
-        foreach(Fate fate in fates)
+        foreach (Fate fate in fates)
         {
             if (!config.IsFateEnabled(fate.Id.Value))
+            {
+                continue;
+            }
+
+            if (IsPotFateBelowMinTime(fate))
             {
                 continue;
             }
@@ -68,5 +78,20 @@ public class FateScorer
         }
 
         return best;
+    }
+
+    private bool IsPotFateBelowMinTime(Fate fate)
+    {
+        if (config.MinPotFateMinutesRemaining <= 0)
+        {
+            return false;
+        }
+
+        if (!zones.GetZone().IsPotFate(fate.Id.Value))
+        {
+            return false;
+        }
+
+        return fate.TimeRemainingSeconds < config.MinPotFateMinutesRemaining * 60L;
     }
 }

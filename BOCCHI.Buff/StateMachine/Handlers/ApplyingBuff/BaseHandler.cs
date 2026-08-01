@@ -43,9 +43,10 @@ public abstract class BaseHandler
             return BuffState.ChoosingBuffToApply;
         }
 
-        if (conditions[ConditionFlag.Mounted])
+        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
         {
-            if (Actions.Dismount.CanCast())
+            // Don't gate on CanCast — mounted at crystal with a blocked dismount soft-locks.
+            if (!conditions[ConditionFlag.Mounting])
             {
                 Actions.Dismount.Cast();
             }

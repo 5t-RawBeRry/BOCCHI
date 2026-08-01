@@ -10,6 +10,10 @@
       "label": "Prefer pot FATEs",
       "tooltip": "Boost scoring for Persistent Pots and Pleading Pots when choosing a FATE."
     },
+    "min_pot_fate_minutes_remaining": {
+      "label": "Min pot FATE time remaining (minutes)",
+      "tooltip": "Do not path to (or stay on) a pot FATE with fewer minutes left than this. Set to 0 to disable."
+    },
     "should_farm_pot_chests": {
       "label": "Farm pot chests after pot FATEs",
       "tooltip": "After completing a pot FATE, walk to linked chest positions and open them before choosing a new activity."

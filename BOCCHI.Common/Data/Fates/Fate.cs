@@ -27,11 +27,15 @@ public class Fate(FateId id, IFate context, IDataRepository<FateData> fateDataRe
 
     public byte Progress { get; private set; } = context.Progress;
 
+    /// <summary>Seconds left on the FATE timer (Dalamud <see cref="IFate.TimeRemaining"/>).</summary>
+    public long TimeRemainingSeconds { get; private set; } = context.TimeRemaining;
+
     public void Update(IFate context)
     {
         Position = context.Position;
         State = context.State;
         Progress = context.Progress;
+        TimeRemainingSeconds = context.TimeRemaining;
 
         ProgressTracker.Observe(Progress);
     }

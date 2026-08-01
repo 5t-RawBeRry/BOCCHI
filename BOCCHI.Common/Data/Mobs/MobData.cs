@@ -149,12 +149,7 @@ public static class MobData
 
     private static string FormatDisplayName(Mob mob, string baseName)
     {
-        if (LegacyToCrescent.ContainsValue(mob))
-        {
-            return $"{baseName} (Crescent)";
-        }
-
-        // Disambiguate shared sheet names when both horns are listed together.
+        // Sheet Singular is already "crescent taurus" / "crescent aetherscab" — don't double-suffix.
         if (GetZone(mob) == ZoneId.NorthHorn)
         {
             return $"{baseName} (North Horn)";

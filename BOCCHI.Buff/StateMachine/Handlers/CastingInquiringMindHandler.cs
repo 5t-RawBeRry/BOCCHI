@@ -2,6 +2,7 @@
 using BOCCHI.Buff.Services;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Services;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
 using Ocelot.Actions;
 using Ocelot.States.Flow;
@@ -11,6 +12,7 @@ namespace BOCCHI.Buff.StateMachine.Handlers;
 public class CastingInquiringMindHandler
 (
     IObjectTable objects,
+    ICondition conditions,
     ISupportJobChanger changer,
     ISupportJobFactory supportJobs,
     IBuffProvider buffs
@@ -35,6 +37,16 @@ public class CastingInquiringMindHandler
         if (buffs.IsInquiringMindFresh(player))
         {
             return BuffState.ChoosingBuffToApply;
+        }
+
+        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
+        {
+            if (!conditions[ConditionFlag.Mounting])
+            {
+                Actions.Dismount.Cast();
+            }
+
+            return null;
         }
 
         if (!supportJobs.TryGetCurrent(out SupportJob supportJob) || supportJob.Id != SupportJobId.PhantomFreelancer)

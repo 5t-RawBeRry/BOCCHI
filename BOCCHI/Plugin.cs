@@ -34,6 +34,7 @@ using Ocelot.Pathfinding.Services;
 using Ocelot.Pictomancy.Services;
 using Ocelot.Services.WindowManager;
 using Ocelot.UI.Services;
+using Ocelot.Windows;
 using System.Reflection;
 #if DEBUG
 using BOCCHI.Debug;
@@ -61,6 +62,7 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<IMainRenderer, MainRenderer>();
         services.AddSingleton<IConfigRenderer, ConfigRenderer>();
         services.AddSingleton<OperationalStatusBar>();
+        services.AddSingleton<IMainWindowTitleBarContributor, IllegalModeTitleBarContributor>();
         services.AddSingleton<IFieldRenderer<MobMultiSelectAttribute>, MobMultiSelectRenderer>();
         services.AddSingleton<IFieldRenderer<DisabledFateIdsAttribute>, DisabledFateIdsRenderer>();
         services.AddSingleton<IFieldRenderer<DisabledCriticalEncounterIdsAttribute>, DisabledCriticalEncounterIdsRenderer>();
@@ -89,6 +91,8 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.LoadAutomatorModule();
         services.LoadMobFarmerModule();
         services.LoadTreasureModule();
+
+        services.AddBocchiCommands();
 
 #if DEBUG
         services.LoadDebugModule();

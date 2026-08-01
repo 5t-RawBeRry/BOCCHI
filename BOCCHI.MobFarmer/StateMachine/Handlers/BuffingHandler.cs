@@ -37,9 +37,13 @@ public class BuffingHandler
             return FarmerPhase.Gathering;
         }
 
-        if (conditions[ConditionFlag.Mounted] && Actions.Dismount.CanCast())
+        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
         {
-            Actions.Dismount.Cast();
+            if (!conditions[ConditionFlag.Mounting])
+            {
+                Actions.Dismount.Cast();
+            }
+
             return null;
         }
 

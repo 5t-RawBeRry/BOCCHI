@@ -14,6 +14,12 @@ public class FatesConfig : IAutoConfig
     [Checkbox]
     public bool PreferPotFates { get; set; } = false;
 
+    /// <summary>
+    ///     Skip / abandon pot FATEs with less than this many minutes left (0 = disabled).
+    /// </summary>
+    [IntRange(0, 15)]
+    public int MinPotFateMinutesRemaining { get; set; } = 2;
+
     [Checkbox]
     public bool ShouldFarmPotChests { get; set; } = false;
 

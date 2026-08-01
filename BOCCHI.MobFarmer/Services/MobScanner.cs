@@ -41,7 +41,6 @@ public class MobScanner
 
         Mobs = objects.OfType<IBattleNpc>()
             .Where(o => o is { IsDead: false, IsTargetable: true })
-            .Where(o => o.IsHostile())
             .Where(o => player.Position.Distance2D(o.Position) <= config.MaxEuclideanDistance)
             .Where(o =>
             {
@@ -51,9 +50,15 @@ public class MobScanner
                     return false;
                 }
 
+                // Selected OC NameIds count even when not flagged hostile yet (common in caves).
                 if (MobData.IsSelected(o.NameId, config.Mobs))
                 {
                     return true;
+                }
+
+                if (!o.IsHostile())
+                {
+                    return false;
                 }
 
                 if (!config.ConsiderSpecialMobs)
