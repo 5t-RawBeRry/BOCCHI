@@ -1,2 +1,3 @@
-# 4.0.1.0
-- Testing build: North Horn support (version match fix for Dalamud)
+# 4.0.1.1
+- Fix Manifest
+- Still initial support for North Horn
