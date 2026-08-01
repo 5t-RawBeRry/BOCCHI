@@ -43,6 +43,14 @@ public class FightingHandler
         bool shouldReturnHome = config.ReturnToStartInWaitingPhase
                                 && player.Position.Distance2D(farmer.StartingPoint) >= config.MinEuclideanDistanceToReturnHome;
 
+        // Keep pulling until the configured pack size if free mobs remain.
+        if (anyInCombat
+            && inCombat.Count < config.MinimumMobsToStartFight
+            && scanner.NotInCombat.Any())
+        {
+            return FarmerPhase.Gathering;
+        }
+
         if (shouldReturnHome && !anyInCombat)
         {
             if (pathfinder.GetState() == PathfindingState.Idle)

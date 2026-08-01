@@ -63,11 +63,13 @@ public class MobFarmerService
     {
         scanner.Update();
 
-        if (!Running || scanner.Mobs.Count == 0)
+        if (!Running)
         {
             return;
         }
 
+        // Always tick the phase machine while running — even with an empty scan list —
+        // so Fighting can return to Waiting after the last mob dies/despawns.
         StateMachine.Update();
     }
 }

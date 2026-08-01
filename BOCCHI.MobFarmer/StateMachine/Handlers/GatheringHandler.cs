@@ -2,10 +2,14 @@ using BOCCHI.Common.Config;
 using BOCCHI.Common.Extensions;
 using BOCCHI.MobFarmer.Data;
 using BOCCHI.MobFarmer.Services;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
+using Ocelot.Actions;
+using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
+using Ocelot.Services.PlayerState;
 using Ocelot.States.Flow;
 
 namespace BOCCHI.MobFarmer.StateMachine.Handlers;
@@ -16,7 +20,9 @@ public class GatheringHandler
     IMobScanner scanner,
     IObjectTable objects,
     ITargetManager targets,
-    IPathfinder pathfinder
+    IPathfinder pathfinder,
+    ICondition conditions,
+    IPlayer player
 ) : FlowStateHandler<FarmerPhase>(FarmerPhase.Gathering)
 {
     public override FarmerPhase? Handle()
@@ -44,9 +50,17 @@ public class GatheringHandler
             pathfinder.Stop();
         }
 
-        IBattleNpc? next = notInCombat.FirstOrDefault();
+        IBattleNpc? next = notInCombat
+            .OrderBy(o => player.Position.Distance2D(o.Position))
+            .FirstOrDefault();
         if (next == null)
         {
+            return null;
+        }
+
+        if (conditions[ConditionFlag.Mounted] && Actions.Dismount.CanCast())
+        {
+            Actions.Dismount.Cast();
             return null;
         }
 
@@ -64,7 +78,8 @@ public class GatheringHandler
 
         pathfinder.PathfindAndMoveTo(new(next.Position)
         {
-            AllowFlying = false
+            AllowFlying = false,
+            DistanceThreshold = 2f,
         });
 
         return null;
