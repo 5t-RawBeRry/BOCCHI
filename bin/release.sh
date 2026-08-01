@@ -57,6 +57,10 @@ if [ -z "$PROJECT" ]; then
 fi
 
 ZIP_PATH="$PROJECT/bin/Release/$PROJECT/latest.zip"
+# Directory.Build.props forces Platforms=x64 → bin/x64/Release/...
+if [ ! -f "$ZIP_PATH" ]; then
+  ZIP_PATH="$PROJECT/bin/x64/Release/$PROJECT/latest.zip"
+fi
 CSPROJ="$PROJECT/$PROJECT.csproj"
 
 if git rev-parse "$TAG" >/dev/null 2>&1; then
