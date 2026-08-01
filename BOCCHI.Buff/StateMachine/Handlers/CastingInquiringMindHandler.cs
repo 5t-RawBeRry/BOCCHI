@@ -1,19 +1,19 @@
 ﻿using BOCCHI.Buff.Data;
 using BOCCHI.Buff.Services;
+using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Extensions;
 using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Objects.SubKinds;
-using Dalamud.Game.ClientState.Statuses;
 using Dalamud.Plugin.Services;
 using Ocelot.Actions;
-using Ocelot.Extensions;
 using Ocelot.States.Flow;
 
 namespace BOCCHI.Buff.StateMachine.Handlers;
 
 public class CastingInquiringMindHandler
 (
+    BuffConfig config,
     IObjectTable objects,
     ISupportJobChanger changer,
     ISupportJobFactory supportJobs,
@@ -35,7 +35,7 @@ public class CastingInquiringMindHandler
             return null;
         }
 
-        if (GetMinutesRemainingForLowestBuff(player) >= 29)
+        if (GetMinutesRemainingForLowestEnabledBuff(player) >= 29)
         {
             return BuffState.ChoosingBuffToApply;
         }
@@ -60,16 +60,24 @@ public class CastingInquiringMindHandler
         return null;
     }
 
-    private uint GetMinutesRemainingForLowestBuff(IPlayerCharacter player)
+    /// <summary>
+    ///     Only count buffs that are enabled and unlocked — matching ChoosingBuffToApplyHandler.
+    ///     Requiring every BuffData.All entry (e.g. disabled Quickstep) caused an infinite recast loop.
+    /// </summary>
+    private uint GetMinutesRemainingForLowestEnabledBuff(IPlayerCharacter player)
     {
         uint lowest = 30;
-        foreach(BuffData buff in buffs.GetBuffs())
+        bool any = false;
+
+        foreach(BuffData buff in buffs.GetBuffs().Where(b => b.ShouldApply(config)))
         {
-            if (!player.StatusList.TryGet(buff.StatusId, out IStatus _))
+            SupportJob job = supportJobs.Create(buff.SupportJobId);
+            if (job.Level < buff.RequiredLevel)
             {
-                return 0;
+                continue;
             }
 
+            any = true;
             uint time = player.GetRemainingMinutes(buff.StatusId);
             if (time < lowest)
             {
@@ -77,6 +85,6 @@ public class CastingInquiringMindHandler
             }
         }
 
-        return lowest;
+        return any ? lowest : 30;
     }
 }

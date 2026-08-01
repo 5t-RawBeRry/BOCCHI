@@ -28,6 +28,8 @@ public class DrawCEs(IOverlayRenderer overlay, ICriticalEncounterRepository ces,
             overlay.StrokeCircle(crystal.Position, 5f, new(1f, 0f, 1f));
         }
 
+#if DEBUG
+        // Debug builds only (BOCCHI.Debug is Debug-config). Cleared at each graph rebuild.
         foreach(List<Vector3> points in GraphConfig.DebugPathLines)
         {
             for(int i = 0; i < points.Count - 1; i++)
@@ -35,5 +37,6 @@ public class DrawCEs(IOverlayRenderer overlay, ICriticalEncounterRepository ces,
                 overlay.StrokeLine(points[i], points[i + 1], new(1f, 0f, 0f));
             }
         }
+#endif
     }
 }

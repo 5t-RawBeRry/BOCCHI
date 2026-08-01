@@ -23,9 +23,14 @@ public class FatesConfig : IAutoConfig
     [DisabledFateIds]
     public HashSet<uint> DisabledFateIds { get; set; } =
     [
+        // South Horn
         1965, // The Winged Terror
         1976, // Persistent Pots
-        1977 // Pleading Pots
+        1977, // Pleading Pots
+        // North Horn
+        2072, // Daylight Pottery
+        2073 // In a Pot of Bother
+
     ];
 
     public bool IsFateEnabled(uint fateId) => ShouldDoFates && !DisabledFateIds.Contains(fateId);

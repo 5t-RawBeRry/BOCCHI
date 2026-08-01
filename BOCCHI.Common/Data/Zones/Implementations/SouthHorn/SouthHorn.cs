@@ -67,15 +67,6 @@ public class SouthHorn
         get => 4944;
     }
 
-    private IEnumerable<uint> KnowledgeCrystalLayoutIds =>
-    [
-        11617915, // Base Camp
-        11617920, // Stonemarsh
-        11617921, // The Wanderer's Haven
-        11617922, // Eldergrowth
-        11617923 // Crystalized Caverns
-    ];
-
     public override AethernetData GetMainAetheryte() => BaseCamp;
 
     public override Vector3 GetAetherytePosition() => new(830.75f, 72.98f, -695.98f);

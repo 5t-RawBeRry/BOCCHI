@@ -8,19 +8,15 @@ namespace BOCCHI.Common.Data.Aethernet;
 
 public static class AethernetNavigation
 {
-    /// <summary>
-    ///     Coarse threshold for graph routing when exact interact points are unreachable.
-    /// </summary>
+    /// <summary>Graph routing when exact interact points are unreachable.</summary>
     public const float AetherytePathfindArrivalRadius = 3.5f;
 
-    /// <summary>
-    ///     Soft vnav stop distance while closing in for Lifestream.
-    /// </summary>
+    /// <summary>Soft vnav stop while closing in for Lifestream.</summary>
     public const float PathfindArrivalRadius = 0.5f;
 
     /// <summary>
-    ///     Idle / Lifestream stand-off from the crystal. Outside the stone base, inside
-    ///     <see cref="AethernetData.LifestreamInteractRadius"/> so a camp spot can teleport.
+    ///     Idle stand-off: outside the stone base, inside
+    ///     <see cref="AethernetData.LifestreamInteractRadius"/>.
     /// </summary>
     public const float CampApproachRadius = 3.0f;
 
@@ -36,7 +32,7 @@ public static class AethernetNavigation
         return node.Position;
     }
 
-    public static IEnumerable<AethernetData> EnumerateAetherytes(this IZone zone) => zone.GetAetherytes().Concat(zone.GetAethernetShards());
+    public static IEnumerable<AethernetData> EnumerateAetherytes(this IZone zone) => zone.GetAetherytes();
 
     public static bool IsWithinInteractRange(this IZone zone, Vector3 position)
     {
@@ -51,9 +47,7 @@ public static class AethernetNavigation
             .Any(aetheryte => position.Distance2D(aetheryte.Position) <= AethernetData.LifestreamInteractRadius);
     }
 
-    /// <summary>
-    ///     Camp parking spots that are also close enough for Lifestream.
-    /// </summary>
+    /// <summary>Camp pads that are still inside Lifestream range.</summary>
     public static IEnumerable<Vector3> GetApproachCandidates(this IZone zone, Vector3 from)
     {
         AethernetData? nearest = zone.EnumerateAetherytes()
@@ -68,8 +62,7 @@ public static class AethernetNavigation
         Vector3 crystal = nearest.Position;
         Vector3 interact = nearest.GetInteractPosition();
 
-        // Only use authored Destination when it is already inside Lifestream range.
-        // Base camp Destination is ~4.7y out — parking there left Pathfinding stuck unable to teleport.
+        // Skip Destination pads outside Lifestream range (SH base camp is ~4.7y out).
         float maxPadDistance = AethernetData.LifestreamInteractRadius - PathfindArrivalRadius;
         if (interact.Distance2D(crystal) > 0.5f && interact.Distance2D(crystal) <= maxPadDistance)
         {
@@ -106,8 +99,7 @@ public static class AethernetNavigation
     {
         foreach(AethernetData aetheryte in zone.EnumerateAetherytes())
         {
-            // Only rewrite paths aimed at the crystal itself — not event approaches
-            // that happen to sit near a camp pad.
+            // Rewrite crystal-aimed paths only — not nearby event approaches.
             if (destination.Distance2D(aetheryte.Position) <= 3f)
             {
                 return aetheryte.GetInteractPosition();

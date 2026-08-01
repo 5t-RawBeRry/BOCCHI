@@ -30,6 +30,6 @@ public class TreasureConfig : IAutoConfig
     [FloatRange(10f, 100f)]
     public float HuntDetectionRange { get; set; } = 75f;
 
-    [IntRange(1, 28)]
-    public int HuntMaxLevel { get; set; } = 23;
+    [IntRange(1, 50)]
+    public int HuntMaxLevel { get; set; } = 40;
 }

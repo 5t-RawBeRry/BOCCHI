@@ -27,8 +27,7 @@ public class PathfindingHandler
     {
         base.Exit(next);
 
-        // ScoreStateMachine can transition in the same frame after Handle(). If we just queued a
-        // return handoff, avoid canceling pathing chains here (that causes a tight restart loop).
+        // Don't cancel pathing on a same-frame return handoff (restart loop).
         if (next == AutomatorState.Returning)
         {
             currentPathTask = null;

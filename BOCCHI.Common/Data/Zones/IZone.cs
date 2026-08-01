@@ -27,12 +27,6 @@ public interface IZone
 
     List<AethernetData> GetAethernetShards();
 
-    List<AethernetData> GetNearbyAethernetShards();
-
-    bool HasNearbyAethernetShards() => GetNearbyKnowledgeCrystals().Count != 0;
-
-    List<KnowledgeCrystalData> GetKnowledgeCrystals();
-
     List<KnowledgeCrystalData> GetNearbyKnowledgeCrystals();
 
     bool HasNearbyKnowledgeCrystals() => GetNearbyKnowledgeCrystals().Count != 0;

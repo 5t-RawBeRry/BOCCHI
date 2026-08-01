@@ -54,7 +54,11 @@
       "label": "Target mobs",
       "tooltip": "Mobs the farmer will pull and count when stacking.",
       "search_hint": "Search name or ID...",
-      "selected": "Selected"
+      "selected": "Selected",
+      "zone_filter": "Zone",
+      "zone_all": "All zones",
+      "zone_south_horn": "South Horn",
+      "zone_north_horn": "North Horn"
     }
   }
 }

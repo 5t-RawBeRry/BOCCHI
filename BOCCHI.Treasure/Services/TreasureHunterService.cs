@@ -1,6 +1,7 @@
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Zones;
+using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Treasure.ChainRecipes;
 using BOCCHI.Treasure.Hunt;
 using Dalamud.Game.ClientState.Conditions;
@@ -423,8 +424,16 @@ public class TreasureHunterService
 
     private List<uint> GetValidNodes(int maxLevel)
     {
-        return zones.GetZone()
-            .GetTreasureData()
+        List<TreasureData> treasureData = zones.GetZone().GetTreasureData();
+        if (treasureData.Exists(d => d.Position.HasValue))
+        {
+            return layoutTreasure
+                .Where(t => treasureData.Any(d => d.Level <= maxLevel && d.Matches(t.Id, t.Position)))
+                .Select(t => t.Id)
+                .ToList();
+        }
+
+        return treasureData
             .Where(node => node.Level <= maxLevel)
             .Select(node => (uint)node.Id)
             .ToList();
@@ -449,11 +458,14 @@ public class TreasureHunterService
                 return null;
             }
 
+            List<TreasureData> treasureData = zones.GetZone().GetTreasureData();
+            bool hasPositionData = treasureData.Exists(d => d.Position.HasValue);
+
             foreach(ILayoutInstance* instance in mapPtr.Value->Values)
             {
                 Transform* transform = instance->GetTransformImpl();
                 Vector3 position = transform->Translation;
-                if (position.Y <= -10f)
+                if (position.Y <= -10f && !hasPositionData)
                 {
                     continue;
                 }
@@ -461,6 +473,11 @@ public class TreasureHunterService
                 uint treasureRowId = Unsafe.Read<uint>((byte*)instance + 0x30);
                 uint sgbId = data.GetExcelSheet<TreasureSheet>().GetRow(treasureRowId).SGB.RowId;
                 if (sgbId != 1596 && sgbId != 1597)
+                {
+                    continue;
+                }
+
+                if (hasPositionData && !treasureData.Any(d => d.Matches(treasureRowId, position)))
                 {
                     continue;
                 }

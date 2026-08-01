@@ -49,10 +49,6 @@ public abstract class BaseZone
 
     public virtual List<AethernetData> GetAethernetShards() => [];
 
-    public virtual List<AethernetData> GetNearbyAethernetShards() => [];
-
-    public virtual List<KnowledgeCrystalData> GetKnowledgeCrystals() => [];
-
     public virtual List<ActivityData> GetNormalFateData() => [];
 
     public virtual List<ActivityData> GetPotFateData() => [];

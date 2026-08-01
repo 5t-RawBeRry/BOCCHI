@@ -23,11 +23,11 @@ public class BuffConfig : IAutoConfig
 
     [FloatRange(30, 300)] public float KnowledgeCrystalDistance { get; set; } = 30f;
 
-    public bool ShouldApplyRomeosBallad() => ShouldAutomateBuffs && ApplyRomeosBallad;
+    public bool ShouldApplyRomeosBallad() => ApplyRomeosBallad;
 
-    public bool ShouldApplyEnduringFortitude() => ShouldAutomateBuffs && ApplyEnduringFortitude;
+    public bool ShouldApplyEnduringFortitude() => ApplyEnduringFortitude;
 
-    public bool ShouldApplyFleetfooted() => ShouldAutomateBuffs && ApplyFleetfooted;
+    public bool ShouldApplyFleetfooted() => ApplyFleetfooted;
 
-    public bool ShouldApplyQuickerStep() => ShouldAutomateBuffs && ApplyQuickerStep;
+    public bool ShouldApplyQuickerStep() => ApplyQuickerStep;
 }

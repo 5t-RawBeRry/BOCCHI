@@ -13,6 +13,7 @@ public static class IServiceCollectionExtensions
         Registry.RegisterAssemblies(typeof(BuffState).Assembly);
 
         services.AddSingleton<IBuffProvider, BuffProvider>();
+        services.AddSingleton<IBuffRunner, BuffRunner>();
         services.AddFlowStateMachine(BuffState.ApproachingKnowledgeCrystal, ServiceLifetime.Transient);
     }
 }

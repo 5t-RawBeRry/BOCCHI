@@ -61,7 +61,7 @@ public class IdleHandler(
             return;
         }
 
-        // Park at the camp spots — don't keep walking into the aetheryte for Lifestream range.
+        // Stay on camp pads so Lifestream stays usable.
         if (zone.IsWithinInteractRange(player.Position))
         {
             idle.ApproachCandidateIndex = 0;

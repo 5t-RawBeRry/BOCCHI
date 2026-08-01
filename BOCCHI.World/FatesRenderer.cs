@@ -13,6 +13,7 @@ public class FatesRenderer
 (
     IFateRepository fates,
     IFateScorer fateScorer,
+    IActivityNavigation navigation,
     UIConfig uiConfig,
     IBrandingService branding,
     IUIService ui,
@@ -44,12 +45,15 @@ public class FatesRenderer
             string details =
                 $"Score {score:F1} · {fate.State} {fate.Progress}% · #{fate.Id.Value} · {fate.Position:f0} · r{fate.Radius}";
 
-            ActivitySnapshotRenderer.RenderCompact(
+            ActivitySnapshotRenderer.RenderCompactWithActions(
                 ui,
+                navigation,
                 branding.DalamudYellow,
                 branding.DalamudGrey,
                 fate.Name,
-                details);
+                details,
+                fate.Position,
+                $"fate_{fate.Id.Value}");
         }
     }
 

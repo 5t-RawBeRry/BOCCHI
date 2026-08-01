@@ -2,8 +2,4 @@
     <PropertyGroup>
         <AssemblyName>BOCCHI.Common</AssemblyName>
     </PropertyGroup>
-
-    <ItemGroup>
-        <Compile Remove="Data\Zones\Implementations\NorthHorn\**\*.cs"/>
-    </ItemGroup>
 </Project>

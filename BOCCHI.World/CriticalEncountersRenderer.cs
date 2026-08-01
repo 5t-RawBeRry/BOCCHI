@@ -3,6 +3,7 @@ using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.UI;
+using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
 using Ocelot.Windows;
@@ -12,6 +13,7 @@ namespace BOCCHI.CriticalEncounters;
 public class CriticalEncountersRenderer
 (
     ICriticalEncounterRepository criticalEncounters,
+    IActivityNavigation navigation,
     UIConfig uiConfig,
     IBrandingService branding,
     IUIService ui,
@@ -42,12 +44,31 @@ public class CriticalEncountersRenderer
             string details =
                 $"{criticalEncounter.State} · #{criticalEncounter.Id.Value} · {criticalEncounter.Position:f0}";
 
-            ActivitySnapshotRenderer.RenderCompact(
-                ui,
-                branding.DalamudYellow,
-                branding.DalamudGrey,
-                criticalEncounter.Name,
-                details);
+            // Match old panel: action buttons while registering / preparing.
+            bool showActions = criticalEncounter.State is DynamicEventState.Register or DynamicEventState.Warmup
+                               && criticalEncounter.Position is { X: not float.NaN };
+
+            if (showActions)
+            {
+                ActivitySnapshotRenderer.RenderCompactWithActions(
+                    ui,
+                    navigation,
+                    branding.DalamudYellow,
+                    branding.DalamudGrey,
+                    criticalEncounter.Name,
+                    details,
+                    criticalEncounter.Position,
+                    $"ce_{criticalEncounter.Id.Value}");
+            }
+            else
+            {
+                ActivitySnapshotRenderer.RenderCompact(
+                    ui,
+                    branding.DalamudYellow,
+                    branding.DalamudGrey,
+                    criticalEncounter.Name,
+                    details);
+            }
         }
     }
 

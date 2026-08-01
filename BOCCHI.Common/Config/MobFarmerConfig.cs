@@ -15,8 +15,8 @@ public class MobFarmerConfig : IAutoConfig
     [Checkbox]
     public bool ConsiderSpecialMobs { get; set; } = false;
 
-    [IntRange(1, 28)]
-    public int MaxMobLevel { get; set; } = 28;
+    [IntRange(1, 50)]
+    public int MaxMobLevel { get; set; } = 40;
 
     [FloatRange(10f, 1000f)]
     public float MaxEuclideanDistance { get; set; } = 75f;

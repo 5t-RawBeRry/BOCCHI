@@ -117,17 +117,6 @@ public class FarmingPotChestsHandler
         );
     }
 
-    public override void Render()
-    {
-        base.Render();
-
-        if (!memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory farm))
-        {
-        }
-
-        // Rendered by AutomatorRenderer via memory inspection
-    }
-
     private IEnumerable<IGameObject> GetValidChests()
     {
         return objects.Where(o => o is

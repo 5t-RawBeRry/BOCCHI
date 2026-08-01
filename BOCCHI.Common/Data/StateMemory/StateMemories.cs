@@ -9,6 +9,9 @@ using System.Numerics;
 namespace BOCCHI.Common.Data.StateMemory;
 
 public sealed class ApplyingBuffsMemory;
+
+public sealed class ManualBuffRunMemory;
+
 public sealed class CastingTreasureSightMemory;
 public class WaitingForCriticalEncounterMemory;
 

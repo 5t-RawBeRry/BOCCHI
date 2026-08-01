@@ -1,4 +1,3 @@
-using System.Numerics;
 using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Common.Data.Zones.Graph.Factory;
@@ -6,36 +5,214 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
+using System.Numerics;
 
 namespace BOCCHI.Common.Data.Zones.Implementations.NorthHorn;
 
-public class NorthHorn(
+public class NorthHorn
+(
     IObjectTable objects,
     IDalamudPluginInterface plugin,
     IGraphFactory graphs,
     IPathfinder pathfinder,
     ILogger logger
-) : BaseZone(objects, plugin, graphs, pathfinder, logger, ZoneId.Unknown)
+) : BaseZone(objects, plugin, graphs, pathfinder, logger, ZoneId.NorthHorn)
 {
-    protected override uint BasecampPlaceNameId => 0;
-
-    public override AethernetData GetMainAetheryte()
+    private static readonly AethernetData BaseCamp = new()
     {
-        throw new NotSupportedException("North Horn zone data is not configured yet.");
+        Id = 5571,
+        BaseId = 2015429,
+        Position = new(880.002f, 259.74f, 880.059f),
+        Destination = new(882.18f, 258.5f, 882.263f),
+        DeadRadius = 3.34f
+    };
+
+    private static readonly AethernetData TheCrownOfKarnak = new()
+    {
+        Id = 5576,
+        BaseId = 2015434,
+        Position = new(451.684f, 70.927f, 528.839f),
+        Destination = new(453.897f, 70f, 530.314f),
+        DeadRadius = 3f
+    };
+
+    private static readonly AethernetData SinkingSanctuary = new()
+    {
+        Id = 5572,
+        BaseId = 2015430,
+        Position = new(357.669f, 45.766f, -554.308f),
+        Destination = new(357.311f, 45.094f, -556.975f),
+        DeadRadius = 3f
+    };
+
+    private static readonly AethernetData SuspendedMasonry = new()
+    {
+        Id = 5573,
+        BaseId = 2015431,
+        Position = new(-547.247f, 67.998f, 594.404f),
+        Destination = new(-549.244f, 67.178f, 596.183f),
+        DeadRadius = 3f
+    };
+
+    private static readonly AethernetData MolderingOutskirts = new()
+    {
+        Id = 5574,
+        BaseId = 2015432,
+        Position = new(-388.573f, 41.221f, -440.52f),
+        Destination = new(-386.639f, 39.293f, -438.26f),
+        DeadRadius = 3.55f
+    };
+
+    private static readonly AethernetData UnhallowedHamlet = new()
+    {
+        Id = 5575,
+        BaseId = 2015433,
+        Position = new(-13.364f, 3.145f, -40.512f),
+        Destination = new(-15.738f, 2.065f, -44.486f),
+        DeadRadius = 4.75f
+    };
+
+    protected override uint BasecampPlaceNameId
+    {
+        get => 5595;
     }
 
-    public override Vector3 GetAetherytePosition()
-    {
-        return Vector3.Zero;
-    }
+    public override AethernetData GetMainAetheryte() => BaseCamp;
 
-    public override Vector3 GetStartingPosition()
-    {
-        return Vector3.Zero;
-    }
+    public override Vector3 GetAetherytePosition() => BaseCamp.Position;
 
-    protected override ushort GetForkedTowerEventId()
-    {
-        return 0;
-    }
+    public override Vector3 GetStartingPosition() => BaseCamp.Destination;
+
+    public override List<AethernetData> GetAetherytes() =>
+    [
+        BaseCamp,
+        TheCrownOfKarnak,
+        SinkingSanctuary,
+        SuspendedMasonry,
+        MolderingOutskirts,
+        UnhallowedHamlet
+    ];
+
+    public override List<AethernetData> GetAethernetShards() =>
+    [
+        TheCrownOfKarnak,
+        SinkingSanctuary,
+        SuspendedMasonry,
+        MolderingOutskirts,
+        UnhallowedHamlet
+    ];
+
+    protected override ushort GetForkedTowerEventId() => 64;
+
+    public override List<ActivityData> GetNormalFateData() =>
+    [
+        new(2081, new(-440f, 47.02659f, -790f)), // A Rotten Affair
+        new(2078, new(-402.0002f, 29.76808f, -252.9997f)), // Allure of the Occult
+        new(2075, new(510f, 16.76658f, -29.99999f), 30f), // Eye to Eye
+        new(2082, new(-855.7433f, 70.67716f, 482.1518f), 30f), // Gale-force Encounter
+        new(2079, new(-170f, 30f, -500f), 30f), // Inconstant Gardener
+        new(2074, new(724f, 70f, 220f), 30f), // Raging Thrall
+        new(2083, new(-661.0049f, 87f, -54.00021f), 30f), // Scale Model
+        new(2076, new(95f, 10f, 470f), 30f), // Shoreline Showdown
+        new(2080, new(-90f, 67.47852f, 865.9999f), 30f), // Territorial Dispute
+        new(2084, new(140f, 37f, -708f), 30f), // Thunderregnum
+        new(2077, new(330f, 0f, -250f), 30f) // Waved Away
+    ];
+
+    public override List<ActivityData> GetPotFateData() =>
+    [
+        new(2072, new(233f, 7.729229f, -470f)), // Daylight Pottery (North)
+        new(2073, new(-505.2822f, 53.14409f, 244.041f), 38f) // In a Pot of Bother (South)
+    ];
+
+    public override List<ActivityData> GetCriticalEncounterData() =>
+    [
+        new(56, new(238f, 15f, 367f), 20f), // A Beast Unleashed
+        new(63, new(500f, 56f, -310f), 20f), // Accept No Imitators
+        new(62, new(-82f, 12f, 485f), 20f), // Ahead of the Competition
+        new(59, new(807f, 61f, -562f), 20f), // Appalling Behavior
+        new(53, new(-688f, 90f, 150f), 20f), // Cursed Resurgence
+        new(57, new(224f, 52f, -860f), 20f), // Dark Artistry
+        new(50, new(-215f, 18f, -65f), 20f), // Doubled Trouble
+        new(58, new(-390f, 68f, 700f), 20f), // Familiar Tactics
+        new(52, new(659f, 132f, 659f), 20f), // Forbidden Folios
+        new(54, new(765f, 70f, 0f), 20f), // Imbalanced Diet
+        new(61, new(-150f, 70f, -860f), 20f), // Lost on the Wind
+        new(49, new(-870f, 20f, -560f), 20f), // Many Mouths to Feed
+        new(51, new(-519f, 48f, -641f), 20f), // Quarried Away
+        new(60, new(152f, 70f, 716f), 20f), // Tiny Terror
+        new(55, new(170f, 4f, -136f), 20f) // Web of Terror
+    ];
+
+    public override List<TreasureData> GetTreasureData() =>
+    [
+        new(2006, 25, new(383.314f, 33.000f, -175.648f)), // SinkingSanctuary_8
+        new(2007, 27, new(-2.306f, 66.691f, -814.905f)), // SinkingSanctuary_3
+        new(2008, 30, new(-22.669f, 42.087f, 628.995f)), // CrownofKarnak_1
+        new(2009, 35, new(-633.696f, 82.718f, -146.005f)), // MolderingOutskirts_16
+        new(2010, 43, new(634.792f, 60.515f, -831.787f)), // SinkingSanctuary_12
+        new(2011, 41, new(-645.440f, 160.099f, 967.944f)), // SuspendedMasonry_5
+        new(2012, 45, new(-815.808f, -21.835f, -699.370f)), // MolderingOutskirts_9
+        new(2013, 48, new(223.653f, -161.864f, -30.644f)), // UnhallowedHamlet_9
+        new(2014, 20, new(676.997f, 190.978f, 957.447f)), // BaseCamp_1
+        new(2015, 20, new(812.000f, 192.000f, 669.000f)), // BaseCamp_2
+        new(2016, 21, new(673.740f, 161.165f, 729.666f)), // BaseCamp_3
+        new(2017, 21, new(758.147f, 130.000f, 506.813f)), // BaseCamp_4
+        new(2018, 23, new(246.227f, 66.542f, 676.666f)), // CrownofKarnak_2
+        new(2019, 23, new(719.348f, 69.655f, 268.304f)), // BaseCamp_5
+        new(2020, 24, new(449.408f, 0.147f, 105.235f)), // BaseCamp_6
+        new(2021, 24, new(649.544f, 46.245f, -157.774f)), // SinkingSanctuary_7
+        new(2022, 25, new(478.451f, 12.422f, -202.971f)), // SinkingSanctuary_6
+        new(2023, 25, new(254.744f, 36.932f, -605.000f)), // SinkingSanctuary_4
+        new(2024, 25, new(-26.000f, 0.232f, -437.688f)), // MolderingOutskirts_3
+        new(2025, 36, new(-265.761f, 30.171f, -439.519f)), // MolderingOutskirts_1
+        new(2026, 27, new(-232.419f, 53.237f, -719.972f)), // MolderingOutskirts_4
+        new(2027, 27, new(147.869f, 61.000f, -868.752f)), // SinkingSanctuary_2
+        new(2028, 28, new(658.809f, 66.126f, -364.676f)), // SinkingSanctuary_9
+        new(2029, 28, new(950.201f, 74.000f, -358.976f)), // SinkingSanctuary_16
+        new(2030, 43, new(658.723f, 60.520f, -552.306f)), // SinkingSanctuary_10
+        new(2031, 29, new(389.536f, 60.682f, -733.018f)), // SinkingSanctuary_1
+        new(2032, 30, new(77.070f, 21.200f, 536.270f)), // CrownofKarnak_3
+        new(2033, 30, new(-12.099f, 66.651f, 773.863f)), // CrownofKarnak_4
+        new(2034, 31, new(-278.056f, 47.784f, 567.973f)), // SuspendedMasonry_2
+        new(2035, 33, new(-436.442f, 0.203f, 166.219f)), // SuspendedMasonry_13
+        new(2036, 32, new(-256.947f, 100.667f, 812.197f)), // SuspendedMasonry_3
+        new(2037, 32, new(-504.091f, 85.753f, 758.321f)), // SuspendedMasonry_4
+        new(2038, 33, new(-612.214f, 66.990f, 578.548f)), // SuspendedMasonry_1
+        new(2039, 34, new(-775.894f, 70.719f, 377.153f)), // SuspendedMasonry_10
+        new(2040, 34, new(-631.779f, 78.255f, 240.000f)), // SuspendedMasonry_12
+        new(2041, 34, new(-923.142f, 113.265f, 197.948f)), // SuspendedMasonry_11
+        new(2042, 35, new(-590.208f, 87.979f, -7.000f)), // MolderingOutskirts_17
+        new(2043, 35, new(-878.967f, 13.135f, -314.202f)), // MolderingOutskirts_13
+        new(2044, 36, new(-581.489f, 40.914f, -257.411f)), // MolderingOutskirts_15
+        new(2045, 36, new(-254.141f, 1.821f, -266.312f)), // MolderingOutskirts_2
+        new(2046, 37, new(-707.376f, 41.586f, -396.989f)), // MolderingOutskirts_14
+        new(2047, 45, new(-697.271f, 34.898f, -565.022f)), // MolderingOutskirts_12
+        new(2048, 38, new(-439.551f, 43.044f, -558.449f)), // MolderingOutskirts_5
+        new(2049, 38, new(-525.781f, 46.857f, -783.468f)), // MolderingOutskirts_6
+        new(2050, 39, new(85.598f, 3.303f, -281.140f)), // UnhallowedHamlet_2
+        new(2051, 39, new(43.782f, 2.454f, -108.192f)), // UnhallowedHamlet_1
+        new(2052, 39, new(-168.204f, 3.380f, -153.458f)), // UnhallowedHamlet_3
+        new(2053, 40, new(-162.042f, 3.590f, 98.450f)), // UnhallowedHamlet_4
+        new(2054, 43, new(633.132f, 60.642f, -910.227f)), // SinkingSanctuary_13
+        new(2055, 43, new(639.049f, 60.625f, -698.726f)), // SinkingSanctuary_11
+        new(2056, 44, new(815.444f, 60.554f, -657.314f)), // SinkingSanctuary_15
+        new(2057, 44, new(865.457f, 70.215f, -874.087f)), // SinkingSanctuary_14
+        new(2058, 41, new(-592.000f, 160.101f, 767.669f)), // SuspendedMasonry_7
+        new(2059, 41, new(-699.837f, 160.000f, 926.379f)), // SuspendedMasonry_6
+        new(2060, 42, new(-857.793f, 159.850f, 772.237f)), // SuspendedMasonry_8
+        new(2061, 42, new(-800.397f, 157.800f, 633.387f)), // SuspendedMasonry_9
+        new(2062, 45, new(-857.599f, -12.235f, -609.817f)), // MolderingOutskirts_11
+        new(2063, 45, new(-928.626f, -11.228f, -744.956f)), // MolderingOutskirts_10
+        new(2064, 46, new(-736.024f, 21.035f, -881.486f)), // MolderingOutskirts_8
+        new(2065, 46, new(-416.774f, 45.937f, -945.431f)), // MolderingOutskirts_7
+        new(2066, 47, new(-144.726f, -129.796f, 304.938f)), // UnhallowedHamlet_6
+        new(2067, 47, new(41.233f, -140.771f, 168.502f)), // UnhallowedHamlet_7
+        new(2068, 48, new(161.000f, -151.760f, 16.000f)), // UnhallowedHamlet_8
+        new(2069, 48, new(313.919f, -139.530f, 180.071f)), // UnhallowedHamlet_10
+        new(2070, 23, new(447.886f, 62.906f, 463.345f)), // CrownofKarnak_5
+        new(2071, 26, new(279.093f, 143.000f, -356.148f)), // SinkingSanctuary_5
+        new(2072, 40, new(-287.741f, -92.000f, 125.666f)), // UnhallowedHamlet_5
+        new(2073, 30, new(222.912f, 90.400f, 913.629f)) // CrownofKarnak_6
+    ];
 }

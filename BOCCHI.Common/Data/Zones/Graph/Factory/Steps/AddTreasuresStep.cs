@@ -25,11 +25,14 @@ public class AddTreasuresStep(IDataRepository<Treasure> treasureSheet) : IGraphB
                 return;
             }
 
+            List<TreasureData> treasureData = zone.GetTreasureData();
+            bool hasPositionData = treasureData.Exists(d => d.Position.HasValue);
+
             foreach(ILayoutInstance* instance in mapPtr.Value->Values)
             {
                 Transform* transform = instance->GetTransformImpl();
                 Vector3 position = transform->Translation;
-                if (position.Y <= -10f)
+                if (position.Y <= -10f && !hasPositionData)
                 {
                     continue;
                 }
@@ -42,13 +45,20 @@ public class AddTreasuresStep(IDataRepository<Treasure> treasureSheet) : IGraphB
                 }
 
                 int level = 99;
-                foreach(TreasureData datum in zone.GetTreasureData())
+                TreasureData? match = null;
+                foreach(TreasureData datum in treasureData)
                 {
-                    if (datum.Id == treasureRowId)
+                    if (datum.Matches(treasureRowId, position))
                     {
+                        match = datum;
                         level = datum.Level;
                         break;
                     }
+                }
+
+                if (hasPositionData && match == null)
+                {
+                    continue;
                 }
 
                 graph.AddNode(new()

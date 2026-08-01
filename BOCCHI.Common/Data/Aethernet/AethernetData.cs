@@ -3,11 +3,10 @@ namespace BOCCHI.Common.Data.Aethernet;
 
 public class AethernetData
 {
-    // General aetheryte proximity — used for graph routing and idle positioning.
+    // Graph routing / idle stand-off from the crystal or Destination pad.
     public const float InteractRadius = 4.3f;
 
-    // Distance to crystal Position where Lifestream's aethernet UI is usable.
-    // Big OC aetheryte bases extend ~2y+ from center; 1.9 was inside the mesh.
+    // Lifestream UI range from crystal center (OC bases are ~2y+; 1.9 sat inside the mesh).
     public const float LifestreamInteractRadius = 3.5f;
 
     public float DeadRadius { get; init; } = 3.2f;

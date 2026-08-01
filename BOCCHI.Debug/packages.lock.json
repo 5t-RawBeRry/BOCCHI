@@ -124,6 +124,18 @@
           "FFXIVOcelot.UI": "[1.0.0, )"
         }
       },
+      "bocchi.treasure": {
+        "type": "Project",
+        "dependencies": {
+          "BOCCHI.Common": "[1.0.0, )",
+          "FFXIVOcelot": "[1.0.0, )",
+          "FFXIVOcelot.Chain": "[1.0.0, )",
+          "FFXIVOcelot.ECommons": "[1.0.0, )",
+          "FFXIVOcelot.Pathfinding": "[1.0.0, )",
+          "FFXIVOcelot.Pictomancy": "[1.0.0, )",
+          "FFXIVOcelot.UI": "[1.0.0, )"
+        }
+      },
       "FFXIVOcelot": {
         "type": "Project",
         "dependencies": {
