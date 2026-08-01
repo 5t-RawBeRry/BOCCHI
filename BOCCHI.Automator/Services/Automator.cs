@@ -88,7 +88,7 @@ public class Automator
                      && !memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory _)
                      && !memory.TryRemember<ApplyingBuffsMemory>(out ApplyingBuffsMemory _))
             {
-                memory.TryAdd(new GoalPathStepMemory(goal.Goal, calculator, logger));
+                memory.TryAdd(new GoalPathStepMemory(goal.Goal, calculator));
             }
         }
 

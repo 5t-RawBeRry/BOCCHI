@@ -5,7 +5,10 @@ using FateData = Lumina.Excel.Sheets.Fate;
 
 namespace BOCCHI.Common.Data.Fates;
 
-public readonly record struct FateId(ushort Value);
+public readonly record struct FateId(ushort Value)
+{
+    public override string ToString() => Value.ToString();
+}
 
 public class Fate(FateId id, IFate context, IDataRepository<FateData> fateDataRepository)
 {

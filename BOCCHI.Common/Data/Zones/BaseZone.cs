@@ -96,29 +96,54 @@ public abstract class BaseZone
         return dec != null && dec->CurrentEventId == GetForkedTowerEventId();
     }
 
-    public async Task<ZoneGraph> GetGraph()
+    private ZoneGraph? cachedGraph;
+    private Task<ZoneGraph>? graphLoadTask;
+    private readonly object graphGate = new();
+
+    public Task<ZoneGraph> GetGraph()
+    {
+        if (cachedGraph != null)
+        {
+            return Task.FromResult(cachedGraph);
+        }
+
+        lock (graphGate)
+        {
+            if (cachedGraph != null)
+            {
+                return Task.FromResult(cachedGraph);
+            }
+
+            return graphLoadTask ??= LoadOrBuildGraphAsync();
+        }
+    }
+
+    private async Task<ZoneGraph> LoadOrBuildGraphAsync()
     {
         string dir = Path.Combine(plugin.GetPluginConfigDirectory(), "zone_graphs");
         Directory.CreateDirectory(dir);
 
-        // Bump when walk-cost / edge semantics or aetheryte Dest pads change.
-        const int graphSchemaVersion = 3;
+        // Bump when walk-cost / edge semantics or which nodes are wired change.
+        const int graphSchemaVersion = 4;
         string path = Path.Combine(dir, $"{TerritoryType}.v{graphSchemaVersion}.json");
 
         if (File.Exists(path))
         {
             logger.Debug("Loaded zone graph from path: " + path);
             string json = await File.ReadAllTextAsync(path);
-            return ZoneGraph.FromJson(json);
+            ZoneGraph loaded = ZoneGraph.FromJson(json);
+            cachedGraph = loaded;
+            return loaded;
         }
 
-        logger.Debug("Creating new zone graph");
+        logger.Info($"Building zone graph for territory {TerritoryType} (one-time; Automator waits until done)");
         logger.Debug("Data: " + GetNormalFateData().Count);
         GraphConfig config = new(pathfinder, logger);
         ZoneGraph graph = await graphs.BuildAsync(config, this);
         logger.Debug("Writing zone graph to: " + path);
         await File.WriteAllTextAsync(path, graph.ToJson());
 
+        cachedGraph = graph;
         return graph;
     }
 

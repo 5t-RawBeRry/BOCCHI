@@ -12,9 +12,10 @@ public class GraphFactory : IGraphFactory
     {
         steps.Add(new AddTeleportsStep());
         steps.Add(new AddActivitiesStep());
-        steps.Add(new AddTreasuresStep(treasureSheet));
-        steps.Add(new AddPotChestsStep());
-        steps.Add(new AddCarrotsStep());
+        // Treasures / pots / carrots are not used by Automator pathing (treasure hunt and
+        // pot farm use their own data). Wiring them with vnav pathfinds floods the query
+        // queue for minutes on cold graph builds.
+        _ = treasureSheet;
     }
 
     public async Task<ZoneGraph> BuildAsync(GraphConfig config, IZone zone)

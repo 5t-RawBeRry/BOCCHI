@@ -226,13 +226,21 @@ public class ZoneGraph
     {
         List<Node> teleports = GetTeleportNodes().ToList();
 
-        foreach(Node node in nodes)
+        foreach (Node node in nodes)
         {
-            // Score more than the Euclidean nearest two — island shards can be closest
-            // but unreachable (e.g. Unhallowed Hamlet → Eye to Eye).
-            IEnumerable<Node> nearestTeleports = teleports.OrderBy(t => t.Position.Distance2D(node.Position)).Take(4);
+            // Score a few Euclidean-nearest shards sequentially. Parallel WhenAll flooded
+            // vnav (Queries: 1 + N queued) and stalled actual movement pathfinds.
+            List<Node> nearestTeleports = teleports
+                .OrderBy(t => t.Position.Distance2D(node.Position))
+                .Take(3)
+                .ToList();
 
-            var costTasks = nearestTeleports.Select(async teleport =>
+            float bestInboundCost = float.PositiveInfinity;
+            Node? bestInbound = null;
+            float bestOutboundCost = float.PositiveInfinity;
+            Node? bestOutbound = null;
+
+            foreach (Node teleport in nearestTeleports)
             {
                 if (teleport.Metadata is not TeleportNodeMetadata meta)
                 {
@@ -240,37 +248,28 @@ public class ZoneGraph
                 }
 
                 float toActivity = await config.GetWalkingCost(meta.Destination, node.Position);
+                if (toActivity < bestInboundCost)
+                {
+                    bestInboundCost = toActivity;
+                    bestInbound = teleport;
+                }
 
                 float fromActivity = await config.GetWalkingCost(node.Position, meta.Destination);
-
-                return new
+                if (fromActivity < bestOutboundCost)
                 {
-                    Teleport = teleport,
-                    ToActivity = toActivity,
-                    FromActivity = fromActivity
-                };
-            });
-
-            var results = await Task.WhenAll(costTasks);
-
-            var bestInbound = results
-                .Where(r => !float.IsPositiveInfinity(r.ToActivity))
-                .OrderBy(r => r.ToActivity)
-                .FirstOrDefault();
-
-            var bestOutbound = results
-                .Where(r => !float.IsPositiveInfinity(r.FromActivity))
-                .OrderBy(r => r.FromActivity)
-                .FirstOrDefault();
-
-            if (bestInbound != null)
-            {
-                AddEdge(bestInbound.Teleport.Id, node.Id, bestInbound.ToActivity, EdgeType.Walk);
+                    bestOutboundCost = fromActivity;
+                    bestOutbound = teleport;
+                }
             }
 
-            if (bestOutbound != null)
+            if (bestInbound != null && !float.IsPositiveInfinity(bestInboundCost))
             {
-                AddEdge(node.Id, bestOutbound.Teleport.Id, bestOutbound.FromActivity, EdgeType.Walk);
+                AddEdge(bestInbound.Id, node.Id, bestInboundCost, EdgeType.Walk);
+            }
+
+            if (bestOutbound != null && !float.IsPositiveInfinity(bestOutboundCost))
+            {
+                AddEdge(node.Id, bestOutbound.Id, bestOutboundCost, EdgeType.Walk);
             }
         }
     }

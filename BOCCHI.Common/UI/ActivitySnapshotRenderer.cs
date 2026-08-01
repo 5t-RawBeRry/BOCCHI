@@ -31,13 +31,14 @@ public static class ActivitySnapshotRenderer
         string title,
         string details,
         Vector3 destination,
-        string actionId
+        string actionId,
+        bool includeTeleport = true
     )
     {
         RenderCompact(ui, titleColor, detailColor, title, details);
 
         ImGui.Indent(12f);
-        DrawActionButtons(navigation, destination, title, actionId);
+        DrawActionButtons(navigation, destination, title, actionId, includeTeleport);
         ImGui.Unindent(12f);
     }
 
@@ -71,7 +72,8 @@ public static class ActivitySnapshotRenderer
         IActivityNavigation navigation,
         Vector3 destination,
         string title,
-        string actionId
+        string actionId,
+        bool includeTeleport
     )
     {
         if (!navigation.CanPathfind)
@@ -87,6 +89,11 @@ public static class ActivitySnapshotRenderer
         if (ImGui.IsItemHovered())
         {
             ImGui.SetTooltip($"Pathfind to {title}");
+        }
+
+        if (!includeTeleport)
+        {
+            return;
         }
 
         ImGui.SameLine(0f, 4f);

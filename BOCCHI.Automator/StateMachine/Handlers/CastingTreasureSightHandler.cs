@@ -98,5 +98,13 @@ public class CastingTreasureSightHandler
         }
     }
 
-    private int GetLastCastDeltaSeconds() => (DateTime.Now - lastCast).Seconds;
+    private int GetLastCastDeltaSeconds()
+    {
+        if (lastCast == DateTime.MinValue)
+        {
+            return int.MaxValue;
+        }
+
+        return (int)(DateTime.Now - lastCast).TotalSeconds;
+    }
 }

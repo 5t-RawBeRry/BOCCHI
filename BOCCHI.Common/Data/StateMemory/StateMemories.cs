@@ -3,7 +3,6 @@ using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.Paths;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Services.Paths;
-using Ocelot.Services.Logger;
 using System.Numerics;
 
 namespace BOCCHI.Common.Data.StateMemory;
@@ -63,7 +62,7 @@ public sealed class PotChestFarmMemory(FateId fateId, IEnumerable<Vector3> chest
     public int RemainingChests => Chests.Count;
 }
 
-public sealed class GoalPathStepMemory(IGoal goal, IPathCalculator calculator, ILogger logger)
+public sealed class GoalPathStepMemory(IGoal goal, IPathCalculator calculator)
 {
     private Task<Queue<IPathStep>>? pathStepTask = calculator.Calculate(goal);
 
@@ -80,7 +79,6 @@ public sealed class GoalPathStepMemory(IGoal goal, IPathCalculator calculator, I
 
         if (!pathStepTask.IsCompleted)
         {
-            logger.Info("Pathstep running...");
             return;
         }
 

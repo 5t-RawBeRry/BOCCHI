@@ -128,7 +128,8 @@ public class TreasureRenderer
                 name,
                 details,
                 pos,
-                $"treasure_{treasure.Id}");
+                $"treasure_{treasure.Id}",
+                includeTeleport: false);
         }
     }
 

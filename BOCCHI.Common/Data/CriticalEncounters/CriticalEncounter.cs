@@ -7,7 +7,10 @@ using System.Numerics;
 
 namespace BOCCHI.Common.Data.CriticalEncounters;
 
-public readonly record struct CriticalEncounterId(ushort Value);
+public readonly record struct CriticalEncounterId(ushort Value)
+{
+    public override string ToString() => Value.ToString();
+}
 
 public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev, float radius)
 {
