@@ -14,7 +14,7 @@ public class MobFarmerService
     Func<IStateMachine<FarmerPhase>> stateMachineFactory,
     IPathfinder pathfinder,
     IPlayer player
-) : IMobFarmer, IOnUpdate
+) : IMobFarmer, IOnUpdate, IOnStop
 {
     private IStateMachine<FarmerPhase>? stateMachine;
 
@@ -25,6 +25,12 @@ public class MobFarmerService
     public Vector3 StartingPoint { get; private set; }
 
     public FarmerPhase Phase => StateMachine.State;
+
+    public void OnStop()
+    {
+        Running = false;
+        pathfinder.Stop();
+    }
 
     public void Toggle()
     {

@@ -212,14 +212,21 @@ public class ActivityNavigation
             return true;
         }
 
-        if (ShouldSkipMount(destination))
+        // Still casting mount — do not treat Mounting as success (ShouldSkipMount does).
+        if (conditions[ConditionFlag.Mounting])
+        {
+            return false;
+        }
+
+        if (conditions[ConditionFlag.InCombat] || conditions[ConditionFlag.Unconscious])
         {
             return true;
         }
 
-        if (conditions[ConditionFlag.Mounting])
+        if (objects.LocalPlayer is not { } localPlayer
+            || localPlayer.Position.Distance(destination) <= NavigationConstants.MountMinDistance)
         {
-            return false;
+            return true;
         }
 
         if (Actions.MountRoulette.CanCast())
@@ -231,8 +238,10 @@ public class ActivityNavigation
     }
 
     /// <summary>
-    ///     Pick the aethernet with the shortest walk to <paramref name="destination"/>.
-    ///     Euclidean nearest is wrong across water (e.g. Unhallowed Hamlet island vs mainland CEs).
+    ///     Pick an aethernet that can walk to <paramref name="destination"/>.
+    ///     Tries Euclidean-nearest first and returns the first reachable shard so the UI
+    ///     button starts Lifestream after typically one vnav query (scoring every shard
+    ///     felt sluggish). Unreachable nearest (island water gaps) are skipped.
     /// </summary>
     private async Task<AethernetData?> SelectBestAetheryteAsync(Vector3 destination)
     {
@@ -251,7 +260,7 @@ public class ActivityNavigation
             return ByEuclidean();
         }
 
-        (AethernetData Aetheryte, float Cost)[] scored = await Task.WhenAll(aetherytes.Select(async aetheryte =>
+        foreach (AethernetData aetheryte in aetherytes.OrderBy(a => destination.Distance2D(a.Position)))
         {
             Vector3 from = aetheryte.GetInteractPosition();
             Path path = await pathfinder.Pathfind(new PathfinderConfig(destination)
@@ -262,16 +271,13 @@ public class ActivityNavigation
                 })
                 .ConfigureAwait(false);
 
-            float cost = path.Nodes.Count < 2 ? float.PositiveInfinity : path.Distance;
-            return (aetheryte, cost);
-        })).ConfigureAwait(false);
+            if (path.Nodes.Count >= 2)
+            {
+                return aetheryte;
+            }
+        }
 
-        (AethernetData Aetheryte, float Cost) best = scored
-            .Where(s => !float.IsPositiveInfinity(s.Cost))
-            .OrderBy(s => s.Cost)
-            .FirstOrDefault();
-
-        return best.Aetheryte ?? ByEuclidean();
+        return ByEuclidean();
     }
 
     private void CancelActivityChains()

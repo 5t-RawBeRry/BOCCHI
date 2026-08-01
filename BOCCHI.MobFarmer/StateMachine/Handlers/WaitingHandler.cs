@@ -21,6 +21,13 @@ public class WaitingHandler
             return FarmerPhase.Fighting;
         }
 
+        // Require at least one free (untargeted) mob — contested packs still count toward
+        // Mobs but would otherwise bounce Buffing → Gathering → Waiting forever.
+        if (!scanner.NotInCombat.Any())
+        {
+            return null;
+        }
+
         return scanner.Mobs.Count >= config.MinimumMobsToStartLoop ? FarmerPhase.Buffing : null;
     }
 }

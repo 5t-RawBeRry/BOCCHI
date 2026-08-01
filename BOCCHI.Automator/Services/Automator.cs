@@ -34,7 +34,7 @@ public class Automator
     IObjectTable objects,
     FatesConfig fatesConfig,
     ILogger<Automator> logger
-) : IAutomator, IOnUpdate
+) : IAutomator, IOnUpdate, IOnStop
 {
     private IStateMachine<AutomatorState>? stateMachine;
 
@@ -43,6 +43,8 @@ public class Automator
     public bool Enabled => context.Enabled;
 
     public AutomatorState? CurrentState => Enabled ? StateMachine.State : null;
+
+    public void OnStop() => StopAutomation();
 
     public void Toggle()
     {

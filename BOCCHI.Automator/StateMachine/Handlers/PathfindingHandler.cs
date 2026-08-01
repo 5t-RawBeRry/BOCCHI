@@ -87,6 +87,8 @@ public class PathfindingHandler
                     {
                         logger.Warning("Path step failed: {Error}", result.ErrorMessage ?? "unknown");
                         pathfinder.Stop();
+                        // Drop the failed step so we do not restart the same Teleport/path forever.
+                        path.DequeuePathStep();
                     }
                 }
                 else if (currentPathTask.IsCanceled)

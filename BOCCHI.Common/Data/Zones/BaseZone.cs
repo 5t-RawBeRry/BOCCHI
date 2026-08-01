@@ -101,7 +101,9 @@ public abstract class BaseZone
         string dir = Path.Combine(plugin.GetPluginConfigDirectory(), "zone_graphs");
         Directory.CreateDirectory(dir);
 
-        string path = Path.Combine(dir, $"{TerritoryType}.json");
+        // Bump when walk-cost / edge semantics or aetheryte Dest pads change.
+        const int graphSchemaVersion = 3;
+        string path = Path.Combine(dir, $"{TerritoryType}.v{graphSchemaVersion}.json");
 
         if (File.Exists(path))
         {

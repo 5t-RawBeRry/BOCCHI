@@ -48,7 +48,13 @@ public class StackingHandler
             return FarmerPhase.Fighting;
         }
 
-        IBattleNpc? furthest = scanner.InCombat
+        List<IBattleNpc> inCombat = scanner.InCombat.ToList();
+        if (inCombat.Count == 0)
+        {
+            return FarmerPhase.Waiting;
+        }
+
+        IBattleNpc? furthest = inCombat
             .Where(o => o.GameObjectId != targets.Target?.GameObjectId)
             .OrderBy(o => player.Position.Distance2D(o.Position))
             .LastOrDefault();

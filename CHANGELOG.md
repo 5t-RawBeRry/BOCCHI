@@ -1,3 +1,3 @@
-# 4.0.1.1
-- Fix Manifest
-- Still initial support for North Horn
+# 4.0.1.2
+- Add carrots and pots chests
+- Fix buffs, mount distance,.. 

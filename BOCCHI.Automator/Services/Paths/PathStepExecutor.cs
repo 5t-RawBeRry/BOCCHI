@@ -91,15 +91,21 @@ public class PathStepExecutor
             return true;
         }
 
-        if (ShouldSkipMount(destination))
+        // Still casting mount — do not treat Mounting as success (ShouldSkipMount does).
+        if (conditions[ConditionFlag.Mounting])
+        {
+            return false;
+        }
+
+        if (conditions[ConditionFlag.InCombat] || conditions[ConditionFlag.Unconscious])
         {
             return true;
         }
 
-        // Still mounting / retrying.
-        if (conditions[ConditionFlag.Mounting])
+        if (objects.LocalPlayer is not { } player
+            || player.Position.Distance(destination) <= NavigationConstants.MountMinDistance)
         {
-            return false;
+            return true;
         }
 
         if (Actions.MountRoulette.CanCast())

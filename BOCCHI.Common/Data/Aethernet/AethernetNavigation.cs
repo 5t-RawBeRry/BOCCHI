@@ -12,7 +12,7 @@ public static class AethernetNavigation
     public const float AetherytePathfindArrivalRadius = 3.5f;
 
     /// <summary>Soft vnav stop while closing in for Lifestream.</summary>
-    public const float PathfindArrivalRadius = 0.5f;
+    public const float PathfindArrivalRadius = 1.5f;
 
     /// <summary>
     ///     Idle stand-off: outside the stone base, inside

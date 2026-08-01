@@ -45,7 +45,7 @@ public class TreasureHunterService
     IDalamudPluginInterface plugin,
     IPluginLog log,
     IGameGui gui
-) : ITreasureHunter, IOnUpdate
+) : ITreasureHunter, IOnUpdate, IOnStop
 {
     private const float ChestSearchRadius = 5f;
     private readonly List<TreasureLayoutDatum> layoutTreasure = [];
@@ -56,6 +56,8 @@ public class TreasureHunterService
 
     private IHuntRoutePlanner? pathPlanner;
     private bool planningRoute;
+
+    public void OnStop() => Teardown();
 
     public void Update()
     {
@@ -388,16 +390,18 @@ public class TreasureHunterService
             return true;
         }
 
-        Vector3 destination = ResolveAethernet(step.Aethernet).Position;
+        Vector3 crystal = ResolveAethernet(step.Aethernet).Position;
+        Vector3 destination = crystal.GetApproachPosition(player.Position, AethernetNavigation.CampApproachRadius);
+        destination = new Vector3(destination.X, crystal.Y, destination.Z);
 
         if (!vnav.IsRunning())
         {
-            vnav.PathfindAndMoveTo(destination, false);
+            vnav.PathfindAndMoveCloseTo(destination, false, AethernetNavigation.PathfindArrivalRadius);
         }
 
         MaybeMount(destination);
 
-        StepDistance = player.Position.Distance(destination);
+        StepDistance = player.Position.Distance2D(crystal);
         return StepDistance <= AethernetData.LifestreamInteractRadius;
     }
 

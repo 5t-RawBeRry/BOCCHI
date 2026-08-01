@@ -133,8 +133,16 @@ public static class AetheryteApproach
             return false;
         }
 
-        float pad = MathF.Max(aetheryte.DeadRadius, AethernetData.InteractRadius);
-        return position.Distance2D(aetheryte.Position) <= pad
-               || position.Distance2D(aetheryte.GetInteractPosition()) <= pad;
+        // Prefer crystal Lifestream range — Dest pads outside 3.5y must not count as "ready"
+        // (old Wanderer's Haven Dest was ~4.29y out with a 4.3y pad).
+        if (position.Distance2D(aetheryte.Position) <= AethernetData.LifestreamInteractRadius)
+        {
+            return true;
+        }
+
+        // After aethernet TP, land on Destination (e.g. SH base camp ~4.7y from crystal).
+        Vector3 interact = aetheryte.GetInteractPosition();
+        return interact != aetheryte.Position
+               && position.Distance2D(interact) <= 2.5f;
     }
 }

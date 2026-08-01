@@ -228,7 +228,9 @@ public class ZoneGraph
 
         foreach(Node node in nodes)
         {
-            IEnumerable<Node> nearestTeleports = teleports.OrderBy(t => t.Position.Distance2D(node.Position)).Take(2);
+            // Score more than the Euclidean nearest two — island shards can be closest
+            // but unreachable (e.g. Unhallowed Hamlet → Eye to Eye).
+            IEnumerable<Node> nearestTeleports = teleports.OrderBy(t => t.Position.Distance2D(node.Position)).Take(4);
 
             var costTasks = nearestTeleports.Select(async teleport =>
             {
@@ -252,15 +254,24 @@ public class ZoneGraph
             var results = await Task.WhenAll(costTasks);
 
             var bestInbound = results
+                .Where(r => !float.IsPositiveInfinity(r.ToActivity))
                 .OrderBy(r => r.ToActivity)
-                .First();
+                .FirstOrDefault();
 
             var bestOutbound = results
+                .Where(r => !float.IsPositiveInfinity(r.FromActivity))
                 .OrderBy(r => r.FromActivity)
-                .First();
+                .FirstOrDefault();
 
-            AddEdge(bestInbound.Teleport.Id, node.Id, bestInbound.ToActivity, EdgeType.Walk);
-            AddEdge(node.Id, bestOutbound.Teleport.Id, bestOutbound.FromActivity, EdgeType.Walk);
+            if (bestInbound != null)
+            {
+                AddEdge(bestInbound.Teleport.Id, node.Id, bestInbound.ToActivity, EdgeType.Walk);
+            }
+
+            if (bestOutbound != null)
+            {
+                AddEdge(node.Id, bestOutbound.Teleport.Id, bestOutbound.FromActivity, EdgeType.Walk);
+            }
         }
     }
 

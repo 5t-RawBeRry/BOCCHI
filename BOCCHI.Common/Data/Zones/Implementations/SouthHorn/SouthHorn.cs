@@ -32,7 +32,8 @@ public class SouthHorn
         Id = 4936,
         BaseId = 2014665,
         Position = new(-173.02f, 8.19f, -611.14f),
-        Destination = new(-169.1f, 6.5f, -609.4f),
+        // Keep Dest inside LifestreamInteractRadius (3.5); old pad was ~4.29y out.
+        Destination = new(-170.74f, 6.5f, -610.13f),
         DeadRadius = 3.2f
     };
 
@@ -41,7 +42,8 @@ public class SouthHorn
         Id = 4929,
         BaseId = 2014666,
         Position = new(-358.14f, 101.98f, -120.96f),
-        Destination = new(-354.6f, 100f, -120.7f),
+        // Old Dest was ~3.55y out — just past Lifestream range.
+        Destination = new(-355.65f, 100f, -120.78f),
         DeadRadius = 3.2f
     };
 

@@ -24,10 +24,18 @@ public class GatheringHandler
         List<IBattleNpc> inCombat = scanner.InCombat.ToList();
         List<IBattleNpc> notInCombat = scanner.NotInCombat.ToList();
 
-        if (inCombat.Count >= config.MinimumMobsToStartFight || notInCombat.Count == 0)
+        if (inCombat.Count >= config.MinimumMobsToStartFight)
         {
             pathfinder.Stop();
             return FarmerPhase.Stacking;
+        }
+
+        // Contested packs (all mobs have a target that isn't us) leave both lists empty —
+        // do not spin Stacking → Fighting → Waiting with nothing to fight.
+        if (notInCombat.Count == 0)
+        {
+            pathfinder.Stop();
+            return inCombat.Count > 0 ? FarmerPhase.Stacking : FarmerPhase.Waiting;
         }
 
         if (targets.Target?.IsTargetingPlayer(objects.LocalPlayer) == true)
