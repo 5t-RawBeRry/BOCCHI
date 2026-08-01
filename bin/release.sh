@@ -126,7 +126,7 @@ gh release upload "$TAG" "$ZIP_PATH" --clobber
 
 echo "Updating manifest repo..."
 rm -rf plugins
-gh repo clone plugins
+gh repo clone OhKannaDuh/plugins
 cd plugins
 
 cd manifest-generator
