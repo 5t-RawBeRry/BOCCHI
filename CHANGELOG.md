@@ -1,3 +1,4 @@
-# 4.0.1.3
-- Add carrots and pots chests
-- Fix buffs, mount distance,.. 
+# 4.0.1.4
+- Fix movement
+- fix treasure sight
+- fix some forgotten things probably
