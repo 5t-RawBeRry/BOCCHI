@@ -1,2 +1,2 @@
-# 4.0.0.0
-- Add basic support for North Horn
+# 4.0.1.0
+- Testing build: North Horn support (version match fix for Dalamud)
