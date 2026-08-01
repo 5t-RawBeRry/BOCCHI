@@ -1,8 +1,10 @@
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using Ocelot.Actions;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Chain.Middleware.Chain;
@@ -20,7 +22,8 @@ public class OpenTreasureCofferChain
     IChainFactory chains,
     IObjectTable objects,
     ITargetManager targets,
-    IPlayer player
+    IPlayer player,
+    ICondition conditions
 ) : ChainRecipe<Vector3>(chains)
 {
     public const float InteractDistance = 2f;
@@ -48,6 +51,16 @@ public class OpenTreasureCofferChain
     {
         if (!EzThrottler.Throttle("ChestInteract", 250))
         {
+            return false;
+        }
+
+        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
+        {
+            if (Actions.Dismount.CanCast())
+            {
+                Actions.Dismount.Cast();
+            }
+
             return false;
         }
 

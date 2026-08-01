@@ -24,7 +24,7 @@
     },
     "apply_buffs_using_inquiring_mind": {
       "label": "Apply buffs using Inquiring Mind",
-      "tooltip": "Use Inquiring Mind to apply buffs when available."
+      "tooltip": "Use Freelancer Inquiring Mind to refresh Quicker Step when available, then apply other selected buffs individually."
     },
     "reapply_threshold": {
       "label": "Reapply threshold (seconds)",

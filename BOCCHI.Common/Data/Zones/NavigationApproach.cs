@@ -14,6 +14,9 @@ public static class NavigationConstants
     public const float CampApproachJitter = 30f;
 
     public const float CriticalEncounterRadiusPadding = 7f;
+
+    /// <summary>Euclidean distance above which long pathfinds should mount first.</summary>
+    public const float MountMinDistance = 20f;
 }
 
 public static class NavigationApproach

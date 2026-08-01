@@ -52,7 +52,7 @@ public readonly struct BuffData
 
     public static readonly BuffData QuickerStep = new()
     {
-        StatusId = PhantomBuffs.Quickstep,
+        StatusId = PhantomBuffs.QuickerStep,
         RequiredLevel = 2,
         SupportJobId = SupportJobId.PhantomDancer,
         ShouldApply = config => config.ShouldApplyQuickerStep(),

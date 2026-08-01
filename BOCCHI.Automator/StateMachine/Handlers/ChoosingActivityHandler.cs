@@ -20,6 +20,7 @@ public class ChoosingActivityHandler
     IBuffProvider buffs,
     BuffConfig buffConfig,
     FatesConfig fatesConfig,
+    CriticalEncountersConfig criticalEncountersConfig,
     IFateScorer fateScorer
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.ChoosingActivity)
 {
@@ -46,7 +47,9 @@ public class ChoosingActivityHandler
         }
 
         int enabledFates = fateRepository.Snapshot().Count(f => fatesConfig.IsFateEnabled(f.Id.Value));
-        int criticalEncounters = criticalEncounterRepository.SnapshotWithoutForkedTower().Count(ce => ce.State == DynamicEventState.Register);
+        int criticalEncounters = criticalEncounterRepository.SnapshotWithoutForkedTower()
+            .Count(ce => ce.State == DynamicEventState.Register
+                         && criticalEncountersConfig.IsCriticalEncounterEnabled(ce.Id.Value));
 
         if (enabledFates <= 0 && criticalEncounters <= 0)
         {
@@ -58,7 +61,9 @@ public class ChoosingActivityHandler
 
     public override void Handle()
     {
-        CriticalEncounter? criticalEncounter = criticalEncounterRepository.SnapshotWithoutForkedTower().FirstOrDefault(c => c.State == DynamicEventState.Register);
+        CriticalEncounter? criticalEncounter = criticalEncounterRepository.SnapshotWithoutForkedTower()
+            .FirstOrDefault(c => c.State == DynamicEventState.Register
+                                 && criticalEncountersConfig.IsCriticalEncounterEnabled(c.Id.Value));
         if (criticalEncounter != null)
         {
             IGoal goal = goalFactory.CriticalEncounter(criticalEncounter.Id);

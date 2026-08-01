@@ -18,10 +18,18 @@ public class PathfindingHandler
     IChainManager manager,
     IObjectTable objects,
     IPathfinder pathfinder,
+    ITargetManager targetManager,
     ILogger<PathfindingHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Pathfinding)
 {
     private Task<ChainResult>? currentPathTask;
+
+    public override void Enter()
+    {
+        base.Enter();
+        // Drop any leftover combat target so rotations don't pull trash mid-path.
+        targetManager.Target = null;
+    }
 
     public override void Exit(AutomatorState next)
     {

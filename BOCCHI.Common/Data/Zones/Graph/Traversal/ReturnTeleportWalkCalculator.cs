@@ -60,9 +60,8 @@ public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
                 GraphTraverser.ReturnCost + toBaseCampNodeEdge.Cost + walkToGoalFromInbound.Cost,
                 [
                     PathStep.Return(),
-                    PathStep.Pathfind(
-                        NavigationApproach.GetEventPosition(goal.Position, returnNode.Position),
-                        NavigationConstants.EventApproachMaxRadius)
+                    // Destination is already offset via GetEventPosition — don't also give vnav a 20y arrival.
+                    PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, returnNode.Position))
                 ]));
         }
 
@@ -71,9 +70,7 @@ public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
             [
                 PathStep.Return(),
                 PathStep.Teleport(meta.AetheryteId),
-                PathStep.Pathfind(
-                    NavigationApproach.GetEventPosition(goal.Position, inbound.Position),
-                    NavigationConstants.EventApproachMaxRadius)
+                PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, inbound.Position))
             ]));
     }
 }

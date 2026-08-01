@@ -4,7 +4,11 @@
   "fields": {
     "should_handle_targeting": {
       "label": "Handle targeting",
-      "tooltip": "Let BOCCHI manage combat targeting."
+      "tooltip": "Let BOCCHI manage combat targeting during Fate/CE, open combat, and Mob Farmer."
+    },
+    "force_target_central_enemy": {
+      "label": "Target pack center",
+      "tooltip": "Prefer the enemy nearest the group's center instead of the closest one."
     },
     "auto_repair_threshold": {
       "label": "Auto-repair threshold (%)",

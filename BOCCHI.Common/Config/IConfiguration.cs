@@ -17,5 +17,7 @@ public interface IConfiguration : IPluginConfiguration
 
     FatesConfig FatesConfig { get; set; }
 
+    CriticalEncountersConfig CriticalEncountersConfig { get; set; }
+
     TreasureConfig TreasureConfig { get; set; }
 }

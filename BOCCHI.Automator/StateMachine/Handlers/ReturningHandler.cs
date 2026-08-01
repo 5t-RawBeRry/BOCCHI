@@ -26,6 +26,12 @@ public class ReturningHandler
 {
     public override StatePriority GetScore()
     {
+        // Return while dead accepts the death prompt and force-respawns.
+        if (conditions[ConditionFlag.Unconscious])
+        {
+            return StatePriority.Never;
+        }
+
         if (memory.TryRemember<ReturningStateMemory>(out ReturningStateMemory _))
         {
             return StatePriority.VeryHigh;
@@ -44,6 +50,12 @@ public class ReturningHandler
 
     public override void Handle()
     {
+        if (conditions[ConditionFlag.Unconscious])
+        {
+            memory.Forget<ReturningStateMemory>();
+            return;
+        }
+
         if (gate.Milliseconds(this, "ReturningHandler::Gate", 500))
         {
             return;
@@ -84,6 +96,12 @@ public class ReturningHandler
 
     private unsafe void SelectYesNoListener(AddonEvent ev, AddonArgs args)
     {
+        // Death / raise prompts also use SelectYesno — never auto-accept while unconscious.
+        if (conditions[ConditionFlag.Unconscious])
+        {
+            return;
+        }
+
         AtkUnitBase* addon = (AtkUnitBase*)args.Addon.Address;
         if (!addon->IsVisible)
         {

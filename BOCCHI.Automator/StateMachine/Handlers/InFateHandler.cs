@@ -3,7 +3,10 @@ using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
+using ECommons.Throttlers;
+using Ocelot.Actions;
 using Ocelot.Services.Pathfinding;
 using Ocelot.States.Score;
 
@@ -37,9 +40,18 @@ public class InFateHandler
             return;
         }
 
+        // Arrive at FATE → dismount even if no hostiles are in range yet.
+        if (conditions[ConditionFlag.Mounted]
+            && EzThrottler.Throttle("InFate::Unmount")
+            && Actions.Unmount.CanCast())
+        {
+            Actions.Unmount.Cast();
+            pathfinder.Stop();
+        }
+
         CombatActivityHandler.HandleTargets(
             player,
-            context.GetTargets().ToList(),
+            context.GetTargets(),
             combat,
             targetManager,
             conditions,

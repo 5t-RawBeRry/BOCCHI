@@ -61,8 +61,8 @@ public class IdleHandler(
             return;
         }
 
-        // Stay on camp pads so Lifestream stays usable.
-        if (zone.IsWithinInteractRange(player.Position))
+        // Stay within Lifestream range of the crystal (Destination pads can sit outside it).
+        if (zone.IsWithinLifestreamRange(player.Position))
         {
             idle.ApproachCandidateIndex = 0;
             pathfinder.Stop();

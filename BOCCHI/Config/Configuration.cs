@@ -23,5 +23,7 @@ public class Configuration : IConfiguration
 
     public FatesConfig FatesConfig { get; set; } = new();
 
+    public CriticalEncountersConfig CriticalEncountersConfig { get; set; } = new();
+
     public TreasureConfig TreasureConfig { get; set; } = new();
 }

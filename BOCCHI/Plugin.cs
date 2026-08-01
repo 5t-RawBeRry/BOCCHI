@@ -63,6 +63,7 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<OperationalStatusBar>();
         services.AddSingleton<IFieldRenderer<MobMultiSelectAttribute>, MobMultiSelectRenderer>();
         services.AddSingleton<IFieldRenderer<DisabledFateIdsAttribute>, DisabledFateIdsRenderer>();
+        services.AddSingleton<IFieldRenderer<DisabledCriticalEncounterIdsAttribute>, DisabledCriticalEncounterIdsRenderer>();
 
         services.AddSingleton<ISupportJobFactory, SupportJobFactory>();
         services.AddSingleton<ISupportJobChanger, SupportJobChanger>();

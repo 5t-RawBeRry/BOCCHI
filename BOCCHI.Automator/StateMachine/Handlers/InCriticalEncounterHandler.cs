@@ -2,7 +2,10 @@
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
+using ECommons.Throttlers;
+using Ocelot.Actions;
 using Ocelot.Services.Pathfinding;
 using Ocelot.States.Score;
 
@@ -34,9 +37,17 @@ public class InCriticalEncounterHandler
             return;
         }
 
+        if (conditions[ConditionFlag.Mounted]
+            && EzThrottler.Throttle("InCriticalEncounter::Unmount")
+            && Actions.Unmount.CanCast())
+        {
+            Actions.Unmount.Cast();
+            pathfinder.Stop();
+        }
+
         CombatActivityHandler.HandleTargets(
             player,
-            context.GetTargets().ToList(),
+            context.GetTargets(),
             combat,
             targetManager,
             conditions,

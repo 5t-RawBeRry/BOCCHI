@@ -4,7 +4,7 @@ using Ocelot.Config.Fields;
 namespace BOCCHI.Common.Config;
 
 [Serializable]
-[ConfigGroup("automation", GroupOrder = 10, Order = 2)]
+[ConfigGroup("automation", GroupOrder = 10, Order = 3)]
 public class BuffConfig : IAutoConfig
 {
     [Checkbox] public bool ShouldAutomateBuffs { get; set; } = false;

@@ -1,4 +1,5 @@
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Targeting;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
@@ -13,7 +14,7 @@ internal static class CombatActivityHandler
 {
     public static void HandleTargets(
         IGameObject player,
-        IReadOnlyList<IGameObject> targets,
+        IEnumerable<IBattleNpc> targets,
         CombatConfig combat,
         ITargetManager targetManager,
         ICondition conditions,
@@ -22,12 +23,13 @@ internal static class CombatActivityHandler
         bool stopPathfinderInCombat = false
     )
     {
-        if (targets.Count == 0)
+        List<IBattleNpc> list = targets as List<IBattleNpc> ?? targets.ToList();
+        IBattleNpc? target = TargetHelper.Select(list, combat.ForceTargetCentralEnemy);
+        if (target == null)
         {
             return;
         }
 
-        IGameObject target = targets[0];
         if (combat.ShouldHandleTargeting
             && EzThrottler.Throttle($"{throttlePrefix}::Target")
             && targetManager.Target?.GameObjectId != target.GameObjectId)

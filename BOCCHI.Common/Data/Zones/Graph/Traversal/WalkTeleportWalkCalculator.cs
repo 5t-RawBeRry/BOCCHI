@@ -100,16 +100,13 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
         new(
             cost,
             [
-                PathStep.Pathfind(
-                    NavigationApproach.GetEventPosition(goal.Position, start),
-                    NavigationConstants.EventApproachMaxRadius)
+                // Destination is already offset via GetEventPosition — don't also give vnav a 20y arrival.
+                PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, start))
             ]);
 
     private static List<PathStep> BuildTeleportSteps(uint aetheryteId, Node goal, Node inbound) =>
     [
         PathStep.Teleport(aetheryteId),
-        PathStep.Pathfind(
-            NavigationApproach.GetEventPosition(goal.Position, inbound.Position),
-            NavigationConstants.EventApproachMaxRadius)
+        PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, inbound.Position))
     ];
 }

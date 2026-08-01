@@ -4,10 +4,15 @@ using Ocelot.Config.Fields;
 namespace BOCCHI.Common.Config;
 
 [Serializable]
-[ConfigGroup("automation", GroupOrder = 10, Order = 3)]
+[ConfigGroup("automation", GroupOrder = 10, Order = 4)]
 public class CombatConfig : IAutoConfig
 {
-    [Checkbox] public bool ShouldHandleTargeting { get; set; } = false;
+    [Checkbox(Order = 0)]
+    public bool ShouldHandleTargeting { get; set; } = true;
 
-    [IntRange(1, 99)] public int AutoRepairThreshold { get; set; } = 30;
+    [Checkbox(Order = 1)]
+    public bool ForceTargetCentralEnemy { get; set; } = true;
+
+    [IntRange(1, 99)]
+    public int AutoRepairThreshold { get; set; } = 30;
 }

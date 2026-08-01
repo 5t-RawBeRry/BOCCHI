@@ -1,6 +1,10 @@
 ﻿using BOCCHI.Automator.Data;
+using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
+using BOCCHI.Common.Targeting;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
 using Ocelot.Actions;
@@ -15,7 +19,10 @@ public class InCombatHandler
     ICondition conditions,
     IFateContext fateContext,
     ICriticalEncounterContext criticalEncounterContext,
-    IPathfinder pathfinder
+    IPathfinder pathfinder,
+    IAutomatorMemory memory,
+    CombatConfig combat,
+    ITargetManager targetManager
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InCombat)
 {
     public override StatePriority GetScore()
@@ -30,7 +37,11 @@ public class InCombatHandler
             return StatePriority.Never;
         }
 
-        // Mob farm check
+        // Don't abandon Fate/CE transit to fight random trash on the road.
+        if (memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _))
+        {
+            return StatePriority.Never;
+        }
 
         return conditions[ConditionFlag.InCombat] ? StatePriority.High : StatePriority.Never;
     }
@@ -40,6 +51,18 @@ public class InCombatHandler
         if (objects.LocalPlayer is not { } player)
         {
             return;
+        }
+
+        if (combat.ShouldHandleTargeting && EzThrottler.Throttle("InCombat::Target", 250))
+        {
+            IBattleNpc? target = TargetHelper.Select(
+                TargetHelper.GetHostileEnemies(objects, player.Position),
+                combat.ForceTargetCentralEnemy);
+
+            if (target != null && targetManager.Target?.GameObjectId != target.GameObjectId)
+            {
+                targetManager.Target = target;
+            }
         }
 
         if (conditions[ConditionFlag.Mounted])

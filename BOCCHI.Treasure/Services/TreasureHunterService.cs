@@ -8,8 +8,10 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.LayoutEngine;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.Interop;
 using FFXIVClientStructs.STD;
 using Ocelot.Actions;
@@ -41,7 +43,8 @@ public class TreasureHunterService
     IPlayer player,
     IDataManager data,
     IDalamudPluginInterface plugin,
-    IPluginLog log
+    IPluginLog log,
+    IGameGui gui
 ) : ITreasureHunter, IOnUpdate
 {
     private const float ChestSearchRadius = 5f;
@@ -77,17 +80,10 @@ public class TreasureHunterService
             return;
         }
 
+        // Finished chains must be cleared or nearby-interact / return get stuck.
         if (activeChain is { IsCompleted: true })
         {
-            if (steps.Count > 0
-                && StepIndex < steps.Count
-                && TryAdvanceCurrentStep())
-            {
-                StepIndex++;
-                StepDistance = 0f;
-            }
-
-            return;
+            activeChain = null;
         }
 
         TryInteractWithNearbyChest();
@@ -314,6 +310,11 @@ public class TreasureHunterService
             return false;
         }
 
+        if (conditions[ConditionFlag.Unconscious])
+        {
+            return false;
+        }
+
         if (zone.IsInBasecamp())
         {
             return true;
@@ -343,14 +344,40 @@ public class TreasureHunterService
                     return StepResult.Success();
                 }, "TreasureHunt::CastReturn")
                 .WaitUntil(
-                    _ => ValueTask.FromResult(zone.IsInBasecamp()),
+                    _ =>
+                    {
+                        TryConfirmReturnDialog();
+                        return ValueTask.FromResult(zones.GetZone().IsInBasecamp());
+                    },
                     TimeSpan.FromSeconds(120),
-                    TimeSpan.FromMilliseconds(500),
+                    TimeSpan.FromMilliseconds(250),
                     "TreasureHunt::WaitForBasecamp"
                 )
         );
 
         return false;
+    }
+
+    private unsafe void TryConfirmReturnDialog()
+    {
+        // Death prompts also use SelectYesno — don't force-respawn while unconscious.
+        if (conditions[ConditionFlag.Unconscious])
+        {
+            return;
+        }
+
+        if (!EzThrottler.Throttle("TreasureHunt::SelectYesno", 250))
+        {
+            return;
+        }
+
+        AddonSelectYesno* yesno = gui.GetAddonByName<AddonSelectYesno>("SelectYesno");
+        if (yesno == null || !yesno->AtkUnitBase.IsVisible)
+        {
+            return;
+        }
+
+        yesno->AtkUnitBase.FireCallbackInt(0);
     }
 
     private bool HandleWalkToAethernet(HuntPathfinderStep step)
@@ -406,7 +433,7 @@ public class TreasureHunterService
             return;
         }
 
-        if (player.Position.Distance(destination) > 50f)
+        if (player.Position.Distance(destination) > NavigationConstants.MountMinDistance)
         {
             Actions.MountRoulette.Cast();
         }

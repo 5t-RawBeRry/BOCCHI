@@ -2,6 +2,7 @@ using BOCCHI.Automator.Data;
 using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
@@ -45,9 +46,14 @@ public class WaitingForCriticalEncounterHandler
             return StatePriority.Never;
         }
 
-        float radius = ce.Radius;
-        float distance = player.Position.Distance2D(ce.Position);
-        float percent = distance / radius;
+        // ce.Radius includes padding; score against the real combat circle.
+        float combatRadius = ce.Radius - NavigationConstants.CriticalEncounterRadiusPadding;
+        if (combatRadius <= 0f)
+        {
+            return StatePriority.Never;
+        }
+
+        float percent = player.Position.Distance2D(ce.Position) / combatRadius;
 
         if (percent >= 1.5f)
         {
@@ -94,15 +100,19 @@ public class WaitingForCriticalEncounterHandler
             return;
         }
 
-        float radius = ce.Radius;
-        float distance = player.Position.Distance2D(ce.Position);
-        float percent = distance / radius;
+        float combatRadius = ce.Radius - NavigationConstants.CriticalEncounterRadiusPadding;
+        if (combatRadius <= 0f)
+        {
+            return;
+        }
+
+        float percent = player.Position.Distance2D(ce.Position) / combatRadius;
 
         if (percent >= 1.0f)
         {
             if (pathfinder.IsIdle())
             {
-                pathfinder.PathfindAndMoveTo(new(ce.Position.GetApproachPosition(player.Position, ce.Radius * 0.8f, 30f)));
+                pathfinder.PathfindAndMoveTo(new(ce.Position.GetApproachPosition(player.Position, combatRadius * 0.8f, 30f)));
             }
 
             return;

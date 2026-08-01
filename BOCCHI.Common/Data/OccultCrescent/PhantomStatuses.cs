@@ -51,6 +51,8 @@ public static class PhantomBuffs
     public const ushort Jitterbugged = 4796;
     public const ushort WillingToWaltz = 4797;
     public const ushort Quickstep = 4798;
+    /// <summary>Knowledge-crystal party buff from Dancer Quickstep / Freelancer Inquiring Mind (30m).</summary>
+    public const ushort QuickerStep = 4799;
     public const ushort SteadfastStance = 4800;
     public const ushort OccultBlink = 5316;
     public const ushort JumpVulnerabilityDown = 5318;

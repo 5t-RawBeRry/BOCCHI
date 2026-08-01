@@ -151,6 +151,8 @@ public class ActivityNavigation
         }
     }
 
+    private static readonly TimeSpan MountTimeout = TimeSpan.FromSeconds(12);
+
     private IChain BuildPathChain(string name, Vector3 destination) =>
         AppendPath(chains.Create(name), name, destination);
 
@@ -159,28 +161,73 @@ public class ActivityNavigation
         return chain
             .Then(_ =>
             {
-                if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
+                if (ShouldSkipMount(destination))
                 {
                     return StepResult.Success();
                 }
 
-                if (objects.LocalPlayer is not { } localPlayer)
-                {
-                    return StepResult.Success();
-                }
-
-                if (localPlayer.Position.Distance(destination) > 50f)
+                if (Actions.MountRoulette.CanCast())
                 {
                     Actions.MountRoulette.Cast();
                 }
 
                 return StepResult.Success();
             }, $"{name}::MaybeMount")
+            .WaitUntil(
+                _ => ValueTask.FromResult(IsMountedOrShouldGiveUp(destination)),
+                MountTimeout,
+                TimeSpan.FromMilliseconds(250),
+                $"{name}::WaitForMount")
             .Then<PathfindToChain, PathfinderConfig>(new(destination)
             {
                 DistanceThreshold = 2f,
                 ShouldSnapToFloor = true
             });
+    }
+
+    private bool ShouldSkipMount(Vector3 destination)
+    {
+        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
+        {
+            return true;
+        }
+
+        if (conditions[ConditionFlag.InCombat] || conditions[ConditionFlag.Unconscious])
+        {
+            return true;
+        }
+
+        if (objects.LocalPlayer is not { } localPlayer)
+        {
+            return true;
+        }
+
+        return localPlayer.Position.Distance(destination) <= NavigationConstants.MountMinDistance;
+    }
+
+    private bool IsMountedOrShouldGiveUp(Vector3 destination)
+    {
+        if (conditions[ConditionFlag.Mounted])
+        {
+            return true;
+        }
+
+        if (ShouldSkipMount(destination))
+        {
+            return true;
+        }
+
+        if (conditions[ConditionFlag.Mounting])
+        {
+            return false;
+        }
+
+        if (Actions.MountRoulette.CanCast())
+        {
+            Actions.MountRoulette.Cast();
+        }
+
+        return false;
     }
 
     /// <summary>

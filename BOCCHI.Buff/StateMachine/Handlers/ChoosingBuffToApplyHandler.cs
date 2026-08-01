@@ -29,16 +29,15 @@ public class ChoosingBuffToApplyHandler
         }
 
         bool forceRefresh = memory.TryRemember<ManualBuffRunMemory>(out ManualBuffRunMemory _);
-        SupportJob freelancer = supportJobs.Create(SupportJobId.PhantomFreelancer);
+        uint maxFreshMinutes = forceRefresh ? ManualFreshEnoughMinutes : (uint)config.ReapplyThreshold;
 
-        if (config.ApplyBuffsUsingInquiringMind
-            && freelancer.Level >= 15
-            && GetLowestEnabledBuffMinutes(player) < (forceRefresh ? ManualFreshEnoughMinutes : 29))
+        // Inquiring Mind only refreshes Quicker Step — cast it when that needs a top-up, then do other buffs.
+        if (buffs.NeedsInquiringMind(player, maxFreshMinutes))
         {
             return BuffState.CastingInquiringMind;
         }
 
-        foreach(BuffData buff in buffs.GetBuffs().Where(b => b.ShouldApply(config)))
+        foreach (BuffData buff in buffs.GetBuffs().Where(b => b.ShouldApply(config)))
         {
             SupportJob job = supportJobs.Create(buff.SupportJobId);
             if (job.Level < buff.RequiredLevel)
@@ -47,8 +46,7 @@ public class ChoosingBuffToApplyHandler
             }
 
             uint remaining = player.GetRemainingMinutes(buff.StatusId);
-            uint skipAbove = forceRefresh ? ManualFreshEnoughMinutes : (uint)config.ReapplyThreshold;
-            if (remaining > skipAbove)
+            if (remaining > maxFreshMinutes)
             {
                 continue;
             }
@@ -60,29 +58,5 @@ public class ChoosingBuffToApplyHandler
         memory.Forget<ManualBuffRunMemory>();
 
         return null;
-    }
-
-    private uint GetLowestEnabledBuffMinutes(Dalamud.Game.ClientState.Objects.SubKinds.IPlayerCharacter player)
-    {
-        uint lowest = 30;
-        bool any = false;
-
-        foreach(BuffData buff in buffs.GetBuffs().Where(b => b.ShouldApply(config)))
-        {
-            SupportJob job = supportJobs.Create(buff.SupportJobId);
-            if (job.Level < buff.RequiredLevel)
-            {
-                continue;
-            }
-
-            any = true;
-            uint time = player.GetRemainingMinutes(buff.StatusId);
-            if (time < lowest)
-            {
-                lowest = time;
-            }
-        }
-
-        return any ? lowest : 30;
     }
 }

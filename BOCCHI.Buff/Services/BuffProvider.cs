@@ -1,7 +1,9 @@
 ﻿using BOCCHI.Buff.Data;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.OccultCrescent;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Extensions;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Plugin.Services;
 using Lumina.Extensions;
 
@@ -14,6 +16,8 @@ public class BuffProvider
     ISupportJobFactory supportJobs
 ) : IBuffProvider
 {
+    public const uint InquiringMindFreshMinutes = 29;
+
     public IEnumerable<BuffData> GetBuffs() => BuffData.All;
 
     public BuffData GetBuffForState(BuffState state)
@@ -27,7 +31,36 @@ public class BuffProvider
         return buff.Value;
     }
 
-    public bool ShouldRefreshAny() => GetBuffs().Any(ShouldRefreshBuff);
+    public bool ShouldRefreshAny()
+    {
+        if (GetBuffs().Any(ShouldRefreshBuff))
+        {
+            return true;
+        }
+
+        // Inquiring Mind applies Quicker Step even when that buff toggle is off.
+        return objects.LocalPlayer is { } player
+               && CanUseInquiringMind()
+               && player.GetRemainingMinutes(PhantomBuffs.QuickerStep) <= (uint)config.ReapplyThreshold;
+    }
+
+    public bool CanUseInquiringMind()
+    {
+        if (!config.ApplyBuffsUsingInquiringMind)
+        {
+            return false;
+        }
+
+        SupportJob freelancer = supportJobs.Create(SupportJobId.PhantomFreelancer);
+        return freelancer.Level >= 15;
+    }
+
+    public bool NeedsInquiringMind(IPlayerCharacter player, uint maxFreshMinutes) =>
+        CanUseInquiringMind()
+        && player.GetRemainingMinutes(PhantomBuffs.QuickerStep) <= maxFreshMinutes;
+
+    public bool IsInquiringMindFresh(IPlayerCharacter player) =>
+        player.GetRemainingMinutes(PhantomBuffs.QuickerStep) >= InquiringMindFreshMinutes;
 
     private bool CanRefreshBuff(BuffData buff)
     {

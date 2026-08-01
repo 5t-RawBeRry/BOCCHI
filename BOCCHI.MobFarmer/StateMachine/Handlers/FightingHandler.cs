@@ -1,4 +1,5 @@
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Targeting;
 using BOCCHI.MobFarmer.Data;
 using BOCCHI.MobFarmer.Services;
 using Dalamud.Game.ClientState.Conditions;
@@ -15,6 +16,7 @@ namespace BOCCHI.MobFarmer.StateMachine.Handlers;
 public class FightingHandler
 (
     MobFarmerConfig config,
+    CombatConfig combat,
     IMobFarmer farmer,
     IMobScanner scanner,
     ITargetManager targets,
@@ -26,9 +28,15 @@ public class FightingHandler
     public override FarmerPhase? Handle()
     {
         List<IBattleNpc> inCombat = scanner.InCombat.ToList();
-        if (inCombat.Count > 0 && EzThrottler.Throttle("MobFarmer::Fighting::Target", 250))
+        if (combat.ShouldHandleTargeting
+            && inCombat.Count > 0
+            && EzThrottler.Throttle("MobFarmer::Fighting::Target", 250))
         {
-            targets.Target = inCombat.OrderBy(o => player.Position.Distance2D(o.Position)).First();
+            IBattleNpc? target = TargetHelper.Select(inCombat, combat.ForceTargetCentralEnemy);
+            if (target != null)
+            {
+                targets.Target = target;
+            }
         }
 
         bool anyInCombat = inCombat.Count > 0;
