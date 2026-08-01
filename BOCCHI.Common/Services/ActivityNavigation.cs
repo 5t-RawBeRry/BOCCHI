@@ -28,10 +28,13 @@ public class ActivityNavigation
     ILifestreamIpc lifestream,
     ICondition conditions,
     IPlayer player,
+    IFramework framework,
     ILogger<ActivityNavigation> logger
 ) : IActivityNavigation
 {
     private const string ChainPrefix = "ActivityGoto::";
+
+    private int teleportGeneration;
 
     public bool CanPathfind => vnav.IsNavmeshReady();
 
@@ -85,43 +88,67 @@ public class ActivityNavigation
             return;
         }
 
-        AethernetData? target = GetNearestAetheryte(destination);
-        if (target == null)
+        int generation = Interlocked.Increment(ref teleportGeneration);
+        manager.CancelWhere(name => name.StartsWith(ChainPrefix, StringComparison.Ordinal));
+        _ = TeleportTowardAsync(destination, name, id, generation);
+    }
+
+    private async Task TeleportTowardAsync(Vector3 destination, string name, string id, int generation)
+    {
+        try
         {
-            logger.Warning("No aethernet found for teleport toward {Name}", name);
-            return;
-        }
+            AethernetData? target = await SelectBestAetheryteAsync(destination).ConfigureAwait(false);
+            if (generation != teleportGeneration)
+            {
+                return;
+            }
 
-        // Already standing at the walk-best shard — just pathfind from here.
-        if (AetheryteApproach.IsAlreadyAtAetheryte(target, player.Position))
+            await framework.Run(() =>
+            {
+                if (generation != teleportGeneration)
+                {
+                    return;
+                }
+
+                if (target == null)
+                {
+                    logger.Warning("No aethernet found for teleport toward {Name}", name);
+                    return;
+                }
+
+                if (AetheryteApproach.IsAlreadyAtAetheryte(target, player.Position))
+                {
+                    logger.Info("Already at best aethernet {Aethernet} for {Name} — pathfinding", target.Id, name);
+                    PathTo(destination, name, id);
+                    return;
+                }
+
+                Vector3 approach = NavigationApproach.GetEventPosition(destination, target.Position);
+                logger.Info("Teleporting via {Aethernet} toward {Name}", target.Id, name);
+
+                IChain chain = AethernetTeleport.BuildChain(
+                    chains.Create($"{ChainPrefix}Teleport::{id}"),
+                    chains,
+                    zones,
+                    objects,
+                    pathfinder,
+                    vnav,
+                    lifestream,
+                    logger,
+                    target.Id);
+
+                if (CanPathfind)
+                {
+                    chain = AppendPath(chain, $"{ChainPrefix}Teleport::{id}", approach);
+                }
+
+                _ = manager.Manage(chain);
+            }).ConfigureAwait(false);
+        }
+        catch (Exception ex)
         {
-            logger.Info("Already at best aethernet {Aethernet} for {Name} — pathfinding", target.Id, name);
-            PathTo(destination, name, id);
-            return;
+            logger.Error(ex, "Failed teleport toward {Name}", name);
         }
-
-        Vector3 approach = NavigationApproach.GetEventPosition(destination, target.Position);
-        logger.Info("Teleporting via {Aethernet} toward {Name}", target.Id, name);
-
-        CancelActivityChains();
-
-        IChain chain = AethernetTeleport.BuildChain(
-            chains.Create($"{ChainPrefix}Teleport::{id}"),
-            chains,
-            zones,
-            objects,
-            pathfinder,
-            vnav,
-            lifestream,
-            logger,
-            target.Id);
-
-        if (CanPathfind)
-        {
-            chain = AppendPath(chain, $"{ChainPrefix}Teleport::{id}", approach);
-        }
-
-        _ = manager.Manage(chain);
     }
 
     private IChain BuildPathChain(string name, Vector3 destination) =>
@@ -160,7 +187,7 @@ public class ActivityNavigation
     ///     Pick the aethernet with the shortest walk to <paramref name="destination"/>.
     ///     Euclidean nearest is wrong across water (e.g. Unhallowed Hamlet island vs mainland CEs).
     /// </summary>
-    private AethernetData? GetNearestAetheryte(Vector3 destination)
+    private async Task<AethernetData?> SelectBestAetheryteAsync(Vector3 destination)
     {
         List<AethernetData> aetherytes = zones.GetZone().GetAetherytes();
         if (aetherytes.Count == 0)
@@ -177,38 +204,32 @@ public class ActivityNavigation
             return ByEuclidean();
         }
 
-        AethernetData? best = null;
-        float bestCost = float.PositiveInfinity;
-
-        foreach(AethernetData aetheryte in aetherytes)
+        (AethernetData Aetheryte, float Cost)[] scored = await Task.WhenAll(aetherytes.Select(async aetheryte =>
         {
             Vector3 from = aetheryte.GetInteractPosition();
-            Path path = pathfinder.Pathfind(new PathfinderConfig(destination)
+            Path path = await pathfinder.Pathfind(new PathfinderConfig(destination)
                 {
                     From = from,
                     AllowFlying = false,
                     ShouldSnapToFloor = true
                 })
-                .ConfigureAwait(false)
-                .GetAwaiter()
-                .GetResult();
+                .ConfigureAwait(false);
 
-            // Empty / single-node path → unreachable from this shard (water gap, etc.).
-            if (path.Nodes.Count < 2)
-            {
-                continue;
-            }
+            float cost = path.Nodes.Count < 2 ? float.PositiveInfinity : path.Distance;
+            return (aetheryte, cost);
+        })).ConfigureAwait(false);
 
-            float cost = path.Distance;
-            if (cost < bestCost)
-            {
-                bestCost = cost;
-                best = aetheryte;
-            }
-        }
+        (AethernetData Aetheryte, float Cost) best = scored
+            .Where(s => !float.IsPositiveInfinity(s.Cost))
+            .OrderBy(s => s.Cost)
+            .FirstOrDefault();
 
-        return best ?? ByEuclidean();
+        return best.Aetheryte ?? ByEuclidean();
     }
 
-    private void CancelActivityChains() => manager.CancelWhere(name => name.StartsWith(ChainPrefix, StringComparison.Ordinal));
+    private void CancelActivityChains()
+    {
+        Interlocked.Increment(ref teleportGeneration);
+        manager.CancelWhere(name => name.StartsWith(ChainPrefix, StringComparison.Ordinal));
+    }
 }
