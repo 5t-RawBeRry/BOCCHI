@@ -1,4 +1,4 @@
-﻿using BOCCHI.Common.Data.Aethernet;
+using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.Paths;
 using BOCCHI.Common.Data.Zones;
@@ -58,8 +58,9 @@ public class PathCalculator
         }
 
         GraphTraverser traverser = new(graph, pathfinder, logger);
-        traverser.AddCalculator(new DirectWalkCalculator());
+        // Teleport-first: from camp this is usually instant (no vnav). DirectWalk only for short hops.
         traverser.AddCalculator(new WalkTeleportWalkCalculator());
+        traverser.AddCalculator(new DirectWalkCalculator());
         traverser.AddCalculator(new ReturnWalkCalculator());
         traverser.AddCalculator(new ReturnTeleportWalkCalculator());
 

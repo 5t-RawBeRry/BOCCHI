@@ -1,4 +1,4 @@
-﻿using BOCCHI.Common.Data.Aethernet;
+using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.KnowledgeCrystals;
 using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Common.Data.Zones.Graph.Factory;
@@ -7,6 +7,7 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using Ocelot.Extensions;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
 using System.Numerics;
@@ -37,7 +38,26 @@ public abstract class BaseZone
 
     public bool IsOccultCrescentZone() => true;
 
-    public bool IsInBasecamp() => GetCurrentSubAreaPlaceNameId() == BasecampPlaceNameId;
+    /// <summary>
+    ///     True at expedition base camp. SubAreaPlaceNameId is unreliable (duplicate PlaceName
+    ///     rows / lag), so also accept proximity to the main aetheryte — otherwise Return loops
+    ///     forever after Demi-Return lands "in town".
+    /// </summary>
+    public bool IsInBasecamp()
+    {
+        if (GetCurrentSubAreaPlaceNameId() == BasecampPlaceNameId)
+        {
+            return true;
+        }
+
+        if (objects.LocalPlayer is not { } player)
+        {
+            return false;
+        }
+
+        const float campRadius = 80f;
+        return player.Position.Distance2D(GetAetherytePosition()) <= campRadius;
+    }
 
     public abstract AethernetData GetMainAetheryte();
 
@@ -62,6 +82,12 @@ public abstract class BaseZone
     public virtual List<PotChestData> GetRerollPotChestData() => [];
 
     public virtual List<CarrotData> GetCarrotData() => [];
+
+    public virtual BuffZone? GetBuffZone() => null;
+
+    public virtual TreasureRoutePolicy GetTreasureRoutePolicy() => new();
+
+    public virtual ShoppingVendorData? GetShoppingVendor() => null;
 
     public List<KnowledgeCrystalData> GetNearbyKnowledgeCrystals()
     {
@@ -133,7 +159,8 @@ public abstract class BaseZone
         Directory.CreateDirectory(dir);
 
         // Bump when walk-cost / edge semantics or which nodes are wired change.
-        const int graphSchemaVersion = 4;
+        // v5: preferred aethernet inbound edges + CE staging positions.
+        const int graphSchemaVersion = 5;
         string path = Path.Combine(dir, $"{TerritoryType}.v{graphSchemaVersion}.json");
 
         if (File.Exists(path))

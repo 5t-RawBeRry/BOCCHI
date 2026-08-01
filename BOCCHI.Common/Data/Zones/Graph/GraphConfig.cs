@@ -1,12 +1,21 @@
-﻿using Ocelot.Services.Logger;
+using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
 using System.Numerics;
 using Path = Ocelot.Services.Pathfinding.Path;
 
 namespace BOCCHI.Common.Data.Zones.Graph;
 
-public record ActivityData(int Id, Vector3 Position, float? CombatRadius = null);
+/// <param name="Position">Path / wait destination (CE staging or FATE start).</param>
+/// <param name="CombatRadius">Engage radius for CEs; unused for FATEs.</param>
+/// <param name="PreferredAethernetId">PlaceNameId of preferred inbound shard, if any.</param>
+public record ActivityData(
+    int Id,
+    Vector3 Position,
+    float? CombatRadius = null,
+    uint? PreferredAethernetId = null);
+
 public record CarrotData(int Id, Vector3 Position, int Level);
+
 public record TreasureData(int Id, int Level, Vector3? Position = null)
 {
     private const float PositionMatchDistanceSquared = 4f;
@@ -15,6 +24,7 @@ public record TreasureData(int Id, int Level, Vector3? Position = null)
         Id == treasureRowId
         || Position is { } position && Vector3.DistanceSquared(position, worldPosition) <= PositionMatchDistanceSquared;
 }
+
 public record PotChestData(Vector3 Position, int Level);
 
 public class GraphConfig(IPathfinder pathfinder, ILogger logger)

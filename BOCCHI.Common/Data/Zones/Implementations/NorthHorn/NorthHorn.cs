@@ -108,7 +108,7 @@ public class NorthHorn
     [
         new(2081, new(-440f, 47.02659f, -790f)), // A Rotten Affair
         new(2078, new(-402.0002f, 29.76808f, -252.9997f)), // Allure of the Occult
-        new(2075, new(510f, 16.76658f, -29.99999f), 30f), // Eye to Eye
+        new(2075, new(510f, 16.76658f, -29.99999f), 30f, SinkingSanctuary.Id), // Eye to Eye
         new(2082, new(-855.7433f, 70.67716f, 482.1518f), 30f), // Gale-force Encounter
         new(2079, new(-170f, 30f, -500f), 30f), // Inconstant Gardener
         new(2074, new(724f, 70f, 220f), 30f), // Raging Thrall
@@ -121,8 +121,8 @@ public class NorthHorn
 
     public override List<ActivityData> GetPotFateData() =>
     [
-        new(2072, new(233f, 7.729229f, -470f)), // Daylight Pottery (North)
-        new(2073, new(-505.2822f, 53.14409f, 244.041f), 38f) // In a Pot of Bother (South)
+        new(2072, new(233f, 7.729229f, -470f), PreferredAethernetId: SinkingSanctuary.Id), // Daylight Pottery (North)
+        new(2073, new(-505.2822f, 53.14409f, 244.041f), 38f, SuspendedMasonry.Id) // In a Pot of Bother (South)
     ];
 
     public override List<ActivityData> GetCriticalEncounterData() =>
@@ -143,6 +143,31 @@ public class NorthHorn
         new(60, new(152f, 70f, 716f), 20f), // Tiny Terror
         new(55, new(170f, 4f, -136f), 20f) // Web of Terror
     ];
+
+    public override BuffZone? GetBuffZone() =>
+        new(new Vector3(885.009f, 258.500f, 874.735f), 2.5f, 4.5f);
+
+    public override ShoppingVendorData? GetShoppingVendor() =>
+        new(1059485, BaseCamp.Id);
+
+    public override TreasureRoutePolicy GetTreasureRoutePolicy() =>
+        new()
+        {
+            AreaAethernetByName = new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["BaseCamp"] = BaseCamp.Id,
+                ["CrownOfKarnak"] = TheCrownOfKarnak.Id,
+                ["The Crown of Karnak"] = TheCrownOfKarnak.Id,
+                ["SuspendedMasonry"] = SuspendedMasonry.Id,
+                ["Suspended Masonry"] = SuspendedMasonry.Id,
+                ["MolderingOutskirts"] = MolderingOutskirts.Id,
+                ["Moldering Outskirts"] = MolderingOutskirts.Id,
+                ["SinkingSanctuary"] = SinkingSanctuary.Id,
+                ["Sinking Sanctuary"] = SinkingSanctuary.Id,
+                ["UnhallowedHamlet"] = UnhallowedHamlet.Id,
+                ["Unhallowed Hamlet"] = UnhallowedHamlet.Id,
+            }
+        };
 
     public override List<TreasureData> GetTreasureData() =>
     [

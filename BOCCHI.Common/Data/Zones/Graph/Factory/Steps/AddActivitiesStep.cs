@@ -1,4 +1,4 @@
-﻿namespace BOCCHI.Common.Data.Zones.Graph.Factory.Steps;
+namespace BOCCHI.Common.Data.Zones.Graph.Factory.Steps;
 
 public class AddActivitiesStep : IGraphBuildStep
 {
@@ -10,7 +10,11 @@ public class AddActivitiesStep : IGraphBuildStep
             {
                 Type = NodeType.NormalFate,
                 Position = fate.Position,
-                Metadata = new ActivityNodeMetadata { Id = fate.Id }
+                Metadata = new ActivityNodeMetadata
+                {
+                    Id = fate.Id,
+                    PreferredAethernetId = fate.PreferredAethernetId
+                }
             });
         }
 
@@ -20,7 +24,11 @@ public class AddActivitiesStep : IGraphBuildStep
             {
                 Type = NodeType.PotFate,
                 Position = fate.Position,
-                Metadata = new ActivityNodeMetadata { Id = fate.Id }
+                Metadata = new ActivityNodeMetadata
+                {
+                    Id = fate.Id,
+                    PreferredAethernetId = fate.PreferredAethernetId
+                }
             });
         }
 
@@ -30,7 +38,11 @@ public class AddActivitiesStep : IGraphBuildStep
             {
                 Type = NodeType.CriticalEncounter,
                 Position = criticalEncounter.Position,
-                Metadata = new ActivityNodeMetadata { Id = criticalEncounter.Id }
+                Metadata = new ActivityNodeMetadata
+                {
+                    Id = criticalEncounter.Id,
+                    PreferredAethernetId = criticalEncounter.PreferredAethernetId
+                }
             });
         }
 

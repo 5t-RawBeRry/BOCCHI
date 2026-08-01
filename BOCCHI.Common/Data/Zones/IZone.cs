@@ -1,4 +1,4 @@
-﻿using BOCCHI.Common.Data.Aethernet;
+using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.KnowledgeCrystals;
 using BOCCHI.Common.Data.Zones.Graph;
 using System.Numerics;
@@ -53,6 +53,12 @@ public interface IZone
     List<PotChestData> GetRerollPotChestData() => [];
 
     List<CarrotData> GetCarrotData() => [];
+
+    BuffZone? GetBuffZone() => null;
+
+    TreasureRoutePolicy GetTreasureRoutePolicy() => new();
+
+    ShoppingVendorData? GetShoppingVendor() => null;
 
     Task<ZoneGraph> GetGraph();
 }

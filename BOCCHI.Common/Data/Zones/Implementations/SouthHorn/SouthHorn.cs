@@ -1,4 +1,4 @@
-﻿using BOCCHI.Common.Data.Aethernet;
+using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Common.Data.Zones.Graph.Factory;
 using Dalamud.Plugin;
@@ -101,9 +101,9 @@ public class SouthHorn
         new(1962, new(162f, 56f, 676f)), // "Rough Waters"
         new(1963, new(373.20f, 70f, 486f)), // "The Golden Guardian"
         new(1964, new(-226.10f, 116.38f, 254f)), // "King of the Crescent"
-        new(1965, new(-548.50f, 3f, -595f)), // "The Winged Terror"
+        new(1965, new(-548.50f, 3f, -595f), PreferredAethernetId: TheWanderersHaven.Id), // "The Winged Terror"
         new(1966, new(-223.10f, 107f, 36f)), // "An Unending Duty"
-        new(1967, new(-48.10f, 111.76f, -320f)), // "Brain Drain"
+        new(1967, new(-48.10f, 111.76f, -320f), PreferredAethernetId: CrystallizedCaverns.Id), // "Brain Drain"
         new(1968, new(-370f, 75f, 650f)), // "A Delicate Balance"
         new(1969, new(-589.10f, 96.50f, 333f)), // "Sworn to Soil"
         new(1970, new(-71f, 71.31f, 557f)), // "A Prying Eye"
@@ -113,28 +113,56 @@ public class SouthHorn
 
     public override List<ActivityData> GetPotFateData() =>
     [
-        new(1976, new(200f, 111.73f, -215f)), // "Persistent Pots" (North)
-        new(1977, new(-481f, 75f, 528f)) // "Pleading Pots" (South)
+        new(1976, new(200f, 111.73f, -215f), PreferredAethernetId: Eldergrowth.Id), // "Persistent Pots" (North)
+        new(1977, new(-481f, 75f, 528f), PreferredAethernetId: Stonemarsh.Id) // "Pleading Pots" (South)
     ];
 
+    // Positions are AOCCH staging points; CombatRadius keeps BOCCHI engage padding behavior.
     public override List<ActivityData> GetCriticalEncounterData() =>
     [
-        new(33, new(286.25f, 70f, 699.25f), 25f), // "Scourge of the Mind"
-        new(34, new(483.39f, 65f, 382.15f), 25f), // "The Black Regiment"
-        new(35, new(597.41f, 79f, 809.66f), 25f), // "The Unbridled"
-        new(36, new(681f, 74f, 512f), 25f), // "Crawling Death"
-        new(37, new(-332.32f, 75f, 799.95f), 25f), // "Calamity Bound"
-        new(38, new(-447.50f, 92f, 58f), 20f), // "Trial by Claw"
-        new(39, new(-800f, 44f, 245f), 20f), // "From Times Bygone"
-        new(40, new(680f, 96f, -256f), 25f), // "Company of Stone"
-        new(41, new(-128f, 1f, -850f), 15f), // "Shark Attack"
-        new(42, new(637.82f, 108f, -54.07f), 25f), // "On the Hunt"
-        new(43, new(-384f, 5f, -588.25f), 15f), // "With Extreme Prejudice"
-        new(44, new(492f, 96f, -389.75f), 25f), // "Noise Complaint"
-        new(45, new(96.25f, 20f, -512f), 25f), // "Cursed Concern"
-        new(46, new(844.55f, 122f, 154.45f), 20f), // "Eternal Watch"
-        new(47, new(-577f, 97f, -187.25f), 20f) // "Flame of Dusk"
+        new(33, new(300.109f, 70f, 730.029f), 20f, Eldergrowth.Id), // "Scourge of the Mind"
+        new(34, new(449.613f, 65f, 356.86f), 20f, Eldergrowth.Id), // "The Black Regiment"
+        new(35, new(619.864f, 79f, 799.882f), 20f, Eldergrowth.Id), // "The Unbridled"
+        new(36, new(680.95f, 74f, 533.939f), 20f, Eldergrowth.Id), // "Crawling Death"
+        new(37, new(-340.067f, 75f, 800.32f), 20f, Stonemarsh.Id), // "Calamity Bound"
+        new(38, new(-413.775f, 92f, 74.884f), 20f, CrystallizedCaverns.Id), // "Trial by Claw"
+        new(39, new(-799.895f, 44f, 245.027f), 20f, Stonemarsh.Id), // "From Times Bygone"
+        new(40, new(679.954f, 96f, -279.855f), 20f, BaseCamp.Id), // "Company of Stone"
+        new(41, new(-117.227f, 1f, -849.941f), 15f, TheWanderersHaven.Id), // "Shark Attack"
+        new(42, new(635.981f, 108f, -53.95f), 20f, Eldergrowth.Id), // "On the Hunt"
+        new(43, new(-351.222f, 5f, -607.909f), 15f, TheWanderersHaven.Id), // "With Extreme Prejudice"
+        new(44, new(460.949f, 97f, -362.86f), 20f, BaseCamp.Id), // "Noise Complaint"
+        new(45, new(71.964f, 20f, -544.904f), 20f, TheWanderersHaven.Id), // "Cursed Concern"
+        new(46, new(869.891f, 122f, 180.11f), 20f, Eldergrowth.Id), // "Eternal Watch"
+        new(47, new(-570.087f, 97f, -160.04f), 20f, CrystallizedCaverns.Id) // "Flame of Dusk"
     ];
+
+    public override BuffZone? GetBuffZone() =>
+        new(new Vector3(836.07f, 73.12f, -709.45f), 2.5f, 4.5f);
+
+    public override ShoppingVendorData? GetShoppingVendor() =>
+        new(1053614, BaseCamp.Id);
+
+    public override TreasureRoutePolicy GetTreasureRoutePolicy() =>
+        new()
+        {
+            UnsafeWeatherIds = [7, 62, 64, 192],
+            AshkinStartEorzeaMinute = 1350,
+            AshkinEndEorzeaMinute = 240,
+            AreaAethernetByName = new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Southdown Heath"] = BaseCamp.Id,
+                ["Lost Citadel"] = BaseCamp.Id,
+                ["Shadowed City"] = Eldergrowth.Id,
+                ["Eldergrowth"] = Eldergrowth.Id,
+                ["Stonemarsh"] = Stonemarsh.Id,
+                ["Heathcliff"] = Stonemarsh.Id,
+                ["Abandoned Ascent"] = Stonemarsh.Id,
+                ["Crystallized Caverns"] = CrystallizedCaverns.Id,
+                ["Vanishing Slope"] = TheWanderersHaven.Id,
+                ["The Wanderer's Haven"] = TheWanderersHaven.Id,
+            }
+        };
 
     public override List<TreasureData> GetTreasureData() =>
     [

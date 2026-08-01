@@ -1,29 +1,16 @@
 using Dalamud.Game.ClientState.Objects.Types;
-using FFXIVClientStructs.FFXIV.Client.Game.Character;
-using FFXIVClientStructs.FFXIV.Client.Game.Object;
 
 namespace BOCCHI.Common.Extensions;
 
-public static unsafe class BattleNpcExtensions
+/// <summary>
+///     Same semantics as pre-rewrite <c>IGameObjectEx</c> on master:
+///     use Dalamud's resolved <see cref="IGameObject.TargetObject"/> so idle
+///     actors with sentinel target id 0xE0000000 are treated as untargeted.
+/// </summary>
+public static class BattleNpcExtensions
 {
-    public static bool HasTarget(this IGameObject obj)
-    {
-        if (obj.Address == nint.Zero)
-        {
-            return false;
-        }
+    public static bool HasTarget(this IGameObject obj) => obj.TargetObject != null;
 
-        return ((BattleChara*)obj.Address)->GetTargetId() != default;
-    }
-
-    public static bool IsTargetingPlayer(this IGameObject obj, IGameObject? player)
-    {
-        if (player == null || player.Address == nint.Zero || obj.Address == nint.Zero)
-        {
-            return false;
-        }
-
-        GameObjectId playerId = ((BattleChara*)player.Address)->GetGameObjectId();
-        return ((BattleChara*)obj.Address)->GetTargetId() == playerId;
-    }
+    public static bool IsTargetingPlayer(this IGameObject obj, IGameObject? player) =>
+        player != null && obj.TargetObject?.Address == player.Address;
 }

@@ -1,4 +1,4 @@
-﻿using Dalamud.Configuration;
+using Dalamud.Configuration;
 namespace BOCCHI.Common.Config;
 
 public interface IConfiguration : IPluginConfiguration
@@ -20,4 +20,6 @@ public interface IConfiguration : IPluginConfiguration
     CriticalEncountersConfig CriticalEncountersConfig { get; set; }
 
     TreasureConfig TreasureConfig { get; set; }
+
+    ShoppingConfig ShoppingConfig { get; set; }
 }

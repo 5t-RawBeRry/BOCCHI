@@ -32,4 +32,16 @@ public class TreasureConfig : IAutoConfig
 
     [IntRange(1, 50)]
     public int HuntMaxLevel { get; set; } = 40;
+
+    /// <summary>
+    ///     Only interact with known coffer BaseIds (2014741–43). Off = any Treasure object.
+    /// </summary>
+    [Checkbox]
+    public bool RestrictCofferBaseIds { get; set; } = true;
+
+    /// <summary>
+    ///     Pause treasure hunting during Ashkin / unsafe weather windows (South Horn).
+    /// </summary>
+    [Checkbox]
+    public bool SkipUnsafeTreasureWindows { get; set; } = true;
 }

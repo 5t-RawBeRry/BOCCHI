@@ -1,4 +1,4 @@
-﻿using Ocelot.Extensions;
+using Ocelot.Extensions;
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -228,11 +228,24 @@ public class ZoneGraph
 
         foreach (Node node in nodes)
         {
+            // Prefer authored aethernet when present (AOCCH preferred shard), else nearest few.
+            List<Node> candidateTeleports = teleports;
+            if (node.Metadata is ActivityNodeMetadata { PreferredAethernetId: { } preferredId })
+            {
+                List<Node> preferred = teleports
+                    .Where(t => t.Metadata is TeleportNodeMetadata tm && tm.AetheryteId == preferredId)
+                    .ToList();
+                if (preferred.Count > 0)
+                {
+                    candidateTeleports = preferred;
+                }
+            }
+
             // Score a few Euclidean-nearest shards sequentially. Parallel WhenAll flooded
             // vnav (Queries: 1 + N queued) and stalled actual movement pathfinds.
-            List<Node> nearestTeleports = teleports
+            List<Node> nearestTeleports = candidateTeleports
                 .OrderBy(t => t.Position.Distance2D(node.Position))
-                .Take(3)
+                .Take(candidateTeleports == teleports ? 3 : candidateTeleports.Count)
                 .ToList();
 
             float bestInboundCost = float.PositiveInfinity;

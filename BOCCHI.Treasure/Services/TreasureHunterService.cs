@@ -73,6 +73,11 @@ public class TreasureHunterService
             return;
         }
 
+        if (config.SkipUnsafeTreasureWindows && IsUnsafeTreasureWindow())
+        {
+            return;
+        }
+
         if (!IsVnavReady)
         {
             return;
@@ -370,12 +375,13 @@ public class TreasureHunterService
         }
 
         AddonSelectYesno* yesno = gui.GetAddonByName<AddonSelectYesno>("SelectYesno");
-        if (yesno == null || !yesno->AtkUnitBase.IsVisible)
+        if (yesno == null)
         {
             return;
         }
 
-        yesno->AtkUnitBase.FireCallbackInt(0);
+        // Same AtkValues[7] filter as pre-rewrite — Return only.
+        ReturnYesNo.TryAccept(&yesno->AtkUnitBase);
     }
 
     private bool HandleWalkToAethernet(HuntPathfinderStep step)
@@ -452,7 +458,37 @@ public class TreasureHunterService
             ObjectKind: ObjectKind.Treasure,
             IsDead: false,
             IsTargetable: true
-        } && o.IsValid());
+        } && o.IsValid() && IsAllowedCofferBaseId(o.BaseId));
+    }
+
+    private bool IsAllowedCofferBaseId(uint baseId)
+    {
+        if (!config.RestrictCofferBaseIds)
+        {
+            return true;
+        }
+
+        return TreasureRoutePolicy.CofferBaseIds.Contains(baseId);
+    }
+
+    private bool IsUnsafeTreasureWindow()
+    {
+        TreasureRoutePolicy policy = zones.GetZone().GetTreasureRoutePolicy();
+        int eorzeaMinute = TreasureRoutePolicy.GetEorzeaMinuteOfDay(DateTimeOffset.UtcNow);
+        if (policy.IsAshkinPeriod(eorzeaMinute))
+        {
+            return true;
+        }
+
+        byte weatherId = GetCurrentWeatherId();
+        return weatherId != 0 && policy.IsUnsafeWeather(weatherId);
+    }
+
+    private static unsafe byte GetCurrentWeatherId()
+    {
+        FFXIVClientStructs.FFXIV.Client.Graphics.Environment.EnvManager* env =
+            FFXIVClientStructs.FFXIV.Client.Graphics.Environment.EnvManager.Instance();
+        return env == null ? (byte)0 : env->ActiveWeather;
     }
 
     private List<uint> GetValidNodes(int maxLevel)

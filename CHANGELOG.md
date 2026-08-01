@@ -1,4 +1,2 @@
-# 4.0.1.6
-restores commands
-more movement fixes
-various other hotfixes
+# 4.0.1.7
+fixes and stuffs

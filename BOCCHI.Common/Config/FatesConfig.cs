@@ -20,6 +20,24 @@ public class FatesConfig : IAutoConfig
     [IntRange(0, 15)]
     public int MinPotFateMinutesRemaining { get; set; } = 2;
 
+    /// <summary>
+    ///     Minutes before predicted pot spawn to leave for pot (AOCCH SpawnLeadMinutes).
+    /// </summary>
+    [IntRange(0, 15)]
+    public int PotSpawnLeadMinutes { get; set; } = 3;
+
+    /// <summary>
+    ///     Do not start a FATE when pot departure is within this many minutes (0 = disabled).
+    /// </summary>
+    [IntRange(0, 30)]
+    public int FateFallbackCutoffMinutes { get; set; } = 5;
+
+    /// <summary>
+    ///     Do not start a CE when pot departure is within this many minutes (0 = disabled).
+    /// </summary>
+    [IntRange(0, 30)]
+    public int CeFallbackCutoffMinutes { get; set; } = 10;
+
     [Checkbox]
     public bool ShouldFarmPotChests { get; set; } = false;
 

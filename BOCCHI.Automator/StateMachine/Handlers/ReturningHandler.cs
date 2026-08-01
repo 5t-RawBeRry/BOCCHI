@@ -1,5 +1,6 @@
 using BOCCHI.Automator.Data;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
@@ -69,10 +70,21 @@ public class ReturningHandler
             return;
         }
 
-        if (zones.GetZone().IsInBasecamp())
+        IZone zone = zones.GetZone();
+        if (zone.IsInBasecamp())
         {
             memory.Forget<ReturningStateMemory>();
             return;
+        }
+
+        // Still mid-return (BetweenAreas already gated above). Don't re-cast while on CD /
+        // after a successful cast left ReturningStateMemory stuck with a bad IsInBasecamp().
+        if (memory.TryRemember<ReturningStateMemory>(out ReturningStateMemory _))
+        {
+            if (!Actions.Return.CanCast())
+            {
+                return;
+            }
         }
 
         if (Actions.Return.CanCast())
@@ -102,12 +114,7 @@ public class ReturningHandler
             return;
         }
 
-        AtkUnitBase* addon = (AtkUnitBase*)args.Addon.Address;
-        if (!addon->IsVisible)
-        {
-            return;
-        }
-
-        addon->FireCallbackInt(0);
+        // Same filter as pre-rewrite TeleporterModule — only Return, not shops/etc.
+        ReturnYesNo.TryAccept((AtkUnitBase*)args.Addon.Address);
     }
 }

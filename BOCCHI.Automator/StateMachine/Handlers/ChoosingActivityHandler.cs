@@ -5,8 +5,10 @@ using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
+using Ocelot.Services.Logger;
 using Ocelot.States.Score;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
@@ -21,7 +23,10 @@ public class ChoosingActivityHandler
     BuffConfig buffConfig,
     FatesConfig fatesConfig,
     CriticalEncountersConfig criticalEncountersConfig,
-    IFateScorer fateScorer
+    IFateScorer fateScorer,
+    IPotCycleTracker potCycle,
+    IZoneProvider zones,
+    ILogger<ChoosingActivityHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.ChoosingActivity)
 {
     public override StatePriority GetScore()
@@ -61,24 +66,60 @@ public class ChoosingActivityHandler
 
     public override void Handle()
     {
+        bool potFarming = fatesConfig.ShouldFarmPotChests || fatesConfig.PreferPotFates;
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        PotCycleSnapshot cycle = potCycle.Snapshot;
+
         CriticalEncounter? criticalEncounter = criticalEncounterRepository.SnapshotWithoutForkedTower()
             .FirstOrDefault(c => c.State == DynamicEventState.Register
                                  && criticalEncountersConfig.IsCriticalEncounterEnabled(c.Id.Value));
         if (criticalEncounter != null)
         {
-            IGoal goal = goalFactory.CriticalEncounter(criticalEncounter.Id);
-            memory.TryAdd(new GoalMemory(goal));
-            return;
+            PotFallbackStartDecision ceDecision = PotFallbackWindow.Evaluate(
+                cycle,
+                now,
+                TimeSpan.FromMinutes(Math.Max(0, fatesConfig.CeFallbackCutoffMinutes)),
+                fatesConfig.PotSpawnLeadMinutes,
+                potFarming,
+                "CE");
+            if (!ceDecision.AllowStart)
+            {
+                logger.Debug(ceDecision.Reason);
+            }
+            else
+            {
+                IGoal goal = goalFactory.CriticalEncounter(criticalEncounter.Id);
+                memory.TryAdd(new GoalMemory(goal));
+                return;
+            }
         }
 
         Fate? fate = fateScorer.SelectBest(fateRepository.Snapshot());
         if (fate != null)
         {
+            // Always allow pot FATEs themselves; only gate non-pot FATE fallbacks.
+            if (!zones.GetZone().IsPotFate(fate.Id.Value))
+            {
+                PotFallbackStartDecision fateDecision = PotFallbackWindow.Evaluate(
+                    cycle,
+                    now,
+                    TimeSpan.FromMinutes(Math.Max(0, fatesConfig.FateFallbackCutoffMinutes)),
+                    fatesConfig.PotSpawnLeadMinutes,
+                    potFarming,
+                    "FATE");
+                if (!fateDecision.AllowStart)
+                {
+                    logger.Debug(fateDecision.Reason);
+                    return;
+                }
+            }
+
             IGoal goal = goalFactory.Fate(fate.Id);
             memory.TryAdd(new GoalMemory(goal));
             return;
         }
 
-        throw new("Unable to determine a goal in the Choosing activity state...");
+        // Pot cutoff or empty board — wait for next tick rather than hard-failing.
+        logger.Debug("ChoosingActivity: no eligible goal this tick");
     }
 }

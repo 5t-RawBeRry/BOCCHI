@@ -7,6 +7,7 @@ public static class ZoneServiceCollectionExtensions
     public static IServiceCollection AddZones(this IServiceCollection services)
     {
         services.AddSingleton<IZoneProvider, ZoneProvider>();
+        services.AddSingleton<IPotCycleTracker, PotCycleTracker>();
         return services;
     }
 

@@ -1,4 +1,4 @@
-﻿using BOCCHI.Buff.Data;
+using BOCCHI.Buff.Data;
 using BOCCHI.Common.Data.KnowledgeCrystals;
 using BOCCHI.Common.Data.Zones;
 using Dalamud.Game.ClientState.Conditions;
@@ -20,7 +20,7 @@ public class ApproachingKnowledgeCrystalHandler
     ICondition conditions
 ) : FlowStateHandler<BuffState>(BuffState.ApproachingKnowledgeCrystal)
 {
-    private const float InteractionRange = 5f;
+    private const float CrystalInteractionRange = 5f;
 
     public override BuffState? Handle()
     {
@@ -36,9 +36,15 @@ public class ApproachingKnowledgeCrystalHandler
             return BuffState.NoCrystalsFound;
         }
 
+        BuffZone? buffZone = zone.GetBuffZone();
         KnowledgeCrystalData closest = crystals[0];
-        float distance = player.Position.Distance2D(closest.Position);
-        if (distance <= InteractionRange)
+
+        // Prefer the fixed buff annulus when authored; fall back to crystal approach.
+        bool inRange = buffZone is { } zoneData
+            ? zoneData.Contains2D(player.Position)
+            : player.Position.Distance2D(closest.Position) <= CrystalInteractionRange;
+
+        if (inRange)
         {
             pathfinder.Stop();
 
@@ -60,10 +66,13 @@ public class ApproachingKnowledgeCrystalHandler
             return null;
         }
 
-        Vector3 destination = closest.Position.GetApproachPosition(player.Position, InteractionRange - 0.2f);
+        Vector3 destination = buffZone is { } bz
+            ? bz.GetApproachPoint(player.Position)
+            : closest.Position.GetApproachPosition(player.Position, CrystalInteractionRange - 0.2f);
+
         pathfinder.PathfindAndMoveTo(new(destination)
         {
-            DistanceThreshold = 1.5f,
+            DistanceThreshold = 1.0f,
             ShouldSnapToFloor = true
         });
 

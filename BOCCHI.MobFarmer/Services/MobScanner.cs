@@ -45,7 +45,9 @@ public class MobScanner
             .Where(o =>
             {
                 BattleChara* battleChara = (BattleChara*)o.Address;
-                if (battleChara->ForayInfo.Level > config.MaxMobLevel)
+                // Level 0 = foray info unavailable; don't filter those out.
+                byte level = battleChara->ForayInfo.Level;
+                if (level > 0 && level > config.MaxMobLevel)
                 {
                     return false;
                 }

@@ -1,4 +1,4 @@
-﻿using BOCCHI.Common.Config;
+using BOCCHI.Common.Config;
 using Ocelot.Config;
 
 namespace BOCCHI.Config;
@@ -26,4 +26,6 @@ public class Configuration : IConfiguration
     public CriticalEncountersConfig CriticalEncountersConfig { get; set; } = new();
 
     public TreasureConfig TreasureConfig { get; set; } = new();
+
+    public ShoppingConfig ShoppingConfig { get; set; } = new();
 }

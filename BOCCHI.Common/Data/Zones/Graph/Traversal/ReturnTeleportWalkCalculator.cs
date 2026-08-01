@@ -1,4 +1,4 @@
-﻿using BOCCHI.Common.Data.Aethernet;
+using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Paths;
 using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
@@ -18,12 +18,20 @@ public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
         }
 
         Node? baseCampAetheryte = graph.GetBaseCampAetheryteNode();
-        if (baseCampAetheryte != null && start.Distance2D(baseCampAetheryte.GetInteractPosition()) <= AethernetData.InteractRadius)
+        Node? returnNode = graph.GetBaseCampReturnPositionNode();
+
+        // Already at / near camp (return pad or aetheryte) — never offer Return again.
+        const float alreadyAtCampRadius = 80f;
+        if (baseCampAetheryte != null && start.Distance2D(baseCampAetheryte.Position) <= alreadyAtCampRadius)
         {
             return Task.FromResult<TraversalCandidate?>(null);
         }
 
-        Node? returnNode = graph.GetBaseCampReturnPositionNode();
+        if (returnNode != null && start.Distance2D(returnNode.Position) <= alreadyAtCampRadius)
+        {
+            return Task.FromResult<TraversalCandidate?>(null);
+        }
+
         if (returnNode == null)
         {
             return Task.FromResult<TraversalCandidate?>(null);

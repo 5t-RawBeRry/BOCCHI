@@ -1,4 +1,5 @@
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.Zones;
@@ -12,18 +13,37 @@ public class GoalValidator
     IFateRepository fateRepository,
     IZoneProvider zones,
     FatesConfig fatesConfig,
-    CriticalEncountersConfig criticalEncountersConfig
+    CriticalEncountersConfig criticalEncountersConfig,
+    IPotCycleTracker potCycle
 ) : IGoalValidator
 {
     public bool Validate(IGoal goal)
     {
         return goal.GoalType switch
         {
-            CriticalEncounterGoal(var id) => criticalEncounterRepository.HasCriticalEncounter(id)
-                                            && criticalEncountersConfig.IsCriticalEncounterEnabled(id.Value),
+            CriticalEncounterGoal(var id) => ValidateCriticalEncounter(id),
             FateGoal(var id) => ValidateFate(id),
             var _ => throw new ArgumentOutOfRangeException(nameof(GoalType))
         };
+    }
+
+    private bool ValidateCriticalEncounter(CriticalEncounterId id)
+    {
+        if (!criticalEncounterRepository.HasCriticalEncounter(id)
+            || !criticalEncountersConfig.IsCriticalEncounterEnabled(id.Value))
+        {
+            return false;
+        }
+
+        bool potFarming = fatesConfig.ShouldFarmPotChests || fatesConfig.PreferPotFates;
+        PotFallbackStartDecision decision = PotFallbackWindow.Evaluate(
+            potCycle.Snapshot,
+            DateTimeOffset.UtcNow,
+            TimeSpan.FromMinutes(Math.Max(0, fatesConfig.CeFallbackCutoffMinutes)),
+            fatesConfig.PotSpawnLeadMinutes,
+            potFarming,
+            "CE");
+        return decision.AllowStart;
     }
 
     private bool ValidateFate(FateId id)
@@ -33,7 +53,24 @@ public class GoalValidator
             return false;
         }
 
-        if (fatesConfig.MinPotFateMinutesRemaining <= 0 || !zones.GetZone().IsPotFate(id.Value))
+        bool isPot = zones.GetZone().IsPotFate(id.Value);
+        if (!isPot)
+        {
+            bool potFarming = fatesConfig.ShouldFarmPotChests || fatesConfig.PreferPotFates;
+            PotFallbackStartDecision decision = PotFallbackWindow.Evaluate(
+                potCycle.Snapshot,
+                DateTimeOffset.UtcNow,
+                TimeSpan.FromMinutes(Math.Max(0, fatesConfig.FateFallbackCutoffMinutes)),
+                fatesConfig.PotSpawnLeadMinutes,
+                potFarming,
+                "FATE");
+            if (!decision.AllowStart)
+            {
+                return false;
+            }
+        }
+
+        if (fatesConfig.MinPotFateMinutesRemaining <= 0 || !isPot)
         {
             return true;
         }

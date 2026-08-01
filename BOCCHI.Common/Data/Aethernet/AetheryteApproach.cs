@@ -126,6 +126,11 @@ public static class AetheryteApproach
         return zone.IsWithinLifestreamRange(position);
     }
 
+    /// <summary>
+    ///     True when we have arrived at / are standing on this shard.
+    ///     Wider than Lifestream interact range — post-TP landings and menu-open range
+    ///     are often 4–10y from the crystal; a 3.5y check caused re-TP loops to the same id.
+    /// </summary>
     public static bool IsAlreadyAtAetheryte(AethernetData? aetheryte, Vector3 position)
     {
         if (aetheryte == null)
@@ -133,16 +138,30 @@ public static class AetheryteApproach
             return false;
         }
 
-        // Prefer crystal Lifestream range — Dest pads outside 3.5y must not count as "ready"
-        // (old Wanderer's Haven Dest was ~4.29y out with a 4.3y pad).
-        if (position.Distance2D(aetheryte.Position) <= AethernetData.LifestreamInteractRadius)
+        const float arrivedRadius = 12f;
+        if (position.Distance2D(aetheryte.Position) <= arrivedRadius)
         {
             return true;
         }
 
-        // After aethernet TP, land on Destination (e.g. SH base camp ~4.7y from crystal).
         Vector3 interact = aetheryte.GetInteractPosition();
-        return interact != aetheryte.Position
-               && position.Distance2D(interact) <= 2.5f;
+        return position.Distance2D(interact) <= arrivedRadius;
+    }
+
+    /// <summary>Nearest authored aetheryte matches <paramref name="placeNameId"/> and we're close to it.</summary>
+    public static bool IsAtPlaceName(IZone zone, uint placeNameId, Vector3 position)
+    {
+        if (IsAlreadyAtAetheryte(zone.FindAetheryte(placeNameId), position))
+        {
+            return true;
+        }
+
+        AethernetData? nearest = zone.EnumerateAetherytes()
+            .OrderBy(aetheryte => position.Distance2D(aetheryte.Position))
+            .FirstOrDefault();
+
+        return nearest != null
+               && nearest.Id == placeNameId
+               && position.Distance2D(nearest.Position) <= 25f;
     }
 }
