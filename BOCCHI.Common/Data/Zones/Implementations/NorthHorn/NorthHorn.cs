@@ -74,7 +74,7 @@ public class NorthHorn
 
     protected override uint BasecampPlaceNameId
     {
-        get => 5595;
+        get => 5571;
     }
 
     public override AethernetData GetMainAetheryte() => BaseCamp;

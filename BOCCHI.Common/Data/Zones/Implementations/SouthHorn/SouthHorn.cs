@@ -20,7 +20,8 @@ public class SouthHorn
 {
     private static readonly AethernetData BaseCamp = new()
     {
-        Id = 4944,
+        // PlaceName 4927 = Expedition Base Camp (Lifestream / SubArea); 4944 is a duplicate row.
+        Id = 4927,
         BaseId = 2014664,
         Position = new(830.75f, 72.98f, -695.98f),
         Destination = new(834.5f, 73f, -698.75f),
@@ -29,7 +30,8 @@ public class SouthHorn
 
     private static readonly AethernetData TheWanderersHaven = new()
     {
-        Id = 4936,
+        // PlaceName 4928 matches Lifestream; 4936 is a duplicate Singular row.
+        Id = 4928,
         BaseId = 2014665,
         Position = new(-173.02f, 8.19f, -611.14f),
         // Keep Dest inside LifestreamInteractRadius (3.5); old pad was ~4.29y out.
@@ -66,7 +68,7 @@ public class SouthHorn
     };
     protected override uint BasecampPlaceNameId
     {
-        get => 4944;
+        get => 4927;
     }
 
     public override AethernetData GetMainAetheryte() => BaseCamp;
