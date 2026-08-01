@@ -1,12 +1,18 @@
-﻿using System.Numerics;
-using BOCCHI.Common.Data.Aethernet;
+﻿using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.KnowledgeCrystals;
 using BOCCHI.Common.Data.Zones.Graph;
+using System.Numerics;
 
 namespace BOCCHI.Common.Data.Zones;
 
 public interface IZone
 {
+    ZoneId ZoneId { get; }
+
+    ushort TerritoryType { get; }
+
+    ushort ForkedTowerEventId { get; }
+
     bool IsOccultCrescentZone();
 
     bool IsInBasecamp();
@@ -23,56 +29,36 @@ public interface IZone
 
     List<AethernetData> GetNearbyAethernetShards();
 
-    bool HasNearbyAethernetShards()
-    {
-        return GetNearbyKnowledgeCrystals().Count != 0;
-    }
+    bool HasNearbyAethernetShards() => GetNearbyKnowledgeCrystals().Count != 0;
 
     List<KnowledgeCrystalData> GetKnowledgeCrystals();
 
     List<KnowledgeCrystalData> GetNearbyKnowledgeCrystals();
 
-    bool HasNearbyKnowledgeCrystals()
-    {
-        return GetNearbyKnowledgeCrystals().Count != 0;
-    }
+    bool HasNearbyKnowledgeCrystals() => GetNearbyKnowledgeCrystals().Count != 0;
 
     bool IsInForkedTower();
 
-    List<ActivityData> GetNormalFateData()
+    float GetCriticalEncounterRadius(int eventId);
+
+    bool IsPotFate(int fateId)
     {
-        return [];
+        return GetPotFateData().Any(f => f.Id == fateId);
     }
 
-    List<ActivityData> GetPotFateData()
-    {
-        return [];
-    }
+    List<ActivityData> GetNormalFateData() => [];
 
-    List<ActivityData> GetCriticalEncounterData()
-    {
-        return [];
-    }
+    List<ActivityData> GetPotFateData() => [];
 
-    List<TreasureData> GetTreasureData()
-    {
-        return [];
-    }
+    List<ActivityData> GetCriticalEncounterData() => [];
 
-    Dictionary<int, List<PotChestData>> GetPotChestData()
-    {
-        return [];
-    }
+    List<TreasureData> GetTreasureData() => [];
 
-    List<PotChestData> GetRerollPotChestData()
-    {
-        return [];
-    }
+    Dictionary<int, List<PotChestData>> GetPotChestData() => [];
 
-    List<CarrotData> GetCarrotData()
-    {
-        return [];
-    }
+    List<PotChestData> GetRerollPotChestData() => [];
+
+    List<CarrotData> GetCarrotData() => [];
 
     Task<ZoneGraph> GetGraph();
 }

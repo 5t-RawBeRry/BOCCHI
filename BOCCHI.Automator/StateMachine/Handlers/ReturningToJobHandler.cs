@@ -1,27 +1,15 @@
-﻿using BOCCHI.Automator.Data;
-using BOCCHI.Automator.Data.StateMemory;
-using BOCCHI.Automator.Services;
+using BOCCHI.Automator.Data;
+using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.SupportJobs;
-using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
-using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
-using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
-using Ocelot.Extensions;
-using Ocelot.Pathfinding.Extensions;
-using Ocelot.Services.Logger;
-using Ocelot.Services.Pathfinding;
-using Ocelot.Services.UI;
 using Ocelot.States.Score;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
 public class ReturningToJobHandler(IAutomatorMemory memory, ISupportJobFactory jobs, ISupportJobChanger changer) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.ReturningToJob)
 {
-    public override StatePriority GetScore()
-    {
-        return memory.TryRemember<SupportJobMemory>(out var _) ? StatePriority.AboveNormal : StatePriority.Never;
-    }
+    public override StatePriority GetScore() => HasJobToRestore() ? StatePriority.AboveNormal : StatePriority.Never;
 
     public override void Handle()
     {
@@ -30,17 +18,45 @@ public class ReturningToJobHandler(IAutomatorMemory memory, ISupportJobFactory j
             return;
         }
 
-        if (!memory.TryRemember<SupportJobMemory>(out var job))
+        if (!TryGetJobToRestore(out SupportJobId jobId))
         {
             return;
         }
 
-        if (jobs.TryGetCurrent(out var current) && current.Id == job.Job)
+        if (jobs.TryGetCurrent(out SupportJob current) && current.Id == jobId)
         {
-            memory.Forget<SupportJobMemory>();
+            ForgetSavedJobs();
             return;
         }
 
-        changer.Change(job.Job);
+        changer.Change(jobId);
+    }
+
+    private bool HasJobToRestore() =>
+        memory.TryRemember<BuffSupportJobMemory>(out BuffSupportJobMemory _)
+        || memory.TryRemember<TreasureSightSupportJobMemory>(out TreasureSightSupportJobMemory _);
+
+    private bool TryGetJobToRestore(out SupportJobId jobId)
+    {
+        if (memory.TryRemember<BuffSupportJobMemory>(out BuffSupportJobMemory buffJob))
+        {
+            jobId = buffJob.Job;
+            return true;
+        }
+
+        if (memory.TryRemember<TreasureSightSupportJobMemory>(out TreasureSightSupportJobMemory treasureSightJob))
+        {
+            jobId = treasureSightJob.Job;
+            return true;
+        }
+
+        jobId = default;
+        return false;
+    }
+
+    private void ForgetSavedJobs()
+    {
+        memory.Forget<BuffSupportJobMemory>();
+        memory.Forget<TreasureSightSupportJobMemory>();
     }
 }

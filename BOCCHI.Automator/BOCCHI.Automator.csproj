@@ -2,8 +2,9 @@
     <ItemGroup>
         <ProjectReference Include="..\BOCCHI.Common\BOCCHI.Common.csproj"/>
         <ProjectReference Include="..\BOCCHI.Buff\BOCCHI.Buff.csproj"/>
+        <ProjectReference Include="..\BOCCHI.Treasure\BOCCHI.Treasure.csproj"/>
     </ItemGroup>
     <ItemGroup>
-      <Folder Include="Data\Paths\" />
+        <Folder Include="Data\Paths\"/>
     </ItemGroup>
 </Project>

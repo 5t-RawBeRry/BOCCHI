@@ -1,12 +1,35 @@
-﻿using System.Numerics;
-using BOCCHI.Common.Services.Paths;
+﻿using BOCCHI.Common.Services.Paths;
 using Ocelot.Chain;
+using System.Numerics;
 
 namespace BOCCHI.Common.Data.Paths;
 
+public interface IPathStep
+{
+    PathStepType PathStepData { get; }
+
+    PathStepKind Kind { get; init; }
+
+    string Describe();
+
+    bool TryExecute(IPathStepExecutor executor);
+}
+
+public abstract record PathStepType;
+public sealed record Teleport(uint id) : PathStepType;
+public sealed record Pathfind(Vector3 destination, float range) : PathStepType;
+public sealed record Return : PathStepType;
+
+public enum PathStepKind
+{
+    Teleport,
+    Pathfind,
+    Return
+}
+
 public class PathStep : IPathStep
 {
-    private Task<ChainResult>? task = null;
+    private Task<ChainResult>? task;
 
     public required PathStepType PathStepData { get; init; }
 
@@ -19,18 +42,16 @@ public class PathStep : IPathStep
             Pathfind(var destination, var range) => $"Pathfind to {destination:f2} (range = {range:f2})",
             Teleport(var id) => $"Teleport to {id}",
             Return _ => "Return to Basecamp",
-            _ => throw new ArgumentOutOfRangeException(nameof(PathStepData))
+            var _ => throw new ArgumentOutOfRangeException(nameof(PathStepData))
         };
     }
 
-    // Returns true when finished executing
     public bool TryExecute(IPathStepExecutor executor)
     {
         if (task != null)
         {
             if (task.IsCompleted)
             {
-                task.Dispose();
                 task = null;
                 return true;
             }
@@ -42,30 +63,24 @@ public class PathStep : IPathStep
         return false;
     }
 
-    public static PathStep Teleport(uint id)
-    {
-        return new PathStep
+    public static PathStep Teleport(uint id) =>
+        new()
         {
             PathStepData = new Teleport(id),
-            Kind = PathStepKind.Teleport,
+            Kind = PathStepKind.Teleport
         };
-    }
 
-    public static PathStep Pathfind(Vector3 destination, float range = 0f)
-    {
-        return new PathStep
+    public static PathStep Pathfind(Vector3 destination, float range = 0f) =>
+        new()
         {
             PathStepData = new Pathfind(destination, range),
-            Kind = PathStepKind.Pathfind,
+            Kind = PathStepKind.Pathfind
         };
-    }
 
-    public static PathStep Return()
-    {
-        return new PathStep
+    public static PathStep Return() =>
+        new()
         {
             PathStepData = new Return(),
-            Kind = PathStepKind.Return,
+            Kind = PathStepKind.Return
         };
-    }
 }

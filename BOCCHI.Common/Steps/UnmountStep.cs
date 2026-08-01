@@ -8,7 +8,10 @@ namespace BOCCHI.Common.Steps;
 
 public class UnmountStep(IChainFactory chains, IPlayer player) : ChainRecipe(chains)
 {
-    public override string Name { get; } = "Unmount";
+    public override string Name
+    {
+        get => "Unmount";
+    }
 
     protected override IChain Compose(IChain chain)
     {
@@ -16,7 +19,7 @@ public class UnmountStep(IChainFactory chains, IPlayer player) : ChainRecipe(cha
             .UseStepMiddleware(new RetryStepMiddleware
             {
                 DelayMs = 100,
-                MaxAttempts = 30,
+                MaxAttempts = 30
             })
             .Then(_ =>
             {

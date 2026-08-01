@@ -1,5 +1,4 @@
 ﻿using BOCCHI.Common.Services;
-
 namespace BOCCHI.Automator.Services;
 
 public class AutomatorMemory : IAutomatorMemory
@@ -8,7 +7,7 @@ public class AutomatorMemory : IAutomatorMemory
 
     public bool TryRemember<T>(out T memory) where T : class
     {
-        if(memories.TryGetValue(typeof(T), out var obj))
+        if (memories.TryGetValue(typeof(T), out object? obj))
         {
             memory = (T)obj;
             return true;
@@ -18,10 +17,7 @@ public class AutomatorMemory : IAutomatorMemory
         return false;
     }
 
-    public bool TryAdd<T>() where T : class, new()
-    {
-        return TryAdd(new T());
-    }
+    public bool TryAdd<T>() where T : class, new() => TryAdd(new T());
 
     public bool TryAdd<T>(T memory) where T : class
     {
@@ -34,10 +30,7 @@ public class AutomatorMemory : IAutomatorMemory
         return true;
     }
 
-    public bool Forget<T>() where T : class
-    {
-        return memories.Remove(typeof(T));
-    }
+    public bool Forget<T>() where T : class => memories.Remove(typeof(T));
 
     public void Wipe()
     {

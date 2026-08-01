@@ -1,29 +1,29 @@
-﻿using BOCCHI.Common.Services;
+﻿using BOCCHI.Common.Config;
+using BOCCHI.Common.Services;
 using BOCCHI.Common.Steps;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Ocelot.Chain;
 
 namespace BOCCHI.Services.Repair;
 
-public class RepairService(IChainFactory chains) : IRepairService
+public class RepairService(IChainFactory chains, CombatConfig config) : IRepairService
 {
     public unsafe bool ShouldRepair()
     {
-        if (!TryGetEquipped(out var equipped))
+        if (!TryGetEquipped(out InventoryContainer* equipped))
         {
             return false;
         }
 
-        for (var i = 0; i < equipped->Size; i++)
+        for(int i = 0; i < equipped->Size; i++)
         {
-            var item = equipped->GetInventorySlot(i);
+            InventoryItem* item = equipped->GetInventorySlot(i);
             if (item is null)
             {
                 continue;
             }
 
-            //config.AutoRepairThreshold
-            if (Convert.ToInt32(Convert.ToDouble(item->Condition) / 30000.0 * 100.0) <= 99)
+            if (Convert.ToInt32(Convert.ToDouble(item->Condition) / 30000.0 * 100.0) <= config.AutoRepairThreshold)
             {
                 return true;
             }
@@ -34,7 +34,7 @@ public class RepairService(IChainFactory chains) : IRepairService
 
     public IChain Repair()
     {
-        var chain = chains.Create("Repairs");
+        IChain chain = chains.Create("Repairs");
 
         chain.Then<UnmountStep>();
         chain.Then<RepairStep>();
@@ -46,7 +46,7 @@ public class RepairService(IChainFactory chains) : IRepairService
     {
         equipped = null;
 
-        var inventory = InventoryManager.Instance();
+        InventoryManager* inventory = InventoryManager.Instance();
         if (inventory == null)
         {
             return false;

@@ -16,7 +16,7 @@ public class SupportJob
     {
         get
         {
-            var state = PublicContentOccultCrescent.GetState();
+            OccultCrescentState* state = PublicContentOccultCrescent.GetState();
             if (state == null || state->SupportJobLevels.Length < Id.Index())
             {
                 return 0;
@@ -30,7 +30,7 @@ public class SupportJob
     {
         get
         {
-            var state = PublicContentOccultCrescent.GetState();
+            OccultCrescentState* state = PublicContentOccultCrescent.GetState();
             if (state == null || state->SupportJobExperience.Length < Id.Index())
             {
                 return 0;
@@ -44,7 +44,7 @@ public class SupportJob
     {
         get
         {
-            var rows = GrowthData.Where(r => r.SubrowId < Level);
+            IEnumerable<MKDGrowDataSJob> rows = GrowthData.Where(r => r.SubrowId < Level);
 
             return (uint)rows.Sum(r => r.Unknown0) + CurrentExperience;
         }
@@ -72,7 +72,7 @@ public class SupportJob
                 SupportJobId.PhantomMysticKnight => 4803,
                 SupportJobId.PhantomGladiator => 4804,
                 SupportJobId.PhantomDancer => 4805,
-                _ => throw new ArgumentOutOfRangeException(),
+                var _ => throw new ArgumentOutOfRangeException()
             };
         }
     }

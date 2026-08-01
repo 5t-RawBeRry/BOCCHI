@@ -4,5 +4,7 @@ public enum ZoneId : ushort
 {
     Unknown = 0,
 
-    SouthHorn = 1252,
+    SouthHorn = 1252
+
+    // NorthHorn = TBD,
 }

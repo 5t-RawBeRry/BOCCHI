@@ -1,0 +1,14 @@
+{
+  "label": "Combat",
+  "tooltip": "Combat assistance settings.",
+  "fields": {
+    "should_handle_targeting": {
+      "label": "Handle targeting",
+      "tooltip": "Let BOCCHI manage combat targeting."
+    },
+    "auto_repair_threshold": {
+      "label": "Auto-repair threshold (%)",
+      "tooltip": "Repair equipped gear when any piece falls to or below this condition."
+    }
+  }
+}

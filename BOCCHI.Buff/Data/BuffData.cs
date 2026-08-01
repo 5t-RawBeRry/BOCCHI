@@ -19,47 +19,47 @@ public readonly struct BuffData
 
     public Action Action { get; init; }
 
-    public readonly static BuffData RomeosBallad = new()
+    public static readonly BuffData RomeosBallad = new()
     {
         StatusId = 4244,
         RequiredLevel = 2,
         SupportJobId = SupportJobId.PhantomBard,
         ShouldApply = config => config.ShouldApplyRomeosBallad(),
         State = BuffState.ApplyingRomeosBallad,
-        Action = Actions.PhantomActionII, // Romeo's Ballad
+        Action = Actions.PhantomActionII // Romeo's Ballad
     };
 
-    public readonly static BuffData Fleetfooted = new()
+    public static readonly BuffData Fleetfooted = new()
     {
         StatusId = 4239,
         RequiredLevel = 3,
         SupportJobId = SupportJobId.PhantomMonk,
         ShouldApply = config => config.ShouldApplyFleetfooted(),
         State = BuffState.ApplyingFleetfooted,
-        Action = Actions.PhantomActionIII, // Counterstance
+        Action = Actions.PhantomActionIII // Counterstance
     };
 
-    public readonly static BuffData EnduringFortitude = new()
+    public static readonly BuffData EnduringFortitude = new()
     {
         StatusId = 4233,
         RequiredLevel = 2,
         SupportJobId = SupportJobId.PhantomKnight,
         ShouldApply = config => config.ShouldApplyEnduringFortitude(),
         State = BuffState.ApplyingEnduringFortitude,
-        Action = Actions.PhantomActionII, // Pray
+        Action = Actions.PhantomActionII // Pray
     };
 
-    public readonly static BuffData QuickerStep = new()
+    public static readonly BuffData QuickerStep = new()
     {
         StatusId = 4799,
         RequiredLevel = 2,
         SupportJobId = SupportJobId.PhantomDancer,
         ShouldApply = config => config.ShouldApplyQuickerStep(),
         State = BuffState.ApplyingQuickerStep,
-        Action = Actions.PhantomActionII, // Quickstep
+        Action = Actions.PhantomActionII // Quickstep
     };
 
-    public readonly static IEnumerable<BuffData> All =
+    public static readonly IEnumerable<BuffData> All =
     [
         RomeosBallad,
         Fleetfooted,

@@ -1,0 +1,34 @@
+{
+  "label": "UI",
+  "tooltip": "Choose which panels appear in the main window.",
+  "fields": {
+    "show_experience_tracker": {
+      "label": "Show experience tracker",
+      "tooltip": "Display the experience tracker panel in the main window."
+    },
+    "show_experience_tracker_graph": {
+      "label": "Show experience tracker graph",
+      "tooltip": "Display the experience graph under the tracker."
+    },
+    "show_currency_tracker": {
+      "label": "Show currency tracker",
+      "tooltip": "Display the currency tracker panel in the main window."
+    },
+    "show_currency_tracker_graph": {
+      "label": "Show currency tracker graph",
+      "tooltip": "Display the currency graph under the tracker."
+    },
+    "show_world_section": {
+      "label": "Show world section",
+      "tooltip": "Display active FATEs and critical encounters in the main window."
+    },
+    "show_automation_section": {
+      "label": "Show automation section",
+      "tooltip": "Display automator and mob farmer controls in the main window."
+    },
+    "show_treasure_section": {
+      "label": "Show treasure section",
+      "tooltip": "Display treasure hunt status and controls in the main window."
+    }
+  }
+}

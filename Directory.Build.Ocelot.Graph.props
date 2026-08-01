@@ -1,0 +1,8 @@
+<Project>
+    <Import Project="$(MSBuildThisFileDirectory)Directory.Build.Ocelot.Core.props"/>
+
+    <ItemGroup>
+        <ProjectReference Include="$(MSBuildThisFileDirectory)Ocelot/Ocelot.ECommons/Ocelot.ECommons.csproj"/>
+        <ProjectReference Include="$(MSBuildThisFileDirectory)Ocelot/Ocelot.Pathfinding/Ocelot.Pathfinding.csproj"/>
+    </ItemGroup>
+</Project>

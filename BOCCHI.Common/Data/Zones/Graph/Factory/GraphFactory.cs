@@ -19,9 +19,9 @@ public class GraphFactory : IGraphFactory
 
     public async Task<ZoneGraph> BuildAsync(GraphConfig config, IZone zone)
     {
-        var graph = new ZoneGraph();
+        ZoneGraph graph = new();
 
-        foreach (var step in steps)
+        foreach(IGraphBuildStep step in steps)
         {
             await step.ExecuteAsync(graph, config, zone);
         }

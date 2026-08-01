@@ -1,5 +1,5 @@
-﻿using System.Numerics;
-using Ocelot.Services.Pathfinding;
+﻿using Ocelot.Services.Pathfinding;
+using System.Numerics;
 
 namespace BOCCHI.Common.Data.Zones.Graph.Traversal;
 

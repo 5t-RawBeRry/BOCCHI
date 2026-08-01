@@ -4,11 +4,11 @@ namespace BOCCHI.Common.Config.Migrations;
 
 public class ConfigurationMigrationResolver : IConfigurationMigrationResolver
 {
-    private Dictionary<int, IMigrator> migratorMap { get; } = [];
+    private readonly Dictionary<int, IMigrator> migratorMap = [];
 
     public ConfigurationMigrationResolver(IEnumerable<IMigrator> migrators)
     {
-        foreach (var migrator in migrators)
+        foreach(IMigrator migrator in migrators)
         {
             if (!migratorMap.TryAdd(migrator.FromVersion, migrator))
             {
@@ -17,15 +17,9 @@ public class ConfigurationMigrationResolver : IConfigurationMigrationResolver
         }
     }
 
-    public IMigrator? Resolve(int from)
-    {
-        return migratorMap.TryGetValue(from, out var migrator) ? migrator : null;
-    }
+    public IMigrator? Resolve(int from) => migratorMap.TryGetValue(from, out IMigrator? migrator) ? migrator : null;
 
-    public IMigrator? Resolve(JObject obj)
-    {
-        return Resolve(obj["Version"]?.Value<int>() ?? 1);
-    }
+    public IMigrator? Resolve(JObject obj) => Resolve(obj["Version"]?.Value<int>() ?? 1);
 
     public bool CanMigrateTo(int from, int to)
     {
@@ -39,17 +33,17 @@ public class ConfigurationMigrationResolver : IConfigurationMigrationResolver
             return false;
         }
 
-        var visited = new HashSet<int>();
-        var current = from;
+        HashSet<int> visited = new();
+        int current = from;
 
-        while (migratorMap.TryGetValue(current, out var migrator))
+        while(migratorMap.TryGetValue(current, out IMigrator? migrator))
         {
             if (!visited.Add(current))
             {
                 return false;
             }
 
-            var next = migrator.ToVersion;
+            int next = migrator.ToVersion;
 
             if (next == to)
             {

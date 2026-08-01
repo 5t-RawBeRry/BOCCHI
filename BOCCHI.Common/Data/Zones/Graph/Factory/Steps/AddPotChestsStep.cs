@@ -1,10 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using FFXIVClientStructs.FFXIV.Client.LayoutEngine;
-using Lumina.Excel.Sheets;
-using Ocelot.Extensions;
-using Ocelot.Services.Data;
-
-namespace BOCCHI.Common.Data.Zones.Graph.Factory.Steps;
+﻿namespace BOCCHI.Common.Data.Zones.Graph.Factory.Steps;
 
 public class AddPotChestsStep : IGraphBuildStep
 {
@@ -16,32 +10,32 @@ public class AddPotChestsStep : IGraphBuildStep
 
     private async Task AddNormalPotChests(ZoneGraph graph, GraphConfig config, IZone zone)
     {
-        var fates = new List<int>();
-        foreach (var (fateId, chestData) in zone.GetPotChestData())
+        List<int> fates = new();
+        foreach((int fateId, List<PotChestData> chestData) in zone.GetPotChestData())
         {
             fates.Add(fateId);
 
-            foreach (var chest in chestData)
+            foreach(PotChestData chest in chestData)
             {
-                graph.AddNode(new Node
+                graph.AddNode(new()
                 {
                     Type = NodeType.PotChest,
                     Position = chest.Position,
-                    Metadata = new PotChestNodeMetaData
+                    Metadata = new PotChestNodeMetadata
                     {
                         FateId = fateId,
-                        Level = chest.Level,
-                    },
+                        Level = chest.Level
+                    }
                 });
             }
         }
 
-        var chests = graph.GetNodesByTypes(NodeType.PotChest).ToList();
-        foreach (var fate in fates)
+        List<Node> chests = graph.GetNodesByTypes(NodeType.PotChest).ToList();
+        foreach(int fate in fates)
         {
-            var relevant = chests.Where(chest =>
+            List<Node> relevant = chests.Where(chest =>
             {
-                if (chest.Metadata is not PotChestNodeMetaData meta)
+                if (chest.Metadata is not PotChestNodeMetadata meta)
                 {
                     return false;
                 }
@@ -57,20 +51,20 @@ public class AddPotChestsStep : IGraphBuildStep
 
     private async Task AddRerollPotChests(ZoneGraph graph, GraphConfig config, IZone zone)
     {
-        foreach (var chest in zone.GetRerollPotChestData())
+        foreach(PotChestData chest in zone.GetRerollPotChestData())
         {
-            graph.AddNode(new Node
+            graph.AddNode(new()
             {
                 Type = NodeType.PostChestReroll,
                 Position = chest.Position,
-                Metadata = new RerollPotChestNodeMetaData
+                Metadata = new RerollPotChestNodeMetadata
                 {
-                    Level = chest.Level,
-                },
+                    Level = chest.Level
+                }
             });
         }
 
-        var nodes = graph.GetNodesByTypes(NodeType.PostChestReroll).ToList();
+        List<Node> nodes = graph.GetNodesByTypes(NodeType.PostChestReroll).ToList();
 
         await graph.ConnectToNearestTeleports(nodes, config);
         await graph.ConnectToNearestAlike(nodes, config, 4);

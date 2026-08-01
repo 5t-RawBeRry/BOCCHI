@@ -1,41 +1,38 @@
-﻿using System.Numerics;
-using Ocelot.Services.Logger;
+﻿using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
+using System.Numerics;
+using Path = Ocelot.Services.Pathfinding.Path;
 
 namespace BOCCHI.Common.Data.Zones.Graph;
 
-public record ActivityData(int Id, Vector3 Position);
-
+public record ActivityData(int Id, Vector3 Position, float? CombatRadius = null);
 public record CarrotData(int Id, Vector3 Position, int Level);
-
 public record TreasureData(int Id, int Level);
-
 public record PotChestData(Vector3 Position, int Level);
 
 public class GraphConfig(IPathfinder pathfinder, ILogger logger)
 {
-
-    public readonly static List<List<Vector3>> Lines = [[]];
-
+#if DEBUG
+    public static readonly List<List<Vector3>> DebugPathLines = [];
+#endif
 
     public float TeleportCost { get; init; } = 10f;
 
     public async Task<float> GetWalkingCost(Vector3 from, Vector3 to)
     {
-        logger.Info($"Calculating walking cost (from = {from:f2},  to = {to:f2})");
-        var result = await pathfinder.Pathfind(new PathfinderConfig(to)
+        logger.Debug($"Calculating walking cost (from = {from:f2}, to = {to:f2})");
+        Path result = await pathfinder.Pathfind(new(to)
         {
             From = from,
-            AllowFlying = false,
+            AllowFlying = false
         });
 
-        Lines.Add(result.Nodes.ToList());
+#if DEBUG
+        DebugPathLines.Add(result.Nodes.ToList());
+#endif
 
         return result.Distance;
     }
 
-    public async Task<float> GetWalkingCost(Node from, Node to)
-    {
-        return await GetWalkingCost(from.Position, to.Position);
-    }
+    public async Task<float> GetWalkingCost(Node from, Node to) => await GetWalkingCost(from.Position, to.Position);
 }

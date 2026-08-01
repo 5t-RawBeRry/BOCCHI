@@ -1,8 +1,5 @@
-﻿using BOCCHI.Automator.ChainRecipes;
-using BOCCHI.Automator.Data.StateMemory;
+using BOCCHI.Automator.ChainRecipes;
 using BOCCHI.Common.Data.Paths;
-using BOCCHI.Common.Data.Zones;
-using BOCCHI.Common.Services;
 using BOCCHI.Common.Services.Paths;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
@@ -15,18 +12,17 @@ using Ocelot.Services.Pathfinding;
 
 namespace BOCCHI.Automator.Services.Paths;
 
-public class PathStepExecutor(
+public class PathStepExecutor
+(
     IChainFactory chains,
     IChainManager manager,
     IObjectTable objects,
-    IAutomatorMemory memory,
-    IZoneProvider zone,
     ICondition conditions
 ) : IPathStepExecutor
 {
     public Task<ChainResult> Execute(IPathStep step)
     {
-        var chain = step.PathStepData switch
+        IChain chain = step.PathStepData switch
         {
             Pathfind(var destination, var range) => chains.Create($"PathStep::Pathfind({destination:f2}, {range:f2})")
                 .Then(_ =>
@@ -41,7 +37,7 @@ public class PathStepExecutor(
                         return StepResult.Failure("Didn't mount");
                     }
 
-                    var distance = player.Position.Distance(destination);
+                    float distance = player.Position.Distance(destination);
                     if (distance > 50f)
                     {
                         Actions.MountRoulette.Cast();
@@ -49,20 +45,19 @@ public class PathStepExecutor(
 
                     return StepResult.Success();
                 }, "PathStep::MaybeMount")
-                .Then<PathfindToChain, PathfinderConfig>(new PathfinderConfig(destination)
+                .Then<PathfindToChain, PathfinderConfig>(new(destination)
                 {
-                    DistanceThreshold = range,
+                    DistanceThreshold = range > 0f ? range : 2f,
+                    ShouldSnapToFloor = true
                 }),
 
             Teleport(var id) => chains.Create($"PathStep::Teleport({id})")
                 .Then<TeleportToAethernetChain, uint>(id),
 
 
-            Return _ => chains.Create($"PathStep::Return")
-                .Then(_ => memory.TryAdd<ReturningStateMemory>(), "Remember to return")
-                .WaitUntil(_ => new ValueTask<bool>(zone.GetZone().IsInBasecamp()), TimeSpan.FromSeconds(60)),
+            Return _ => throw new InvalidOperationException("Return path steps are handled by PathfindingHandler."),
 
-            _ => throw new ArgumentOutOfRangeException(),
+            var _ => throw new ArgumentOutOfRangeException()
         };
 
         return manager.Manage(chain);

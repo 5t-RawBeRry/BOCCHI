@@ -15,7 +15,7 @@ public class ConfigMigrator(IDalamudPluginInterface plugin, IPluginLog logger)
             return false;
         }
 
-        var version = config["Version"]?.Value<int>() ?? 1;
+        int version = config["Version"]?.Value<int>() ?? 1;
 
         return version < Configuration.CurrentVersion;
     }
@@ -29,11 +29,12 @@ public class ConfigMigrator(IDalamudPluginInterface plugin, IPluginLog logger)
             return;
         }
 
-        var resolver = new ConfigurationMigrationResolver([
+        ConfigurationMigrationResolver resolver = new([
             new ConfigMigratorV1ToV2(),
+            new ConfigMigratorV2ToV3()
         ]);
 
-        var version = config["Version"]?.Value<int>() ?? 1;
+        int version = config["Version"]?.Value<int>() ?? 1;
         if (!resolver.CanMigrateTo(version, Configuration.CurrentVersion))
         {
             logger.Warning("Could not migrate configuration from {0} to {1}. Backing up to {2}", version, Configuration.CurrentVersion, GetConfigFileBackupPath(version));
@@ -41,7 +42,7 @@ public class ConfigMigrator(IDalamudPluginInterface plugin, IPluginLog logger)
             return;
         }
 
-        var latest = Migrate(config, version, resolver);
+        JObject? latest = Migrate(config, version, resolver);
         if (latest == null)
         {
             logger.Warning("Could not migrate configuration from {0} to {1}. Backing up to {2}", version, Configuration.CurrentVersion, GetConfigFileBackupPath(version));
@@ -49,7 +50,7 @@ public class ConfigMigrator(IDalamudPluginInterface plugin, IPluginLog logger)
             return;
         }
 
-        var output = latest.ToObject<Configuration>();
+        Configuration? output = latest.ToObject<Configuration>();
         if (output == null)
         {
             logger.Warning("Could not migrate configuration from {0} to {1}. Backing up to {2}", version, Configuration.CurrentVersion, GetConfigFileBackupPath(version));
@@ -59,12 +60,12 @@ public class ConfigMigrator(IDalamudPluginInterface plugin, IPluginLog logger)
 
         logger.Info("Successfully migrated config from {0} to {1}.", version, Configuration.CurrentVersion);
         BackupConfig(version);
-        var serialized = JsonConvert.SerializeObject(
+        string serialized = JsonConvert.SerializeObject(
             output,
             Formatting.Indented
         );
 
-        var path = GetConfigFilePath();
+        string path = GetConfigFilePath();
         File.WriteAllText(path, serialized);
     }
 
@@ -72,7 +73,7 @@ public class ConfigMigrator(IDalamudPluginInterface plugin, IPluginLog logger)
     {
         do
         {
-            var migrator = resolver.Resolve(version);
+            IMigrator? migrator = resolver.Resolve(version);
             if (migrator == null)
             {
                 return null;
@@ -80,25 +81,26 @@ public class ConfigMigrator(IDalamudPluginInterface plugin, IPluginLog logger)
 
             config = migrator.Migrate(config);
             version = config["Version"]?.Value<int>() ?? 1;
-        } while (version < Configuration.CurrentVersion);
+        }
+        while(version < Configuration.CurrentVersion);
 
         return config;
     }
 
-     private void BackupConfig(int version)
+    private void BackupConfig(int version)
     {
-        var path = GetConfigFilePath();
+        string path = GetConfigFilePath();
         if (!File.Exists(path))
         {
             logger.Warning("Tried backing up config of version {0} but could to read config from path {1}.", version, path);
             return;
         }
 
-        var backupPath = GetConfigFileBackupPath(version);
+        string backupPath = GetConfigFileBackupPath(version);
 
         try
         {
-            var dir = Path.GetDirectoryName(backupPath);
+            string? dir = Path.GetDirectoryName(backupPath);
             if (!string.IsNullOrEmpty(dir))
             {
                 Directory.CreateDirectory(dir);
@@ -113,7 +115,7 @@ public class ConfigMigrator(IDalamudPluginInterface plugin, IPluginLog logger)
             File.Copy(path, backupPath);
             logger.Info("Backed up config file to {Path}", backupPath);
         }
-        catch (Exception ex)
+        catch(Exception ex)
         {
             logger.Error(ex, "Failed to back up config file");
         }
@@ -121,37 +123,37 @@ public class ConfigMigrator(IDalamudPluginInterface plugin, IPluginLog logger)
 
     private string GetConfigFilePath()
     {
-        var fileName = $"{plugin.InternalName}.json";
-        var pluginDir = plugin.GetPluginConfigDirectory();
-        var pluginConfigsDir = Directory.GetParent(pluginDir)!.FullName;
+        string fileName = $"{plugin.InternalName}.json";
+        string pluginDir = plugin.GetPluginConfigDirectory();
+        string pluginConfigsDir = Directory.GetParent(pluginDir)!.FullName;
 
         return Path.Combine(pluginConfigsDir, fileName);
     }
 
     private string GetConfigFileBackupPath(int version)
     {
-        var fileName = $"{plugin.InternalName}.{version}.json";
-        var pluginDir = plugin.GetPluginConfigDirectory();
-        var pluginConfigsDir = Directory.GetParent(pluginDir)!.FullName;
+        string fileName = $"{plugin.InternalName}.{version}.json";
+        string pluginDir = plugin.GetPluginConfigDirectory();
+        string pluginConfigsDir = Directory.GetParent(pluginDir)!.FullName;
 
         return Path.Combine(pluginConfigsDir, fileName);
     }
 
     private JObject? GetCurrentConfigJObject()
     {
-        var filePath = GetConfigFilePath();
+        string filePath = GetConfigFilePath();
 
         if (!File.Exists(filePath))
         {
             return null;
         }
 
-        var raw = File.ReadAllText(filePath);
+        string raw = File.ReadAllText(filePath);
         try
         {
             return JObject.Parse(raw);
         }
-        catch (JsonReaderException e)
+        catch(JsonReaderException e)
         {
             logger.Error(e, "An error occured when trying to parse the config file: {0}", filePath);
             return null;

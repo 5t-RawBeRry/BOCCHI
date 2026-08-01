@@ -1,5 +1,5 @@
-﻿using BOCCHI.Automator.Data;
-using BOCCHI.Automator.Data.StateMemory;
+using BOCCHI.Automator.Data;
+using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
@@ -15,7 +15,8 @@ using Ocelot.States.Score;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
-public class WaitingForCriticalEncounterHandler(
+public class WaitingForCriticalEncounterHandler
+(
     IAutomatorMemory memory,
     IObjectTable objects,
     ICondition conditions,
@@ -31,22 +32,22 @@ public class WaitingForCriticalEncounterHandler(
             return StatePriority.Never;
         }
 
-        // See if we have a goal in memeory and that goal is a CE
-        if (!memory.TryRemember<GoalMemory>(out var goal) || goal.Goal.GoalType is not CriticalEncounterGoal ceGoal)
+        // See if we have a goal in memory and that goal is a CE
+        if (!memory.TryRemember<GoalMemory>(out GoalMemory goal) || goal.Goal.GoalType is not CriticalEncounterGoal ceGoal)
         {
             return StatePriority.Never;
         }
 
         // See if that ce goal memory is an active CE that is currently preparing to launch
-        var ce = repo.SnapshotWithoutForkedTower().FirstOrDefault(ce => ce.Id == ceGoal.id);
+        CriticalEncounter? ce = repo.SnapshotWithoutForkedTower().FirstOrDefault(ce => ce.Id == ceGoal.id);
         if (ce == null || !ce.IsPreparing())
         {
             return StatePriority.Never;
         }
 
-        var radius = ce.Radius;
-        var distance = player.Position.Distance2D(ce.Position);
-        var percent = distance / radius;
+        float radius = ce.Radius;
+        float distance = player.Position.Distance2D(ce.Position);
+        float percent = distance / radius;
 
         if (percent >= 1.5f)
         {
@@ -82,26 +83,26 @@ public class WaitingForCriticalEncounterHandler(
             return;
         }
 
-        if (!memory.TryRemember<GoalMemory>(out var goal) || goal.Goal.GoalType is not CriticalEncounterGoal ceGoal)
+        if (!memory.TryRemember<GoalMemory>(out GoalMemory goal) || goal.Goal.GoalType is not CriticalEncounterGoal ceGoal)
         {
             return;
         }
 
-        var ce = repo.SnapshotWithoutForkedTower().FirstOrDefault(ce => ce.Id == ceGoal.id);
+        CriticalEncounter? ce = repo.SnapshotWithoutForkedTower().FirstOrDefault(ce => ce.Id == ceGoal.id);
         if (ce == null || !ce.IsPreparing())
         {
             return;
         }
 
-        var radius = ce.Radius;
-        var distance = player.Position.Distance2D(ce.Position);
-        var percent = distance / radius;
+        float radius = ce.Radius;
+        float distance = player.Position.Distance2D(ce.Position);
+        float percent = distance / radius;
 
         if (percent >= 1.0f)
         {
             if (pathfinder.IsIdle())
             {
-                pathfinder.PathfindAndMoveTo(new PathfinderConfig(ce.Position.GetApproachPosition(player.Position, ce.Radius * 0.8f, 30f)));
+                pathfinder.PathfindAndMoveTo(new(ce.Position.GetApproachPosition(player.Position, ce.Radius * 0.8f, 30f)));
             }
 
             return;
@@ -115,6 +116,5 @@ public class WaitingForCriticalEncounterHandler(
                 pathfinder.Stop();
             }
         }
-
     }
 }

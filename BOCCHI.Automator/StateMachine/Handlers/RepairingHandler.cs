@@ -32,7 +32,6 @@ public class RepairingHandler(IZoneProvider zones, IRepairService repair) : Scor
         base.Exit(next);
         if (task is { IsCompleted: true })
         {
-            task.Dispose();
             task = null;
         }
     }

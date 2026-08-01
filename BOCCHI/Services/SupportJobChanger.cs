@@ -9,13 +9,22 @@ using Ocelot.Lifecycle;
 
 namespace BOCCHI.Services;
 
-public class SupportJobChanger(
+public class SupportJobChanger
+(
     IChainManager chainManager,
     ISupportJobFactory supportJobs,
     IObjectTable objects
 ) : ISupportJobChanger, IOnUpdate
 {
     private Task<ChainResult>? task;
+
+    public void Update()
+    {
+        if (task?.IsCompleted == true)
+        {
+            task = null;
+        }
+    }
 
     public void Change(SupportJobId id)
     {
@@ -29,15 +38,14 @@ public class SupportJobChanger(
             return;
         }
 
-        var job = supportJobs.Create(id);
+        SupportJob job = supportJobs.Create(id);
 
         task = chainManager.ExecuteAsync(chains =>
         {
             return chains.Create("SupportJobChanger")
                 .IfThen(
-                    // If we can't get our current job, or we are already that job
-                    _ => !supportJobs.TryGetCurrent(out SupportJob current) || current.Id == id,
-                    // Break from this chain
+                    // Already on the requested job.
+                    _ => supportJobs.TryGetCurrent(out SupportJob current) && current.Id == id,
                     _ => ValueTask.FromResult(StepResult.Break()),
                     "SupportJobChanger::CheckCurrentJob"
                 )
@@ -47,22 +55,9 @@ public class SupportJobChanger(
                     TimeSpan.FromSeconds(5),
                     TimeSpan.FromMilliseconds(250),
                     "SupportJobChanger::WaitForChange"
-
                 );
         });
     }
 
-    public bool IsBusy()
-    {
-        return task is { IsCompleted: false };
-    }
-
-    public void Update()
-    {
-        if (task?.IsCompleted == true)
-        {
-            task.Dispose();
-            task = null;
-        }
-    }
+    public bool IsBusy() => task is { IsCompleted: false };
 }

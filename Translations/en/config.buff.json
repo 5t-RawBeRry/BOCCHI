@@ -1,0 +1,38 @@
+{
+  "label": "Buffs",
+  "tooltip": "Automatic support job buff upkeep.",
+  "fields": {
+    "should_automate_buffs": {
+      "label": "Automate buffs",
+      "tooltip": "Automatically maintain selected support buffs."
+    },
+    "apply_romeos_ballad": {
+      "label": "Apply Romeo's Ballad",
+      "tooltip": "Keep Romeo's Ballad applied when automating buffs."
+    },
+    "apply_enduring_fortitude": {
+      "label": "Apply Enduring Fortitude",
+      "tooltip": "Keep Enduring Fortitude applied when automating buffs."
+    },
+    "apply_fleetfooted": {
+      "label": "Apply Fleetfooted",
+      "tooltip": "Keep Fleetfooted applied when automating buffs."
+    },
+    "apply_quicker_step": {
+      "label": "Apply Quicker Step",
+      "tooltip": "Keep Quicker Step applied when automating buffs."
+    },
+    "apply_buffs_using_inquiring_mind": {
+      "label": "Apply buffs using Inquiring Mind",
+      "tooltip": "Use Inquiring Mind to apply buffs when available."
+    },
+    "reapply_threshold": {
+      "label": "Reapply threshold (seconds)",
+      "tooltip": "Reapply a buff when this many seconds remain."
+    },
+    "knowledge_crystal_distance": {
+      "label": "Knowledge crystal distance",
+      "tooltip": "Maximum distance to a knowledge crystal before walking to it for buffs."
+    }
+  }
+}

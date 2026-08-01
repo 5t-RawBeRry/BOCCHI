@@ -1,5 +1,4 @@
 ﻿using BOCCHI.Common.Data.CriticalEncounters;
-
 namespace BOCCHI.Common.Services;
 
 public interface ICriticalEncounterRepository

@@ -1,0 +1,6 @@
+<Project>
+    <ItemGroup>
+        <ProjectReference Include="$(MSBuildThisFileDirectory)Ocelot/Ocelot/Ocelot.csproj"/>
+        <ProjectReference Include="$(MSBuildThisFileDirectory)Ocelot/Ocelot.UI/Ocelot.UI.csproj"/>
+    </ItemGroup>
+</Project>

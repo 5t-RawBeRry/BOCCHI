@@ -1,42 +1,40 @@
-﻿using Ocelot.Extensions;
-
-namespace BOCCHI.Common.Data.Zones.Graph.Factory.Steps;
+﻿namespace BOCCHI.Common.Data.Zones.Graph.Factory.Steps;
 
 public class AddActivitiesStep : IGraphBuildStep
 {
     public async Task ExecuteAsync(ZoneGraph graph, GraphConfig config, IZone zone)
     {
-        foreach (var fate in zone.GetNormalFateData())
+        foreach(ActivityData fate in zone.GetNormalFateData())
         {
-            graph.AddNode(new Node
+            graph.AddNode(new()
             {
                 Type = NodeType.NormalFate,
                 Position = fate.Position,
-                Metadata = new ActivityNodeMetadata { Id = fate.Id, },
+                Metadata = new ActivityNodeMetadata { Id = fate.Id }
             });
         }
 
-        foreach (var fate in zone.GetPotFateData())
+        foreach(ActivityData fate in zone.GetPotFateData())
         {
-            graph.AddNode(new Node
+            graph.AddNode(new()
             {
                 Type = NodeType.PotFate,
                 Position = fate.Position,
-                Metadata = new ActivityNodeMetadata { Id = fate.Id, },
+                Metadata = new ActivityNodeMetadata { Id = fate.Id }
             });
         }
 
-        foreach (var criticalEncounter in zone.GetCriticalEncounterData())
+        foreach(ActivityData criticalEncounter in zone.GetCriticalEncounterData())
         {
-            graph.AddNode(new Node
+            graph.AddNode(new()
             {
                 Type = NodeType.CriticalEncounter,
                 Position = criticalEncounter.Position,
-                Metadata = new ActivityNodeMetadata { Id = criticalEncounter.Id, },
+                Metadata = new ActivityNodeMetadata { Id = criticalEncounter.Id }
             });
         }
 
-        var activities = graph.GetActivityNodes().ToList();
+        List<Node> activities = graph.GetActivityNodes().ToList();
 
         await graph.ConnectToNearestTeleports(activities, config);
         await graph.ConnectToBaseCamp(activities, config);

@@ -17,21 +17,15 @@ public enum SupportJobId
     PhantomThief = 12,
     PhantomMysticKnight = 13,
     PhantomGladiator = 14,
-    PhantomDancer = 15,
+    PhantomDancer = 15
 }
 
 public static class SupportJobExtensions
 {
     extension(SupportJobId jobId)
     {
-        public int Index()
-        {
-            return (int)jobId;
-        }
+        public int Index() => (int)jobId;
 
-        public uint RowId()
-        {
-            return (uint)jobId;
-        }
+        public uint RowId() => (uint)jobId;
     }
 }

@@ -15,7 +15,7 @@ public class Vector3Converter : JsonConverter<Vector3>
             throw new JsonException();
         }
 
-        while (reader.Read())
+        while(reader.Read())
         {
             if (reader.TokenType == JsonTokenType.EndObject)
             {
@@ -27,7 +27,7 @@ public class Vector3Converter : JsonConverter<Vector3>
                 throw new JsonException();
             }
 
-            var propName = reader.GetString();
+            string? propName = reader.GetString();
             reader.Read();
 
             switch (propName)
@@ -38,7 +38,7 @@ public class Vector3Converter : JsonConverter<Vector3>
             }
         }
 
-        return new Vector3(x, y, z);
+        return new(x, y, z);
     }
 
     public override void Write(Utf8JsonWriter writer, Vector3 value, JsonSerializerOptions options)

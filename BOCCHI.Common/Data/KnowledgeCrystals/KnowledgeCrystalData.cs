@@ -1,5 +1,4 @@
 ﻿using System.Numerics;
-
 namespace BOCCHI.Common.Data.KnowledgeCrystals;
 
 public class KnowledgeCrystalData

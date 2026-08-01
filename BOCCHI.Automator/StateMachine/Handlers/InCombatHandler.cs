@@ -9,7 +9,8 @@ using Ocelot.States.Score;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
-public class InCombatHandler(
+public class InCombatHandler
+(
     IObjectTable objects,
     ICondition conditions,
     IFateContext fateContext,
@@ -43,7 +44,7 @@ public class InCombatHandler(
 
         if (conditions[ConditionFlag.Mounted])
         {
-            if (EzThrottler.Throttle("InFate::Unmount") && Actions.Unmount.CanCast())
+            if (EzThrottler.Throttle("InCombat::Unmount") && Actions.Unmount.CanCast())
             {
                 Actions.Unmount.Cast();
                 pathfinder.Stop();

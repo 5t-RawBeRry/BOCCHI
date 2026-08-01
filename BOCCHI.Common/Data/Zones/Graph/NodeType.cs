@@ -3,7 +3,7 @@
 public enum NodeType
 {
     // Teleports
-    BaseCampeReturnPosition, // Where you end up when you cast return
+    BaseCampReturnPosition, // Where you end up when you cast return
     BaseCampAetheryte, // The main zone aetheryte
     AethernetShard, // Other shards around the zone
 
@@ -19,5 +19,5 @@ public enum NodeType
     PotChest,
     _PotChestB, // unused (left for type id)
     PostChestReroll, // Getting a reroll on any pot chest from any pool (including this one) will roll in this pool
-    Carrot,
+    Carrot
 }

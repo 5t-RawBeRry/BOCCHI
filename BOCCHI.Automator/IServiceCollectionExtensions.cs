@@ -1,9 +1,10 @@
-﻿using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Data.Goals;
 using BOCCHI.Automator.Services;
 using BOCCHI.Automator.Services.Goals;
 using BOCCHI.Automator.Services.Paths;
 using BOCCHI.Common;
+using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.Services.Paths;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +20,7 @@ public static class IServiceCollectionExtensions
         Registry.RegisterAssemblies(typeof(AutomatorState).Assembly);
 
         services.AddSingleton<IAutomator, Services.Automator>();
+        services.AddSingleton<Func<IAutomator>>(sp => () => sp.GetRequiredService<IAutomator>());
         services.AddSingleton<IAutomatorContext, AutomatorContext>();
         services.AddSingleton<IDynamicRenderer, AutomatorRenderer>();
 
@@ -31,5 +33,6 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<IAutomatorMemory, AutomatorMemory>();
 
         services.AddScoreStateMachine<AutomatorState, StatePriority>(AutomatorState.Entry);
+        services.AddSingleton<Func<IStateMachine<AutomatorState>>>(sp => () => sp.GetRequiredService<IStateMachine<AutomatorState>>());
     }
 }

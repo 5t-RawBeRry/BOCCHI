@@ -1,18 +1,17 @@
 ﻿using BOCCHI.Buff.Data;
 using BOCCHI.Buff.Services;
 using BOCCHI.Common.Data.SupportJobs;
+using BOCCHI.Common.Extensions;
 using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using Ocelot.Actions;
-using Ocelot.Extensions;
-using Ocelot.Services.PlayerState;
 using Ocelot.States.Flow;
 
 namespace BOCCHI.Buff.StateMachine.Handlers.ApplyingBuff;
 
-public abstract class BaseHandler(
+public abstract class BaseHandler
+(
     BuffState state,
     IBuffProvider buffs,
     IObjectTable objects,
@@ -33,9 +32,13 @@ public abstract class BaseHandler(
 
     public override BuffState? Handle()
     {
-        var buff = GetBuffData();
-        var remaining = GetMinutesRemainingForBuff(buff);
-        if (remaining >= 29)
+        if (objects.LocalPlayer is not { } player)
+        {
+            return null;
+        }
+
+        BuffData buff = GetBuffData();
+        if (player.GetRemainingMinutes(buff.StatusId) >= 29)
         {
             return BuffState.ChoosingBuffToApply;
         }
@@ -60,7 +63,7 @@ public abstract class BaseHandler(
             return null;
         }
 
-        var time = DateTime.UtcNow - lastCast;
+        TimeSpan time = DateTime.UtcNow - lastCast;
         if (buff.Action.CanCast() && time.TotalSeconds >= 3)
         {
             lastCast = DateTime.UtcNow;
@@ -70,28 +73,7 @@ public abstract class BaseHandler(
         return null;
     }
 
-    private BuffData GetBuffData()
-    {
-        return buffs.GetBuffForState(state);
-    }
+    private BuffData GetBuffData() => buffs.GetBuffForState(state);
 
-    private uint GetMinutesRemainingForBuff(BuffData buff)
-    {
-        if (objects.LocalPlayer is not { } player)
-        {
-            return 0;
-        }
-
-        if (!player.StatusList.TryGet(buff.StatusId, out var status))
-        {
-            return 0;
-        }
-
-        return (uint)TimeSpan.FromSeconds(status.RemainingTime).TotalMinutes;
-    }
-
-    private  bool IsCorrectJob()
-    {
-        return supportJobs.TryGetCurrent(out var supportJob) && supportJob.Id == GetBuffData().SupportJobId;
-    }
+    private bool IsCorrectJob() => supportJobs.TryGetCurrent(out SupportJob supportJob) && supportJob.Id == GetBuffData().SupportJobId;
 }

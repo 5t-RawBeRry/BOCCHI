@@ -4,21 +4,29 @@
     "net10.0-windows7.0": {
       "ECommons": {
         "type": "Transitive",
-        "resolved": "3.1.0.10",
-        "contentHash": "afgAdXz9ykESACvgssr9PXsPb8i7ZwSyqw58IGzgURUxkH8Hm1qIxwzybLDE5Eo8BXr4nESGqcRqEpbviH4/3g=="
+        "resolved": "3.2.1.16",
+        "contentHash": "Ifq1cHrBXL9h+94hWhocehklrl3DamafhYTfxgwzOGc6yc/3AkDvwLjYQG2EHEv1Rrgrf5FkdxlnJzcVfiBesQ=="
+      },
+      "KamiToolKit": {
+        "type": "Transitive",
+        "resolved": "1.1.2",
+        "contentHash": "pyydp+XFd+E00uEXXd44GGNCCH2uAK1ndwjLVHKVrHg059g65ry+92a5UdDISWZRJMhK+LcDpDUPSijnFavCvQ==",
+        "dependencies": {
+          "SixLabors.ImageSharp": "3.1.12"
+        }
       },
       "Microsoft.Extensions.DependencyInjection": {
         "type": "Transitive",
-        "resolved": "10.0.1",
-        "contentHash": "zerXV0GAR9LCSXoSIApbWn+Dq1/T+6vbXMHGduq1LoVQRHT0BXsGQEau0jeLUBUcsoF/NaUT8ADPu8b+eNcIyg==",
+        "resolved": "10.0.7",
+        "contentHash": "91F/o3emPV/+xY/ip3s2LqDNF14kjttlVtq0BXgg6p4MnCzeSZxnUJm+t6WRrtD3JdGo88/oX+z7OwK4y8PZuw==",
         "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.1"
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.7"
         }
       },
       "Microsoft.Extensions.DependencyInjection.Abstractions": {
         "type": "Transitive",
-        "resolved": "10.0.1",
-        "contentHash": "oIy8fQxxbUsSrrOvgBqlVgOeCtDmrcynnTG+FQufcUWBrwyPfwlUkCDB2vaiBeYPyT+20u9/HeuHeBf+H4F/8g=="
+        "resolved": "10.0.7",
+        "contentHash": "Z6mfFEaFcwCfSboxJwOLfu7/31npCY9q70WUamHW/vRQhDvBKOT4Vf9YkZj5J6hLvJpb0oDEYfHunQZj0xxvKw=="
       },
       "Microsoft.NETCore.Platforms": {
         "type": "Transitive",
@@ -35,9 +43,10 @@
       },
       "Pictomancy": {
         "type": "Transitive",
-        "resolved": "0.0.2",
-        "contentHash": "th7LcwtMgGWbhfZu7cyKYQKIOpRHzC/O9YvbWy5FSEs0zs1rgC/jgFg1MuX6F4XireR3XJgmg+RcHY+TCKBpsw==",
+        "resolved": "1.0.10",
+        "contentHash": "xHRbKtdyT15T58oZH4QSHdsnjlRMc3Vi4DbrnnIWeeZfDX3yyBu0CiVYUR37ALIGcOd1sl0bpX/9GpLl+PEMTg==",
         "dependencies": {
+          "KamiToolKit": "1.1.2",
           "SharpDX.D3DCompiler": "4.2.0",
           "SharpDX.Direct2D1": "4.2.0",
           "SharpDX.Direct3D11": "4.2.0",
@@ -99,16 +108,21 @@
           "SharpDX": "4.2.0"
         }
       },
+      "SixLabors.ImageSharp": {
+        "type": "Transitive",
+        "resolved": "3.1.12",
+        "contentHash": "iAg6zifihXEFS/t7fiHhZBGAdCp3FavsF4i2ZIDp0JfeYeDVzvmlbY1CNhhIKimaIzrzSi5M/NBFcWvZT2rB/A=="
+      },
       "FFXIVOcelot": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.Extensions.DependencyInjection": "[10.0.1, )"
+          "ECommons": "[3.2.1.16, )",
+          "Microsoft.Extensions.DependencyInjection": "[10.0.7, )"
         }
       },
       "FFXIVOcelot.Chain": {
         "type": "Project",
         "dependencies": {
-          "ECommons": "[3.0.1.14, )",
           "FFXIVOcelot": "[1.0.0, )",
           "FFXIVOcelot.Pathfinding": "[1.0.0, )"
         }
@@ -116,7 +130,7 @@
       "FFXIVOcelot.ECommons": {
         "type": "Project",
         "dependencies": {
-          "ECommons": "[3.1.0.10, )",
+          "ECommons": "[3.2.1.16, )",
           "FFXIVOcelot": "[1.0.0, )"
         }
       },
@@ -130,7 +144,7 @@
         "type": "Project",
         "dependencies": {
           "FFXIVOcelot": "[1.0.0, )",
-          "Pictomancy": "[0.0.2, )"
+          "Pictomancy": "[1.0.10, )"
         }
       },
       "FFXIVOcelot.UI": {

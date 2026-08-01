@@ -1,22 +1,16 @@
-﻿using BOCCHI.Automator.Data;
-using BOCCHI.Automator.Data.Goals;
-using BOCCHI.Automator.Data.StateMemory;
-using BOCCHI.Automator.Services;
+using BOCCHI.Automator.Data;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
-using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
-using ECommons.Throttlers;
-using Ocelot.Actions;
-using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
 using Ocelot.States.Score;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
-public class InFateHandler(
+public class InFateHandler
+(
     IAutomatorMemory memory,
     IFateContext context,
     IObjectTable objects,
@@ -28,7 +22,7 @@ public class InFateHandler(
 {
     public override StatePriority GetScore()
     {
-        if (!memory.TryRemember<GoalMemory>(out var goal) || goal.Goal.GoalType is not FateGoal fateGoal)
+        if (!memory.TryRemember<GoalMemory>(out GoalMemory goal) || goal.Goal.GoalType is not FateGoal fateGoal)
         {
             return StatePriority.Never;
         }
@@ -43,31 +37,15 @@ public class InFateHandler(
             return;
         }
 
-        var targets = context.GetTargets().ToList();
-        if (targets.Count == 0)
-        {
-            return;
-        }
-
-        var target = targets.First();
-        if (combat.ShouldHandleTargeting && EzThrottler.Throttle("InFate::Target") && targetManager.Target?.GameObjectId != target.GameObjectId)
-        {
-            targetManager.Target = target;
-        }
-
-        var distance = player.Position.Distance2D(target.Position) - target.HitboxRadius;
-        if (distance <= 5f && conditions[ConditionFlag.Mounted])
-        {
-            if (EzThrottler.Throttle("InFate::Unmount") && Actions.Unmount.CanCast())
-            {
-                Actions.Unmount.Cast();
-                pathfinder.Stop();
-            }
-        }
-
-        if (conditions[ConditionFlag.InCombat])
-        {
-            pathfinder.Stop();
-        }
+        CombatActivityHandler.HandleTargets(
+            player,
+            context.GetTargets().ToList(),
+            combat,
+            targetManager,
+            conditions,
+            pathfinder,
+            "InFate",
+            true
+        );
     }
 }

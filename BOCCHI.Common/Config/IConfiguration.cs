@@ -1,12 +1,9 @@
 ﻿using Dalamud.Configuration;
-
 namespace BOCCHI.Common.Config;
 
 public interface IConfiguration : IPluginConfiguration
 {
-    ExperienceConfig ExperienceConfig { get; set; }
-
-    CurrencyConfig CurrencyConfig { get; set; }
+    TrackerConfig TrackerConfig { get; set; }
 
     UIConfig UIConfig { get; set; }
 
@@ -15,4 +12,10 @@ public interface IConfiguration : IPluginConfiguration
     BuffConfig BuffConfig { get; set; }
 
     CombatConfig CombatConfig { get; set; }
+
+    MobFarmerConfig MobFarmerConfig { get; set; }
+
+    FatesConfig FatesConfig { get; set; }
+
+    TreasureConfig TreasureConfig { get; set; }
 }

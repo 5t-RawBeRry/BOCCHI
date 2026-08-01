@@ -1,34 +1,32 @@
-﻿using System.Numerics;
+﻿using Ocelot.Extensions;
+using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Ocelot.Extensions;
 
 namespace BOCCHI.Common.Data.Zones.Graph;
 
 public class ZoneGraph
 {
-    public readonly record struct EdgeSet(List<Edge> Inbound, List<Edge> Outbound);
+    private Dictionary<int, Guid> CriticalEncounterNodes = new();
+
+    private Dictionary<Guid, EdgeSet> EdgeSets = new();
+
+    private Dictionary<int, Guid> FateNodes = new();
 
     [JsonInclude] public Dictionary<Guid, Node> Nodes { get; private set; } = new();
 
     [JsonInclude] public Dictionary<Guid, List<Edge>> Edges { get; private set; } = new();
 
-    private Dictionary<int, Guid> CriticalEncounterNodes = new();
-
-    private Dictionary<int, Guid> FateNodes = new();
-
-    private Dictionary<Guid, EdgeSet> EdgeSets = new();
-
     public string ToJson()
     {
-        var options = new JsonSerializerOptions
+        JsonSerializerOptions options = new()
         {
             WriteIndented = true,
             Converters =
             {
                 new NodeMetadataConverter(),
-                new Vector3Converter(),
-            },
+                new Vector3Converter()
+            }
         };
 
         return JsonSerializer.Serialize(this, options);
@@ -36,13 +34,13 @@ public class ZoneGraph
 
     public static ZoneGraph FromJson(string json)
     {
-        var options = new JsonSerializerOptions
+        JsonSerializerOptions options = new()
         {
             Converters =
             {
                 new Vector3Converter(),
-                new NodeMetadataConverter(),
-            },
+                new NodeMetadataConverter()
+            }
         };
 
         return JsonSerializer.Deserialize<ZoneGraph>(json, options)!;
@@ -50,7 +48,7 @@ public class ZoneGraph
 
     public void Cache()
     {
-        foreach (var (key, node) in Nodes)
+        foreach((Guid key, Node node) in Nodes)
         {
             if (node is { Type: NodeType.CriticalEncounter, Metadata: ActivityNodeMetadata cMeta })
             {
@@ -68,13 +66,13 @@ public class ZoneGraph
 
     private EdgeSet GetEdgeSetForNode(Node node)
     {
-        var inbound = Edges.Values
+        List<Edge> inbound = Edges.Values
             .SelectMany(edgeSet => edgeSet)
             .Where(edge => edge.To == node.Id).ToList();
 
-        var outbound = Edges.TryGetValue(node.Id, out var list) ? list : [];
+        List<Edge> outbound = Edges.TryGetValue(node.Id, out List<Edge>? list) ? list : [];
 
-        return new EdgeSet(inbound, outbound);
+        return new(inbound, outbound);
     }
 
     public void AddNode(Node node)
@@ -93,12 +91,12 @@ public class ZoneGraph
             throw new InvalidOperationException("Both nodes must exist before adding an edge.");
         }
 
-        Edges[from].Add(new Edge
+        Edges[from].Add(new()
         {
             Type = type,
             From = from,
             To = to,
-            Cost = cost,
+            Cost = cost
         });
     }
 
@@ -114,34 +112,19 @@ public class ZoneGraph
         AddEdge(b, a, costBA, type);
     }
 
-    public IEnumerable<Edge> GetEdges(Guid nodeId)
-    {
-        return Edges.TryGetValue(nodeId, out var list) ? list : [];
-    }
+    public IEnumerable<Edge> GetEdges(Guid nodeId) => Edges.TryGetValue(nodeId, out List<Edge>? list) ? list : [];
 
-    public EdgeSet GetEdgeSet(Guid nodeId)
-    {
-        return EdgeSets.TryGetValue(nodeId, out var set) ? set : new EdgeSet([], []);
-    }
+    public EdgeSet GetEdgeSet(Guid nodeId) => EdgeSets.TryGetValue(nodeId, out EdgeSet set) ? set : new([], []);
 
-    public Node GetCriticalEncounterNode(int id)
-    {
-        return Nodes[CriticalEncounterNodes[id]];
-    }
+    public Node GetCriticalEncounterNode(int id) => Nodes[CriticalEncounterNodes[id]];
 
-    public Node GetFateNode(int id)
-    {
-        return Nodes[FateNodes[id]];
-    }
+    public Node GetFateNode(int id) => Nodes[FateNodes[id]];
 
-    public IEnumerable<Node> GetNodes(Func<Node, bool> predicate)
-    {
-        return Nodes.Values.Where(predicate);
-    }
+    public IEnumerable<Node> GetNodes(Func<Node, bool> predicate) => Nodes.Values.Where(predicate);
 
     public Edge? GetEdge(Node from, Node to)
     {
-        if (!Edges.TryGetValue(from.Id, out var list))
+        if (!Edges.TryGetValue(from.Id, out List<Edge>? list))
         {
             return null;
         }
@@ -158,13 +141,13 @@ public class ZoneGraph
             return false;
         }
 
-        var maxDistSq = maxDistance * maxDistance;
-        var bestDistSq = float.MaxValue;
+        float maxDistSq = maxDistance * maxDistance;
+        float bestDistSq = float.MaxValue;
         Node? best = null;
 
-        foreach (var n in Nodes.Values)
+        foreach(Node n in Nodes.Values)
         {
-            var distSq = Vector3.DistanceSquared(n.Position, position);
+            float distSq = Vector3.DistanceSquared(n.Position, position);
             if (distSq <= maxDistSq && distSq < bestDistSq)
             {
                 bestDistSq = distSq;
@@ -182,10 +165,7 @@ public class ZoneGraph
         return true;
     }
 
-    public bool TryGetNode(Vector3 position, out Node node)
-    {
-        return TryGetNode(position, 20f,  out node);
-    }
+    public bool TryGetNode(Vector3 position, out Node node) => TryGetNode(position, 20f, out node);
 
     public Node? GetInboundTeleport(Node goal)
     {
@@ -198,29 +178,17 @@ public class ZoneGraph
 
     public IEnumerable<Node> GetNodesByTypes(params NodeType[] types)
     {
-        var set = types.ToHashSet();
+        HashSet<NodeType> set = types.ToHashSet();
         return Nodes.Values.Where(n => set.Contains(n.Type));
     }
 
-    public Node? GetBaseCampReturnPositionNode()
-    {
-        return GetNodesByTypes(NodeType.BaseCampeReturnPosition).FirstOrDefault();
-    }
+    public Node? GetBaseCampReturnPositionNode() => GetNodesByTypes(NodeType.BaseCampReturnPosition).FirstOrDefault();
 
-    public Node? GetBaseCampAetheryteNode()
-    {
-        return GetNodesByTypes(NodeType.BaseCampAetheryte).FirstOrDefault();
-    }
+    public Node? GetBaseCampAetheryteNode() => GetNodesByTypes(NodeType.BaseCampAetheryte).FirstOrDefault();
 
-    public IEnumerable<Node> GetTeleportNodes()
-    {
-        return GetNodesByTypes(NodeType.BaseCampAetheryte, NodeType.AethernetShard);
-    }
+    public IEnumerable<Node> GetTeleportNodes() => GetNodesByTypes(NodeType.BaseCampAetheryte, NodeType.AethernetShard);
 
-    public IEnumerable<Node> GetActivityNodes()
-    {
-        return GetNodesByTypes(NodeType.NormalFate, NodeType.PotFate, NodeType.CriticalEncounter);
-    }
+    public IEnumerable<Node> GetActivityNodes() => GetNodesByTypes(NodeType.NormalFate, NodeType.PotFate, NodeType.CriticalEncounter);
 
     public Node? GetNearestTeleport(Vector3 pos)
     {
@@ -233,21 +201,21 @@ public class ZoneGraph
     {
         const float MaxEuclideanDistance2D = 512f;
 
-        var returnNode = GetBaseCampReturnPositionNode();
+        Node? returnNode = GetBaseCampReturnPositionNode();
         if (returnNode == null)
         {
             return;
         }
 
-        foreach (var node in nodes)
+        foreach(Node node in nodes)
         {
-            var euclideanDistance2D = returnNode.Position.Distance2D(node.Position);
+            float euclideanDistance2D = returnNode.Position.Distance2D(node.Position);
             if (euclideanDistance2D > MaxEuclideanDistance2D)
             {
                 continue;
             }
 
-            var cost = await config.GetWalkingCost(returnNode, node);
+            float cost = await config.GetWalkingCost(returnNode, node);
 
             AddEdge(returnNode.Id, node.Id, cost, EdgeType.Walk);
         }
@@ -256,29 +224,28 @@ public class ZoneGraph
 
     public async Task ConnectToNearestTeleports(List<Node> nodes, GraphConfig config)
     {
-        var teleports = GetTeleportNodes().ToList();
+        List<Node> teleports = GetTeleportNodes().ToList();
 
-        foreach (var node in nodes)
+        foreach(Node node in nodes)
         {
-
-            var nearestTeleports = teleports.OrderBy(t => t.Position.Distance2D(node.Position)).Take(2);
+            IEnumerable<Node> nearestTeleports = teleports.OrderBy(t => t.Position.Distance2D(node.Position)).Take(2);
 
             var costTasks = nearestTeleports.Select(async teleport =>
             {
                 if (teleport.Metadata is not TeleportNodeMetadata meta)
                 {
-                    throw new Exception("Teleport node metadata is not set");
+                    throw new("Teleport node metadata is not set");
                 }
 
-                var toActivity = await config.GetWalkingCost(meta.Destination, node.Position);
+                float toActivity = await config.GetWalkingCost(meta.Destination, node.Position);
 
-                var fromActivity = await config.GetWalkingCost(node.Position, meta.Destination);
+                float fromActivity = await config.GetWalkingCost(node.Position, meta.Destination);
 
                 return new
                 {
                     Teleport = teleport,
                     ToActivity = toActivity,
-                    FromActivity = fromActivity,
+                    FromActivity = fromActivity
                 };
             });
 
@@ -299,24 +266,25 @@ public class ZoneGraph
 
     public async Task ConnectToNearestAlike(List<Node> nodes, GraphConfig config, int max = 2, float max_euclidean_distance_2d = 256f)
     {
-        for (var i = 0; i < nodes.Count; i++)
+        for(int i = 0; i < nodes.Count; i++)
         {
-            var node = nodes[i];
+            Node node = nodes[i];
 
-            var nearestOther = nodes.Skip(i + 1).Where(n => n.Id != node.Id).OrderBy(c => c.Position.Distance2D(node.Position)).Take(max);
-            foreach (var other in nearestOther)
+            IEnumerable<Node> nearestOther = nodes.Skip(i + 1).Where(n => n.Id != node.Id).OrderBy(c => c.Position.Distance2D(node.Position)).Take(max);
+            foreach(Node other in nearestOther)
             {
-                var euclidean_distance_2d = node.Position.Distance2D(other.Position);
+                float euclidean_distance_2d = node.Position.Distance2D(other.Position);
                 if (euclidean_distance_2d > max_euclidean_distance_2d)
                 {
                     continue;
                 }
 
-                var ab = await config.GetWalkingCost(node, other);
-                var ba = await config.GetWalkingCost(other, node);
+                float ab = await config.GetWalkingCost(node, other);
+                float ba = await config.GetWalkingCost(other, node);
 
                 AddTwoWayEdge(node.Id, other.Id, ab, ba, EdgeType.Walk);
             }
         }
     }
+    public readonly record struct EdgeSet(List<Edge> Inbound, List<Edge> Outbound);
 }

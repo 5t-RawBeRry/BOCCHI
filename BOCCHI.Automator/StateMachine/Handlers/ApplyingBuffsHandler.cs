@@ -1,6 +1,4 @@
-﻿using BOCCHI.Automator.Data;
-using BOCCHI.Automator.Data.StateMemory;
-using BOCCHI.Automator.Services;
+using BOCCHI.Automator.Data;
 using BOCCHI.Buff.Data;
 using BOCCHI.Buff.Services;
 using BOCCHI.Common.Config;
@@ -8,32 +6,28 @@ using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
-using Ocelot.Extensions;
-using Ocelot.Services.Logger;
-using Ocelot.Services.PlayerState;
 using Ocelot.States;
 using Ocelot.States.Score;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
-public class ApplyingBuffsHandler(
+public class ApplyingBuffsHandler
+(
     Func<IStateMachine<BuffState>> factory,
     IBuffProvider buffs,
     IZoneProvider zones,
-    IPlayer player,
     IAutomatorMemory memory,
     ISupportJobFactory jobs,
-    BuffConfig config,
-    ILogger<ApplyingBuffsHandler> logger
+    BuffConfig config
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.ApplyingBuffs)
 {
     private IStateMachine<BuffState>? stateMachine;
 
     public override StatePriority GetScore()
     {
-        if (memory.TryRemember<ApplyingBuffsMemory>(out var _))
+        if (memory.TryRemember<ApplyingBuffsMemory>(out ApplyingBuffsMemory _))
         {
-            return StatePriority.MediumHigh;
+            return StatePriority.VeryHigh;
         }
 
         if (!config.ShouldAutomateBuffs || !buffs.ShouldRefreshAny())
@@ -41,20 +35,18 @@ public class ApplyingBuffsHandler(
             return StatePriority.Never;
         }
 
-        var zone = zones.GetZone();
+        IZone zone = zones.GetZone();
         if (!zone.IsOccultCrescentZone())
         {
             return StatePriority.Never;
         }
 
-        var crystals = zone.GetNearbyKnowledgeCrystals().ToList();
-        if (crystals.Count == 0)
+        if (!zone.GetNearbyKnowledgeCrystals().Any())
         {
             return StatePriority.Never;
         }
 
-        var closest = crystals.OrderBy(c => player.Position.Distance2D(c.Position)).First();
-        return player.Position.Distance2D(closest.Position) <= config.KnowledgeCrystalDistance ? StatePriority.Normal : StatePriority.Never;
+        return StatePriority.MediumHigh;
     }
 
     public override void Enter()
@@ -62,9 +54,9 @@ public class ApplyingBuffsHandler(
         stateMachine = factory();
 
         memory.TryAdd<ApplyingBuffsMemory>();
-        if (jobs.TryGetCurrent(out var job))
+        if (jobs.TryGetCurrent(out SupportJob job))
         {
-            memory.TryAdd(new SupportJobMemory(job.Id));
+            memory.TryAdd(new BuffSupportJobMemory(job.Id));
         }
     }
 

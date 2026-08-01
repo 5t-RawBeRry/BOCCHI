@@ -1,70 +1,41 @@
-﻿using System.Numerics;
-using BOCCHI.Common.Data.Aethernet;
+﻿using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.KnowledgeCrystals;
 using BOCCHI.Common.Data.Zones.Graph;
-using Dalamud.Configuration;
+using System.Numerics;
 
 namespace BOCCHI.Common.Data.Zones;
 
 public class NullZone : IZone
 {
-    public bool IsOccultCrescentZone()
-    {
-        return false;
-    }
+    public ZoneId ZoneId => ZoneId.Unknown;
 
-    public bool IsInBasecamp()
-    {
-        return false;
-    }
+    public ushort TerritoryType => 0;
 
-    public AethernetData GetMainAetheryte()
-    {
-        return new AethernetData();
-    }
+    public bool IsOccultCrescentZone() => false;
 
-    public Vector3 GetAetherytePosition()
-    {
-        return Vector3.NaN;
-    }
+    public bool IsInBasecamp() => false;
 
-    public Vector3 GetStartingPosition()
-    {
-        return Vector3.NaN;
-    }
+    public AethernetData GetMainAetheryte() => new();
 
-    public List<AethernetData> GetAetherytes()
-    {
-        return [];
-    }
+    public Vector3 GetAetherytePosition() => Vector3.NaN;
 
-    public List<AethernetData> GetAethernetShards()
-    {
-        return [];
-    }
+    public Vector3 GetStartingPosition() => Vector3.NaN;
 
-    public List<AethernetData> GetNearbyAethernetShards()
-    {
-        return [];
-    }
+    public List<AethernetData> GetAetherytes() => [];
 
-    public List<KnowledgeCrystalData> GetKnowledgeCrystals()
-    {
-        return [];
-    }
+    public List<AethernetData> GetAethernetShards() => [];
 
-    public List<KnowledgeCrystalData> GetNearbyKnowledgeCrystals()
-    {
-        return [];
-    }
+    public List<AethernetData> GetNearbyAethernetShards() => [];
 
-    public bool IsInForkedTower()
-    {
-        return false;
-    }
+    public List<KnowledgeCrystalData> GetKnowledgeCrystals() => [];
 
-    public async Task<ZoneGraph> GetGraph()
-    {
-        return new ZoneGraph();
-    }
+    public List<KnowledgeCrystalData> GetNearbyKnowledgeCrystals() => [];
+
+    public ushort ForkedTowerEventId => 0;
+
+    public bool IsInForkedTower() => false;
+
+    public float GetCriticalEncounterRadius(int eventId) => 0f;
+
+    public async Task<ZoneGraph> GetGraph() => new();
 }

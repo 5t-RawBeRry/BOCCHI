@@ -1,5 +1,4 @@
 ﻿using System.Numerics;
-
 namespace BOCCHI.Common.Data.Zones.Graph;
 
 public class Node
@@ -12,8 +11,5 @@ public class Node
 
     public INodeMetadata Metadata { get; set; } = new BlankNodeMetadata();
 
-    public bool IsTeleport()
-    {
-        return Type is NodeType.BaseCampAetheryte or NodeType.AethernetShard;
-    }
+    public bool IsTeleport() => Type is NodeType.BaseCampAetheryte or NodeType.AethernetShard;
 }

@@ -1,92 +1,117 @@
-﻿using System.Numerics;
-using BOCCHI.Common.Data.Paths;
+﻿using BOCCHI.Common.Data.Paths;
 using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
+using System.Numerics;
+using Path = Ocelot.Services.Pathfinding.Path;
 
 namespace BOCCHI.Common.Data.Zones.Graph.Traversal;
 
 public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
 {
-    public string Key()
-    {
-        return "WalkTeleportWalk";
-    }
+    public string Key() => "WalkTeleportWalk";
 
     public async Task<TraversalCandidate?> CalculateAsync(ZoneGraph graph, Vector3 start, Node goal, IPathfinder pathfinder)
     {
-        var inbound = graph.GetInboundTeleport(goal);
-        if (inbound?.Metadata is not TeleportNodeMetadata meta)
+        Node? inbound = graph.GetInboundTeleport(goal);
+        if (inbound?.Metadata is not TeleportNodeMetadata inboundMeta)
         {
             return null;
         }
 
-        var walkToGoalFromInbound = graph.GetEdge(inbound, goal);
+        Edge? walkToGoalFromInbound = graph.GetEdge(inbound, goal);
         if (walkToGoalFromInbound == null)
         {
             return null;
         }
 
-        if (graph.TryGetNode(start, 20f, out var node))
+        Node? departure;
+        float walkToDepartureCost;
+
+        if (graph.TryGetNode(start, 20f, out Node node))
         {
             if (node.IsTeleport())
             {
-                if (node.Id == inbound.Id)
-                {
-                    return null;
-                }
-
-                var walkToNearestAethernetCost = start.Distance(node.Position);
-
-                return new TraversalCandidate(
-                    walkToNearestAethernetCost + GraphTraverser.TeleportCost + walkToGoalFromInbound.Cost,
-                    [
-                        PathStep.Pathfind(node.Position.GetApproachPosition(start, meta.InteractRange)),
-                        PathStep.Teleport(meta.AetheryteId),
-                        PathStep.Pathfind(goal.Position),
-                    ]);
+                departure = node;
+                walkToDepartureCost = start.Distance(node.Position);
             }
             else
             {
-                var edges = graph.GetEdges(node.Id).OrderBy((e) => e.Cost);
-                var connectedTeleports = edges.Where(e => graph.Nodes[e.To].IsTeleport()).ToList();
+                List<Edge> connectedTeleports = graph.GetEdges(node.Id)
+                    .Where(e => graph.Nodes[e.To].IsTeleport())
+                    .OrderBy(e => e.Cost)
+                    .ToList();
+
                 if (connectedTeleports.Count == 0)
                 {
                     return null;
                 }
 
-                var walkToNearestAethernet = connectedTeleports.First();
-                var nearestAethernet = graph.Nodes[walkToNearestAethernet.To];
-
-                var walkToNearestAethernetCost = walkToNearestAethernet.Cost;
-
-                return new TraversalCandidate(
-                    walkToNearestAethernetCost + GraphTraverser.TeleportCost + walkToGoalFromInbound.Cost,
-                    [
-                        PathStep.Pathfind(nearestAethernet.Position),
-                        PathStep.Teleport(meta.AetheryteId),
-                        PathStep.Pathfind(goal.Position),
-                    ]);
+                Edge walkToNearestAethernet = connectedTeleports.First();
+                departure = graph.Nodes[walkToNearestAethernet.To];
+                walkToDepartureCost = walkToNearestAethernet.Cost;
             }
         }
+        else
+        {
+            departure = graph.GetNearestTeleport(start);
+            if (departure == null)
+            {
+                return null;
+            }
 
-        var nearestTeleport = graph.GetNearestTeleport(start);
-        if (nearestTeleport == null)
+            Path walkToNearestTeleportPath = await pathfinder.Pathfind(new(departure.Position)
+            {
+                From = start,
+                AllowFlying = false
+            });
+
+            walkToDepartureCost = walkToNearestTeleportPath.Distance;
+        }
+
+        // Fate and CE often share the same inbound shard. Teleporting there is a no-op
+        // (walk to crystal → TP to where you already are). Just walk to the event.
+        if (IsSameAetheryte(departure, inbound, inboundMeta))
+        {
+            return BuildWalkOnly(start, goal, walkToDepartureCost + walkToGoalFromInbound.Cost);
+        }
+
+        // Getting to base camp from the field via a nearby shard is almost always worse than Return.
+        // Leave those routes to ReturnTeleportWalk.
+        if (inbound.Type == NodeType.BaseCampAetheryte && departure.Type != NodeType.BaseCampAetheryte)
         {
             return null;
         }
 
-        var walkToNearestTeleportPath = await pathfinder.Pathfind(new PathfinderConfig(nearestTeleport.Position)
-        {
-            From = start,
-            AllowFlying = false,
-        });
-
-        return new TraversalCandidate(
-            walkToNearestTeleportPath.Distance + GraphTraverser.TeleportCost + walkToGoalFromInbound.Cost,
-            [
-                PathStep.Pathfind(nearestTeleport.Position),
-                PathStep.Teleport(meta.AetheryteId),
-                PathStep.Pathfind(goal.Position),
-            ]);
+        return new(
+            walkToDepartureCost + GraphTraverser.TeleportCost + walkToGoalFromInbound.Cost,
+            BuildTeleportSteps(inboundMeta.AetheryteId, goal, inbound));
     }
+
+    private static bool IsSameAetheryte(Node departure, Node inbound, TeleportNodeMetadata inboundMeta)
+    {
+        if (departure.Id == inbound.Id)
+        {
+            return true;
+        }
+
+        return departure.Metadata is TeleportNodeMetadata departureMeta
+               && departureMeta.AetheryteId == inboundMeta.AetheryteId;
+    }
+
+    private static TraversalCandidate BuildWalkOnly(Vector3 start, Node goal, float cost) =>
+        new(
+            cost,
+            [
+                PathStep.Pathfind(
+                    NavigationApproach.GetEventPosition(goal.Position, start),
+                    NavigationConstants.EventApproachMaxRadius)
+            ]);
+
+    private static List<PathStep> BuildTeleportSteps(uint aetheryteId, Node goal, Node inbound) =>
+    [
+        PathStep.Teleport(aetheryteId),
+        PathStep.Pathfind(
+            NavigationApproach.GetEventPosition(goal.Position, inbound.Position),
+            NavigationConstants.EventApproachMaxRadius)
+    ];
 }
