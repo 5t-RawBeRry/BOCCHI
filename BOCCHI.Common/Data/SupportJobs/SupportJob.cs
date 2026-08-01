@@ -72,6 +72,14 @@ public class SupportJob
                 SupportJobId.PhantomMysticKnight => 4803,
                 SupportJobId.PhantomGladiator => 4804,
                 SupportJobId.PhantomDancer => 4805,
+                SupportJobId.PhantomNinja => 5328,
+                SupportJobId.PhantomWhiteMage => 5329,
+                SupportJobId.PhantomBlackMage => 5330,
+                SupportJobId.PhantomDragoon => 5331,
+                SupportJobId.PhantomSummoner => 5332,
+                SupportJobId.PhantomBlueMage => 5333,
+                SupportJobId.PhantomRedMage => 5334,
+                SupportJobId.PhantomNecromancer => 5335,
                 var _ => throw new ArgumentOutOfRangeException()
             };
         }

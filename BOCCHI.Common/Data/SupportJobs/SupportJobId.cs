@@ -17,7 +17,15 @@ public enum SupportJobId
     PhantomThief = 12,
     PhantomMysticKnight = 13,
     PhantomGladiator = 14,
-    PhantomDancer = 15
+    PhantomDancer = 15,
+    PhantomNinja = 16,
+    PhantomWhiteMage = 17,
+    PhantomBlackMage = 18,
+    PhantomDragoon = 19,
+    PhantomSummoner = 20,
+    PhantomBlueMage = 21,
+    PhantomRedMage = 22,
+    PhantomNecromancer = 23
 }
 
 public static class SupportJobExtensions
