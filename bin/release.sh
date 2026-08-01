@@ -56,11 +56,9 @@ if [ -z "$PROJECT" ]; then
   exit 1
 fi
 
-ZIP_PATH="$PROJECT/bin/Release/$PROJECT/latest.zip"
-# Directory.Build.props forces Platforms=x64 → bin/x64/Release/...
-if [ ! -f "$ZIP_PATH" ]; then
-  ZIP_PATH="$PROJECT/bin/x64/Release/$PROJECT/latest.zip"
-fi
+# Directory.Build.props sets Platforms=x64 → output under bin/x64/Release/
+ZIP_PATH="$PROJECT/bin/x64/Release/$PROJECT/latest.zip"
+ZIP_PATH_FALLBACK="$PROJECT/bin/Release/$PROJECT/latest.zip"
 CSPROJ="$PROJECT/$PROJECT.csproj"
 
 if git rev-parse "$TAG" >/dev/null 2>&1; then
@@ -100,13 +98,19 @@ if ! grep -q "# $TAG" CHANGELOG.md; then
   exit 1
 fi
 
-rm -f "$ZIP_PATH"
+rm -f "$ZIP_PATH" "$ZIP_PATH_FALLBACK"
 echo "Building project..."
-dotnet build -c Release
+dotnet build -c Release -p:Platform=x64
 if [ ! -f "$ZIP_PATH" ]; then
-  echo "Error: Build failed or $ZIP_PATH not created."
-  exit 1
+  if [ -f "$ZIP_PATH_FALLBACK" ]; then
+    ZIP_PATH="$ZIP_PATH_FALLBACK"
+  else
+    echo "Error: Build failed or zip not created (tried $ZIP_PATH and $ZIP_PATH_FALLBACK)."
+    exit 1
+  fi
 fi
+
+echo "Using zip: $ZIP_PATH"
 
 echo "Creating annotated tag $TAG..."
 git tag -a "$TAG" -m "$TAG"
