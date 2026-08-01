@@ -1,5 +1,6 @@
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Services;
 using BOCCHI.Common.UI;
 using BOCCHI.Treasure.Hunt;
 using BOCCHI.Treasure.Services;
@@ -17,9 +18,11 @@ public class TreasureRenderer
 (
     ITreasureTracker tracker,
     ITreasureHunter hunter,
+    IActivityNavigation navigation,
     TreasureConfig config,
     UIConfig uiConfig,
     IPlayer player,
+    IBrandingService branding,
     IUIService ui,
     ITranslator<MainWindow> translator
 ) : IDynamicRenderer
@@ -104,7 +107,7 @@ public class TreasureRenderer
             .OrderBy(t => player.Position.Distance(t.GetPosition()))
             .ToList();
 
-        using ImGuiSectionHelper.BoundedListScope list = ImGuiSectionHelper.BoundedList("##nearby_treasures", 160f);
+        using ImGuiSectionHelper.BoundedListScope list = ImGuiSectionHelper.BoundedList("##nearby_treasures", 200f);
         if (!list.IsOpen)
         {
             return;
@@ -113,11 +116,19 @@ public class TreasureRenderer
         foreach(TreasureCoffer treasure in treasures)
         {
             Vector3 pos = treasure.GetPosition();
-            ImGui.TextUnformatted(treasure.GetName());
-            ImGui.Indent();
-            ImGui.TextUnformatted(string.Format(translator.T(".treasure.distance"), player.Position.Distance(pos)));
-            ImGui.TextUnformatted(string.Format(translator.T(".treasure.position"), pos.X, pos.Y, pos.Z));
-            ImGui.Unindent();
+            string name = treasure.GetName();
+            string details =
+                $"{string.Format(translator.T(".treasure.distance"), player.Position.Distance(pos))} · {pos:f0}";
+
+            ActivitySnapshotRenderer.RenderCompactWithActions(
+                ui,
+                navigation,
+                branding.DalamudYellow,
+                branding.DalamudGrey,
+                name,
+                details,
+                pos,
+                $"treasure_{treasure.Id}");
         }
     }
 

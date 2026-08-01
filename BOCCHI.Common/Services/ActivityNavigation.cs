@@ -13,6 +13,7 @@ using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
 using System.Numerics;
+using Path = Ocelot.Services.Pathfinding.Path;
 
 namespace BOCCHI.Common.Services;
 
@@ -43,8 +44,7 @@ public class ActivityNavigation
             return false;
         }
 
-        AethernetData? target = GetNearestAetheryte(destination);
-        if (target == null)
+        if (zone.GetAetherytes().Count == 0)
         {
             disabledReason = "No aethernet destination found.";
             return false;
@@ -56,12 +56,8 @@ public class ActivityNavigation
             return false;
         }
 
-        if (AetheryteApproach.IsAlreadyAtAetheryte(target, player.Position))
-        {
-            disabledReason = "You're already at this aetheryte.";
-            return false;
-        }
-
+        // Do not gate on "already at nearest" — Euclidean nearest can be an island
+        // shard that cannot walk to the destination (e.g. Unhallowed Hamlet → Eye to Eye).
         disabledReason = null;
         return true;
     }
@@ -83,6 +79,12 @@ public class ActivityNavigation
 
     public void TeleportToward(Vector3 destination, string name, string id)
     {
+        if (!CanTeleport(destination, out string? reason))
+        {
+            logger.Warning("Cannot teleport toward {Name}: {Reason}", name, reason ?? "unknown");
+            return;
+        }
+
         AethernetData? target = GetNearestAetheryte(destination);
         if (target == null)
         {
@@ -90,9 +92,11 @@ public class ActivityNavigation
             return;
         }
 
-        if (!CanTeleport(destination, out string? reason))
+        // Already standing at the walk-best shard — just pathfind from here.
+        if (AetheryteApproach.IsAlreadyAtAetheryte(target, player.Position))
         {
-            logger.Warning("Cannot teleport toward {Name}: {Reason}", name, reason ?? "unknown");
+            logger.Info("Already at best aethernet {Aethernet} for {Name} — pathfinding", target.Id, name);
+            PathTo(destination, name, id);
             return;
         }
 
@@ -152,11 +156,58 @@ public class ActivityNavigation
             });
     }
 
+    /// <summary>
+    ///     Pick the aethernet with the shortest walk to <paramref name="destination"/>.
+    ///     Euclidean nearest is wrong across water (e.g. Unhallowed Hamlet island vs mainland CEs).
+    /// </summary>
     private AethernetData? GetNearestAetheryte(Vector3 destination)
     {
-        return zones.GetZone().GetAetherytes()
+        List<AethernetData> aetherytes = zones.GetZone().GetAetherytes();
+        if (aetherytes.Count == 0)
+        {
+            return null;
+        }
+
+        AethernetData? ByEuclidean() => aetherytes
             .OrderBy(a => destination.Distance2D(a.Position))
             .FirstOrDefault();
+
+        if (!vnav.IsNavmeshReady())
+        {
+            return ByEuclidean();
+        }
+
+        AethernetData? best = null;
+        float bestCost = float.PositiveInfinity;
+
+        foreach(AethernetData aetheryte in aetherytes)
+        {
+            Vector3 from = aetheryte.GetInteractPosition();
+            Path path = pathfinder.Pathfind(new PathfinderConfig(destination)
+                {
+                    From = from,
+                    AllowFlying = false,
+                    ShouldSnapToFloor = true
+                })
+                .ConfigureAwait(false)
+                .GetAwaiter()
+                .GetResult();
+
+            // Empty / single-node path → unreachable from this shard (water gap, etc.).
+            if (path.Nodes.Count < 2)
+            {
+                continue;
+            }
+
+            float cost = path.Distance;
+            if (cost < bestCost)
+            {
+                bestCost = cost;
+                best = aetheryte;
+            }
+        }
+
+        return best ?? ByEuclidean();
     }
 
     private void CancelActivityChains() => manager.CancelWhere(name => name.StartsWith(ChainPrefix, StringComparison.Ordinal));
