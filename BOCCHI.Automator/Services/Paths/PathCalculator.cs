@@ -76,11 +76,9 @@ public class PathCalculator
                 Metadata = goalNode.Metadata
             };
 
-            // Inside the yellow circle counts as arrived even before CurrentFate registers.
-            if (liveFate.Radius > 0f)
-            {
-                arrivalRadius = Math.Max(arrivalRadius, liveFate.Radius * 0.85f);
-            }
+            // Path toward the FATE center — do not treat "inside the yellow circle" (~20y+) as arrived.
+            // InFateHandler continues into max melee of the boss once CurrentFate registers.
+            arrivalRadius = NavigationConstants.EventArrivalRadius;
         }
         else if (goal.GoalType is CriticalEncounterGoal liveCeGoal
                  && criticalEncounters.SnapshotWithoutForkedTower()

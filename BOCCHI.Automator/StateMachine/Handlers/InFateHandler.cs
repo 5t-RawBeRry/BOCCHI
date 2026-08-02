@@ -34,7 +34,7 @@ public class InFateHandler
             return StatePriority.Never;
         }
 
-        return context.GetFateId() == fateGoal.id ? StatePriority.High : StatePriority.Never;
+        return context.GetFateId() == fateGoal.id ? StatePriority.VeryHigh : StatePriority.Never;
     }
 
     public override void Handle()

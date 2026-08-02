@@ -22,7 +22,7 @@ public class InCriticalEncounterHandler
     ITargetManager targetManager
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InCriticalEncounter)
 {
-    public override StatePriority GetScore() => context.IsInCriticalEncounter() ? StatePriority.High : StatePriority.Never;
+    public override StatePriority GetScore() => context.IsInCriticalEncounter() ? StatePriority.VeryHigh : StatePriority.Never;
 
     public override void Enter()
     {
