@@ -6,6 +6,7 @@
 - Illegal Mode: random 2..max Return delay after FATE/CE; dismount before cast; drop finished CE goals
 - Illegal Mode: path FATEs to boss max melee instead of stopping ~20y inside the circle
 - Mob Farmer: stop Geo↔combat job flip-flop after Battle Bell (#94)
+- Mob Farmer: debug lines only while the farmer is running
 - Gold/silver tracker: don't count shop spend dip→recover as gains (#96)
 
 ### Features
