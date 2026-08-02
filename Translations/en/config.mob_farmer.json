@@ -32,11 +32,7 @@
     },
     "render_debug_lines": {
       "label": "Render debug lines",
-      "tooltip": "Render red lines to valid mobs out of combat and green lines to valid mobs in combat"
-    },
-    "render_debug_lines_while_not_running": {
-      "label": "Render debug lines while inactive",
-      "tooltip": "Render the lines even while mob farmer is not running"
+      "tooltip": "While Mob Farmer is running, render red lines to valid mobs out of combat and green lines to valid mobs in combat."
     },
     "apply_battle_bell": {
       "label": "Apply Battle Bell",

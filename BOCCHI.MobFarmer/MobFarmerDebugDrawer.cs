@@ -27,12 +27,7 @@ public class MobFarmerDebugDrawer
 
     public void Render()
     {
-        if (!config.RenderDebugLines)
-        {
-            return;
-        }
-
-        if (!Farmer.Running && !config.RenderDebugLinesWhileNotRunning)
+        if (!config.RenderDebugLines || !Farmer.Running)
         {
             return;
         }

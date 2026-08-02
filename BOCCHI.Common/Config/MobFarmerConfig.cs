@@ -43,9 +43,6 @@ public class MobFarmerConfig : IAutoConfig
     public bool RenderDebugLines { get; set; } = false;
 
     [Checkbox]
-    public bool RenderDebugLinesWhileNotRunning { get; set; } = false;
-
-    [Checkbox]
     public bool ApplyBattleBell { get; set; } = false;
 
     [FloatRange(0f, 30f)]
