@@ -10,6 +10,7 @@ using Ocelot.Chain.Extensions;
 using Ocelot.Chain.Middleware.Chain;
 using Ocelot.Chain.Middleware.Step;
 using Ocelot.Extensions;
+using Ocelot.Ipc.VNavmesh;
 using Ocelot.Services.PlayerState;
 using System.Numerics;
 using DalamudObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
@@ -23,15 +24,23 @@ public class OpenTreasureCofferChain
     IObjectTable objects,
     ITargetManager targets,
     IPlayer player,
-    ICondition conditions
+    ICondition conditions,
+    IVNavmeshIpc vnav
 ) : ChainRecipe<Vector3>(chains)
 {
-    public const float InteractDistance = 2f;
+    /// <summary>Try to path this close before interacting (mesh permitting).</summary>
+    public const float PathArrivalRange = 1.5f;
 
-    public override string Name
-    {
-        get => "Open Treasure Coffer";
-    }
+    /// <summary>Comfortable open distance (matches AOCCH PreferredOpenDistance).</summary>
+    public const float PreferredOpenDistance = 3.25f;
+
+    /// <summary>Max distance where InteractWithObject can still succeed.</summary>
+    public const float MaxInteractRange = 4.5f;
+
+    /// <summary>Legacy alias used by hunt pathing — prefer PreferredOpenDistance for gating.</summary>
+    public const float InteractDistance = PreferredOpenDistance;
+
+    public override string Name => "Open Treasure Coffer";
 
     protected override IChain Compose(IChain chain, Vector3 targetPosition)
     {
@@ -71,16 +80,40 @@ public class OpenTreasureCofferChain
             return false;
         }
 
-        if (player.Position.Distance2D(chest.Position) > InteractDistance)
+        float dist2d = player.Position.Distance2D(chest.Position);
+
+        // Still too far for a reliable open — close in; don't treat as failure.
+        if (dist2d > MaxInteractRange)
         {
+            if (!vnav.IsRunning())
+            {
+                vnav.PathfindAndMoveCloseTo(chest.Position, false, PathArrivalRange);
+            }
+
             return false;
+        }
+
+        if (dist2d > PreferredOpenDistance)
+        {
+            if (!vnav.IsRunning())
+            {
+                vnav.PathfindAndMoveCloseTo(chest.Position, false, PathArrivalRange);
+            }
+
+            return false;
+        }
+
+        if (vnav.IsRunning())
+        {
+            vnav.Stop();
         }
 
         unsafe
         {
             targets.Target = chest;
             GameObject* gameObject = (GameObject*)(void*)chest.Address;
-            FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure* instance = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
+            FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure* instance =
+                (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
             TargetSystem.Instance()->InteractWithObject(gameObject);
 
             if (instance->Flags.HasFlag(TreasureFlags.Opened))
@@ -94,10 +127,11 @@ public class OpenTreasureCofferChain
 
     private IGameObject? GetChestAt(Vector3 position)
     {
-        // Search a bit wider than interact range so slight layout offsets still resolve.
-        const float SearchRadius = 5f;
+        // Wider than max interact so slight offsets still resolve; 2D like pathing.
+        const float SearchRadius = 6f;
         return objects
-            .Where(o => o is { ObjectKind: DalamudObjectKind.Treasure, IsDead: false, IsTargetable: true } && o.IsValid())
-            .FirstOrDefault(o => Vector3.Distance(o.Position, position) <= SearchRadius);
+            .Where(o => o is { ObjectKind: DalamudObjectKind.Treasure, IsDead: false } && o.IsValid())
+            .OrderBy(o => position.Distance2D(o.Position))
+            .FirstOrDefault(o => position.Distance2D(o.Position) <= SearchRadius);
     }
 }

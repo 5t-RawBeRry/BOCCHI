@@ -48,10 +48,13 @@ public class TreasureHunterService
     IGameGui gui
 ) : ITreasureHunter, IOnUpdate, IOnStop
 {
-    private const float ChestSearchRadius = 5f;
+    private const float ChestSearchRadius = 25f;
 
-    /// <summary>Close enough that an unspawned chest should have streamed; skip empty nodes here (not HuntDetectionRange).</summary>
-    private const float EmptySkipRadius = 10f;
+    /// <summary>
+    /// Only treat a node as empty once we're essentially on top of the layout point.
+    /// A larger radius (e.g. 10y) skipped chests while still outside interact range (#93).
+    /// </summary>
+    private const float EmptySkipRadius = 2f;
     private readonly List<TreasureLayoutDatum> layoutTreasure = [];
     private readonly List<HuntPathfinderStep> steps = [];
 
@@ -130,7 +133,6 @@ public class TreasureHunterService
             activeChain = null;
         }
 
-        // Do not start nearby-interact early — it froze pathing at 5y while open needs 2y (#93).
     }
 
     public bool Running { get; private set; }
@@ -254,24 +256,23 @@ public class TreasureHunterService
 
         // Presence: don't require IsTargetable (often false until inside interact range).
         IGameObject? present = FindTreasureNear(layoutDestination, ChestSearchRadius);
-        IGameObject? chest = present is { IsTargetable: true } ? present : null;
 
         // Prefer the live object once it exists — layout coords are often slightly off.
         Vector3 destination = present?.Position ?? layoutDestination;
         float dist2d = player.Position.Distance2D(destination);
 
-        if (!vnav.IsRunning() && dist2d > OpenTreasureCofferChain.InteractDistance)
+        // Path tighter than open range so we actually arrive inside PreferredOpenDistance.
+        if (!vnav.IsRunning() && dist2d > OpenTreasureCofferChain.PreferredOpenDistance)
         {
-            vnav.PathfindAndMoveCloseTo(destination, false, OpenTreasureCofferChain.InteractDistance);
+            vnav.PathfindAndMoveCloseTo(destination, false, OpenTreasureCofferChain.PathArrivalRange);
         }
         else if (present != null && vnav.IsRunning())
         {
-            // Re-aim at the live chest if we were still pathing to layout.
             float toLive = player.Position.Distance2D(present.Position);
-            if (toLive > OpenTreasureCofferChain.InteractDistance
+            if (toLive > OpenTreasureCofferChain.PreferredOpenDistance
                 && player.Position.Distance2D(layoutDestination) <= ChestSearchRadius)
             {
-                vnav.PathfindAndMoveCloseTo(present.Position, false, OpenTreasureCofferChain.InteractDistance);
+                vnav.PathfindAndMoveCloseTo(present.Position, false, OpenTreasureCofferChain.PathArrivalRange);
             }
         }
 
@@ -283,16 +284,17 @@ public class TreasureHunterService
             return false;
         }
 
-        if (chest != null && IsChestOpened(chest))
+        if (present != null && IsChestOpened(present))
         {
             vnav.Stop();
             return true;
         }
 
-        // Empty / unspawned: skip once close enough that the object should have streamed.
+        // Empty / unspawned: only skip once we're on the layout point with no live coffer nearby.
+        // Do not skip while still pathing — mesh often stops ~8–10y before interact range.
         if (present == null)
         {
-            if (StepDistance <= EmptySkipRadius)
+            if (StepDistance <= EmptySkipRadius && !vnav.IsRunning())
             {
                 vnav.Stop();
                 return true;
@@ -301,21 +303,21 @@ public class TreasureHunterService
             return false;
         }
 
-        if (StepDistance > OpenTreasureCofferChain.InteractDistance)
+        // Wait until within max interact range (and preferably idle) before handing off to open chain.
+        if (StepDistance > OpenTreasureCofferChain.MaxInteractRange)
         {
             return false;
         }
 
-        if (chest == null)
+        if (vnav.IsRunning() && StepDistance > OpenTreasureCofferChain.PreferredOpenDistance)
         {
-            // Present but not targetable yet — wait briefly in range.
             return false;
         }
 
         vnav.Stop();
         activeChain = chainManager.Manage(
             chains.Create($"TreasureHunt::Open({step.NodeId})")
-                .Then<OpenTreasureCofferChain, Vector3>(chest.Position)
+                .Then<OpenTreasureCofferChain, Vector3>(present.Position)
         );
 
         return false;
