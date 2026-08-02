@@ -1,0 +1,8 @@
+<Project>
+    <Import Project="$(MSBuildThisFileDirectory)Directory.Build.Ocelot.Graph.props"/>
+
+    <ItemGroup>
+        <ProjectReference Include="$(MSBuildThisFileDirectory)Ocelot/Ocelot.Chain/Ocelot.Chain.csproj"/>
+        <ProjectReference Include="$(MSBuildThisFileDirectory)Ocelot/Ocelot.Pictomancy/Ocelot.Pictomancy.csproj"/>
+    </ItemGroup>
+</Project>

@@ -1,92 +1,147 @@
-﻿using System;
-using BOCCHI.Chains;
+using BOCCHI.Automator;
+using BOCCHI.Automator.ChainRecipes;
+using BOCCHI.Buff;
+using BOCCHI.Common.Config;
+using BOCCHI.Common.Config.Fields;
+using BOCCHI.Common.Config.Renderers;
+using BOCCHI.Common.Data.SupportJobs;
+using BOCCHI.Common.Data.Zones;
+using BOCCHI.Common.Data.Zones.Graph.Factory;
+using BOCCHI.Common.Data.Zones.Implementations.NorthHorn;
+using BOCCHI.Common.Data.Zones.Implementations.SouthHorn;
+using BOCCHI.Common.Services;
+using BOCCHI.Common.Steps;
+using BOCCHI.Config;
 using BOCCHI.Data;
-using Dalamud.Game;
-using Dalamud.Game.ClientState.Conditions;
+using BOCCHI.MobFarmer;
+using BOCCHI.Renderers;
+using BOCCHI.Services;
+using BOCCHI.Services.Repair;
+using BOCCHI.Trackers;
+using BOCCHI.Treasure;
+using BOCCHI.UI;
+using BOCCHI.World;
+using Dalamud.Configuration;
 using Dalamud.Plugin;
-using ECommons;
-using ECommons.DalamudServices;
+using Dalamud.Plugin.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Ocelot;
-using Ocelot.Chain;
+using Ocelot.Chain.Services;
+using Ocelot.Config;
+using Ocelot.Config.Renderers;
+using Ocelot.ECommons.Services;
+using Ocelot.Pathfinding.Services;
+using Ocelot.Pictomancy.Services;
+using Ocelot.Services.WindowManager;
+using Ocelot.UI.Services;
+using Ocelot.Windows;
+using System.Reflection;
+#if DEBUG
+using BOCCHI.Debug;
+#endif
 
 namespace BOCCHI;
 
-public sealed class Plugin : OcelotPlugin
+public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : OcelotPlugin(plugin, logger)
 {
+    private readonly IPluginLog logger = logger;
+    private readonly IDalamudPluginInterface plugin = plugin;
+
     public override string Name
     {
-        get => "Occult Crescent Helper";
+        get => "BOCCHI";
     }
 
-    public Config Config { get; }
-
-    public override IOcelotConfig OcelotConfig
+    protected override void Bootstrap(IServiceCollection services)
     {
-        get => Config;
-    }
+        BootstrapOcelotModules(services);
+        BootstrapConfiguration(services, plugin, logger);
 
-    public static ChainQueue Chain
-    {
-        get => ChainManager.Get("OCH##main");
-    }
+        services.AddSingleton<TranslationLoader>();
+        services.AddSingleton<ReturnYesNoInitializer>();
 
-    public Plugin(IDalamudPluginInterface plugin)
-        : base(plugin, Module.DalamudReflector)
-    {
-        Config = plugin.GetPluginConfig() as Config ?? new Config();
+        services.AddSingleton<IMainRenderer, MainRenderer>();
+        services.AddSingleton<IConfigRenderer, ConfigRenderer>();
+        services.AddSingleton<OperationalStatusBar>();
+        services.AddSingleton<IMainWindowTitleBarContributor, IllegalModeTitleBarContributor>();
+        services.AddSingleton<IFieldRenderer<MobMultiSelectAttribute>, MobMultiSelectRenderer>();
+        services.AddSingleton<IFieldRenderer<DisabledFateIdsAttribute>, DisabledFateIdsRenderer>();
+        services.AddSingleton<IFieldRenderer<DisabledCriticalEncounterIdsAttribute>, DisabledCriticalEncounterIdsRenderer>();
+        services.AddSingleton<IFieldRenderer<MountSelectAttribute>, MountSelectRenderer>();
 
-        SetupLanguage(plugin);
+        services.AddSingleton<ISupportJobFactory, SupportJobFactory>();
+        services.AddSingleton<ISupportJobChanger, SupportJobChanger>();
 
-        OcelotInitialize(OcelotFeature.All);
+        services.AddZones()
+            .AddZone<SouthHorn>()
+            .AddZone<NorthHorn>();
 
-        ChainHelper.Initialize(this);
-    }
+        services.AddSingleton<IGraphFactory, GraphFactory>();
 
-    private void SetupLanguage(IDalamudPluginInterface plugin)
-    {
-        I18N.SetDirectory(plugin.AssemblyLocation.Directory?.FullName!);
-        I18N.LoadAllFromDirectory("en", "Translations/en");
-        I18N.LoadAllFromDirectory("jp", "Translations/jp");
-        I18N.LoadAllFromDirectory("fr", "Translations/fr");
-#if DALAMUD_CN
-        I18N.LoadAllFromDirectory("zh", "Translations/zh");
+        services.AddSingleton<IActivityNavigation, ActivityNavigation>();
+
+        services.AddSingleton<UnmountStep>();
+        services.AddSingleton<RepairStep>();
+        services.AddSingleton<IRepairService, RepairService>();
+        services.AddSingleton<TeleportToAethernetChain>();
+
+        services.LoadTrackersModule();
+        services.LoadWorldModule();
+        services.LoadBuffModule();
+
+        services.LoadAutomatorModule();
+        services.LoadMobFarmerModule();
+        services.LoadTreasureModule();
+
+        services.AddBocchiCommands();
+
+#if DEBUG
+        services.LoadDebugModule();
 #endif
+    }
 
-        // @todo: Breakup German and uwu translation
-        I18N.LoadFromFile("de", "Translations/de.json");
-        I18N.LoadFromFile("uwu", "Translations/uwu.json");
+    private static void BootstrapOcelotModules(IServiceCollection services)
+    {
+        services.LoadECommons();
+        services.LoadPictomancy();
+        services.LoadPathfinding();
+        services.LoadChain();
+        services.LoadUI();
+    }
 
-        var lang = Svc.ClientState.ClientLanguage switch
+    private static void BootstrapConfiguration(IServiceCollection services, IDalamudPluginInterface plugin, IPluginLog logger)
+    {
+        ConfigMigrator migrator = new(plugin, logger);
+        if (migrator.ShouldMigrate())
         {
-            ClientLanguage.French => "fr",
-            ClientLanguage.German => "de",
-            ClientLanguage.Japanese => "jp",
-#if DALAMUD_CN
-            ClientLanguage.ChineseSimplified => "zh",
-#endif
-            _ => "en",
-        };
-
-        I18N.SetLanguage(lang);
-
-        var today = DateTime.Today;
-        if (today is { Month: 4, Day: 1 } && Random.Shared.NextDouble() < 0.05)
-        {
-            I18N.SetLanguage("uwu");
+            migrator.Migrate();
         }
-    }
 
-    protected override bool ShouldUpdate()
-    {
-        return ZoneData.IsInOccultCrescent()
-               && !(
-                   Svc.Condition[ConditionFlag.BetweenAreas] ||
-                   Svc.Condition[ConditionFlag.BetweenAreas51] ||
-                   Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent] ||
-                   Svc.Condition[ConditionFlag.OccupiedInEvent] ||
-                   Svc.Condition[ConditionFlag.WatchingCutscene] ||
-                   Svc.Condition[ConditionFlag.WatchingCutscene78] ||
-                   Svc.Objects.LocalPlayer?.IsTargetable != true
-               );
+        Configuration cfg = plugin.GetPluginConfig() as Configuration ?? new Configuration();
+        services.AddSingleton(cfg);
+        services.AddSingleton<IConfiguration>(cfg);
+        services.AddSingleton<IPluginConfiguration>(s => s.GetRequiredService<Configuration>());
+        PropertyInfo[] properties = typeof(IConfiguration).GetProperties(BindingFlags.Instance | BindingFlags.Public);
+
+        foreach(PropertyInfo property in properties)
+        {
+            PropertyInfo prop = property;
+            Type propType = prop.PropertyType;
+
+            services.AddSingleton(propType, sp =>
+            {
+                IConfiguration conf = sp.GetRequiredService<IConfiguration>();
+                return prop.GetValue(conf)!;
+            });
+
+            if (typeof(IAutoConfig).IsAssignableFrom(propType))
+            {
+                services.AddSingleton(typeof(IAutoConfig), sp =>
+                {
+                    IConfiguration conf = sp.GetRequiredService<IConfiguration>();
+                    return prop.GetValue(conf)!;
+                });
+            }
+        }
     }
 }

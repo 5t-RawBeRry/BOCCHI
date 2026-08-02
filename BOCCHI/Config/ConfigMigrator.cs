@@ -1,0 +1,162 @@
+﻿using BOCCHI.Common.Config.Migrations;
+using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
+namespace BOCCHI.Config;
+
+public class ConfigMigrator(IDalamudPluginInterface plugin, IPluginLog logger)
+{
+    public bool ShouldMigrate()
+    {
+        if (GetCurrentConfigJObject() is not { } config)
+        {
+            return false;
+        }
+
+        int version = config["Version"]?.Value<int>() ?? 1;
+
+        return version < Configuration.CurrentVersion;
+    }
+
+    public void Migrate()
+    {
+        // We shouldn't be able to get into this block, but just in case
+        if (GetCurrentConfigJObject() is not { } config)
+        {
+            logger.Warning("No config file found");
+            return;
+        }
+
+        ConfigurationMigrationResolver resolver = new([
+            new ConfigMigratorV1ToV2(),
+            new ConfigMigratorV2ToV3()
+        ]);
+
+        int version = config["Version"]?.Value<int>() ?? 1;
+        if (!resolver.CanMigrateTo(version, Configuration.CurrentVersion))
+        {
+            logger.Warning("Could not migrate configuration from {0} to {1}. Backing up to {2}", version, Configuration.CurrentVersion, GetConfigFileBackupPath(version));
+            BackupConfig(version);
+            return;
+        }
+
+        JObject? latest = Migrate(config, version, resolver);
+        if (latest == null)
+        {
+            logger.Warning("Could not migrate configuration from {0} to {1}. Backing up to {2}", version, Configuration.CurrentVersion, GetConfigFileBackupPath(version));
+            BackupConfig(version);
+            return;
+        }
+
+        Configuration? output = latest.ToObject<Configuration>();
+        if (output == null)
+        {
+            logger.Warning("Could not migrate configuration from {0} to {1}. Backing up to {2}", version, Configuration.CurrentVersion, GetConfigFileBackupPath(version));
+            BackupConfig(version);
+            return;
+        }
+
+        logger.Info("Successfully migrated config from {0} to {1}.", version, Configuration.CurrentVersion);
+        BackupConfig(version);
+        string serialized = JsonConvert.SerializeObject(
+            output,
+            Formatting.Indented
+        );
+
+        string path = GetConfigFilePath();
+        File.WriteAllText(path, serialized);
+    }
+
+    private JObject? Migrate(JObject config, int version, ConfigurationMigrationResolver resolver)
+    {
+        do
+        {
+            IMigrator? migrator = resolver.Resolve(version);
+            if (migrator == null)
+            {
+                return null;
+            }
+
+            config = migrator.Migrate(config);
+            version = config["Version"]?.Value<int>() ?? 1;
+        }
+        while(version < Configuration.CurrentVersion);
+
+        return config;
+    }
+
+    private void BackupConfig(int version)
+    {
+        string path = GetConfigFilePath();
+        if (!File.Exists(path))
+        {
+            logger.Warning("Tried backing up config of version {0} but could to read config from path {1}.", version, path);
+            return;
+        }
+
+        string backupPath = GetConfigFileBackupPath(version);
+
+        try
+        {
+            string? dir = Path.GetDirectoryName(backupPath);
+            if (!string.IsNullOrEmpty(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+
+            if (File.Exists(backupPath))
+            {
+                logger.Warning("Config backup already exists: {Path}", backupPath);
+                return;
+            }
+
+            File.Copy(path, backupPath);
+            logger.Info("Backed up config file to {Path}", backupPath);
+        }
+        catch(Exception ex)
+        {
+            logger.Error(ex, "Failed to back up config file");
+        }
+    }
+
+    private string GetConfigFilePath()
+    {
+        string fileName = $"{plugin.InternalName}.json";
+        string pluginDir = plugin.GetPluginConfigDirectory();
+        string pluginConfigsDir = Directory.GetParent(pluginDir)!.FullName;
+
+        return Path.Combine(pluginConfigsDir, fileName);
+    }
+
+    private string GetConfigFileBackupPath(int version)
+    {
+        string fileName = $"{plugin.InternalName}.{version}.json";
+        string pluginDir = plugin.GetPluginConfigDirectory();
+        string pluginConfigsDir = Directory.GetParent(pluginDir)!.FullName;
+
+        return Path.Combine(pluginConfigsDir, fileName);
+    }
+
+    private JObject? GetCurrentConfigJObject()
+    {
+        string filePath = GetConfigFilePath();
+
+        if (!File.Exists(filePath))
+        {
+            return null;
+        }
+
+        string raw = File.ReadAllText(filePath);
+        try
+        {
+            return JObject.Parse(raw);
+        }
+        catch(JsonReaderException e)
+        {
+            logger.Error(e, "An error occured when trying to parse the config file: {0}", filePath);
+            return null;
+        }
+    }
+}

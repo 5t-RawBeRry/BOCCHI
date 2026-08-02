@@ -1,0 +1,39 @@
+﻿namespace BOCCHI.Common.Data.SupportJobs;
+
+public enum SupportJobId
+{
+    PhantomFreelancer = 0,
+    PhantomKnight = 1,
+    PhantomBerserker = 2,
+    PhantomMonk = 3,
+    PhantomRanger = 4,
+    PhantomSamurai = 5,
+    PhantomBard = 6,
+    PhantomGeomancer = 7,
+    PhantomTime = 8,
+    PhantomCannoneer = 9,
+    PhantomChemist = 10,
+    PhantomOracle = 11,
+    PhantomThief = 12,
+    PhantomMysticKnight = 13,
+    PhantomGladiator = 14,
+    PhantomDancer = 15,
+    PhantomNinja = 16,
+    PhantomWhiteMage = 17,
+    PhantomBlackMage = 18,
+    PhantomDragoon = 19,
+    PhantomSummoner = 20,
+    PhantomBlueMage = 21,
+    PhantomRedMage = 22,
+    PhantomNecromancer = 23
+}
+
+public static class SupportJobExtensions
+{
+    extension(SupportJobId jobId)
+    {
+        public int Index() => (int)jobId;
+
+        public uint RowId() => (uint)jobId;
+    }
+}

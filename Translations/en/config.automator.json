@@ -1,0 +1,28 @@
+{
+  "label": "Illegal Mode",
+  "tooltip": "Core Illegal Mode behavior and idle handling.",
+  "fields": {
+    "should_auto_mount": {
+      "label": "Auto-mount while traveling",
+      "tooltip": "Mount before long pathfinds and remount if you dismount mid-route (e.g. after Treasure Sight) while heading to a FATE or CE."
+    },
+    "preferred_mount_id": {
+      "label": "Preferred mount",
+      "tooltip": "Mount to use while auto-traveling. Mount Roulette uses the game's roulette; otherwise pick an unlocked mount from the list.",
+      "roulette": "Mount Roulette",
+      "search": "Search mounts..."
+    },
+    "should_cast_treasure_sight": {
+      "label": "Cast Treasure Sight",
+      "tooltip": "Automatically recast Treasure Sight while Illegal Mode is running."
+    },
+    "treasure_sight_recast_interval_seconds": {
+      "label": "Treasure Sight recast interval (seconds)",
+      "tooltip": "How often to recast Treasure Sight."
+    },
+    "max_remote_idle_time_seconds": {
+      "label": "Max Return delay after FATE/CE (seconds)",
+      "tooltip": "After a FATE or CE ends, wait a random time between 2 seconds and this value before casting Return. Occult Crescent has no Return cooldown — this only humanizes the pause."
+    }
+  }
+}

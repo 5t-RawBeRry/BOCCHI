@@ -1,0 +1,46 @@
+{
+  "label": "Treasure",
+  "tooltip": "Treasure coffer overlays and treasure hunt routing.",
+  "fields": {
+    "enabled": {
+      "label": "Enabled",
+      "tooltip": "Enable treasure-related overlays and features."
+    },
+    "draw_line_to_bronze_chests": {
+      "label": "Draw lines to bronze coffers",
+      "tooltip": "Render a brown line from your character to nearby bronze coffers, while out of combat."
+    },
+    "draw_line_to_silver_chests": {
+      "label": "Draw lines to silver coffers",
+      "tooltip": "Render a silver line from your character to nearby silver coffers, while out of combat."
+    },
+    "draw_line_to_carrots": {
+      "label": "Draw lines to carrots",
+      "tooltip": "Render a green line from your character to nearby carrots, while out of combat."
+    },
+    "show_percentage_active_treasure_count": {
+      "label": "Show active treasure as percentage",
+      "tooltip": "Show active treasure as percentage next to the total"
+    },
+    "enable_treasure_hunt": {
+      "label": "Show Treasure Hunt button",
+      "tooltip": "Show the treasure hunt button in the main window."
+    },
+    "hunt_return_cost": {
+      "label": "Return cost",
+      "tooltip": "Pathfinding cost weight for returning to base camp"
+    },
+    "hunt_teleport_cost": {
+      "label": "Teleport cost",
+      "tooltip": "Pathfinding cost weight for aethernet teleports"
+    },
+    "hunt_detection_range": {
+      "label": "Detection range",
+      "tooltip": "How close you must be to a chest node before interacting"
+    },
+    "hunt_max_level": {
+      "label": "Max chest level",
+      "tooltip": "Maximum treasure node level to include in the hunt route"
+    }
+  }
+}

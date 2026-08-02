@@ -1,0 +1,36 @@
+using BOCCHI.Common.Config.Fields;
+using BOCCHI.Common.Data.Zones;
+using BOCCHI.Common.Data.Zones.Graph;
+using Dalamud.Plugin.Services;
+using Lumina.Excel;
+using Ocelot.Config.Renderers;
+using Ocelot.Services.Translation;
+using Ocelot.Services.UI;
+using System.Reflection;
+using XIVFate = Lumina.Excel.Sheets.Fate;
+
+namespace BOCCHI.Common.Config.Renderers;
+
+public class DisabledFateIdsRenderer(IZoneProvider zones, IDataManager data, IUIService ui)
+    : IFieldRenderer<DisabledFateIdsAttribute>
+{
+    public bool Render(object target, PropertyInfo prop, DisabledFateIdsAttribute attr, Type owner, ITranslator translator)
+    {
+        ExcelSheet<XIVFate> fateSheet = data.GetExcelSheet<XIVFate>();
+        IZone zone = zones.GetZone();
+        List<ActivityData> fates = zone.GetNormalFateData()
+            .Concat(zone.GetPotFateData())
+            .OrderBy(f => f.Id)
+            .ToList();
+
+        return DisabledActivityIdsHelper.Render(
+            target,
+            prop,
+            owner,
+            translator,
+            ui,
+            nameof(DisabledFateIdsRenderer),
+            fates,
+            id => fateSheet.GetRow(id).Name.ToString());
+    }
+}

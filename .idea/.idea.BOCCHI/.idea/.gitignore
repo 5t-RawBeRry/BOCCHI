@@ -4,8 +4,8 @@
 # Rider ignored files
 /modules.xml
 /projectSettingsUpdater.xml
-/.idea.OccultCrescentHelper.iml
 /contentModel.xml
+/.idea.BOCCHI.iml
 # Editor-based HTTP Client requests
 /httpRequests/
 # Datasource local storage ignored files

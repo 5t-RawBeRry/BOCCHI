@@ -1,0 +1,366 @@
+using BOCCHI.Common.Data.Aethernet;
+using BOCCHI.Common.Data.Zones.Graph;
+using BOCCHI.Common.Data.Zones.Graph.Factory;
+using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
+using Ocelot.Services.Logger;
+using Ocelot.Services.Pathfinding;
+using System.Numerics;
+
+namespace BOCCHI.Common.Data.Zones.Implementations.SouthHorn;
+
+public class SouthHorn
+(
+    IObjectTable objects,
+    IDalamudPluginInterface plugin,
+    IGraphFactory graphs,
+    IPathfinder pathfinder,
+    ILogger logger
+) : BaseZone(objects, plugin, graphs, pathfinder, logger, ZoneId.SouthHorn)
+{
+    private static readonly AethernetData BaseCamp = new()
+    {
+        // PlaceName 4927 = Expedition Base Camp (Lifestream / SubArea); 4944 is a duplicate row.
+        Id = 4927,
+        BaseId = 2014664,
+        Position = new(830.75f, 72.98f, -695.98f),
+        Destination = new(834.5f, 73f, -698.75f),
+        DeadRadius = 3f
+    };
+
+    private static readonly AethernetData TheWanderersHaven = new()
+    {
+        // PlaceName 4928 matches Lifestream; 4936 is a duplicate Singular row.
+        Id = 4928,
+        BaseId = 2014665,
+        Position = new(-173.02f, 8.19f, -611.14f),
+        // Keep Dest inside LifestreamInteractRadius (3.5); old pad was ~4.29y out.
+        Destination = new(-170.74f, 6.5f, -610.13f),
+        DeadRadius = 3.2f
+    };
+
+    private static readonly AethernetData CrystallizedCaverns = new()
+    {
+        Id = 4929,
+        BaseId = 2014666,
+        Position = new(-358.14f, 101.98f, -120.96f),
+        // Old Dest was ~3.55y out — just past Lifestream range.
+        Destination = new(-355.65f, 100f, -120.78f),
+        DeadRadius = 3.2f
+    };
+
+    private static readonly AethernetData Eldergrowth = new()
+    {
+        Id = 4930,
+        BaseId = 2014667,
+        Position = new(306.94f, 105.18f, 305.65f),
+        Destination = new(306.94f, 103f, 306f),
+        DeadRadius = 3.2f
+    };
+
+    private static readonly AethernetData Stonemarsh = new()
+    {
+        Id = 4942,
+        BaseId = 2014744,
+        Position = new(-384.12f, 99.20f, 281.42f),
+        Destination = new(-384f, 97.2f, 278.1f),
+        DeadRadius = 3.2f
+    };
+    protected override uint BasecampPlaceNameId
+    {
+        get => 4927;
+    }
+
+    public override AethernetData GetMainAetheryte() => BaseCamp;
+
+    public override Vector3 GetAetherytePosition() => new(830.75f, 72.98f, -695.98f);
+
+    public override Vector3 GetStartingPosition() => new(850.33f, 72.99f, -704.07f);
+
+    public override List<AethernetData> GetAetherytes() =>
+    [
+        BaseCamp,
+        TheWanderersHaven,
+        CrystallizedCaverns,
+        Eldergrowth,
+        Stonemarsh
+    ];
+
+    public override List<AethernetData> GetAethernetShards() =>
+    [
+        TheWanderersHaven,
+        CrystallizedCaverns,
+        Eldergrowth,
+        Stonemarsh
+    ];
+
+    protected override ushort GetForkedTowerEventId() => 48;
+
+    public override List<ActivityData> GetNormalFateData() =>
+    [
+        new(1962, new(162f, 56f, 676f)), // "Rough Waters"
+        new(1963, new(373.20f, 70f, 486f)), // "The Golden Guardian"
+        new(1964, new(-226.10f, 116.38f, 254f)), // "King of the Crescent"
+        new(1965, new(-548.50f, 3f, -595f), PreferredAethernetId: TheWanderersHaven.Id), // "The Winged Terror"
+        new(1966, new(-223.10f, 107f, 36f)), // "An Unending Duty"
+        new(1967, new(-48.10f, 111.76f, -320f), PreferredAethernetId: CrystallizedCaverns.Id), // "Brain Drain"
+        new(1968, new(-370f, 75f, 650f)), // "A Delicate Balance"
+        new(1969, new(-589.10f, 96.50f, 333f)), // "Sworn to Soil"
+        new(1970, new(-71f, 71.31f, 557f)), // "A Prying Eye"
+        new(1971, new(79f, 97.86f, 278f)), // "Fatal Allure"
+        new(1972, new(413f, 96f, -13f)) // "Serving Darkness"
+    ];
+
+    public override List<ActivityData> GetPotFateData() =>
+    [
+        new(1976, new(200f, 111.73f, -215f), PreferredAethernetId: Eldergrowth.Id), // "Persistent Pots" (North)
+        new(1977, new(-481f, 75f, 528f), PreferredAethernetId: Stonemarsh.Id) // "Pleading Pots" (South)
+    ];
+
+    // Positions are AOCCH staging points; CombatRadius keeps BOCCHI engage padding behavior.
+    public override List<ActivityData> GetCriticalEncounterData() =>
+    [
+        new(33, new(300.109f, 70f, 730.029f), 20f, Eldergrowth.Id), // "Scourge of the Mind"
+        new(34, new(449.613f, 65f, 356.86f), 20f, Eldergrowth.Id), // "The Black Regiment"
+        new(35, new(619.864f, 79f, 799.882f), 20f, Eldergrowth.Id), // "The Unbridled"
+        new(36, new(680.95f, 74f, 533.939f), 20f, Eldergrowth.Id), // "Crawling Death"
+        new(37, new(-340.067f, 75f, 800.32f), 20f, Stonemarsh.Id), // "Calamity Bound"
+        new(38, new(-413.775f, 92f, 74.884f), 20f, CrystallizedCaverns.Id), // "Trial by Claw"
+        new(39, new(-799.895f, 44f, 245.027f), 20f, Stonemarsh.Id), // "From Times Bygone"
+        new(40, new(679.954f, 96f, -279.855f), 20f, BaseCamp.Id), // "Company of Stone"
+        new(41, new(-117.227f, 1f, -849.941f), 15f, TheWanderersHaven.Id), // "Shark Attack"
+        new(42, new(635.981f, 108f, -53.95f), 20f, Eldergrowth.Id), // "On the Hunt"
+        new(43, new(-351.222f, 5f, -607.909f), 15f, TheWanderersHaven.Id), // "With Extreme Prejudice"
+        new(44, new(460.949f, 97f, -362.86f), 20f, BaseCamp.Id), // "Noise Complaint"
+        new(45, new(71.964f, 20f, -544.904f), 20f, TheWanderersHaven.Id), // "Cursed Concern"
+        new(46, new(869.891f, 122f, 180.11f), 20f, Eldergrowth.Id), // "Eternal Watch"
+        new(47, new(-570.087f, 97f, -160.04f), 20f, CrystallizedCaverns.Id) // "Flame of Dusk"
+    ];
+
+    public override BuffZone? GetBuffZone() =>
+        new(new Vector3(836.07f, 73.12f, -709.45f), 2.5f, 4.5f);
+
+    public override ShoppingVendorData? GetShoppingVendor() =>
+        new(1053614, BaseCamp.Id);
+
+    public override TreasureRoutePolicy GetTreasureRoutePolicy() =>
+        new()
+        {
+            UnsafeWeatherIds = [7, 62, 64, 192],
+            AshkinStartEorzeaMinute = 1350,
+            AshkinEndEorzeaMinute = 240,
+            AreaAethernetByName = new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Southdown Heath"] = BaseCamp.Id,
+                ["Lost Citadel"] = BaseCamp.Id,
+                ["Shadowed City"] = Eldergrowth.Id,
+                ["Eldergrowth"] = Eldergrowth.Id,
+                ["Stonemarsh"] = Stonemarsh.Id,
+                ["Heathcliff"] = Stonemarsh.Id,
+                ["Abandoned Ascent"] = Stonemarsh.Id,
+                ["Crystallized Caverns"] = CrystallizedCaverns.Id,
+                ["Vanishing Slope"] = TheWanderersHaven.Id,
+                ["The Wanderer's Haven"] = TheWanderersHaven.Id,
+            }
+        };
+
+    public override List<TreasureData> GetTreasureData() =>
+    [
+        new(1789, 5),
+        new(1790, 11),
+        new(1791, 13),
+        new(1792, 16),
+        new(1793, 14),
+        new(1794, 23),
+        new(1795, 25),
+        new(1796, 28),
+        new(1797, 1),
+        new(1798, 1),
+        new(1799, 2),
+        new(1800, 2),
+        new(1801, 3),
+        new(1802, 3),
+        new(1803, 4),
+        new(1804, 4),
+        new(1805, 5),
+        new(1806, 5),
+        new(1807, 3),
+        new(1808, 6),
+        new(1809, 6),
+        new(1810, 7),
+        new(1811, 8),
+        new(1812, 8),
+        new(1813, 9),
+        new(1814, 9),
+        new(1815, 10),
+        new(1816, 10),
+        new(1817, 11),
+        new(1818, 11),
+        new(1819, 12),
+        new(1820, 12),
+        new(1821, 13),
+        new(1822, 13),
+        new(1823, 14),
+        new(1824, 14),
+        new(1825, 15),
+        new(1826, 15),
+        new(1827, 16),
+        new(1828, 16),
+        new(1829, 17),
+        new(1830, 17),
+        new(1831, 18),
+        new(1832, 18),
+        new(1833, 19),
+        new(1834, 19),
+        new(1835, 20),
+        new(1836, 20),
+        new(1837, 21),
+        new(1838, 21),
+        new(1839, 22),
+        new(1840, 22),
+        new(1841, 22),
+        new(1842, 99), // 23 marked as 99 to avoid this chest, this is on a lip that vnav can't walk to
+        new(1843, 24),
+        new(1844, 24),
+        new(1845, 25),
+        new(1846, 25),
+        new(1847, 26),
+        new(1848, 26),
+        new(1849, 27),
+        new(1850, 27),
+        new(1851, 28),
+        new(1852, 28),
+        new(1853, 21),
+        new(1854, 10),
+        new(1855, 11),
+        new(1856, 11)
+    ];
+
+    public override Dictionary<int, List<PotChestData>> GetPotChestData() =>
+        new()
+        {
+            // North
+            {
+                1976, [
+                    new(new(571.5841f, 51.451305f, -813.1642f), 99),
+                    new(new(662.4388f, 120f, 161.1339f), 99),
+                    new(new(606.4641f, 108.07402f, 184.8517f), 99),
+                    new(new(-312.2778f, 103.19944f, -35.25348f), 99),
+                    new(new(587.7039f, 78.8956f, -545.8168f), 99),
+                    new(new(891.2597f, 120f, -20.672f), 99),
+                    new(new(878.1131f, 108.28959f, -91.1057f), 99),
+                    new(new(803.6609f, 95.99998f, -354.1809f), 99),
+                    new(new(341.4413f, 95.99999f, 194.7507f), 99),
+                    new(new(570.2421f, 64.66201f, 272.1734f), 99),
+                    new(new(-216.372f, 5.4469404f, -510.1361f), 99),
+                    new(new(684.4223f, 96.10129f, -165.4811f), 99),
+                    new(new(-188.1745f, 2.999999f, -717.2005f), 99),
+                    new(new(-476.3011f, 101.44228f, -86.69939f), 99),
+                    new(new(80.19762f, 101.27949f, 391.2263f), 99),
+                    new(new(-534.6993f, 2.999998f, -651.6244f), 99),
+                    new(new(-165.2374f, 95.33837f, 437.4505f), 99),
+                    new(new(330.8659f, 6.7168036f, -654.5339f), 99),
+                    new(new(-333.3444f, 2.9999998f, -861.1722f), 99),
+                    new(new(-313.2906f, 108.10962f, 70.76207f), 99),
+                    new(new(-459.1735f, 93.57443f, 5.054043f), 99),
+                    new(new(-54.69518f, 99.40573f, 405.0261f), 99),
+                    new(new(-382.4396f, 109.30187f, -378.3482f), 99),
+                    new(new(263.2559f, 100.38499f, 326.6834f), 99),
+                    new(new(224.7233f, 68.7328f, 518.668f), 99),
+                    new(new(19.73968f, 26.045855f, -420.977f), 99),
+                    new(new(705.2716f, 68.143616f, 358.6714f), 99),
+                    new(new(-660.5336f, 98f, -216.7666f), 99),
+                    new(new(-324.2736f, 121f, 203.2017f), 99),
+                    new(new(-386.5904f, -0.13994062f, -461.0976f), 99)
+                ]
+            },
+            // South
+            {
+                1977, [
+                    new(new(-195.4419f, 110.15342f, -287.8911f), 99),
+                    new(new(74.73397f, 110.494316f, -394.1289f), 99),
+                    new(new(-386.437f, 98.60658f, -221.7847f), 99),
+                    new(new(-554.6146f, 99.01769f, -309.1231f), 99),
+                    new(new(107.0611f, 105.699875f, 146.7059f), 99),
+                    new(new(825.9521f, 70f, 772.4054f), 99),
+                    new(new(-836.7586f, 106.999985f, 597.2944f), 99),
+                    new(new(67.45271f, 69.477974f, 745.8658f), 99),
+                    new(new(69.70596f, 111.56108f, -239.064f), 99),
+                    new(new(301.8741f, 103.784424f, 70.59854f), 99),
+                    new(new(-38.97946f, 102.073296f, -175.4589f), 99),
+                    new(new(-60.72729f, 69.687035f, 828.4997f), 99),
+                    new(new(17.60418f, 65.93209f, 674.6207f), 99),
+                    new(new(393.2685f, 57.545956f, 844.6924f), 99),
+                    new(new(393.0191f, 104f, -124.1651f), 99),
+                    new(new(-798.7886f, 84.22545f, -4.822005f), 99),
+                    new(new(440.8355f, 70.3f, 876.4097f), 99),
+                    new(new(-734.1434f, 170.99998f, 683.7238f), 99),
+                    new(new(423.3505f, 70.3f, 578.9013f), 99),
+                    new(new(200.1241f, 56f, 624.2285f), 99),
+                    new(new(-603.3457f, 139f, 858.6771f), 99),
+                    new(new(-829.598f, 62.66814f, 66.82948f), 99),
+                    new(new(-645.3027f, 135.69208f, -73.54771f), 99),
+                    new(new(-836.1612f, 107f, 770.2822f), 99),
+                    new(new(-676.6202f, 128.57442f, 1.531581f), 99),
+                    new(new(-713.6796f, 203f, 710.08f), 99),
+                    new(new(781.2514f, 70f, 560.0701f), 99),
+                    new(new(-746.1318f, 172.00023f, 828.8809f), 99),
+                    new(new(-730.5441f, 107.694275f, -371.4776f), 99),
+                    new(new(-810.8279f, 114.053925f, -226.8324f), 99)
+                ]
+            }
+        };
+
+    public override List<PotChestData> GetRerollPotChestData() =>
+    [
+        new(new(-676.4631f, 5f, -769.7955f), 99),
+        new(new(-823.9183f, 140.00032f, 677.6934f), 99),
+        new(new(-886.4718f, 107f, 712.4964f), 99),
+        new(new(-625.7809f, 171f, 810.8691f), 99),
+        new(new(-813.9943f, 5f, -663.3634f), 99),
+        new(new(-842.8967f, 75.76903f, -125.0559f), 99),
+        new(new(-680.0345f, 201f, 739.9117f), 99),
+        new(new(-793.0552f, 5f, -777.3126f), 99),
+        new(new(-708.6777f, 171f, 669.5714f), 99),
+        new(new(-718.0424f, 5f, -633.8791f), 99),
+        new(new(-868.8489f, 67.5054f, -59.44909f), 99),
+        new(new(-803.5182f, 3f, -602.7497f), 99),
+        new(new(-732.2048f, 139f, 828.8491f), 99),
+        new(new(-659.1158f, 12.198493f, -508.7968f), 99),
+        new(new(-785.997f, 162.39513f, 790.5948f), 99),
+        new(new(-840.8771f, 107.26465f, -250.273f), 99),
+        new(new(-708.687f, 141.16982f, -139.3283f), 99),
+        new(new(-796.66f, 114.15647f, -228.9318f), 99),
+        new(new(-776.6315f, 5f, -486.978f), 99),
+        new(new(-758.8058f, 127.66496f, -183.164f), 99)
+    ];
+
+    public override List<CarrotData> GetCarrotData() =>
+    [
+        new(1, new(-554.02f, 110.70f, -365.90f), 11),
+        new(2, new(-710.27f, 3.00f, -451.51f), 23),
+        new(3, new(720.41f, 120.00f, 271.05f), 21),
+        new(4, new(-771.63f, 5.00f, -694.00f), 22),
+        new(5, new(845.53f, 98.00f, 777.43f), 17),
+        new(6, new(-701.88f, 201.00f, 718.72f), 28),
+        new(7, new(-843.86f, 83.66f, -36.78f), 24),
+        new(8, new(-84.74f, 3.00f, -796.02f), 1),
+        new(9, new(-490.32f, 3.00f, -741.02f), 22),
+        new(10, new(-727.85f, 81.48f, 328.93f), 19),
+        new(11, new(-273.09f, 75.00f, 850.03f), 20),
+        new(12, new(-806.51f, 107.00f, 887.61f), 26),
+        new(13, new(248.92f, 56.00f, 791.11f), 20),
+        new(14, new(827.20f, 108.00f, -156.44f), 5),
+        new(15, new(-743.60f, 96.39f, 84.44f), 13),
+        new(16, new(650.23f, 108.00f, 141.19f), 5),
+        new(17, new(-174.05f, 121.00f, 107.65f), 11),
+        new(18, new(-575.64f, 162.40f, 668.70f), 27),
+        new(19, new(-400.53f, 3.00f, -518.30f), 8),
+        new(20, new(865.00f, 96.00f, -214.67f), 5),
+        new(21, new(772.36f, 70.30f, 531.13f), 21),
+        new(22, new(466.20f, 70.30f, 563.25f), 17),
+        new(23, new(477.41f, 96.10f, 138.65f), 4),
+        new(24, new(283.65f, 56.00f, 587.31f), 15),
+        new(25, new(-439.05f, 115.82f, 184.47f), 12)
+    ];
+}

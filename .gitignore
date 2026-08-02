@@ -1,5 +1,14 @@
 .vs/
+BOCCHI/obj/
+BOCCHI/bin/
 *.user
-.env
+BOCCHI/.env
 node_modules/
-plugins
+BOCCHI*/obj
+BOCCHI*/bin
+
+# Legacy monolith code superseded by BOCCHI.* projects on rewrite
+/BOCCHI/Modules/
+/BOCCHI/Commands/
+/BOCCHI/Chains/
+/BOCCHI/Data/EventData.cs
