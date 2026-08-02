@@ -230,11 +230,27 @@ public class TreasureHunterService
             return true;
         }
 
-        Vector3 destination = layoutTreasure.First(t => t.Id == step.NodeId).Position;
+        Vector3 layoutDestination = layoutTreasure.First(t => t.Id == step.NodeId).Position;
+
+        IGameObject? chest = GetValidChests()
+            .FirstOrDefault(o => Vector3.Distance(layoutDestination, o.Position) <= ChestSearchRadius);
+
+        // Prefer the live object once it exists — layout coords are often slightly off.
+        Vector3 destination = chest?.Position ?? layoutDestination;
 
         if (!vnav.IsRunning())
         {
             vnav.PathfindAndMoveTo(destination, false);
+        }
+        else if (chest != null)
+        {
+            // Re-aim at the live chest if we were still pathing to layout.
+            float toLive = player.Position.Distance(chest.Position);
+            if (toLive > OpenTreasureCofferChain.InteractDistance
+                && player.Position.Distance(layoutDestination) <= ChestSearchRadius)
+            {
+                vnav.PathfindAndMoveTo(chest.Position, false);
+            }
         }
 
         MaybeMount(destination);
@@ -245,19 +261,23 @@ public class TreasureHunterService
             return false;
         }
 
-        IGameObject? chest = GetValidChests()
-            .FirstOrDefault(o => Vector3.Distance(destination, o.Position) <= ChestSearchRadius);
-
-        if (IsChestComplete(destination))
+        if (chest != null && IsChestOpened(chest))
         {
             vnav.Stop();
             return true;
         }
 
+        // Only treat as empty when we're close enough that the object should have streamed in.
+        // Skipping at HuntDetectionRange (default 75y) caused "runs past" when radar already saw the chest.
         if (chest == null)
         {
-            vnav.Stop();
-            return true;
+            if (StepDistance <= ChestSearchRadius)
+            {
+                vnav.Stop();
+                return true;
+            }
+
+            return false;
         }
 
         if (StepDistance > OpenTreasureCofferChain.InteractDistance)
@@ -273,16 +293,8 @@ public class TreasureHunterService
         return false;
     }
 
-    private bool IsChestComplete(Vector3 destination)
+    private bool IsChestOpened(IGameObject chest)
     {
-        IGameObject? chest = GetValidChests()
-            .FirstOrDefault(o => Vector3.Distance(destination, o.Position) <= ChestSearchRadius);
-
-        if (chest == null)
-        {
-            return true;
-        }
-
         unsafe
         {
             GameObject* gameObject = (GameObject*)(void*)chest.Address;
@@ -447,7 +459,7 @@ public class TreasureHunterService
 
         if (player.Position.Distance(destination) > NavigationConstants.MountMinDistance)
         {
-            MountWait.TryCast((uint)Math.Max(0, automatorConfig.PreferredMountId));
+            MountWait.TryCast(automatorConfig.PreferredMountId);
         }
     }
 

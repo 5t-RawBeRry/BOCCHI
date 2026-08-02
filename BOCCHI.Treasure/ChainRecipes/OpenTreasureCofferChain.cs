@@ -67,7 +67,8 @@ public class OpenTreasureCofferChain
         IGameObject? chest = GetChestAt(targetPosition);
         if (chest == null)
         {
-            return true;
+            // Keep waiting — missing object is not success (spawn lag / offset).
+            return false;
         }
 
         if (player.Position.Distance(chest.Position) > InteractDistance)
@@ -93,8 +94,10 @@ public class OpenTreasureCofferChain
 
     private IGameObject? GetChestAt(Vector3 position)
     {
+        // Search a bit wider than interact range so slight layout offsets still resolve.
+        const float SearchRadius = 5f;
         return objects
             .Where(o => o is { ObjectKind: DalamudObjectKind.Treasure, IsDead: false, IsTargetable: true } && o.IsValid())
-            .FirstOrDefault(o => Vector3.Distance(o.Position, position) <= InteractDistance);
+            .FirstOrDefault(o => Vector3.Distance(o.Position, position) <= SearchRadius);
     }
 }

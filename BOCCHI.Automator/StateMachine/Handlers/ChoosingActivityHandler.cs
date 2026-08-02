@@ -66,9 +66,9 @@ public class ChoosingActivityHandler
 
     public override void Handle()
     {
-        bool potFarming = fatesConfig.ShouldFarmPotChests || fatesConfig.PreferPotFates;
         DateTimeOffset now = DateTimeOffset.UtcNow;
         PotCycleSnapshot cycle = potCycle.Snapshot;
+        bool potFarming = fatesConfig.IsPotFallbackGatingEnabled((uint)cycle.PredictedNextPotFateId);
 
         CriticalEncounter? criticalEncounter = criticalEncounterRepository.SnapshotWithoutForkedTower()
             .FirstOrDefault(c => c.State == DynamicEventState.Register

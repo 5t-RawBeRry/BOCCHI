@@ -10,7 +10,16 @@ namespace BOCCHI.Automator.StateMachine.Handlers;
 public class ReturningToJobHandler(IAutomatorMemory memory, ISupportJobFactory jobs, ISupportJobChanger changer) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.ReturningToJob)
 {
     // Must beat Pathfinding (High) / InFate / InCombat so TS/buff job restore is not skipped.
-    public override StatePriority GetScore() => HasJobToRestore() ? StatePriority.VeryHigh : StatePriority.Never;
+    // Do not restore while Treasure Sight is still in progress — otherwise Freelancer swap loops forever.
+    public override StatePriority GetScore()
+    {
+        if (memory.TryRemember<CastingTreasureSightMemory>(out CastingTreasureSightMemory _))
+        {
+            return StatePriority.Never;
+        }
+
+        return HasJobToRestore() ? StatePriority.VeryHigh : StatePriority.Never;
+    }
 
     public override void Handle()
     {

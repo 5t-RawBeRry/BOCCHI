@@ -53,7 +53,7 @@ public class PathStepExecutor
                     return StepResult.Success();
                 }
 
-                MountWait.TryCast((uint)Math.Max(0, config.PreferredMountId));
+                MountWait.TryCast(config.PreferredMountId);
                 return StepResult.Success();
             }, "PathStep::MaybeMount")
             .WaitUntil(
@@ -67,7 +67,7 @@ public class PathStepExecutor
                             destination,
                             started,
                             config.ShouldAutoMount,
-                            (uint)Math.Max(0, config.PreferredMountId)));
+                            config.PreferredMountId));
                 },
                 MountWait.Timeout,
                 TimeSpan.FromMilliseconds(250),

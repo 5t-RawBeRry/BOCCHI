@@ -5,6 +5,17 @@ using Ocelot.Lifecycle;
 
 namespace BOCCHI.Currency.Services;
 
+public interface ICurrencyTracker
+{
+    double GoldPerHour { get; }
+
+    double SilverPerHour { get; }
+
+    float[] GetGoldHistory(TimeSpan sampleDuration);
+
+    float[] GetSilverHistory(TimeSpan sampleDuration);
+}
+
 public class CurrencyTracker(TrackerConfig config) : ICurrencyTracker, IOnUpdate
 {
     private readonly DeltaRateTracker goldTracker = new(() => TimeSpan.FromMinutes(config.TrackedDuration));

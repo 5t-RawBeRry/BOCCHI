@@ -1,3 +1,4 @@
+using Dalamud.Bindings.ImGui;
 using Ocelot.Services.UI;
 
 namespace BOCCHI.Common.UI;
@@ -18,7 +19,31 @@ public static class TrackerRateRenderer
 
         if (showGraph)
         {
-            TrackerPlotHelper.PlotPerHourHistory(history, plotId, plotHeight);
+            PlotPerHourHistory(history, plotId, plotHeight);
         }
+    }
+
+    public static void PlotPerHourHistory(float[] history, string id, float height = 30f)
+    {
+        if (history.Length <= 0)
+        {
+            return;
+        }
+
+        float max = history.Max();
+        if (max <= 0f)
+        {
+            max = 1f;
+        }
+
+        ImGui.PlotLines(
+            id,
+            history.AsSpan(),
+            history.Length,
+            string.Empty,
+            0f,
+            max,
+            new(ImGui.GetContentRegionAvail().X, height)
+        );
     }
 }

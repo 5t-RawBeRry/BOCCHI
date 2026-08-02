@@ -6,6 +6,8 @@ using System.Numerics;
 
 namespace BOCCHI.Debug;
 
+public interface IDebugWindow : IWindow;
+
 public sealed class DebugWindow
 (
     IEnumerable<IDebugPanel> panels,

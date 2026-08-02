@@ -1,3 +1,4 @@
+using BOCCHI.Common.Config.Fields;
 using Ocelot.Config;
 using Ocelot.Config.Fields;
 
@@ -10,10 +11,10 @@ public class AutomatorConfig : IAutoConfig
     [Checkbox] public bool ShouldAutoMount { get; set; } = true;
 
     /// <summary>
-    ///     Mount sheet row ID to use when auto-mounting. 0 = Mount Roulette.
+    ///     Preferred mount sheet row ID. 0 = Mount Roulette.
     /// </summary>
-    [IntRange(0, 999)]
-    public int PreferredMountId { get; set; } = 0;
+    [MountSelect]
+    public uint PreferredMountId { get; set; } = 0;
 
     [Checkbox] public bool ShouldCastTreasureSight { get; set; } = false;
 

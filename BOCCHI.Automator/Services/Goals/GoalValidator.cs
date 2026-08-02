@@ -35,15 +35,9 @@ public class GoalValidator
             return false;
         }
 
-        bool potFarming = fatesConfig.ShouldFarmPotChests || fatesConfig.PreferPotFates;
-        PotFallbackStartDecision decision = PotFallbackWindow.Evaluate(
-            potCycle.Snapshot,
-            DateTimeOffset.UtcNow,
-            TimeSpan.FromMinutes(Math.Max(0, fatesConfig.CeFallbackCutoffMinutes)),
-            fatesConfig.PotSpawnLeadMinutes,
-            potFarming,
-            "CE");
-        return decision.AllowStart;
+        // Sticky: once a CE is chosen, keep it until it leaves Register / is disabled.
+        // Pot cutoffs only block *starting* a CE (ChoosingActivity) — abandoning mid-wait for a FATE is wrong.
+        return true;
     }
 
     private bool ValidateFate(FateId id)
@@ -56,9 +50,10 @@ public class GoalValidator
         bool isPot = zones.GetZone().IsPotFate(id.Value);
         if (!isPot)
         {
-            bool potFarming = fatesConfig.ShouldFarmPotChests || fatesConfig.PreferPotFates;
+            PotCycleSnapshot cycle = potCycle.Snapshot;
+            bool potFarming = fatesConfig.IsPotFallbackGatingEnabled((uint)cycle.PredictedNextPotFateId);
             PotFallbackStartDecision decision = PotFallbackWindow.Evaluate(
-                potCycle.Snapshot,
+                cycle,
                 DateTimeOffset.UtcNow,
                 TimeSpan.FromMinutes(Math.Max(0, fatesConfig.FateFallbackCutoffMinutes)),
                 fatesConfig.PotSpawnLeadMinutes,

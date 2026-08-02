@@ -168,7 +168,7 @@ public class ActivityNavigation
                     return StepResult.Success();
                 }
 
-                MountWait.TryCast((uint)Math.Max(0, automatorConfig.PreferredMountId));
+                MountWait.TryCast(automatorConfig.PreferredMountId);
                 return StepResult.Success();
             }, $"{name}::MaybeMount")
             .WaitUntil(
@@ -182,7 +182,7 @@ public class ActivityNavigation
                             destination,
                             started,
                             automatorConfig.ShouldAutoMount,
-                            (uint)Math.Max(0, automatorConfig.PreferredMountId)));
+                            automatorConfig.PreferredMountId));
                 },
                 MountWait.Timeout,
                 TimeSpan.FromMilliseconds(250),

@@ -32,6 +32,7 @@ public class Automator
     IVNavmeshIpc vnav,
     IZoneProvider zones,
     IObjectTable objects,
+    IChatGui chat,
     FatesConfig fatesConfig,
     ILogger<Automator> logger
 ) : IAutomator, IOnUpdate, IOnStop
@@ -49,6 +50,7 @@ public class Automator
     public void Toggle()
     {
         context.Toggle();
+        chat.Print(Enabled ? "[BOCCHI] Illegal Mode On" : "[BOCCHI] Illegal Mode Off");
         if (!Enabled)
         {
             StopAutomation();

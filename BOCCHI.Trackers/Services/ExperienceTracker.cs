@@ -6,6 +6,13 @@ using Ocelot.Lifecycle;
 
 namespace BOCCHI.Experience.Services;
 
+public interface IExperienceTracker
+{
+    double ExperiencePerHour { get; }
+
+    float[] GetExperienceHistory(TimeSpan sampleDuration);
+}
+
 public class ExperienceTracker
 (
     TrackerConfig config,

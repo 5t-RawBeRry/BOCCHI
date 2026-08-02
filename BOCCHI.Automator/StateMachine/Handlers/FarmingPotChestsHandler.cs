@@ -31,6 +31,9 @@ public class FarmingPotChestsHandler
 {
     private const float ChestSearchRadius = 5f;
 
+    /// <summary>How long to wait near a predicted pot chest before giving up on spawn.</summary>
+    private static readonly TimeSpan ChestSpawnWait = TimeSpan.FromSeconds(45);
+
     private Task<ChainResult>? activeChain;
 
     public override StatePriority GetScore()
@@ -79,12 +82,13 @@ public class FarmingPotChestsHandler
             return;
         }
 
-        while(farm.Chests.Count > 0)
+        while (farm.Chests.Count > 0)
         {
             Vector3 target = farm.Chests.Peek();
-            if (!HasChestAt(target) || IsChestComplete(target))
+            if (IsChestOpened(target))
             {
                 farm.Chests.Dequeue();
+                farm.WaitingForSpawnSince = DateTimeOffset.MinValue;
                 continue;
             }
 
@@ -98,13 +102,46 @@ public class FarmingPotChestsHandler
         }
 
         Vector3 chestPosition = farm.Chests.Peek();
-        float distance = player.Position.Distance(chestPosition);
+        IGameObject? liveChest = FindChestNear(chestPosition);
+        Vector3 pathTarget = liveChest?.Position ?? chestPosition;
+        float distance = player.Position.Distance(pathTarget);
+
+        if (liveChest == null)
+        {
+            if (farm.WaitingForSpawnSince == DateTimeOffset.MinValue)
+            {
+                farm.WaitingForSpawnSince = DateTimeOffset.UtcNow;
+            }
+
+            // Path to authored position and wait — chests often spawn after the pot FATE ends.
+            if (distance > OpenTreasureCofferChain.InteractDistance)
+            {
+                if (pathfinder.IsIdle())
+                {
+                    pathfinder.PathfindAndMoveTo(new(chestPosition));
+                }
+
+                return;
+            }
+
+            pathfinder.Stop();
+
+            if (DateTimeOffset.UtcNow - farm.WaitingForSpawnSince >= ChestSpawnWait)
+            {
+                farm.Chests.Dequeue();
+                farm.WaitingForSpawnSince = DateTimeOffset.MinValue;
+            }
+
+            return;
+        }
+
+        farm.WaitingForSpawnSince = DateTimeOffset.MinValue;
 
         if (distance > OpenTreasureCofferChain.InteractDistance)
         {
             if (pathfinder.IsIdle())
             {
-                pathfinder.PathfindAndMoveTo(new(chestPosition));
+                pathfinder.PathfindAndMoveTo(new(pathTarget));
             }
 
             return;
@@ -113,7 +150,7 @@ public class FarmingPotChestsHandler
         pathfinder.Stop();
         activeChain = chainManager.Manage(
             chains.Create("PotChestFarm::Open")
-                .Then<OpenTreasureCofferChain, Vector3>(chestPosition)
+                .Then<OpenTreasureCofferChain, Vector3>(liveChest.Position)
         );
     }
 
@@ -127,20 +164,18 @@ public class FarmingPotChestsHandler
         } && o.IsValid());
     }
 
-    private bool HasChestAt(Vector3 position)
+    private IGameObject? FindChestNear(Vector3 position)
     {
         return GetValidChests()
-            .Any(o => Vector3.Distance(o.Position, position) <= ChestSearchRadius);
+            .FirstOrDefault(o => Vector3.Distance(o.Position, position) <= ChestSearchRadius);
     }
 
-    private bool IsChestComplete(Vector3 position)
+    private bool IsChestOpened(Vector3 position)
     {
-        IGameObject? chest = GetValidChests()
-            .FirstOrDefault(o => Vector3.Distance(o.Position, position) <= ChestSearchRadius);
-
+        IGameObject? chest = FindChestNear(position);
         if (chest == null)
         {
-            return true;
+            return false;
         }
 
         unsafe

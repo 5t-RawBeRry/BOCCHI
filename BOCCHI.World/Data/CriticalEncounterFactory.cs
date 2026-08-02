@@ -4,6 +4,11 @@ using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 
 namespace BOCCHI.CriticalEncounters.Data;
 
+public interface ICriticalEncounterFactory
+{
+    CriticalEncounter Create(DynamicEvent ev);
+}
+
 public class CriticalEncounterFactory(IZoneProvider zones) : ICriticalEncounterFactory
 {
     public CriticalEncounter Create(DynamicEvent ev)

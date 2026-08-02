@@ -44,6 +44,6 @@ public static class AutoMount
             return;
         }
 
-        MountWait.TryCast((uint)Math.Max(0, config.PreferredMountId));
+        MountWait.TryCast(config.PreferredMountId);
     }
 }

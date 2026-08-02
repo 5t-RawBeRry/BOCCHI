@@ -1,9 +1,11 @@
 using BOCCHI.Common.Data.Aethernet;
+using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.Paths;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Common.Data.Zones.Graph.Traversal;
+using BOCCHI.Common.Services;
 using BOCCHI.Common.Services.Paths;
 using Dalamud.Plugin.Services;
 using Ocelot.Extensions;
@@ -18,6 +20,8 @@ public class PathCalculator
     IPathfinder pathfinder,
     IObjectTable objects,
     IZoneProvider zones,
+    IFateRepository fates,
+    IFateContext fateContext,
     ILogger<PathCalculator> logger
 ) : IPathCalculator
 {
@@ -36,6 +40,13 @@ public class PathCalculator
             return [];
         }
 
+        // Already registered in the target FATE — no more travel needed.
+        if (goal.GoalType is FateGoal fateGoal && fateContext.GetFateId() == fateGoal.id)
+        {
+            logger.Debug("Already inside target FATE.");
+            return [];
+        }
+
         ZoneGraph graph = await zone.GetGraph();
 
         Node goalNode;
@@ -43,15 +54,26 @@ public class PathCalculator
         {
             goalNode = GetGoalNode(goal, graph);
         }
-        catch(ArgumentOutOfRangeException ex)
+        catch (ArgumentOutOfRangeException ex)
         {
             logger.Error(ex.Message);
             return [];
         }
 
-        Vector3 destination = goalNode.Position;
+        // Prefer live FATE center when available — authored graph points can sit outside the circle.
+        Node pathGoal = goalNode;
+        if (goal.GoalType is FateGoal liveFateGoal
+            && fates.Snapshot().FirstOrDefault(f => f.Id.Value == liveFateGoal.id.Value) is { } liveFate)
+        {
+            pathGoal = new Node
+            {
+                Type = goalNode.Type,
+                Position = liveFate.Position,
+                Metadata = goalNode.Metadata
+            };
+        }
 
-        if (player.Position.Distance2D(destination) <= 20f)
+        if (player.Position.Distance2D(pathGoal.Position) <= NavigationConstants.EventArrivalRadius)
         {
             logger.Debug("Too close to destination.");
             return [];
@@ -64,7 +86,7 @@ public class PathCalculator
         traverser.AddCalculator(new ReturnWalkCalculator());
         traverser.AddCalculator(new ReturnTeleportWalkCalculator());
 
-        List<PathStep> steps = await traverser.FindPath(player.Position, goalNode);
+        List<PathStep> steps = await traverser.FindPath(player.Position, pathGoal);
         List<PathStep> resolvedSteps = steps
             .Select(step => AethernetNavigation.ResolveAetherytePathStep(step, zone))
             .ToList();

@@ -58,6 +58,7 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         BootstrapConfiguration(services, plugin, logger);
 
         services.AddSingleton<TranslationLoader>();
+        services.AddSingleton<ReturnYesNoInitializer>();
 
         services.AddSingleton<IMainRenderer, MainRenderer>();
         services.AddSingleton<IConfigRenderer, ConfigRenderer>();
@@ -66,6 +67,7 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<IFieldRenderer<MobMultiSelectAttribute>, MobMultiSelectRenderer>();
         services.AddSingleton<IFieldRenderer<DisabledFateIdsAttribute>, DisabledFateIdsRenderer>();
         services.AddSingleton<IFieldRenderer<DisabledCriticalEncounterIdsAttribute>, DisabledCriticalEncounterIdsRenderer>();
+        services.AddSingleton<IFieldRenderer<MountSelectAttribute>, MountSelectRenderer>();
 
         services.AddSingleton<ISupportJobFactory, SupportJobFactory>();
         services.AddSingleton<ISupportJobChanger, SupportJobChanger>();

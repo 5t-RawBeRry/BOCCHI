@@ -27,8 +27,8 @@
       "tooltip": "Use Freelancer Inquiring Mind to refresh Quicker Step when available, then apply other selected buffs individually."
     },
     "reapply_threshold": {
-      "label": "Reapply threshold (seconds)",
-      "tooltip": "Reapply a buff when this many seconds remain."
+      "label": "Reapply threshold (minutes)",
+      "tooltip": "Reapply a buff when this many minutes (or less) remain on its duration."
     },
     "knowledge_crystal_distance": {
       "label": "Knowledge crystal distance",

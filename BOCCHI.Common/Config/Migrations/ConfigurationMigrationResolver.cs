@@ -2,13 +2,47 @@
 
 namespace BOCCHI.Common.Config.Migrations;
 
+public interface IMigrator
+{
+    int FromVersion { get; }
+
+    int ToVersion { get; }
+
+    JObject Migrate(JObject oldConfig);
+}
+
+public interface IConfigurationMigrationResolver
+{
+    IMigrator? Resolve(int from);
+
+    IMigrator? Resolve(JObject obj);
+
+    bool CanMigrateTo(int from, int to);
+}
+
+public class DuplicateMigrationBaseException(int from) : Exception($"Found duplicate from migrator {from}");
+
+public static class JObjectExtensions
+{
+    extension(JObject self)
+    {
+        public bool BoolOr(string path, bool fallback) => self.SelectToken(path)?.Value<bool>() ?? fallback;
+
+        public int IntOr(string path, int fallback) => self.SelectToken(path)?.Value<int>() ?? fallback;
+
+        public uint UintOr(string path, uint fallback) => self.SelectToken(path)?.Value<uint>() ?? fallback;
+
+        public float FloatOr(string path, float fallback) => self.SelectToken(path)?.Value<float>() ?? fallback;
+    }
+}
+
 public class ConfigurationMigrationResolver : IConfigurationMigrationResolver
 {
     private readonly Dictionary<int, IMigrator> migratorMap = [];
 
     public ConfigurationMigrationResolver(IEnumerable<IMigrator> migrators)
     {
-        foreach(IMigrator migrator in migrators)
+        foreach (IMigrator migrator in migrators)
         {
             if (!migratorMap.TryAdd(migrator.FromVersion, migrator))
             {
@@ -36,7 +70,7 @@ public class ConfigurationMigrationResolver : IConfigurationMigrationResolver
         HashSet<int> visited = new();
         int current = from;
 
-        while(migratorMap.TryGetValue(current, out IMigrator? migrator))
+        while (migratorMap.TryGetValue(current, out IMigrator? migrator))
         {
             if (!visited.Add(current))
             {

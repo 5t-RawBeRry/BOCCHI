@@ -10,6 +10,13 @@ public interface IGoal
     string Describe();
 }
 
+public interface IGoalFactory
+{
+    IGoal Fate(FateId id);
+
+    IGoal CriticalEncounter(CriticalEncounterId id);
+}
+
 public abstract record GoalType;
 public sealed record FateGoal(FateId id) : GoalType;
 public sealed record CriticalEncounterGoal(CriticalEncounterId id) : GoalType;
@@ -28,3 +35,4 @@ public class Goal : IGoal
         };
     }
 }
+

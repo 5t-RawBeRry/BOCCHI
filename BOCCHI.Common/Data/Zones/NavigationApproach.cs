@@ -7,9 +7,13 @@ public static class NavigationConstants
 {
     public const float MaxDirectWalkDistance = 80f;
 
-    public const float EventApproachMinRadius = 5f;
+    /// <summary>Stop this close to FATE/CE center so we enter the engagement circle.</summary>
+    public const float EventApproachMinRadius = 0f;
 
-    public const float EventApproachMaxRadius = 20f;
+    public const float EventApproachMaxRadius = 5f;
+
+    /// <summary>PathCalculator treats this as "arrived at event" — must be ≤ max approach.</summary>
+    public const float EventArrivalRadius = 3f;
 
     public const float CampApproachJitter = 30f;
 

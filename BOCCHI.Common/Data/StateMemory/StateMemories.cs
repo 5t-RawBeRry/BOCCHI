@@ -60,6 +60,9 @@ public sealed class PotChestFarmMemory(FateId fateId, IEnumerable<Vector3> chest
     public readonly int TotalChests = chestPositions.Count();
 
     public int RemainingChests => Chests.Count;
+
+    /// <summary>When we started waiting for the current (peek) chest to spawn.</summary>
+    public DateTimeOffset WaitingForSpawnSince { get; set; } = DateTimeOffset.MinValue;
 }
 
 public sealed class GoalPathStepMemory(IGoal goal, IPathCalculator calculator)

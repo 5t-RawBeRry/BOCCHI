@@ -5,6 +5,11 @@ using FateData = Lumina.Excel.Sheets.Fate;
 
 namespace BOCCHI.Fates.Data;
 
+public interface IFateFactory
+{
+    Fate Create(IFate context);
+}
+
 public class FateFactory(IDataRepository<FateData> fateDataRepository) : IFateFactory
 {
     public Fate Create(IFate context)

@@ -7,8 +7,10 @@
       "tooltip": "Mount before long pathfinds and remount if you dismount mid-route (e.g. after Treasure Sight) while heading to a FATE or CE."
     },
     "preferred_mount_id": {
-      "label": "Preferred mount ID",
-      "tooltip": "Mount sheet row ID to use instead of Mount Roulette. 0 = Mount Roulette. Find IDs via Dalamud Data window (Mounts) or online mount lists."
+      "label": "Preferred mount",
+      "tooltip": "Mount to use while auto-traveling. Mount Roulette uses the game's roulette; otherwise pick an unlocked mount from the list.",
+      "roulette": "Mount Roulette",
+      "search": "Search mounts..."
     },
     "should_cast_treasure_sight": {
       "label": "Cast Treasure Sight",

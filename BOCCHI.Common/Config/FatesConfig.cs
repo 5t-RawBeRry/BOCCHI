@@ -58,4 +58,23 @@ public class FatesConfig : IAutoConfig
     ];
 
     public bool IsFateEnabled(uint fateId) => ShouldDoFates && !DisabledFateIds.Contains(fateId);
+
+    /// <summary>
+    ///     Pot fallback cutoffs only apply when pot farming is on AND the predicted next pot FATE is enabled.
+    ///     Disabled pot FATEs must not idle the automator near spawn (#85).
+    /// </summary>
+    public bool IsPotFallbackGatingEnabled(uint predictedNextPotFateId)
+    {
+        if (!ShouldFarmPotChests && !PreferPotFates)
+        {
+            return false;
+        }
+
+        if (predictedNextPotFateId == 0)
+        {
+            return false;
+        }
+
+        return IsFateEnabled(predictedNextPotFateId);
+    }
 }
