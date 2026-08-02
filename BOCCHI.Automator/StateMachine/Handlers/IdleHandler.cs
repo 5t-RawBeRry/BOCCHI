@@ -1,4 +1,6 @@
 using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Services;
+using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
@@ -22,6 +24,7 @@ public class IdleHandler(
     IObjectTable objects,
     IPathfinder pathfinder,
     IChainManager chains,
+    AutomatorConfig config,
     IUIService ui,
     ITranslator<MainWindow> translator
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Idle)
@@ -33,7 +36,7 @@ public class IdleHandler(
         base.Enter();
         chains.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
         pathfinder.Stop();
-        memory.TryAdd<IdleStateMemory>();
+        memory.TryAdd(new IdleStateMemory(ReturnDelay.Roll(config)));
     }
 
     public override void Exit(AutomatorState next)

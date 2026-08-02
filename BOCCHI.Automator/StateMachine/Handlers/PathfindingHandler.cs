@@ -137,7 +137,7 @@ public class PathfindingHandler
             if (step.PathStepData is Return)
             {
                 logger.Info("Handing off return step to ReturningHandler...");
-                memory.TryAdd<ReturningStateMemory>();
+                memory.TryAdd(new ReturningStateMemory(ReturnDelay.Roll(config)));
                 path.DequeuePathStep();
                 return;
             }

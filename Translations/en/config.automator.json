@@ -1,6 +1,6 @@
 {
-  "label": "Automator",
-  "tooltip": "Core automator behavior and idle handling.",
+  "label": "Illegal Mode",
+  "tooltip": "Core Illegal Mode behavior and idle handling.",
   "fields": {
     "should_auto_mount": {
       "label": "Auto-mount while traveling",
@@ -14,15 +14,15 @@
     },
     "should_cast_treasure_sight": {
       "label": "Cast Treasure Sight",
-      "tooltip": "Automatically recast Treasure Sight while the automator is running."
+      "tooltip": "Automatically recast Treasure Sight while Illegal Mode is running."
     },
     "treasure_sight_recast_interval_seconds": {
       "label": "Treasure Sight recast interval (seconds)",
       "tooltip": "How often to recast Treasure Sight."
     },
     "max_remote_idle_time_seconds": {
-      "label": "Max remote idle time (seconds)",
-      "tooltip": "How long to wait before treating a remote player as idle."
+      "label": "Max Return delay after FATE/CE (seconds)",
+      "tooltip": "After a FATE or CE ends, wait a random time between 2 seconds and this value before casting Return. Occult Crescent has no Return cooldown — this only humanizes the pause."
     }
   }
 }

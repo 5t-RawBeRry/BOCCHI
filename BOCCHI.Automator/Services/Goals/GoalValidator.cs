@@ -29,15 +29,21 @@ public class GoalValidator
 
     private bool ValidateCriticalEncounter(CriticalEncounterId id)
     {
-        if (!criticalEncounterRepository.HasCriticalEncounter(id)
-            || !criticalEncountersConfig.IsCriticalEncounterEnabled(id.Value))
+        if (!criticalEncountersConfig.IsCriticalEncounterEnabled(id.Value))
         {
             return false;
         }
 
-        // Sticky: once a CE is chosen, keep it until it leaves Register / is disabled.
-        // Pot cutoffs only block *starting* a CE (ChoosingActivity) — abandoning mid-wait for a FATE is wrong.
-        return true;
+        CriticalEncounter? ce = criticalEncounterRepository.SnapshotWithoutForkedTower()
+            .FirstOrDefault(c => c.Id == id);
+        if (ce == null)
+        {
+            return false;
+        }
+
+        // Keep while Register/Warmup/Battle. Drop as soon as the CE ends so we can Return/rechoose
+        // instead of sitting on an empty path until the event goes Inactive.
+        return ce.IsPreparing() || ce.IsActive();
     }
 
     private bool ValidateFate(FateId id)

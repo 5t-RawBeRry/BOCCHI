@@ -20,5 +20,8 @@ public class AutomatorConfig : IAutoConfig
 
     [IntRange(60, 600)] public int TreasureSightRecastIntervalSeconds { get; set; } = 120;
 
-    [IntRange(0, 60)] public int MaxRemoteIdleTimeSeconds { get; set; } = 10;
+    /// <summary>
+    ///     Upper bound (seconds) for the random 2..max wait before Return after a FATE/CE.
+    /// </summary>
+    [IntRange(2, 60)] public int MaxRemoteIdleTimeSeconds { get; set; } = 10;
 }

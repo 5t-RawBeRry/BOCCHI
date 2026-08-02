@@ -1,5 +1,4 @@
 using BOCCHI.Automator.Data;
-using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
@@ -25,7 +24,6 @@ public class ReturningHandler
     IZoneProvider zones,
     ICondition conditions,
     IAddonLifecycle addons,
-    AutomatorConfig config,
     IFateRepository fates,
     IPlayer player,
     IGateService gate
@@ -55,10 +53,8 @@ public class ReturningHandler
             return StatePriority.Never;
         }
 
-        TimeSpan time = idle.GetIdleTime();
-        TimeSpan maxRemoteIdle = TimeSpan.FromSeconds(config.MaxRemoteIdleTimeSeconds);
-
-        return time >= maxRemoteIdle ? StatePriority.VeryLow : StatePriority.Never;
+        // Opportunistic Return while idle (OC has no Return CD). Keep below ChoosingActivity.
+        return idle.IsReadyToReturn() ? StatePriority.VeryLow : StatePriority.Never;
     }
 
     public override void Handle()
@@ -82,6 +78,17 @@ public class ReturningHandler
             return;
         }
 
+        // Return needs feet on the ground — lingering mount after a FATE/CE looked like a long wait.
+        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
+        {
+            if (Actions.Dismount.CanCast())
+            {
+                Actions.Dismount.Cast();
+            }
+
+            return;
+        }
+
         IZone zone = zones.GetZone();
         if (zone.IsInBasecamp())
         {
@@ -89,10 +96,14 @@ public class ReturningHandler
             return;
         }
 
-        // Still mid-return (BetweenAreas already gated above). Don't re-cast while on CD /
-        // after a successful cast left ReturningStateMemory stuck with a bad IsInBasecamp().
-        if (memory.TryRemember<ReturningStateMemory>(out ReturningStateMemory _))
+        // Path handoff: hold Returning while the rolled 2..max delay elapses.
+        if (memory.TryRemember<ReturningStateMemory>(out ReturningStateMemory returning))
         {
+            if (!returning.IsReadyToCast())
+            {
+                return;
+            }
+
             if (!Actions.Return.CanCast())
             {
                 return;
@@ -101,7 +112,8 @@ public class ReturningHandler
 
         if (Actions.Return.CanCast())
         {
-            memory.TryAdd<ReturningStateMemory>();
+            // Opportunistic cast already waited via IdleStateMemory — no second delay.
+            memory.TryAdd(new ReturningStateMemory(TimeSpan.Zero));
             Actions.Return.Cast();
         }
     }

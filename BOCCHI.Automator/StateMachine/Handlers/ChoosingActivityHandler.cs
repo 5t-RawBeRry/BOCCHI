@@ -62,7 +62,7 @@ public class ChoosingActivityHandler
             return StatePriority.Never;
         }
 
-        return StatePriority.VeryLow;
+        return StatePriority.Low;
     }
 
     public override void Handle()

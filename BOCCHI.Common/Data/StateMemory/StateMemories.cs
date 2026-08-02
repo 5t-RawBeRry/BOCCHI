@@ -27,20 +27,30 @@ public sealed class GoalMemory(IGoal goal)
     }
 }
 
-public sealed class IdleStateMemory
+public sealed class IdleStateMemory(TimeSpan returnAfter)
 {
     public readonly DateTimeOffset Entered = DateTimeOffset.UtcNow;
+
+    /// <summary>Rolled wait (2..max) before opportunistic Return while idle.</summary>
+    public readonly TimeSpan ReturnAfter = returnAfter;
 
     public int ApproachCandidateIndex { get; set; }
 
     public TimeSpan GetIdleTime() => DateTimeOffset.UtcNow - Entered;
+
+    public bool IsReadyToReturn() => GetIdleTime() >= ReturnAfter;
 }
 
-public sealed class ReturningStateMemory
+public sealed class ReturningStateMemory(TimeSpan castDelay)
 {
     public readonly DateTimeOffset QueuedAt = DateTimeOffset.UtcNow;
 
+    /// <summary>Rolled wait before casting Return (path handoff after FATE/CE). Zero when already waited while idle.</summary>
+    public readonly TimeSpan CastDelay = castDelay;
+
     public TimeSpan GetTimeQueued() => DateTimeOffset.UtcNow - QueuedAt;
+
+    public bool IsReadyToCast() => GetTimeQueued() >= CastDelay;
 }
 
 public class BuffSupportJobMemory(SupportJobId job)
