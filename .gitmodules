@@ -1,5 +1,4 @@
 [submodule "Ocelot"]
 	path = Ocelot
-	url = https://github.com/Kagekazu/Ocelot.git
-	branch = detached3
-
+	url = https://github.com/OhKannaDuh/Ocelot.git
+	branch = BOCCHI
