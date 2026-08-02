@@ -144,8 +144,10 @@ public class PathfindingHandler
 
             logger.Info("Starting next task step...");
             currentPathTask = pathStepExecutor.Execute(step);
+            return;
         }
 
+        // Empty plan (already at destination) — keep GoalPathStepMemory so Automator doesn't recreate (#92).
         if (!path.IsValid)
         {
             memory.Forget<GoalPathStepMemory>();

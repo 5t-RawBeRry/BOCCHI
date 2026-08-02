@@ -70,6 +70,7 @@ public class PathCalculator
         {
             pathGoal = new Node
             {
+                Id = goalNode.Id,
                 Type = goalNode.Type,
                 Position = liveFate.Position,
                 Metadata = goalNode.Metadata
@@ -88,6 +89,7 @@ public class PathCalculator
         {
             pathGoal = new Node
             {
+                Id = goalNode.Id,
                 Type = goalNode.Type,
                 Position = liveCe.Position,
                 Metadata = goalNode.Metadata

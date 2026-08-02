@@ -74,9 +74,12 @@ public sealed class GoalPathStepMemory(IGoal goal, IPathCalculator calculator)
 {
     private Task<Queue<IPathStep>>? pathStepTask = calculator.Calculate(goal);
 
+    /// <summary>Calc finished with no steps (already at destination). Keeps memory valid so Automator doesn't recreate an empty plan every tick.</summary>
+    private bool emptyPlan;
+
     public Queue<IPathStep> PathSteps { get; private set; } = [];
 
-    public bool IsValid => pathStepTask != null || PathSteps.Count != 0;
+    public bool IsValid => pathStepTask != null || PathSteps.Count != 0 || emptyPlan;
 
     public void Update()
     {
@@ -93,6 +96,7 @@ public sealed class GoalPathStepMemory(IGoal goal, IPathCalculator calculator)
         if (pathStepTask.IsCompletedSuccessfully)
         {
             PathSteps = pathStepTask.Result;
+            emptyPlan = PathSteps.Count == 0;
         }
 
         pathStepTask = null;
