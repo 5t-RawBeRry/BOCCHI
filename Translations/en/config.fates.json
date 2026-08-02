@@ -4,7 +4,7 @@
   "fields": {
     "should_do_fates": {
       "label": "Do FATEs",
-      "tooltip": "Allow the automator to select and run FATE goals."
+      "tooltip": "Allow Illegal Mode to select and run FATE goals."
     },
     "prefer_pot_fates": {
       "label": "Prefer pot FATEs",
@@ -24,7 +24,7 @@
     },
     "disabled_fate_ids": {
       "label": "FATE availability",
-      "tooltip": "Uncheck a FATE to exclude it from automator selection.",
+      "tooltip": "Uncheck a FATE to exclude it from Illegal Mode selection.",
       "empty": "No FATEs defined for the current zone."
     }
   }

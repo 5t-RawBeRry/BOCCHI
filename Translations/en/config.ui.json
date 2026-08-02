@@ -28,7 +28,7 @@
     },
     "show_automation_section": {
       "label": "Show automation section",
-      "tooltip": "Display automator and mob farmer controls in the main window."
+      "tooltip": "Display Illegal Mode and mob farmer controls in the main window."
     },
     "show_treasure_section": {
       "label": "Show treasure section",

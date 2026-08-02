@@ -8,7 +8,7 @@
     "treasure": "Treasure"
   },
   "status": {
-    "automator": "Automator",
+    "automator": "Illegal Mode",
     "mob_farmer": "Mob Farmer",
     "treasure_hunt": "Treasure Hunt",
     "on": "On",
@@ -41,9 +41,9 @@
   },
   "automation": {
     "automator": {
-      "title": "Automator",
-      "enable": "Enable Automator",
-      "disable": "Disable Automator",
+      "title": "Illegal Mode",
+      "enable": "Enable Illegal Mode",
+      "disable": "Disable Illegal Mode",
       "refresh_pathfinding": "Refresh Pathfinding",
       "refresh_pathfinding_tooltip": "Drop the current route and replan from where you are standing. Useful after nudging out of a stuck spot or manually steering.",
       "details": "Details",
