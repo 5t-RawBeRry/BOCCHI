@@ -27,6 +27,18 @@ public class MobFarmerConfig : IAutoConfig
     [FloatRange(10f, 1000f)]
     public float MinEuclideanDistanceToReturnHome { get; set; } = 200f;
 
+    /// <summary>
+    ///     When off, weather/time specials still pull (if enabled) but do not count toward min pack thresholds.
+    /// </summary>
+    [Checkbox]
+    public bool CountSpecialMobsTowardMinimum { get; set; } = false;
+
+    /// <summary>
+    ///     Do not begin a new Buffing → Gathering loop while the InCombat flag is still set.
+    /// </summary>
+    [Checkbox]
+    public bool OnlyStartOutOfCombat { get; set; } = false;
+
     [Checkbox]
     public bool RenderDebugLines { get; set; } = false;
 

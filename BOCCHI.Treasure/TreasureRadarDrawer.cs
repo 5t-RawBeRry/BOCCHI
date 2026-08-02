@@ -15,6 +15,7 @@ namespace BOCCHI.Treasure;
 public class TreasureRadarDrawer
 (
     ITreasureTracker tracker,
+    ICarrotTracker carrots,
     TreasureConfig config,
     IZoneProvider zones,
     ICondition conditions,
@@ -34,7 +35,7 @@ public class TreasureRadarDrawer
             return;
         }
 
-        if (config is { DrawLineToBronzeChests: false, DrawLineToSilverChests: false })
+        if (config is { DrawLineToBronzeChests: false, DrawLineToSilverChests: false, DrawLineToCarrots: false })
         {
             return;
         }
@@ -46,7 +47,7 @@ public class TreasureRadarDrawer
 
         Vector3 origin = player.Position;
 
-        foreach(TreasureCoffer treasure in tracker.Treasures.Where(treasure => treasure.IsValid()))
+        foreach (TreasureCoffer treasure in tracker.Treasures.Where(treasure => treasure.IsValid()))
         {
             CofferType cofferType = treasure.GetCofferType();
             if (config.DrawLineToBronzeChests && cofferType == CofferType.Bronze)
@@ -57,6 +58,15 @@ public class TreasureRadarDrawer
             if (config.DrawLineToSilverChests && cofferType == CofferType.Silver)
             {
                 overlay.StrokeLine(origin, treasure.GetPosition(), ToColor(treasure.GetColor()));
+            }
+        }
+
+        if (config.DrawLineToCarrots)
+        {
+            Color carrotColor = ToColor(Carrot.Color);
+            foreach (Carrot carrot in carrots.Carrots)
+            {
+                overlay.StrokeLine(origin, carrot.GetPosition(), carrotColor);
             }
         }
     }

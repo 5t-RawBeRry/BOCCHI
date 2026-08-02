@@ -17,6 +17,9 @@ public class TreasureConfig : IAutoConfig
     public bool DrawLineToSilverChests { get; set; } = true;
 
     [Checkbox]
+    public bool DrawLineToCarrots { get; set; } = true;
+
+    [Checkbox]
     public bool ShowPercentageActiveTreasureCount { get; set; } = false;
 
     [Checkbox]

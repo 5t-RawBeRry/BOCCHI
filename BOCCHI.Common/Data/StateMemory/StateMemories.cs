@@ -14,6 +14,11 @@ public sealed class ManualBuffRunMemory;
 public sealed class CastingTreasureSightMemory;
 public class WaitingForCriticalEncounterMemory;
 
+/// <summary>
+///     User / soft-cancel stopped navigation. Blocks auto-replan until Illegal Mode is toggled.
+/// </summary>
+public sealed class NavigationInterruptedMemory;
+
 public sealed class GoalMemory(IGoal goal)
 {
     public IGoal Goal

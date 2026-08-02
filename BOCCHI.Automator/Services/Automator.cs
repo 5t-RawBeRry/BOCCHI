@@ -55,6 +55,11 @@ public class Automator
         {
             StopAutomation();
         }
+        else
+        {
+            // Fresh run clears a mid-route cancel pause from the previous session.
+            memory.Forget<NavigationInterruptedMemory>();
+        }
     }
 
     public void Render()
@@ -66,6 +71,13 @@ public class Automator
     {
         if (!Enabled)
         {
+            return;
+        }
+
+        // Mid-route cancel (vnav stop / emergency) — don't replan until Illegal Mode is toggled.
+        if (memory.TryRemember<NavigationInterruptedMemory>(out NavigationInterruptedMemory _))
+        {
+            StateMachine.Update();
             return;
         }
 

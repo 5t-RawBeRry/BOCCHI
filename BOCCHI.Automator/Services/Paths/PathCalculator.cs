@@ -1,4 +1,5 @@
 using BOCCHI.Common.Data.Aethernet;
+using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.Paths;
@@ -21,6 +22,7 @@ public class PathCalculator
     IObjectTable objects,
     IZoneProvider zones,
     IFateRepository fates,
+    ICriticalEncounterRepository criticalEncounters,
     IFateContext fateContext,
     ILogger<PathCalculator> logger
 ) : IPathCalculator
@@ -60,8 +62,9 @@ public class PathCalculator
             return [];
         }
 
-        // Prefer live FATE center when available — authored graph points can sit outside the circle.
+        // Prefer live FATE/CE center when available — authored graph points can sit outside the circle.
         Node pathGoal = goalNode;
+        float arrivalRadius = NavigationConstants.EventArrivalRadius;
         if (goal.GoalType is FateGoal liveFateGoal
             && fates.Snapshot().FirstOrDefault(f => f.Id.Value == liveFateGoal.id.Value) is { } liveFate)
         {
@@ -71,9 +74,34 @@ public class PathCalculator
                 Position = liveFate.Position,
                 Metadata = goalNode.Metadata
             };
+
+            // Inside the yellow circle counts as arrived even before CurrentFate registers.
+            if (liveFate.Radius > 0f)
+            {
+                arrivalRadius = Math.Max(arrivalRadius, liveFate.Radius * 0.85f);
+            }
+        }
+        else if (goal.GoalType is CriticalEncounterGoal liveCeGoal
+                 && criticalEncounters.SnapshotWithoutForkedTower()
+                     .FirstOrDefault(c => c.Id.Value == liveCeGoal.id.Value) is { } liveCe
+                 && !float.IsNaN(liveCe.Position.X))
+        {
+            pathGoal = new Node
+            {
+                Type = goalNode.Type,
+                Position = liveCe.Position,
+                Metadata = goalNode.Metadata
+            };
+
+            float combatRadius = liveCe.Radius - NavigationConstants.CriticalEncounterRadiusPadding;
+            if (combatRadius > 0f)
+            {
+                arrivalRadius = Math.Max(arrivalRadius, combatRadius * 0.85f);
+            }
         }
 
-        if (player.Position.Distance2D(pathGoal.Position) <= NavigationConstants.EventArrivalRadius)
+        float distanceToGoal = player.Position.Distance2D(pathGoal.Position);
+        if (distanceToGoal <= arrivalRadius)
         {
             logger.Debug("Too close to destination.");
             return [];
@@ -84,7 +112,16 @@ public class PathCalculator
         traverser.AddCalculator(new WalkTeleportWalkCalculator());
         traverser.AddCalculator(new DirectWalkCalculator());
         traverser.AddCalculator(new ReturnWalkCalculator());
-        traverser.AddCalculator(new ReturnTeleportWalkCalculator());
+
+        // Don't offer Return when already closer to the goal than to camp — that caused #84 loops.
+        float distToCamp = graph.GetBaseCampAetheryteNode() is { } camp
+            ? player.Position.Distance2D(camp.Position)
+            : float.MaxValue;
+        if (distanceToGoal > NavigationConstants.MaxDirectWalkDistance
+            && distanceToGoal >= distToCamp * 0.5f)
+        {
+            traverser.AddCalculator(new ReturnTeleportWalkCalculator());
+        }
 
         List<PathStep> steps = await traverser.FindPath(player.Position, pathGoal);
         List<PathStep> resolvedSteps = steps

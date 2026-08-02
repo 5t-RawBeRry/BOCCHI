@@ -87,6 +87,9 @@ public static class MobData
         return false;
     }
 
+    public static bool IsSpecialMob(uint nameId) =>
+        TryFromNameId(nameId, out Mob mob) && MobsWithSpawnCondition.Contains(mob);
+
     public static bool IsSelected(uint nameId, IReadOnlyCollection<Mob> selected)
     {
         if (!TryFromNameId(nameId, out Mob mob))

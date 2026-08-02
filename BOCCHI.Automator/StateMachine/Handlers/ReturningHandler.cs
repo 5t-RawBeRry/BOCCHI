@@ -1,6 +1,8 @@
 using BOCCHI.Automator.Data;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Aethernet;
+using BOCCHI.Common.Data.Fates;
+using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
@@ -10,7 +12,9 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Ocelot.Actions;
+using Ocelot.Extensions;
 using Ocelot.Services.Gate;
+using Ocelot.Services.PlayerState;
 using Ocelot.States.Score;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
@@ -22,6 +26,8 @@ public class ReturningHandler
     ICondition conditions,
     IAddonLifecycle addons,
     AutomatorConfig config,
+    IFateRepository fates,
+    IPlayer player,
     IGateService gate
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Returning)
 {
@@ -39,6 +45,12 @@ public class ReturningHandler
         }
 
         if (!memory.TryRemember<IdleStateMemory>(out IdleStateMemory idle) || zones.GetZone().IsInBasecamp())
+        {
+            return StatePriority.Never;
+        }
+
+        // Waiting inside / near the goal FATE circle — don't Return-to-base (#84).
+        if (IsNearActiveFateGoal())
         {
             return StatePriority.Never;
         }
@@ -116,5 +128,24 @@ public class ReturningHandler
 
         // Same filter as pre-rewrite TeleporterModule — only Return, not shops/etc.
         ReturnYesNo.TryAccept((AtkUnitBase*)args.Addon.Address);
+    }
+
+    private bool IsNearActiveFateGoal()
+    {
+        if (!memory.TryRemember<GoalMemory>(out GoalMemory goal) || goal.Goal.GoalType is not FateGoal fateGoal)
+        {
+            return false;
+        }
+
+        Fate? fate = fates.Snapshot().FirstOrDefault(f => f.Id.Value == fateGoal.id.Value);
+        if (fate == null)
+        {
+            return false;
+        }
+
+        float radius = fate.Radius > 0f
+            ? fate.Radius * 0.9f
+            : NavigationConstants.EventArrivalRadius;
+        return player.Position.Distance2D(fate.Position) <= radius;
     }
 }

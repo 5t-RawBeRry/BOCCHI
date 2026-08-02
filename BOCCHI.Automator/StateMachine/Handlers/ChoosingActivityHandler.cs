@@ -36,6 +36,11 @@ public class ChoosingActivityHandler
             return StatePriority.Never;
         }
 
+        if (memory.TryRemember<NavigationInterruptedMemory>(out NavigationInterruptedMemory _))
+        {
+            return StatePriority.Never;
+        }
+
         if (buffConfig.ShouldAutomateBuffs && buffs.ShouldRefreshAny())
         {
             return StatePriority.Never;
@@ -51,12 +56,8 @@ public class ChoosingActivityHandler
             return StatePriority.Never;
         }
 
-        int enabledFates = fateRepository.Snapshot().Count(f => fatesConfig.IsFateEnabled(f.Id.Value));
-        int criticalEncounters = criticalEncounterRepository.SnapshotWithoutForkedTower()
-            .Count(ce => ce.State == DynamicEventState.Register
-                         && criticalEncountersConfig.IsCriticalEncounterEnabled(ce.Id.Value));
-
-        if (enabledFates <= 0 && criticalEncounters <= 0)
+        // Only claim Choosing when something can actually start this tick (avoids pot-cutoff softlock).
+        if (FindStartableCriticalEncounter() == null && fateScorer.SelectBest(fateRepository.Snapshot()) == null)
         {
             return StatePriority.Never;
         }
@@ -66,32 +67,13 @@ public class ChoosingActivityHandler
 
     public override void Handle()
     {
-        DateTimeOffset now = DateTimeOffset.UtcNow;
-        PotCycleSnapshot cycle = potCycle.Snapshot;
-        bool potFarming = fatesConfig.IsPotFallbackGatingEnabled((uint)cycle.PredictedNextPotFateId);
-
-        CriticalEncounter? criticalEncounter = criticalEncounterRepository.SnapshotWithoutForkedTower()
-            .FirstOrDefault(c => c.State == DynamicEventState.Register
-                                 && criticalEncountersConfig.IsCriticalEncounterEnabled(c.Id.Value));
+        CriticalEncounter? criticalEncounter = FindStartableCriticalEncounter();
         if (criticalEncounter != null)
         {
-            PotFallbackStartDecision ceDecision = PotFallbackWindow.Evaluate(
-                cycle,
-                now,
-                TimeSpan.FromMinutes(Math.Max(0, fatesConfig.CeFallbackCutoffMinutes)),
-                fatesConfig.PotSpawnLeadMinutes,
-                potFarming,
-                "CE");
-            if (!ceDecision.AllowStart)
-            {
-                logger.Debug(ceDecision.Reason);
-            }
-            else
-            {
-                IGoal goal = goalFactory.CriticalEncounter(criticalEncounter.Id);
-                memory.TryAdd(new GoalMemory(goal));
-                return;
-            }
+            IGoal goal = goalFactory.CriticalEncounter(criticalEncounter.Id);
+            memory.TryAdd(new GoalMemory(goal));
+            logger.Info("Chose CE {Id} ({Name})", criticalEncounter.Id.Value, criticalEncounter.Name);
+            return;
         }
 
         Fate? fate = fateScorer.SelectBest(fateRepository.Snapshot());
@@ -100,6 +82,9 @@ public class ChoosingActivityHandler
             // Always allow pot FATEs themselves; only gate non-pot FATE fallbacks.
             if (!zones.GetZone().IsPotFate(fate.Id.Value))
             {
+                DateTimeOffset now = DateTimeOffset.UtcNow;
+                PotCycleSnapshot cycle = potCycle.Snapshot;
+                bool potFarming = fatesConfig.IsPotFallbackGatingEnabled((uint)cycle.PredictedNextPotFateId);
                 PotFallbackStartDecision fateDecision = PotFallbackWindow.Evaluate(
                     cycle,
                     now,
@@ -121,5 +106,38 @@ public class ChoosingActivityHandler
 
         // Pot cutoff or empty board — wait for next tick rather than hard-failing.
         logger.Debug("ChoosingActivity: no eligible goal this tick");
+    }
+
+    private CriticalEncounter? FindStartableCriticalEncounter()
+    {
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        PotCycleSnapshot cycle = potCycle.Snapshot;
+        bool potFarming = fatesConfig.IsPotFallbackGatingEnabled((uint)cycle.PredictedNextPotFateId);
+
+        // Register + Warmup — Warmup-only used to leave Choosing stuck with a visible CE.
+        foreach (CriticalEncounter ce in criticalEncounterRepository.SnapshotWithoutForkedTower())
+        {
+            if (!ce.IsPreparing() || !criticalEncountersConfig.IsCriticalEncounterEnabled(ce.Id.Value))
+            {
+                continue;
+            }
+
+            PotFallbackStartDecision decision = PotFallbackWindow.Evaluate(
+                cycle,
+                now,
+                TimeSpan.FromMinutes(Math.Max(0, fatesConfig.CeFallbackCutoffMinutes)),
+                fatesConfig.PotSpawnLeadMinutes,
+                potFarming,
+                "CE");
+            if (!decision.AllowStart)
+            {
+                logger.Debug(decision.Reason);
+                continue;
+            }
+
+            return ce;
+        }
+
+        return null;
     }
 }

@@ -1,4 +1,5 @@
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Targeting;
 using BOCCHI.MobFarmer.Data;
 using BOCCHI.MobFarmer.Services;
@@ -16,11 +17,13 @@ namespace BOCCHI.MobFarmer.StateMachine.Handlers;
 public class FightingHandler
 (
     MobFarmerConfig config,
+    AutomatorConfig automatorConfig,
     CombatConfig combat,
     IMobFarmer farmer,
     IMobScanner scanner,
     ITargetManager targets,
     ICondition conditions,
+    IObjectTable objects,
     IPathfinder pathfinder,
     IPlayer player
 ) : FlowStateHandler<FarmerPhase>(FarmerPhase.Fighting)
@@ -43,16 +46,21 @@ public class FightingHandler
         bool shouldReturnHome = config.ReturnToStartInWaitingPhase
                                 && player.Position.Distance2D(farmer.StartingPoint) >= config.MinEuclideanDistanceToReturnHome;
 
-        // Keep pulling until the configured pack size if free mobs remain.
-        if (anyInCombat
-            && inCombat.Count < config.MinimumMobsToStartFight
-            && scanner.NotInCombat.Any())
-        {
-            return FarmerPhase.Gathering;
-        }
-
+        // Finish the fight before gathering again — do not top up mid-pack.
         if (shouldReturnHome && !anyInCombat)
         {
+            if (!MountWait.ShouldSkip(conditions, objects, farmer.StartingPoint, automatorConfig.ShouldAutoMount)
+                && EzThrottler.Throttle("MobFarmer::Fighting::MountHome", 750))
+            {
+                MountWait.TryCast(automatorConfig.PreferredMountId);
+                return null;
+            }
+
+            if (conditions[ConditionFlag.Mounting])
+            {
+                return null;
+            }
+
             if (pathfinder.GetState() == PathfindingState.Idle)
             {
                 pathfinder.PathfindAndMoveTo(new(farmer.StartingPoint)

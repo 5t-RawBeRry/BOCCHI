@@ -31,7 +31,7 @@ public class IdleHandler(
     public override void Enter()
     {
         base.Enter();
-        chains.CancelAll();
+        chains.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
         pathfinder.Stop();
         memory.TryAdd<IdleStateMemory>();
     }

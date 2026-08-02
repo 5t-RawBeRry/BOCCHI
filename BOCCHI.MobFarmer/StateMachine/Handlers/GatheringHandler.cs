@@ -1,4 +1,5 @@
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.Mobs;
 using BOCCHI.Common.Extensions;
 using BOCCHI.MobFarmer.Data;
 using BOCCHI.MobFarmer.Services;
@@ -30,7 +31,7 @@ public class GatheringHandler
         List<IBattleNpc> inCombat = scanner.InCombat.ToList();
         List<IBattleNpc> notInCombat = scanner.NotInCombat.ToList();
 
-        if (inCombat.Count >= config.MinimumMobsToStartFight)
+        if (CountTowardMinimum(inCombat) >= config.MinimumMobsToStartFight)
         {
             pathfinder.Stop();
             return FarmerPhase.Stacking;
@@ -87,5 +88,15 @@ public class GatheringHandler
         });
 
         return null;
+    }
+
+    private int CountTowardMinimum(IEnumerable<IBattleNpc> mobs)
+    {
+        if (config.CountSpecialMobsTowardMinimum)
+        {
+            return mobs.Count();
+        }
+
+        return mobs.Count(m => !MobData.IsSpecialMob(m.NameId));
     }
 }

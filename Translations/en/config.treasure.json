@@ -14,6 +14,10 @@
       "label": "Draw lines to silver coffers",
       "tooltip": "Render a line from your character's position to nearby silver coffers, while out of combat."
     },
+    "draw_line_to_carrots": {
+      "label": "Draw lines to carrots",
+      "tooltip": "Render a green line from your character to nearby carrots, while out of combat."
+    },
     "show_percentage_active_treasure_count": {
       "label": "Show active treasure as percentage",
       "tooltip": "Show active treasure as percentage next to the total"

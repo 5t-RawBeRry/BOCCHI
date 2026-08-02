@@ -10,6 +10,7 @@ public static class IServiceCollectionExtensions
     public static void LoadTreasureModule(this IServiceCollection services)
     {
         services.AddSingleton<ITreasureTracker, TreasureTracker>();
+        services.AddSingleton<ICarrotTracker, CarrotTracker>();
         services.AddSingleton<ITreasureHunter, TreasureHunterService>();
         services.AddSingleton<IDynamicRenderer, TreasureRenderer>();
         services.AddSingleton<TreasureRadarDrawer>();

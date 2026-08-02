@@ -19,22 +19,31 @@ public class BuffingHandler
 {
     private bool castBattleBell;
 
+    private SupportJobId? jobToRestore;
+
     public override void Enter()
     {
         base.Enter();
         castBattleBell = false;
+        jobToRestore = null;
+
+        if (supportJobs.TryGetCurrent(out SupportJob job)
+            && job.Id != SupportJobId.PhantomGeomancer)
+        {
+            jobToRestore = job.Id;
+        }
     }
 
     public override FarmerPhase? Handle()
     {
         if (!config.ApplyBattleBell)
         {
-            return FarmerPhase.Gathering;
+            return RestoreThenGather();
         }
 
         if (Actions.PhantomActionI.GetRecastTime() > config.MaximumBattleBellWaitTime)
         {
-            return FarmerPhase.Gathering;
+            return RestoreThenGather();
         }
 
         if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
@@ -73,8 +82,30 @@ public class BuffingHandler
             Actions.Sprint.Cast();
         }
 
-        return FarmerPhase.Gathering;
+        return RestoreThenGather();
     }
 
-    private bool IsGeomancer() => supportJobs.TryGetCurrent(out SupportJob job) && job.Id == SupportJobId.PhantomGeomancer;
+    private FarmerPhase? RestoreThenGather()
+    {
+        if (jobToRestore is not { } restoreId)
+        {
+            return FarmerPhase.Gathering;
+        }
+
+        if (supportJobs.TryGetCurrent(out SupportJob current) && current.Id == restoreId)
+        {
+            jobToRestore = null;
+            return FarmerPhase.Gathering;
+        }
+
+        if (!changer.IsBusy())
+        {
+            changer.Change(restoreId);
+        }
+
+        return null;
+    }
+
+    private bool IsGeomancer() =>
+        supportJobs.TryGetCurrent(out SupportJob job) && job.Id == SupportJobId.PhantomGeomancer;
 }

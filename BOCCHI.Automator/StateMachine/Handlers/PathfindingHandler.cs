@@ -94,18 +94,31 @@ public class PathfindingHandler
                         logger.Info("Finished current task step...");
                         path.DequeuePathStep();
                     }
+                    else if (result.IsCanceled)
+                    {
+                        // User stop / soft interrupt — pause auto-nav so we don't immediately
+                        // rebuild the same Return+teleport chain (retry spam). Toggle Illegal Mode to resume.
+                        logger.Info("Path step canceled — pausing navigation until Illegal Mode is toggled");
+                        pathfinder.Stop();
+                        memory.Forget<GoalPathStepMemory>();
+                        memory.Forget<GoalMemory>();
+                        memory.TryAdd<NavigationInterruptedMemory>();
+                    }
                     else
                     {
                         logger.Warning("Path step failed: {Error}", result.ErrorMessage ?? "unknown");
                         pathfinder.Stop();
-                        // Drop the failed step so we do not restart the same Teleport/path forever.
+                        // Drop failed step; remaining plan continues (or empties → replan from here).
                         path.DequeuePathStep();
                     }
                 }
                 else if (currentPathTask.IsCanceled)
                 {
-                    logger.Warning("Path step canceled");
+                    logger.Warning("Path step canceled — pausing navigation until Illegal Mode is toggled");
                     pathfinder.Stop();
+                    memory.Forget<GoalPathStepMemory>();
+                    memory.Forget<GoalMemory>();
+                    memory.TryAdd<NavigationInterruptedMemory>();
                 }
                 else
                 {

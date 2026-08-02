@@ -106,7 +106,7 @@ public class NorthHorn
 
     public override List<ActivityData> GetNormalFateData() =>
     [
-        new(2081, new(-440f, 47.02659f, -790f)), // A Rotten Affair
+        new(2081, new(-440f, 47.02659f, -790f), PreferredAethernetId: MolderingOutskirts.Id), // A Rotten Affair
         new(2078, new(-402.0002f, 29.76808f, -252.9997f)), // Allure of the Occult
         new(2075, new(510f, 16.76658f, -29.99999f), 30f, SinkingSanctuary.Id), // Eye to Eye
         new(2082, new(-855.7433f, 70.67716f, 482.1518f), 30f), // Gale-force Encounter
@@ -135,7 +135,7 @@ public class NorthHorn
         new(57, new(224f, 52f, -860f), 20f), // Dark Artistry
         new(50, new(-215f, 18f, -65f), 20f), // Doubled Trouble
         new(58, new(-390f, 68f, 700f), 20f), // Familiar Tactics
-        new(52, new(659f, 132f, 659f), 20f), // Forbidden Folios
+        new(52, new(659f, 132f, 659f), 20f, TheCrownOfKarnak.Id), // Forbidden Folios
         new(54, new(765f, 70f, 0f), 20f), // Imbalanced Diet
         new(61, new(-150f, 70f, -860f), 20f), // Lost on the Wind
         new(49, new(-870f, 20f, -560f), 20f), // Many Mouths to Feed

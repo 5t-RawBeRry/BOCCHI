@@ -1,4 +1,6 @@
-﻿using ECommons;
+﻿using BOCCHI.Common.Data.CriticalEncounters;
+using BOCCHI.Common.Data.Zones;
+using ECommons;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using FFXIVClientStructs.FFXIV.Client.LayoutEngine;
 using FFXIVClientStructs.Interop;
@@ -12,23 +14,23 @@ public readonly record struct CriticalEncounterId(ushort Value)
     public override string ToString() => Value.ToString();
 }
 
-public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev, float radius)
+public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev, float radius, Vector3 fallbackPosition)
 {
     public readonly CriticalEncounterId Id = id;
 
     public readonly string Name = ev.Name.ToString();
 
-    public readonly Vector3 Position = GetPosition(ev);
-
     public readonly ActivityProgressTracker ProgressTracker = new();
 
     public readonly float Radius = radius;
+
+    public Vector3 Position { get; private set; } = ResolvePosition(ev, fallbackPosition);
 
     public DynamicEventState State { get; private set; } = ev.State;
 
     public byte Progress { get; private set; } = ev.Progress;
 
-    private static unsafe Vector3 GetPosition(DynamicEvent ev)
+    private static unsafe Vector3 TryReadLayoutPosition(DynamicEvent ev)
     {
         LayoutManager* layout = LayoutWorld.Instance()->ActiveLayout;
         if (layout == null)
@@ -59,10 +61,27 @@ public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev, float ra
         return new(position.X, position.Y, position.Z);
     }
 
+    private static Vector3 ResolvePosition(DynamicEvent ev, Vector3 fallbackPosition)
+    {
+        Vector3 live = TryReadLayoutPosition(ev);
+        if (!float.IsNaN(live.X))
+        {
+            return live;
+        }
+
+        return float.IsNaN(fallbackPosition.X) ? Vector3.NaN : fallbackPosition;
+    }
+
     public void Update(DynamicEvent ev)
     {
         State = ev.State;
         Progress = ev.Progress;
+
+        Vector3 live = TryReadLayoutPosition(ev);
+        if (!float.IsNaN(live.X))
+        {
+            Position = live;
+        }
 
         ProgressTracker.Observe(Progress);
     }

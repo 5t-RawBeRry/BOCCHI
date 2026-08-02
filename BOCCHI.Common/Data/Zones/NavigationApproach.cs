@@ -12,8 +12,8 @@ public static class NavigationConstants
 
     public const float EventApproachMaxRadius = 5f;
 
-    /// <summary>PathCalculator treats this as "arrived at event" — must be ≤ max approach.</summary>
-    public const float EventArrivalRadius = 3f;
+    /// <summary>PathCalculator treats this as "arrived at event" — must be ≥ max approach.</summary>
+    public const float EventArrivalRadius = 5f;
 
     public const float CampApproachJitter = 30f;
 
