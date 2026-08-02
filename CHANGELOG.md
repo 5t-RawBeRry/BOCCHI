@@ -1,3 +1,15 @@
+# 4.0.1.10
+
+### Fixes
+- Automator Idle↔Pathfinding flicker: live FATE/CE path goals keep graph node Id so teleport routes resolve (#92)
+- Treasure hunt: path CloseTo interact range, 2D distances, skip empties ~10y, don't freeze pathing at 5y (#93)
+- Mob Farmer: stop Geo↔combat job flip-flop after Battle Bell (#94)
+- Gold/silver tracker: don't count shop spend dip→recover as gains (#96)
+
+### Features
+- Refresh Pathfinding button on Automator — replan from current position (#95)
+- Treasure hunt Pause / Resume — keeps the planned route (#98)
+
 # 4.0.1.9
 
 ### Automator / navigation
@@ -27,3 +39,4 @@
 - Buff reapply threshold label corrected to minutes
 - Green carrot tethers restored (config toggle)
 - Bronze / silver tethers already colored
+- Ko-fi link updated to https://ko-fi.com/kagekazu
