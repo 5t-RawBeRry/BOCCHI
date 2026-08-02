@@ -1,5 +1,6 @@
 using BOCCHI.Automator.Data;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
@@ -29,12 +30,15 @@ public class InFateHandler
 
     public override StatePriority GetScore()
     {
+        FateId? currentFateId = context.GetFateId();
+        GetApproachMemory(currentFateId);
+
         if (!memory.TryRemember<GoalMemory>(out GoalMemory goal) || goal.Goal.GoalType is not FateGoal fateGoal)
         {
             return StatePriority.Never;
         }
 
-        return context.GetFateId() == fateGoal.id ? StatePriority.VeryHigh : StatePriority.Never;
+        return currentFateId == fateGoal.id ? StatePriority.VeryHigh : StatePriority.Never;
     }
 
     public override void Handle()
@@ -45,6 +49,7 @@ public class InFateHandler
         }
 
         List<IBattleNpc> targets = context.GetTargets().ToList();
+        InitialCombatApproachMemory<FateId> approach = GetApproachMemory(context.GetFateId());
 
         // Stay mounted until within range of a FATE target.
         if (conditions[ConditionFlag.Mounted]
@@ -57,7 +62,7 @@ public class InFateHandler
             pathfinder.Stop();
         }
 
-        CombatActivityHandler.HandleTargets(
+        if (CombatActivityHandler.HandleTargets(
             player,
             targets,
             combat,
@@ -65,7 +70,23 @@ public class InFateHandler
             conditions,
             pathfinder,
             "InFate",
+            approach.IsPending,
             true
-        );
+        ))
+        {
+            approach.Complete();
+        }
+    }
+
+    private InitialCombatApproachMemory<FateId> GetApproachMemory(FateId? fateId)
+    {
+        if (!memory.TryRemember(out InitialCombatApproachMemory<FateId> approach))
+        {
+            approach = new();
+            memory.TryAdd(approach);
+        }
+
+        approach.Track(fateId);
+        return approach;
     }
 }

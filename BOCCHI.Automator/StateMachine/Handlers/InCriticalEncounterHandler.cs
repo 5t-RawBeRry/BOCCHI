@@ -1,5 +1,6 @@
 ﻿using BOCCHI.Automator.Data;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Conditions;
@@ -22,7 +23,13 @@ public class InCriticalEncounterHandler
     ITargetManager targetManager
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InCriticalEncounter)
 {
-    public override StatePriority GetScore() => context.IsInCriticalEncounter() ? StatePriority.VeryHigh : StatePriority.Never;
+    public override StatePriority GetScore()
+    {
+        CriticalEncounterId? currentEncounterId = context.GetCriticalEncounterId();
+        GetApproachMemory(currentEncounterId);
+
+        return currentEncounterId != null ? StatePriority.VeryHigh : StatePriority.Never;
+    }
 
     public override void Enter()
     {
@@ -45,14 +52,32 @@ public class InCriticalEncounterHandler
             pathfinder.Stop();
         }
 
-        CombatActivityHandler.HandleTargets(
+        InitialCombatApproachMemory<CriticalEncounterId> approach = GetApproachMemory(context.GetCriticalEncounterId());
+
+        if (CombatActivityHandler.HandleTargets(
             player,
             context.GetTargets(),
             combat,
             targetManager,
             conditions,
             pathfinder,
-            "InCriticalEncounter"
-        );
+            "InCriticalEncounter",
+            approach.IsPending
+        ))
+        {
+            approach.Complete();
+        }
+    }
+
+    private InitialCombatApproachMemory<CriticalEncounterId> GetApproachMemory(CriticalEncounterId? encounterId)
+    {
+        if (!memory.TryRemember(out InitialCombatApproachMemory<CriticalEncounterId> approach))
+        {
+            approach = new();
+            memory.TryAdd(approach);
+        }
+
+        approach.Track(encounterId);
+        return approach;
     }
 }
