@@ -62,6 +62,31 @@ public class Automator
         }
     }
 
+    public void RefreshPathfinding()
+    {
+        if (!Enabled)
+        {
+            return;
+        }
+
+        logger.Info("Refreshing pathfinding from current position");
+        memory.Forget<NavigationInterruptedMemory>();
+        memory.Forget<GoalPathStepMemory>();
+        memory.Forget<WaitingForCriticalEncounterMemory>();
+        manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
+        pathfinder.Stop();
+        vnav.Stop();
+
+        // GoalMemory kept — Update() will rebuild GoalPathStepMemory from here.
+        if (!memory.TryRemember<GoalMemory>(out GoalMemory _))
+        {
+            chat.Print("[BOCCHI] Pathfinding refreshed (no active goal)");
+            return;
+        }
+
+        chat.Print("[BOCCHI] Pathfinding refreshed");
+    }
+
     public void Render()
     {
         StateMachine.Render();

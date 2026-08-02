@@ -38,6 +38,20 @@ public class AutomatorRenderer
             Automator.Toggle();
         }
 
+        if (Automator.Enabled)
+        {
+            ImGui.SameLine();
+            if (ImGui.Button(translator.T(".automation.automator.refresh_pathfinding")))
+            {
+                Automator.RefreshPathfinding();
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip(translator.T(".automation.automator.refresh_pathfinding_tooltip"));
+            }
+        }
+
         if (!Automator.Enabled && !HasDetails())
         {
             return;

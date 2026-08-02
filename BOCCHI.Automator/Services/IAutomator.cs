@@ -9,5 +9,8 @@ public interface IAutomator
 
     void Toggle();
 
+    /// <summary>Drop the current route and replan from the player's position (keeps the goal).</summary>
+    void RefreshPathfinding();
+
     void Render();
 }

@@ -44,6 +44,8 @@
       "title": "Automator",
       "enable": "Enable Automator",
       "disable": "Disable Automator",
+      "refresh_pathfinding": "Refresh Pathfinding",
+      "refresh_pathfinding_tooltip": "Drop the current route and replan from where you are standing. Useful after nudging out of a stuck spot or manually steering.",
       "details": "Details",
       "pot_chest_farm": "Pot chest farm",
       "chests_remaining": "Chests remaining",
