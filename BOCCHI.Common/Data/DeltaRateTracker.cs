@@ -4,9 +4,15 @@ public readonly record struct DeltaSnapshot(long Delta, DateTime Time);
 
 public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
 {
+    private static readonly TimeSpan RecoveryWindow = TimeSpan.FromSeconds(2);
+
     private readonly List<DeltaSnapshot> snapshots = [];
 
     private long lastValue;
+
+    private long? valueBeforeDrop;
+
+    private DateTime dropAt = DateTime.MinValue;
 
     public bool HasValue { get; private set; }
 
@@ -47,6 +53,8 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
     {
         lastValue = value;
         HasValue = true;
+        valueBeforeDrop = null;
+        dropAt = DateTime.MinValue;
     }
 
     public void RecordPositiveDelta(long current)
@@ -61,7 +69,34 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
         }
 
         long delta = current - lastValue;
-        lastValue = current;
+
+        if (delta < 0)
+        {
+            // Remember pre-drop balance so a shop/state dip→recover is not counted as a gain (#96).
+            valueBeforeDrop = lastValue;
+            dropAt = DateTime.UtcNow;
+            lastValue = current;
+            return;
+        }
+
+        if (valueBeforeDrop is { } before
+            && DateTime.UtcNow - dropAt <= RecoveryWindow)
+        {
+            lastValue = current;
+            valueBeforeDrop = null;
+            // Absorb one recovery sample after a dip (typically back to post-spend balance).
+            if (current <= before)
+            {
+                return;
+            }
+
+            delta = current - before;
+        }
+        else
+        {
+            valueBeforeDrop = null;
+            lastValue = current;
+        }
 
         if (delta <= 0)
         {
@@ -97,7 +132,7 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
 
         double[] bucketTotals = new double[bucketCount];
 
-        foreach(DeltaSnapshot snapshot in relevant)
+        foreach (DeltaSnapshot snapshot in relevant)
         {
             double secondsFromStart = (snapshot.Time - start).TotalSeconds;
             int index = (int)(secondsFromStart / sampleDuration.TotalSeconds);
@@ -113,7 +148,7 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
         float[] result = new float[bucketCount];
         double bucketSeconds = sampleDuration.TotalSeconds;
 
-        for(int i = 0; i < bucketCount; i++)
+        for (int i = 0; i < bucketCount; i++)
         {
             double amount = bucketTotals[i];
 
@@ -139,7 +174,7 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
         DateTime cutoff = DateTime.UtcNow - getTrackedWindow();
 
         int index = 0;
-        while(index < snapshots.Count && snapshots[index].Time < cutoff)
+        while (index < snapshots.Count && snapshots[index].Time < cutoff)
         {
             index++;
         }

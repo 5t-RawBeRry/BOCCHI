@@ -1,6 +1,8 @@
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data;
 using BOCCHI.Common.Services;
+using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using Ocelot.Lifecycle;
 
 namespace BOCCHI.Currency.Services;
@@ -16,7 +18,7 @@ public interface ICurrencyTracker
     float[] GetSilverHistory(TimeSpan sampleDuration);
 }
 
-public class CurrencyTracker(TrackerConfig config) : ICurrencyTracker, IOnUpdate
+public class CurrencyTracker(TrackerConfig config, IGameGui gui) : ICurrencyTracker, IOnUpdate
 {
     private readonly DeltaRateTracker goldTracker = new(() => TimeSpan.FromMinutes(config.TrackedDuration));
 
@@ -54,8 +56,22 @@ public class CurrencyTracker(TrackerConfig config) : ICurrencyTracker, IOnUpdate
             return;
         }
 
+        // Shopping churns currency reads; re-baseline so spend→recover isn't a false gain (#96).
+        if (IsShopOpen())
+        {
+            goldTracker.SyncBaseline(gold);
+            silverTracker.SyncBaseline(silver);
+            return;
+        }
+
         goldTracker.RecordPositiveDelta(gold);
         silverTracker.RecordPositiveDelta(silver);
+    }
+
+    private unsafe bool IsShopOpen()
+    {
+        AtkUnitBase* shop = (AtkUnitBase*)gui.GetAddonByName("ShopExchangeCurrency", 1).Address;
+        return shop != null && shop->IsVisible;
     }
 
     private static int GetCurrentGold() => OccultCrescentHelper.GetGold();
