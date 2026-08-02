@@ -17,9 +17,11 @@ namespace BOCCHI.Treasure.Data
 
     public static class TreasureColors
     {
-        public static readonly Vector4 Bronze = new(0.804f, 0.498f, 0.196f, 1f);
+        /// <summary>Brown/bronze tether for bronze coffers.</summary>
+        public static readonly Vector4 Bronze = new(0.72f, 0.45f, 0.20f, 1f);
 
-        public static readonly Vector4 Silver = new(0.753f, 0.753f, 0.753f, 1f);
+        /// <summary>Silver-grey tether for silver coffers.</summary>
+        public static readonly Vector4 Silver = new(0.82f, 0.84f, 0.88f, 1f);
 
         public static readonly Vector4 Unknown = new(0.6f, 0.2f, 0.8f, 1f);
     }

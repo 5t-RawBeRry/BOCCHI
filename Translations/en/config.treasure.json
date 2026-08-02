@@ -8,11 +8,11 @@
     },
     "draw_line_to_bronze_chests": {
       "label": "Draw lines to bronze coffers",
-      "tooltip": "Render a line from your character's position to nearby bronze coffers, while out of combat."
+      "tooltip": "Render a brown line from your character to nearby bronze coffers, while out of combat."
     },
     "draw_line_to_silver_chests": {
       "label": "Draw lines to silver coffers",
-      "tooltip": "Render a line from your character's position to nearby silver coffers, while out of combat."
+      "tooltip": "Render a silver line from your character to nearby silver coffers, while out of combat."
     },
     "draw_line_to_carrots": {
       "label": "Draw lines to carrots",

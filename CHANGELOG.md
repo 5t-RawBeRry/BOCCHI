@@ -11,3 +11,4 @@
 - Refresh Pathfinding button on Automator — replan from current position (#95)
 - Treasure hunt Pause / Resume — keeps the planned route (#98)
 - Rename Automator UI labels back to Illegal Mode
+- Treasure tethers: brown bronze / silver silver / green carrot lines (named in tooltips)
