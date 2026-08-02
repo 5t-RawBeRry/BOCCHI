@@ -2,7 +2,7 @@
 
 ### Fixes
 - Automator Idle↔Pathfinding flicker: live FATE/CE path goals keep graph node Id so teleport routes resolve (#92)
-- Treasure hunt:only skip ~2y with no live coffer; wider search + open-range approach (#93)
+- Treasure hunt: don't empty-skip at ~10y; only skip ~2y with no live coffer; wider search + open-range approach (#93)
 - Illegal Mode: random 2..max Return delay after FATE/CE; dismount before cast; drop finished CE goals
 - Mob Farmer: stop Geo↔combat job flip-flop after Battle Bell (#94)
 - Gold/silver tracker: don't count shop spend dip→recover as gains (#96)
