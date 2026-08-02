@@ -65,7 +65,7 @@ public class TreasureHunterService
 
     public void Update()
     {
-        if (!Running)
+        if (!Running || Paused)
         {
             return;
         }
@@ -135,6 +135,7 @@ public class TreasureHunterService
 
     public bool Running { get; private set; }
 
+    public bool Paused { get; private set; }
 
     public int StepIndex { get; private set; }
 
@@ -163,6 +164,7 @@ public class TreasureHunterService
 
         stopwatch.Restart();
         StepIndex = 0;
+        Paused = false;
         steps.Clear();
         layoutTreasure.Clear();
         pathPlanner = CreatePathPlanner();
@@ -175,6 +177,32 @@ public class TreasureHunterService
 
         Running = true;
         planningRoute = true;
+    }
+
+    public void Pause()
+    {
+        if (!Running || Paused)
+        {
+            return;
+        }
+
+        Paused = true;
+        SoftStopMovement();
+        stopwatch.Stop();
+    }
+
+    public void Resume()
+    {
+        if (!Running || !Paused)
+        {
+            return;
+        }
+
+        Paused = false;
+        if (!stopwatch.IsRunning)
+        {
+            stopwatch.Start();
+        }
     }
 
     public HuntPathfinderStep? GetCurrentStep()
@@ -596,6 +624,7 @@ public class TreasureHunterService
     private void Teardown()
     {
         Running = false;
+        Paused = false;
         planningRoute = false;
 
         SoftStopMovement();

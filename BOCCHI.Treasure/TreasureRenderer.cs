@@ -65,11 +65,32 @@ public class TreasureRenderer
             return;
         }
 
-        if (ImGui.Button(hunter.Running
-            ? translator.T(".treasure.stop_hunt")
-            : translator.T(".treasure.start_hunt")))
+        if (!hunter.Running)
         {
-            hunter.Toggle();
+            if (ImGui.Button(translator.T(".treasure.start_hunt")))
+            {
+                hunter.Toggle();
+            }
+        }
+        else
+        {
+            if (hunter.Paused)
+            {
+                if (ImGui.Button(translator.T(".treasure.resume_hunt")))
+                {
+                    hunter.Resume();
+                }
+            }
+            else if (ImGui.Button(translator.T(".treasure.pause_hunt")))
+            {
+                hunter.Pause();
+            }
+
+            ImGui.SameLine();
+            if (ImGui.Button(translator.T(".treasure.stop_hunt")))
+            {
+                hunter.Toggle();
+            }
         }
 
         if (hunter.Elapsed > TimeSpan.Zero)
@@ -79,7 +100,13 @@ public class TreasureRenderer
 
         if (hunter.Running && hunter.StepCount > 0)
         {
-            ui.LabelledValue(translator.T(".treasure.progress"), $"{hunter.StepIndex}/{hunter.StepCount}");
+            string progress = $"{hunter.StepIndex}/{hunter.StepCount}";
+            if (hunter.Paused)
+            {
+                progress = $"{progress} ({translator.T(".treasure.paused")})";
+            }
+
+            ui.LabelledValue(translator.T(".treasure.progress"), progress);
 
             HuntPathfinderStep? current = hunter.GetCurrentStep();
             if (current?.Type == HuntPathfinderStepType.WalkToNode)

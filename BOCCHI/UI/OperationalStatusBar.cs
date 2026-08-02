@@ -59,7 +59,11 @@ public class OperationalStatusBar
         DrawStatusChip(
             translator.T(".status.treasure_hunt"),
             hunter.Running,
-            hunter.Running && hunter.StepCount > 0 ? $"{hunter.StepIndex + 1}/{hunter.StepCount}" : null);
+            hunter.Running
+                ? hunter.Paused
+                    ? translator.T(".treasure.paused")
+                    : hunter.StepCount > 0 ? $"{hunter.StepIndex + 1}/{hunter.StepCount}" : null
+                : null);
 
         if (uiConfig.ShowBuffSection)
         {
