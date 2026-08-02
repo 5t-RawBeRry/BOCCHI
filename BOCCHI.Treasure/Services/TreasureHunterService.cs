@@ -49,6 +49,9 @@ public class TreasureHunterService
 ) : ITreasureHunter, IOnUpdate, IOnStop
 {
     private const float ChestSearchRadius = 5f;
+
+    /// <summary>Close enough that an unspawned chest should have streamed; skip empty nodes here (not HuntDetectionRange).</summary>
+    private const float EmptySkipRadius = 10f;
     private readonly List<TreasureLayoutDatum> layoutTreasure = [];
     private readonly List<HuntPathfinderStep> steps = [];
 
@@ -127,10 +130,11 @@ public class TreasureHunterService
             activeChain = null;
         }
 
-        TryInteractWithNearbyChest();
+        // Do not start nearby-interact early — it froze pathing at 5y while open needs 2y (#93).
     }
 
     public bool Running { get; private set; }
+
 
     public int StepIndex { get; private set; }
 
@@ -188,25 +192,13 @@ public class TreasureHunterService
         Teardown();
     }
 
-    private void TryInteractWithNearbyChest()
+    /// <summary>Stop movement/chains without clearing the planned route.</summary>
+    private void SoftStopMovement()
     {
-        if (activeChain != null)
-        {
-            return;
-        }
-
-        IGameObject? nearby = GetValidChests()
-            .FirstOrDefault(o => player.Position.Distance(o.Position) <= ChestSearchRadius);
-
-        if (nearby == null)
-        {
-            return;
-        }
-
-        activeChain = chainManager.Manage(
-            chains.Create("TreasureHunt::NearbyInteract")
-                .Then<OpenTreasureCofferChain, Vector3>(nearby.Position)
-        );
+        chainManager.CancelWhere(name => name.StartsWith("TreasureHunt", StringComparison.Ordinal));
+        pathfinder.Stop();
+        vnav.Stop();
+        activeChain = null;
     }
 
     private bool TryAdvanceCurrentStep()
@@ -232,30 +224,32 @@ public class TreasureHunterService
 
         Vector3 layoutDestination = layoutTreasure.First(t => t.Id == step.NodeId).Position;
 
-        IGameObject? chest = GetValidChests()
-            .FirstOrDefault(o => Vector3.Distance(layoutDestination, o.Position) <= ChestSearchRadius);
+        // Presence: don't require IsTargetable (often false until inside interact range).
+        IGameObject? present = FindTreasureNear(layoutDestination, ChestSearchRadius);
+        IGameObject? chest = present is { IsTargetable: true } ? present : null;
 
         // Prefer the live object once it exists — layout coords are often slightly off.
-        Vector3 destination = chest?.Position ?? layoutDestination;
+        Vector3 destination = present?.Position ?? layoutDestination;
+        float dist2d = player.Position.Distance2D(destination);
 
-        if (!vnav.IsRunning())
+        if (!vnav.IsRunning() && dist2d > OpenTreasureCofferChain.InteractDistance)
         {
-            vnav.PathfindAndMoveTo(destination, false);
+            vnav.PathfindAndMoveCloseTo(destination, false, OpenTreasureCofferChain.InteractDistance);
         }
-        else if (chest != null)
+        else if (present != null && vnav.IsRunning())
         {
             // Re-aim at the live chest if we were still pathing to layout.
-            float toLive = player.Position.Distance(chest.Position);
+            float toLive = player.Position.Distance2D(present.Position);
             if (toLive > OpenTreasureCofferChain.InteractDistance
-                && player.Position.Distance(layoutDestination) <= ChestSearchRadius)
+                && player.Position.Distance2D(layoutDestination) <= ChestSearchRadius)
             {
-                vnav.PathfindAndMoveTo(chest.Position, false);
+                vnav.PathfindAndMoveCloseTo(present.Position, false, OpenTreasureCofferChain.InteractDistance);
             }
         }
 
         MaybeMount(destination);
 
-        StepDistance = player.Position.Distance(destination);
+        StepDistance = dist2d;
         if (StepDistance > config.HuntDetectionRange)
         {
             return false;
@@ -267,11 +261,10 @@ public class TreasureHunterService
             return true;
         }
 
-        // Only treat as empty when we're close enough that the object should have streamed in.
-        // Skipping at HuntDetectionRange (default 75y) caused "runs past" when radar already saw the chest.
-        if (chest == null)
+        // Empty / unspawned: skip once close enough that the object should have streamed.
+        if (present == null)
         {
-            if (StepDistance <= ChestSearchRadius)
+            if (StepDistance <= EmptySkipRadius)
             {
                 vnav.Stop();
                 return true;
@@ -285,6 +278,13 @@ public class TreasureHunterService
             return false;
         }
 
+        if (chest == null)
+        {
+            // Present but not targetable yet — wait briefly in range.
+            return false;
+        }
+
+        vnav.Stop();
         activeChain = chainManager.Manage(
             chains.Create($"TreasureHunt::Open({step.NodeId})")
                 .Then<OpenTreasureCofferChain, Vector3>(chest.Position)
@@ -463,14 +463,15 @@ public class TreasureHunterService
         }
     }
 
-    private IEnumerable<IGameObject> GetValidChests()
+    private IGameObject? FindTreasureNear(Vector3 layoutDestination, float radius)
     {
-        return objects.Where(o => o is
-        {
-            ObjectKind: ObjectKind.Treasure,
-            IsDead: false,
-            IsTargetable: true
-        } && o.IsValid() && IsAllowedCofferBaseId(o.BaseId));
+        return objects
+            .Where(o => o is { ObjectKind: ObjectKind.Treasure, IsDead: false }
+                        && o.IsValid()
+                        && IsAllowedCofferBaseId(o.BaseId)
+                        && layoutDestination.Distance2D(o.Position) <= radius)
+            .OrderBy(o => layoutDestination.Distance2D(o.Position))
+            .FirstOrDefault();
     }
 
     private bool IsAllowedCofferBaseId(uint baseId)
@@ -597,12 +598,7 @@ public class TreasureHunterService
         Running = false;
         planningRoute = false;
 
-        chainManager.CancelWhere(name => name.StartsWith("TreasureHunt", StringComparison.Ordinal));
-
-        pathfinder.Stop();
-        vnav.Stop();
-
-        activeChain = null;
+        SoftStopMovement();
 
         stopwatch.Stop();
         StepIndex = 0;

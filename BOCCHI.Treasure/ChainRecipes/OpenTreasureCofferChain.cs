@@ -71,7 +71,7 @@ public class OpenTreasureCofferChain
             return false;
         }
 
-        if (player.Position.Distance(chest.Position) > InteractDistance)
+        if (player.Position.Distance2D(chest.Position) > InteractDistance)
         {
             return false;
         }
