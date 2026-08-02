@@ -56,18 +56,19 @@ public class BuffingHandler
             return null;
         }
 
-        if (!IsGeomancer())
-        {
-            if (!changer.IsBusy())
-            {
-                changer.Change(SupportJobId.PhantomGeomancer);
-            }
-
-            return null;
-        }
-
+        // Only force Geo while we still need to cast Bell — after that, restore must win (#94).
         if (!castBattleBell)
         {
+            if (!IsGeomancer())
+            {
+                if (!changer.IsBusy())
+                {
+                    changer.Change(SupportJobId.PhantomGeomancer);
+                }
+
+                return null;
+            }
+
             if (Actions.PhantomActionI.CanCast())
             {
                 Actions.PhantomActionI.Cast();
