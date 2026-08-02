@@ -1,4 +1,4 @@
-# 4.0.1.12
+# 4.0.1.13
 
 ### Fixes
 - Automator Idle↔Pathfinding flicker: live FATE/CE path goals keep graph node Id so teleport routes resolve (#92)
