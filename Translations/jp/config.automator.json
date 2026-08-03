@@ -1,0 +1,32 @@
+{
+  "label": "オートメーター",
+  "tooltip": "基本的な自動化の動作と待機時の扱いです。",
+  "fields": {
+    "should_auto_mount": {
+      "label": "移動中に自動マウント",
+      "tooltip": "FATEやCEへ向かう長距離移動の前にマウントし、途中で降りた場合も再マウントします。"
+    },
+    "preferred_mount_id": {
+      "label": "使用マウント",
+      "tooltip": "自動移動で使うマウントです。マウントルーレットか解放済みマウントを選べます。",
+      "roulette": "マウントルーレット",
+      "search": "マウントを検索..."
+    },
+    "should_cast_treasure_sight": {
+      "label": "トレジャーサイトを使用",
+      "tooltip": "オートメーター実行中にトレジャーサイトを自動でかけ直します。"
+    },
+    "treasure_sight_recast_interval_seconds": {
+      "label": "トレジャーサイト再使用間隔（秒）",
+      "tooltip": "トレジャーサイトをかけ直す間隔です。"
+    },
+    "max_remote_idle_time_seconds": {
+      "label": "リモート待機判定時間（秒）",
+      "tooltip": "リモートプレイヤーを待機中として扱うまでの時間です。"
+    },
+    "critical_encounter_approach_percent": {
+      "label": "CE 停止距離",
+      "tooltip": "CE へ移動・待機する時に止まる位置です。0.95 は内側の外周付近、1.00 は外周、より大きい値は少し外側で待機します。"
+    }
+  }
+}

@@ -1,14 +1,17 @@
+using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services;
 using BOCCHI.Buff.Services;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.UI;
+using BOCCHI.MobFarmer.Data;
 using BOCCHI.MobFarmer.Services;
 using BOCCHI.Treasure.Services;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
+using Ocelot.Extensions;
 using Ocelot.Graphics;
 using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
@@ -47,13 +50,13 @@ public class OperationalStatusBar
         DrawStatusChip(
             translator.T(".status.automator"),
             Automator.Enabled,
-            Automator.CurrentState is { } state ? FormatEnum(state) : null);
+            Automator.CurrentState is { } state ? FormatAutomatorState(state) : null);
 
         ImGui.SameLine();
         DrawStatusChip(
             translator.T(".status.mob_farmer"),
             Farmer.Running,
-            Farmer.Running ? FormatEnum(Farmer.Phase) : null);
+            Farmer.Running ? FormatFarmerPhase(Farmer.Phase) : null);
 
         ImGui.SameLine();
         DrawStatusChip(
@@ -153,9 +156,9 @@ public class OperationalStatusBar
         }
     }
 
-    private static string FormatEnum<TEnum>(TEnum value)
-    where TEnum : struct, Enum
-    {
-        return string.Concat(value.ToString().Select((c, i) => i > 0 && char.IsUpper(c) ? $" {c}" : c.ToString()));
-    }
+    private string FormatAutomatorState(AutomatorState state) =>
+        translator.T($".status.automator_states.{state.ToString().ToSnakeCase()}");
+
+    private string FormatFarmerPhase(FarmerPhase phase) =>
+        translator.T($".status.farmer_phases.{phase.ToString().ToSnakeCase()}");
 }

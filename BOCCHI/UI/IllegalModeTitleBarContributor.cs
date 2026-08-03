@@ -17,7 +17,7 @@ public class IllegalModeTitleBarContributor(
     IPathfinder pathfinder,
     IVNavmeshIpc vnav,
     IChainManager chains,
-    ITranslator translator
+    ITranslator<MainWindow> translator
 ) : IMainWindowTitleBarContributor
 {
     public void Contribute(ICollection<TitleBarButton> buttons)
@@ -35,7 +35,7 @@ public class IllegalModeTitleBarContributor(
             },
             Icon = FontAwesomeIcon.Skull,
             IconOffset = new Vector2(2, 2),
-            ShowTooltip = () => ImGui.SetTooltip(translator.T("generic.toggle_illegal_mode")),
+            ShowTooltip = () => ImGui.SetTooltip(translator.T(".automation.automator.toggle_illegal_mode")),
         });
 
         buttons.Add(new TitleBarButton

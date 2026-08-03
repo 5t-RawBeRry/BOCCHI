@@ -15,7 +15,9 @@ using Ocelot.Ipc.VNavmesh;
 using Ocelot.Lifecycle;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
+using Ocelot.Services.Translation;
 using Ocelot.States;
+using Ocelot.Windows;
 using System.Numerics;
 
 namespace BOCCHI.Automator.Services;
@@ -36,6 +38,7 @@ public class Automator
     FatesConfig fatesConfig,
     AutomatorConfig automatorConfig,
     AutoRotationController autoRotation,
+    ITranslator<MainWindow> translator,
     ILogger<Automator> logger
 ) : IAutomator, IOnUpdate, IOnStop
 {
@@ -54,7 +57,7 @@ public class Automator
     public void Toggle()
     {
         context.Toggle();
-        chat.Print(Enabled ? "[BOCCHI] Illegal Mode On" : "[BOCCHI] Illegal Mode Off");
+        chat.Print(translator.T(Enabled ? ".automation.automator.illegal_mode_on" : ".automation.automator.illegal_mode_off"));
         if (!Enabled)
         {
             StopAutomation();
@@ -86,11 +89,11 @@ public class Automator
         // GoalMemory kept — Update() will rebuild GoalPathStepMemory from here.
         if (!memory.TryRemember<GoalMemory>(out GoalMemory _))
         {
-            chat.Print("[BOCCHI] Pathfinding refreshed (no active goal)");
+            chat.Print(translator.T(".automation.automator.pathfinding_refreshed_no_goal"));
             return;
         }
 
-        chat.Print("[BOCCHI] Pathfinding refreshed");
+        chat.Print(translator.T(".automation.automator.pathfinding_refreshed"));
     }
 
     public void Render()

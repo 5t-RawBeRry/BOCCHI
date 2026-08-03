@@ -1,12 +1,43 @@
-﻿using Ocelot.Config;
+using Ocelot.Config;
 using Ocelot.Config.Fields;
+using Ocelot.Config.Renderers.Enum;
 
 namespace BOCCHI.Common.Config;
+
+public enum UILanguage
+{
+    English,
+    Japanese
+}
+
+public static class UILanguageExtensions
+{
+    extension(UILanguage language)
+    {
+        public string TranslationCode() => language switch
+        {
+            UILanguage.Japanese => "jp",
+            _ => "en"
+        };
+    }
+}
+
+public class UILanguageDisplay : IEnumDisplay<UILanguage>
+{
+    public string Display(UILanguage value) => value switch
+    {
+        UILanguage.Japanese => "日本語",
+        _ => "English"
+    };
+}
 
 [Serializable]
 [ConfigGroup("ux", GroupOrder = 0)]
 public class UIConfig : IAutoConfig
 {
+    [EnumSelectDisplay<UILanguage, UILanguageDisplay>]
+    public UILanguage Language { get; set; } = UILanguage.English;
+
     [Checkbox] public bool ShowExperienceTracker { get; set; } = true;
 
     [Checkbox] public bool ShowExperienceTrackerGraph { get; set; } = false;

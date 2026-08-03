@@ -1,0 +1,123 @@
+{
+  "title": "BOCCHI",
+  "unsupported_zone": "対応している蜃気楼島ゾーン内にいません。",
+  "sections": {
+    "trackers": "トラッカー",
+    "automation": "自動化",
+    "world": "ワールド",
+    "treasure": "宝箱"
+  },
+  "status": {
+    "automator": "不正モード",
+    "mob_farmer": "モブファーム",
+    "treasure_hunt": "トレジャーハント",
+    "on": "オン",
+    "off": "オフ",
+    "goal": "目標",
+    "current_step": "現在の手順",
+    "calculating_path": "経路計算中...",
+    "chests": "壺宝箱",
+    "automator_states": {
+      "entry": "開始",
+      "idle": "待機",
+      "dead": "戦闘不能",
+      "in_combat": "戦闘中",
+      "casting_treasure_sight": "トレジャーサイト使用中",
+      "applying_buffs": "バフ付与中",
+      "repairing": "修理中",
+      "choosing_activity": "活動選択中",
+      "returning": "帰還中",
+      "pathfinding": "移動中",
+      "in_fate": "FATE中",
+      "waiting_for_critical_encounter": "CE待機中",
+      "in_critical_encounter": "CE中",
+      "returning_to_job": "ジョブ復帰中",
+      "farming_pot_chests": "壺宝箱ファーム中"
+    },
+    "farmer_phases": {
+      "waiting": "待機",
+      "buffing": "バフ中",
+      "gathering": "収集中",
+      "stacking": "釣り中",
+      "fighting": "戦闘中"
+    }
+  },
+  "goals": {
+    "fate": "FATE: {0}",
+    "critical_encounter": "クリティカルエンカウント: {0}"
+  },
+  "trackers": {
+    "experience": {
+      "current_job": "現在のジョブ",
+      "no_job": "ジョブが見つかりません",
+      "level": "レベル: {0} ({1})",
+      "per_hour": "1時間あたりの経験値"
+    },
+    "currency": {
+      "gold_per_hour": "1時間あたりの金貨",
+      "silver_per_hour": "1時間あたりの銀貨"
+    }
+  },
+  "buffs": {
+    "title": "バフ",
+    "apply_tooltip": "設定済みのナレッジクリスタルバフを付与します",
+    "stop_tooltip": "バフ付与を停止します",
+    "applying": "付与中..."
+  },
+  "automation": {
+    "automator": {
+      "title": "不正モード",
+      "enable": "不正モードを有効化",
+      "disable": "不正モードを無効化",
+      "toggle_illegal_mode": "不正モード切替",
+      "refresh_pathfinding": "経路を再計算",
+      "refresh_pathfinding_tooltip": "現在地からルートを作り直します。スタック地点から少し動いた後や手動操作後に使います。",
+      "details": "詳細",
+      "illegal_mode_on": "[BOCCHI] 不正モード オン",
+      "illegal_mode_off": "[BOCCHI] 不正モード オフ",
+      "pathfinding_refreshed": "[BOCCHI] 経路を再計算しました",
+      "pathfinding_refreshed_no_goal": "[BOCCHI] 経路を再計算しました（有効な目標なし）",
+      "pot_chest_farm": "壺宝箱ファーム",
+      "chests_remaining": "残り宝箱数",
+      "time_idle": "待機時間"
+    },
+    "mob_farmer": {
+      "title": "モブファーム",
+      "start": "モブファーム開始",
+      "stop": "モブファーム停止",
+      "not_engaged": "未戦闘",
+      "engaged": "戦闘中",
+      "selected_mobs": "選択中のモブ",
+      "configure_mobs": "/bocchi-config -> モブファーム で対象モブを設定してください。"
+    }
+  },
+  "world": {
+    "fates": {
+      "title": "FATE",
+      "none": "進行中の FATE はありません。"
+    },
+    "critical_encounters": {
+      "title": "クリティカルエンカウント",
+      "none": "進行中のクリティカルエンカウントはありません。"
+    }
+  },
+  "treasure": {
+    "title": "トレジャーハンター",
+    "requires_vnav": "vnavmesh プラグインが必要です。",
+    "waiting_navmesh": "ナビメッシュを待機中...",
+    "start_hunt": "ハント開始",
+    "pause_hunt": "一時停止",
+    "resume_hunt": "再開",
+    "stop_hunt": "ハント停止",
+    "paused": "一時停止中",
+    "elapsed": "経過時間",
+    "progress": "進行状況",
+    "distance_to_chest": "宝箱までの距離",
+    "nearby_title": "近くの宝箱",
+    "none_nearby": "近くに宝箱はありません。",
+    "active_bronze": "アクティブな銅箱",
+    "active_silver": "アクティブな銀箱",
+    "distance": "距離: {0:F1}y",
+    "position": "({0:F1}, {1:F1}, {2:F1})"
+  }
+}
