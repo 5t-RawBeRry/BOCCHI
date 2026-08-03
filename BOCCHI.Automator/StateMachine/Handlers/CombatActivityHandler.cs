@@ -16,7 +16,11 @@ internal static class CombatActivityHandler
     /// <summary>Standard max-melee distance past the target hitbox.</summary>
     private const float MaxMeleeRange = 3f;
 
-    public static void HandleTargets(
+    /// <returns>
+    ///     <see langword="true"/> once the activity's initial approach was issued,
+    ///     was already unnecessary, or was superseded by entering combat.
+    /// </returns>
+    public static bool HandleTargets(
         IGameObject player,
         IEnumerable<IBattleNpc> targets,
         CombatConfig combat,
@@ -24,6 +28,7 @@ internal static class CombatActivityHandler
         ICondition conditions,
         IPathfinder pathfinder,
         string throttlePrefix,
+        bool shouldApproachTarget,
         bool stopPathfinderInCombat = false
     )
     {
@@ -31,7 +36,7 @@ internal static class CombatActivityHandler
         IBattleNpc? target = TargetHelper.Select(list, combat.ForceTargetCentralEnemy);
         if (target == null)
         {
-            return;
+            return false;
         }
 
         if (combat.ShouldHandleTargeting
@@ -51,27 +56,36 @@ internal static class CombatActivityHandler
             }
         }
 
-        // Walk into max melee of the boss/pack — don't sit at the FATE circle edge (~20y).
-        if (distance > MaxMeleeRange)
-        {
-            if (EzThrottler.Throttle($"{throttlePrefix}::Approach", 500) && pathfinder.IsIdle())
-            {
-                float arrival = Math.Max(0.5f, target.HitboxRadius + MaxMeleeRange);
-                pathfinder.PathfindAndMoveTo(new PathfinderConfig(target.Position)
-                {
-                    DistanceThreshold = arrival,
-                    ShouldSnapToFloor = true,
-                });
-            }
-
-            return;
-        }
-
-        pathfinder.Stop();
-
+        // Once combat has started, FATE movement is deliberately handed back to the player.
+        // This must precede the out-of-range branch so that branch cannot re-start navigation.
         if (stopPathfinderInCombat && conditions[ConditionFlag.InCombat])
         {
             pathfinder.Stop();
+            return true;
         }
+
+        if (distance <= MaxMeleeRange)
+        {
+            pathfinder.Stop();
+            return true;
+        }
+
+        // Only issue the max-melee movement once for this FATE/CE. The caller keeps
+        // this completed across handler re-entry and re-arms it for a different event.
+        if (!shouldApproachTarget
+            || !EzThrottler.Throttle($"{throttlePrefix}::Approach", 500)
+            || !pathfinder.IsIdle())
+        {
+            return false;
+        }
+
+        float arrival = Math.Max(0.5f, target.HitboxRadius + MaxMeleeRange);
+        pathfinder.PathfindAndMoveTo(new PathfinderConfig(target.Position)
+        {
+            DistanceThreshold = arrival,
+            ShouldSnapToFloor = true,
+        });
+
+        return true;
     }
 }
