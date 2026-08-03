@@ -29,38 +29,33 @@ public class OpenTreasureCofferChain
     IVNavmeshIpc vnav
 ) : ChainRecipe<Vector3>(chains)
 {
-    /// <summary>Try to path this close before interacting (mesh permitting).</summary>
     public const float PathArrivalRange = 1.0f;
 
-    /// <summary>
-    /// Distance at which InteractWithObject reliably opens coffers.
-    /// Matches Pandora's AutoOpenChests (2y) — 3.25y was too far and needed Pandora as a crutch.
-    /// </summary>
     public const float PreferredOpenDistance = 2.0f;
 
-    /// <summary>Still close enough to keep trying; beyond this, path in again.</summary>
     public const float MaxInteractRange = 2.75f;
 
-    /// <summary>Legacy alias used by hunt pathing — prefer PreferredOpenDistance for gating.</summary>
     public const float InteractDistance = PreferredOpenDistance;
 
     public override string Name => "Open Treasure Coffer";
 
     protected override IChain Compose(IChain chain, Vector3 targetPosition)
     {
+        var pathState = new PathState();
+
         return chain
             .UseMiddleware<LogChainMiddleware>()
             .UseStepMiddleware<LogStepMiddleware>()
             .UseStepMiddleware<RunOnMainThreadMiddleware>()
             .WaitUntil(
-                _ => ValueTask.FromResult(TryInteract(targetPosition)),
+                _ => ValueTask.FromResult(TryInteract(targetPosition, pathState)),
                 TimeSpan.FromSeconds(45),
                 TimeSpan.FromMilliseconds(250),
                 "OpenTreasureCofferChain::Interact"
             );
     }
 
-    private bool TryInteract(Vector3 targetPosition)
+    private bool TryInteract(Vector3 targetPosition, PathState pathState)
     {
         if (!EzThrottler.Throttle("ChestInteract", 250))
         {
@@ -80,7 +75,6 @@ public class OpenTreasureCofferChain
         IGameObject? chest = GetChestAt(targetPosition);
         if (chest == null)
         {
-            // Keep waiting — missing object is not success (spawn lag / offset).
             return false;
         }
 
@@ -95,7 +89,6 @@ public class OpenTreasureCofferChain
                 return true;
             }
 
-            // Interact already accepted — wait for Opened; don't spam InteractWithObject.
             if (instance->State is TreasureState.Opening)
             {
                 return false;
@@ -104,16 +97,9 @@ public class OpenTreasureCofferChain
 
         float dist2d = player.Position.Distance2D(chest.Position);
 
-        // Still too far for a reliable open — close in; don't treat as failure.
-        if (dist2d > MaxInteractRange)
-        {
-            EnsurePathing(chest.Position);
-            return false;
-        }
-
         if (dist2d > PreferredOpenDistance)
         {
-            EnsurePathing(chest.Position);
+            EnsurePathing(chest.Position, pathState);
             return false;
         }
 
@@ -122,31 +108,36 @@ public class OpenTreasureCofferChain
             vnav.Stop();
         }
 
+        pathState.LastTarget = null;
+
         unsafe
         {
             GameObject* gameObject = (GameObject*)(void*)chest.Address;
             FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure* instance =
                 (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
 
-            // Pandora only opens when GetIsTargetable(); same gate here.
             if (!gameObject->GetIsTargetable())
             {
-                EnsurePathing(chest.Position);
+                EnsurePathing(chest.Position, pathState);
                 return false;
             }
 
             targets.Target = chest;
-            // false = skip LoS — mesh stop points are often slightly occluded by the coffer model.
             TargetSystem.Instance()->InteractWithObject(gameObject, false);
 
             return IsOpened(instance);
         }
     }
 
-    private void EnsurePathing(Vector3 destination)
+    private void EnsurePathing(Vector3 destination, PathState pathState)
     {
-        if (!vnav.IsRunning())
+        const float RepathDrift = 1.5f;
+        bool drifted = pathState.LastTarget is not { } last
+                       || Vector3.DistanceSquared(last, destination) > RepathDrift * RepathDrift;
+
+        if (!vnav.IsRunning() || drifted)
         {
+            pathState.LastTarget = destination;
             vnav.PathfindAndMoveCloseTo(destination, false, PathArrivalRange);
         }
     }
@@ -160,11 +151,15 @@ public class OpenTreasureCofferChain
 
     private IGameObject? GetChestAt(Vector3 position)
     {
-        // Wider than max interact so slight offsets still resolve; 2D like pathing.
         const float SearchRadius = 6f;
         return objects
             .Where(o => o is { ObjectKind: DalamudObjectKind.Treasure, IsDead: false } && o.IsValid())
             .OrderBy(o => position.Distance2D(o.Position))
             .FirstOrDefault(o => position.Distance2D(o.Position) <= SearchRadius);
+    }
+
+    private sealed class PathState
+    {
+        public Vector3? LastTarget;
     }
 }

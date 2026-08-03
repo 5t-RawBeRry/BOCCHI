@@ -93,8 +93,7 @@ public class ZoneGraph
             throw new InvalidOperationException("Both nodes must exist before adding an edge.");
         }
 
-        // Unreachable walks report PositiveInfinity — omit them so they are not
-        // preferred in routing and so graph JSON stays valid by default.
+        // Unreachable walks report PositiveInfinity — omit from the graph.
         if (!float.IsFinite(cost))
         {
             return;

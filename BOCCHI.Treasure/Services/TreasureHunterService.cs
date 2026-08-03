@@ -257,23 +257,19 @@ public class TreasureHunterService
         // Presence: don't require IsTargetable (often false until inside interact range).
         IGameObject? present = FindTreasureNear(layoutDestination, ChestSearchRadius);
 
-        // Prefer the live object once it exists — layout coords are often slightly off.
-        Vector3 destination = present?.Position ?? layoutDestination;
+        // Use layout while far; live position only when close (avoids repath jitter).
+        Vector3 destination = layoutDestination;
+        float distToLayout = player.Position.Distance2D(layoutDestination);
+        if (present != null && distToLayout <= OpenTreasureCofferChain.MaxInteractRange * 2f)
+        {
+            destination = present.Position;
+        }
+
         float dist2d = player.Position.Distance2D(destination);
 
-        // Path tighter than open range so we actually arrive inside PreferredOpenDistance.
         if (!vnav.IsRunning() && dist2d > OpenTreasureCofferChain.PreferredOpenDistance)
         {
             vnav.PathfindAndMoveCloseTo(destination, false, OpenTreasureCofferChain.PathArrivalRange);
-        }
-        else if (present != null && vnav.IsRunning())
-        {
-            float toLive = player.Position.Distance2D(present.Position);
-            if (toLive > OpenTreasureCofferChain.PreferredOpenDistance
-                && player.Position.Distance2D(layoutDestination) <= ChestSearchRadius)
-            {
-                vnav.PathfindAndMoveCloseTo(present.Position, false, OpenTreasureCofferChain.PathArrivalRange);
-            }
         }
 
         MaybeMount(destination);
@@ -291,7 +287,6 @@ public class TreasureHunterService
         }
 
         // Empty / unspawned: only skip once we're on the layout point with no live coffer nearby.
-        // Do not skip while still pathing — mesh often stops ~8–10y before interact range.
         if (present == null)
         {
             if (StepDistance <= EmptySkipRadius && !vnav.IsRunning())
@@ -303,7 +298,6 @@ public class TreasureHunterService
             return false;
         }
 
-        // Wait until within max interact range (and preferably idle) before handing off to open chain.
         if (StepDistance > OpenTreasureCofferChain.MaxInteractRange)
         {
             return false;
@@ -443,10 +437,7 @@ public class TreasureHunterService
             return true;
         }
 
-        // CampApproachRadius (3.0) + PathfindArrivalRadius (1.5) can stop at ~4.5y —
-        // outside the 3.5y Lifestream window — and vnav then won't move (#113).
-        // Keep stand-off + arrival inside LifestreamInteractRadius; pull tighter if
-        // we're already near the crystal but still short.
+        // Keep stand-off + arrival inside LifestreamInteractRadius (#113).
         float standOff;
         float arrival;
         if (StepDistance <= AethernetData.LifestreamInteractRadius + AethernetNavigation.PathfindArrivalRadius + 0.5f)

@@ -4,10 +4,8 @@ using Ocelot.Rotation.Services;
 namespace BOCCHI.Automator.Services;
 
 /// <summary>
-///     Turns autorotation off in transit and on for FATE/CE when
-///     <see cref="AutomatorConfig.ToggleAiProvider"/> is set.
-///     BossMod / BossMod Reborn use the built-in <c>VBM AI</c> preset
-///     (not legacy <c>/vbmai</c> / <c>/bmrai</c>).
+///     Toggles the <c>BOCCHI AI</c> BossMod preset while traveling / at FATE-CE
+///     when <see cref="AutomatorConfig.ToggleAiProvider"/> is set.
 /// </summary>
 public class AutoRotationController(IRotationService rotations, AutomatorConfig config)
 {
