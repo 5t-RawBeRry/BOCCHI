@@ -29,6 +29,17 @@ public class CriticalEncounterRepository
         return data.Where(e => e.Id.Value != forkedTowerId).ToList().AsReadOnly();
     }
 
+    public CriticalEncounter? TryGetForkedTower()
+    {
+        ushort forkedTowerId = zones.GetZone().ForkedTowerEventId;
+        if (forkedTowerId == 0)
+        {
+            return null;
+        }
+
+        return data.GetAll().FirstOrDefault(e => e.Id.Value == forkedTowerId);
+    }
+
     public bool HasCriticalEncounter(CriticalEncounterId id) => data.ContainsKey(id);
 
     public unsafe void Update()

@@ -11,5 +11,7 @@ public interface ICriticalEncounterRepository
 
     IReadOnlyList<CriticalEncounter> Snapshot();
 
+    CriticalEncounter? TryGetForkedTower();
+
     bool HasCriticalEncounter(CriticalEncounterId id);
 }

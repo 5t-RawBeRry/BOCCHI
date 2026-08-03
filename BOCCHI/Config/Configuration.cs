@@ -27,5 +27,7 @@ public class Configuration : IConfiguration
 
     public TreasureConfig TreasureConfig { get; set; } = new();
 
+    public ForkedTowerConfig ForkedTowerConfig { get; set; } = new();
+
     public ShoppingConfig ShoppingConfig { get; set; } = new();
 }

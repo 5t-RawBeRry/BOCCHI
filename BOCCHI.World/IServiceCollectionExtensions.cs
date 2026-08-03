@@ -24,5 +24,6 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<ICriticalEncounterRepository, CriticalEncounterRepository>();
         services.AddSingleton<ICriticalEncounterFactory, CriticalEncounterFactory>();
         services.AddSingleton<ICriticalEncounterContext, CriticalEncounterContext>();
+        services.AddSingleton<ForkedTowerTrapDrawer>();
     }
 }

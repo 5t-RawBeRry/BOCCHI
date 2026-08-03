@@ -31,6 +31,9 @@ public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev, float ra
 
     public byte Progress { get; private set; } = ev.Progress;
 
+    /// <summary>Unix seconds when registration/start is scheduled (game DynamicEvent).</summary>
+    public uint StartTimestamp { get; private set; } = ev.StartTimestamp;
+
     private static unsafe Vector3 TryReadLayoutPosition(DynamicEvent ev)
     {
         LayoutManager* layout = LayoutWorld.Instance()->ActiveLayout;
@@ -78,6 +81,7 @@ public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev, float ra
     {
         State = ev.State;
         Progress = ev.Progress;
+        StartTimestamp = ev.StartTimestamp;
 
         // Keep authored destination stable; only adopt live layout when we have no fallback.
         if (float.IsNaN(fallbackPosition.X))
@@ -90,6 +94,17 @@ public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev, float ra
         }
 
         ProgressTracker.Observe(Progress);
+    }
+
+    public TimeSpan? GetTimeUntilStart()
+    {
+        if (StartTimestamp == 0)
+        {
+            return null;
+        }
+
+        TimeSpan remaining = DateTimeOffset.FromUnixTimeSeconds(StartTimestamp) - DateTimeOffset.UtcNow;
+        return remaining;
     }
 
     public bool IsPreparing() => State is DynamicEventState.Register or DynamicEventState.Warmup;

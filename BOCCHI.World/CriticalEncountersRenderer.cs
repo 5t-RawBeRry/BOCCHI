@@ -1,6 +1,7 @@
 ﻿using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.CriticalEncounters;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.UI;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
@@ -14,6 +15,8 @@ public class CriticalEncountersRenderer
 (
     ICriticalEncounterRepository criticalEncounters,
     IActivityNavigation navigation,
+    IZoneProvider zones,
+    ForkedTowerConfig forkedTowerConfig,
     UIConfig uiConfig,
     IBrandingService branding,
     IUIService ui,
@@ -26,10 +29,16 @@ public class CriticalEncountersRenderer
 
     public void Render()
     {
+        RenderForkedTower(out bool showedTower);
+
         List<CriticalEncounter> snapshots = criticalEncounters.SnapshotWithoutForkedTower().ToList();
         if (snapshots.Count == 0)
         {
-            ui.Text(translator.T(".world.critical_encounters.none"));
+            if (!showedTower)
+            {
+                ui.Text(translator.T(".world.critical_encounters.none"));
+            }
+
             return;
         }
 
@@ -39,7 +48,7 @@ public class CriticalEncountersRenderer
             return;
         }
 
-        foreach(CriticalEncounter criticalEncounter in snapshots)
+        foreach (CriticalEncounter criticalEncounter in snapshots)
         {
             string details =
                 $"{criticalEncounter.State} · #{criticalEncounter.Id.Value} · {criticalEncounter.Position:f0}";
@@ -70,6 +79,46 @@ public class CriticalEncountersRenderer
                     details);
             }
         }
+    }
+
+    private void RenderForkedTower(out bool showed)
+    {
+        showed = false;
+        if (!forkedTowerConfig.Enabled || !forkedTowerConfig.ShowRegistrationCountdown)
+        {
+            return;
+        }
+
+        // South Horn only for now (#116).
+        if (zones.GetZone().ZoneId != ZoneId.SouthHorn)
+        {
+            return;
+        }
+
+        CriticalEncounter? tower = criticalEncounters.TryGetForkedTower();
+        if (tower == null || tower.State == DynamicEventState.Battle)
+        {
+            return;
+        }
+
+        string details = tower.State switch
+        {
+            DynamicEventState.Register when tower.GetTimeUntilStart() is { } remaining =>
+                remaining <= TimeSpan.Zero
+                    ? $"{tower.State} · #{tower.Id.Value} · registering…"
+                    : $"{tower.State} · #{tower.Id.Value} · {remaining.Minutes:D2}:{remaining.Seconds:D2}",
+            DynamicEventState.Warmup => $"{tower.State} · #{tower.Id.Value} · warmup",
+            DynamicEventState.Inactive => $"{tower.State} · #{tower.Id.Value}",
+            var _ => $"{tower.State} · #{tower.Id.Value}"
+        };
+
+        ActivitySnapshotRenderer.RenderCompact(
+            ui,
+            branding.DalamudYellow,
+            branding.DalamudGrey,
+            tower.Name,
+            details);
+        showed = true;
     }
 
     public bool ShouldRender() => uiConfig.ShowWorldSection;

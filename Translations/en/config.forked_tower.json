@@ -1,0 +1,22 @@
+{
+  "label": "Forked Tower",
+  "tooltip": "South Horn Forked Tower helpers. North Horn support comes later.",
+  "fields": {
+    "enabled": {
+      "label": "Enabled",
+      "tooltip": "Master toggle for South Horn Forked Tower helpers."
+    },
+    "draw_potential_trap_positions": {
+      "label": "Draw potential trap positions",
+      "tooltip": "Draw circles at authored trap spawn points while inside South Horn Forked Tower."
+    },
+    "show_registration_countdown": {
+      "label": "Show registration countdown",
+      "tooltip": "Show Forked Tower registration/warmup countdown in the Critical Encounters list (South Horn)."
+    },
+    "trap_draw_range": {
+      "label": "Trap draw range",
+      "tooltip": "Only draw trap markers within this distance (yalms)."
+    }
+  }
+}

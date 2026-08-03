@@ -11,6 +11,7 @@
 - Do not auto-dismiss party invite SelectYesno (only auto-accept Return while Illegal Mode Returning is active)
 
 ### Features
+- Forked Tower (South Horn): trap position overlays in-instance + registration countdown in Critical Encounters (#116)
 - Illegal Mode: `BOCCHI AI` BossMod preset — AutoTarget (aggressive/always retarget, FATE prio) + NormalMovement (pathfind, 0.5y overdodge, max range, slidecast leeway)
 - Illegal Mode: when BOCCHI AI is enabled, defer FATE/CE targeting and combat approach to VBM
 - Illegal Mode: Stop after return — Return (+ inbound teleport), no auto-walk to FATE/CE (#109)
