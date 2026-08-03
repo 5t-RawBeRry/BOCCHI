@@ -16,5 +16,6 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<TreasureRadarDrawer>();
         services.AddSingleton<OpenTreasureCofferChain>();
         services.AddSingleton<HuntTeleportChain>();
+        services.AddSingleton<HuntTreasureSightChain>();
     }
 }

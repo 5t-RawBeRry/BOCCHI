@@ -104,6 +104,8 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
 
     public bool CountInitialised { get; private set; }
 
+    public DateTime LastCountUpdateUtc { get; private set; } = DateTime.MinValue;
+
     public int BronzeChests { get; private set; }
 
     public int SilverChests { get; private set; }
@@ -139,5 +141,6 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
         SilverChests = int.Parse(match.Groups[1].Value);
         BronzeChests = int.Parse(match.Groups[2].Value);
         CountInitialised = true;
+        LastCountUpdateUtc = DateTime.UtcNow;
     }
 }

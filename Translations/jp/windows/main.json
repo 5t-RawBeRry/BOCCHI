@@ -1,6 +1,9 @@
 {
   "title": "BOCCHI",
   "unsupported_zone": "対応している蜃気楼島ゾーン内にいません。",
+  "support": {
+    "kofi_tooltip": "♥ Ko-fi（あなたが芝生に触れ続けられるように）"
+  },
   "sections": {
     "trackers": "トラッカー",
     "automation": "自動化",

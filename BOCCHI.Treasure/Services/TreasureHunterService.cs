@@ -1,5 +1,6 @@
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Aethernet;
+using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Treasure.ChainRecipes;
@@ -45,7 +46,9 @@ public class TreasureHunterService
     IDataManager data,
     IDalamudPluginInterface plugin,
     IPluginLog log,
-    IGameGui gui
+    IGameGui gui,
+    ITreasureTracker tracker,
+    ISupportJobFactory supportJobs
 ) : ITreasureHunter, IOnUpdate, IOnStop
 {
     private const float ChestSearchRadius = 25f;
@@ -55,6 +58,10 @@ public class TreasureHunterService
     /// A larger radius (e.g. 10y) skipped chests while still outside interact range (#93).
     /// </summary>
     private const float EmptySkipRadius = 2f;
+
+    /// <summary>How long to wait for WideText after casting Treasure Sight.</summary>
+    private static readonly TimeSpan SightCountWait = TimeSpan.FromSeconds(8);
+
     private readonly List<TreasureLayoutDatum> layoutTreasure = [];
     private readonly List<HuntPathfinderStep> steps = [];
 
@@ -63,6 +70,10 @@ public class TreasureHunterService
 
     private IHuntRoutePlanner? pathPlanner;
     private bool planningRoute;
+    private bool pendingStartSight;
+    private bool waitingForSightCounts;
+    private DateTime sightCastUtc = DateTime.MinValue;
+    private DateTime lastSightCastUtc = DateTime.MinValue;
 
     public void OnStop() => Teardown();
 
@@ -118,6 +129,28 @@ public class TreasureHunterService
             steps.AddRange(pathPlanner.FindPath(player.Position, validNodes).GetAwaiter().GetResult());
             pathPlanner = null;
             StepIndex = 0;
+            pendingStartSight = config.CastTreasureSightDuringHunt && CanCastTreasureSight();
+            return;
+        }
+
+        if (TryFinishSightAndMaybeAbort())
+        {
+            return;
+        }
+
+        if (activeChain is { IsCompleted: true })
+        {
+            activeChain = null;
+        }
+
+        if (TryBeginTreasureSight())
+        {
+            return;
+        }
+
+        if (ShouldAbortForNoChests())
+        {
+            FinishHuntEarly("Treasure Sight reports no remaining coffers");
             return;
         }
 
@@ -144,7 +177,6 @@ public class TreasureHunterService
         {
             activeChain = null;
         }
-
     }
 
     public bool Running { get; private set; }
@@ -181,6 +213,10 @@ public class TreasureHunterService
         Paused = false;
         steps.Clear();
         layoutTreasure.Clear();
+        pendingStartSight = false;
+        waitingForSightCounts = false;
+        sightCastUtc = DateTime.MinValue;
+        lastSightCastUtc = DateTime.MinValue;
         pathPlanner = CreatePathPlanner();
         if (pathPlanner == null || pathPlanner.State != HuntPathfinderState.FileLoaded)
         {
@@ -241,6 +277,139 @@ public class TreasureHunterService
         pathfinder.Stop();
         vnav.Stop();
         activeChain = null;
+    }
+
+    private bool CanCastTreasureSight()
+    {
+        SupportJob freelancer = supportJobs.Create(SupportJobId.PhantomFreelancer);
+        return freelancer.Level >= 10;
+    }
+
+    private bool TryBeginTreasureSight()
+    {
+        if (!config.CastTreasureSightDuringHunt || !CanCastTreasureSight())
+        {
+            pendingStartSight = false;
+            return false;
+        }
+
+        if (waitingForSightCounts || activeChain != null)
+        {
+            return false;
+        }
+
+        // Don't interrupt return / teleport mid-step.
+        HuntPathfinderStep? step = GetCurrentStep();
+        if (step is { Type: HuntPathfinderStepType.ReturnToBaseCamp or HuntPathfinderStepType.TeleportToAethernet })
+        {
+            return false;
+        }
+
+        bool dueForStart = pendingStartSight;
+        bool dueForRefresh = !pendingStartSight
+                             && steps.Count > 0
+                             && StepIndex < steps.Count
+                             && lastSightCastUtc != DateTime.MinValue
+                             && (DateTime.UtcNow - lastSightCastUtc).TotalSeconds
+                             >= automatorConfig.TreasureSightRecastIntervalSeconds;
+
+        if (!dueForStart && !dueForRefresh)
+        {
+            return false;
+        }
+
+        SoftStopMovement();
+        pendingStartSight = false;
+        waitingForSightCounts = true;
+        sightCastUtc = DateTime.UtcNow;
+        lastSightCastUtc = sightCastUtc;
+
+        activeChain = chainManager.Manage(
+            chains.Create("TreasureHunt::TreasureSight")
+                .Then<HuntTreasureSightChain>()
+        );
+
+        return true;
+    }
+
+    /// <returns>True when the caller should skip the rest of this tick.</returns>
+    private bool TryFinishSightAndMaybeAbort()
+    {
+        if (!waitingForSightCounts)
+        {
+            return false;
+        }
+
+        if (activeChain is { IsCompleted: false })
+        {
+            return true;
+        }
+
+        if (activeChain is { IsCompleted: true })
+        {
+            bool castOk = activeChain.IsCompletedSuccessfully && (activeChain.Result?.IsSuccess ?? false);
+            activeChain = null;
+            if (!castOk)
+            {
+                waitingForSightCounts = false;
+                log.Warning("Treasure Sight cast during hunt failed; continuing route");
+                return false;
+            }
+        }
+
+        bool refreshed = tracker.LastCountUpdateUtc >= sightCastUtc;
+        bool timedOut = DateTime.UtcNow - sightCastUtc >= SightCountWait;
+        if (!refreshed && !timedOut)
+        {
+            return true;
+        }
+
+        waitingForSightCounts = false;
+
+        if (ShouldAbortForNoChests())
+        {
+            FinishHuntEarly("Treasure Sight reports no remaining coffers");
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool ShouldAbortForNoChests()
+    {
+        if (!config.CastTreasureSightDuringHunt || !tracker.CountInitialised)
+        {
+            return false;
+        }
+
+        if (tracker.BronzeChests + tracker.SilverChests > 0)
+        {
+            return false;
+        }
+
+        // Still have route work that isn't the epilogue Return.
+        for (int i = StepIndex; i < steps.Count; i++)
+        {
+            if (steps[i].Type != HuntPathfinderStepType.ReturnToBaseCamp)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void FinishHuntEarly(string reason)
+    {
+        log.Info($"Treasure hunt ending early: {reason}");
+        SoftStopMovement();
+        waitingForSightCounts = false;
+        pendingStartSight = false;
+
+        if (StepIndex < steps.Count)
+        {
+            steps.RemoveRange(StepIndex, steps.Count - StepIndex);
+        }
     }
 
     private bool TryAdvanceCurrentStep()
@@ -658,7 +827,7 @@ public class TreasureHunterService
         }
 
         // Already appended the epilogue Return for this run.
-        return steps[^1].Type != HuntPathfinderStepType.ReturnToBaseCamp;
+        return steps.Count == 0 || steps[^1].Type != HuntPathfinderStepType.ReturnToBaseCamp;
     }
 
     private AethernetData ResolveAethernet(HuntAethernet aethernet)
@@ -697,6 +866,10 @@ public class TreasureHunterService
         Running = false;
         Paused = false;
         planningRoute = false;
+        pendingStartSight = false;
+        waitingForSightCounts = false;
+        sightCastUtc = DateTime.MinValue;
+        lastSightCastUtc = DateTime.MinValue;
 
         SoftStopMovement();
 

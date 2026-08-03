@@ -38,6 +38,10 @@
       "label": "Hunt complete sound",
       "tooltip": "Chat sound effect ID (1–16), same as System Config → Sound Effects."
     },
+    "cast_treasure_sight_during_hunt": {
+      "label": "Cast Treasure Sight during hunt",
+      "tooltip": "Cast Treasure Sight when the hunt starts (and again periodically). Ends the hunt early when Sight reports no remaining coffers."
+    },
     "hunt_return_cost": {
       "label": "Return cost",
       "tooltip": "Pathfinding cost weight for returning to base camp"

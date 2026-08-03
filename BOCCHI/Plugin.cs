@@ -66,6 +66,7 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<IConfigRenderer, ConfigRenderer>();
         services.AddSingleton<OperationalStatusBar>();
         services.AddSingleton<IMainWindowTitleBarContributor, IllegalModeTitleBarContributor>();
+        services.AddSingleton<IMainWindowTitleBarContributor, KofiTitleBarContributor>();
         services.AddSingleton<IFieldRenderer<MobMultiSelectAttribute>, MobMultiSelectRenderer>();
         services.AddSingleton<IFieldRenderer<DisabledFateIdsAttribute>, DisabledFateIdsRenderer>();
         services.AddSingleton<IFieldRenderer<DisabledCriticalEncounterIdsAttribute>, DisabledCriticalEncounterIdsRenderer>();

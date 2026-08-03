@@ -26,6 +26,22 @@
       "label": "トレジャーハントボタンを表示",
       "tooltip": "メインウィンドウにトレジャーハントボタンを表示します。"
     },
+    "return_to_base_camp_after_hunt": {
+      "label": "ハント後にベースキャンプへ戻る",
+      "tooltip": "ルート上の最後の宝箱のあと、ベースキャンプへデジョンします。"
+    },
+    "play_sound_on_hunt_complete": {
+      "label": "ハント完了時に効果音を再生",
+      "tooltip": "トレジャーハント完了時にチャット効果音を再生します。"
+    },
+    "hunt_complete_sound_id": {
+      "label": "ハント完了効果音",
+      "tooltip": "チャット効果音の ID（1～16）。システムコンフィグ → 効果音と同じ番号です。"
+    },
+    "cast_treasure_sight_during_hunt": {
+      "label": "ハント中にトレジャーサイトを使う",
+      "tooltip": "ハント開始時（および途中で定期的）にトレジャーサイトを唱えます。残りの宝箱が 0 の場合はハントを早めに終了します。"
+    },
     "hunt_return_cost": {
       "label": "デジョンコスト",
       "tooltip": "ベースキャンプへデジョンする経路探索コストです。"

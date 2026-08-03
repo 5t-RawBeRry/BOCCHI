@@ -1,6 +1,9 @@
 {
   "title": "BOCCHI",
   "unsupported_zone": "Not in a supported Occult Crescent Zone.",
+  "support": {
+    "kofi_tooltip": "♥ Ko-fi (so you can keep touching grass)"
+  },
   "sections": {
     "trackers": "Trackers",
     "automation": "Automation",

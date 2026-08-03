@@ -37,6 +37,13 @@ public class TreasureConfig : IAutoConfig
     [IntRange(1, 16)]
     public int HuntCompleteSoundId { get; set; } = 2;
 
+    /// <summary>
+    ///     Cast Treasure Sight at hunt start (and periodically mid-route); stop early when Sight
+    ///     reports no remaining coffers (#120).
+    /// </summary>
+    [Checkbox]
+    public bool CastTreasureSightDuringHunt { get; set; } = true;
+
     [FloatRange(50f, 500f)]
     public float HuntReturnCost { get; set; } = 300f;
 
