@@ -89,7 +89,6 @@ public class CriticalEncountersRenderer
             return;
         }
 
-        // South Horn only for now (#116).
         if (zones.GetZone().ZoneId != ZoneId.SouthHorn)
         {
             return;

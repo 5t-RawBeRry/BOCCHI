@@ -14,15 +14,9 @@ public sealed record PotCycleSnapshot
 
     public bool HasKnownAnchor { get; init; }
 
-    public int LastObservedPotFateId { get; init; }
-
-    public DateTimeOffset LastObservedSpawnAt { get; init; }
-
     public int CurrentActivePotFateId { get; init; }
 
     public int PredictedNextPotFateId { get; init; }
-
-    public string PredictedNextPotFateName { get; init; } = string.Empty;
 
     public DateTimeOffset PredictedNextSpawnAt { get; init; }
 
@@ -41,8 +35,6 @@ public readonly record struct PotFallbackStartDecision(
 public interface IPotCycleTracker
 {
     PotCycleSnapshot Snapshot { get; }
-
-    void Reset(string reason);
 }
 
 /// <summary>
@@ -68,15 +60,6 @@ public sealed class PotCycleTracker
             Mode = UpdateLimitMode.Milliseconds,
             Limit = 500
         };
-
-    public void Reset(string reason)
-    {
-        snapshot = new PotCycleSnapshot
-        {
-            LastUpdated = DateTimeOffset.UtcNow
-        };
-        logger.Info($"[PotCycleTracker] reset reason={reason}");
-    }
 
     public void Update()
     {
@@ -112,11 +95,8 @@ public sealed class PotCycleTracker
                 LastUpdated = now,
                 TerritoryTypeId = territoryType,
                 HasKnownAnchor = sameTerritory && previous.HasKnownAnchor,
-                LastObservedPotFateId = sameTerritory ? previous.LastObservedPotFateId : 0,
-                LastObservedSpawnAt = sameTerritory ? previous.LastObservedSpawnAt : DateTimeOffset.MinValue,
                 CurrentActivePotFateId = 0,
                 PredictedNextPotFateId = sameTerritory ? previous.PredictedNextPotFateId : 0,
-                PredictedNextPotFateName = sameTerritory ? previous.PredictedNextPotFateName : string.Empty,
                 PredictedNextSpawnAt = sameTerritory ? previous.PredictedNextSpawnAt : DateTimeOffset.MinValue
             };
         }
@@ -136,11 +116,8 @@ public sealed class PotCycleTracker
             LastUpdated = now,
             TerritoryTypeId = territoryType,
             HasKnownAnchor = true,
-            LastObservedPotFateId = activeId,
-            LastObservedSpawnAt = now,
             CurrentActivePotFateId = activeId,
             PredictedNextPotFateId = opposite?.Id ?? 0,
-            PredictedNextPotFateName = opposite != null ? $"#{opposite.Id}" : string.Empty,
             PredictedNextSpawnAt = opposite == null ? DateTimeOffset.MinValue : now + PotCycleInterval
         };
     }
@@ -184,9 +161,6 @@ public static class PotFallbackWindow
             timeUntilDeparture);
     }
 
-    /// <summary>
-    ///     True when pot gating has blocked other activities and we should path to the predicted pot early (#112).
-    /// </summary>
     public static bool ShouldPreposition(
         PotCycleSnapshot cycle,
         DateTimeOffset now,

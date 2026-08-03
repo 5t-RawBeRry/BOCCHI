@@ -65,7 +65,7 @@ public static partial class SouthHornTrapData
             new TrapDatum(new Vector3(823f, -500f, -534f), OccultObjectType.Trap),
             new TrapDatum(new Vector3(824.5f, -500f, -528f), OccultObjectType.Trap),
             new TrapDatum(new Vector3(823f, -500f, -522f), OccultObjectType.Trap),
-        ], 2),
+        ]),
 
 
         //Stairs
@@ -88,7 +88,7 @@ public static partial class SouthHornTrapData
             new TrapDatum(new Vector3(705.5f, -476f, -603.5f), OccultObjectType.Trap),
             new TrapDatum(new Vector3(700f, -476f, -603.5f), OccultObjectType.Trap),
             new TrapDatum(new Vector3(694.5f, -476f, -603.5f), OccultObjectType.Trap),
-        ], 3),
+        ]),
     ];
 }
 

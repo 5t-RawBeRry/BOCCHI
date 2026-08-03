@@ -61,7 +61,6 @@ internal static class CombatActivityHandler
             }
         }
 
-        // Hand movement back once combat starts (before the out-of-range branch can repath).
         if (stopPathfinderInCombat && conditions[ConditionFlag.InCombat])
         {
             pathfinder.Stop();
@@ -74,7 +73,6 @@ internal static class CombatActivityHandler
             return true;
         }
 
-        // One max-melee approach per FATE/CE — don't keep pulling the player back in.
         if (!shouldApproachTarget
             || !EzThrottler.Throttle($"{throttlePrefix}::Approach", 500)
             || !pathfinder.IsIdle())
@@ -89,7 +87,6 @@ internal static class CombatActivityHandler
             ShouldSnapToFloor = true,
         });
 
-        // Still pending until we arrive (or combat takes over) so a failed pathfind can retry.
         return false;
     }
 }

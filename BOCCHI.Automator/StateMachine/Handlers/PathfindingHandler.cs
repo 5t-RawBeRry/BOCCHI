@@ -33,7 +33,7 @@ public class PathfindingHandler
     public override void Enter()
     {
         base.Enter();
-        // Drop any leftover combat target so rotations don't pull trash mid-path.
+        // Drop leftover combat target so rotations don't pull trash mid-path.
         targetManager.Target = null;
         autoRotation.DisableForTravel();
     }
@@ -115,29 +115,20 @@ public class PathfindingHandler
                     }
                     else if (result.IsCanceled)
                     {
-                        // User stop / soft interrupt — pause auto-nav so we don't immediately
-                        // rebuild the same Return+teleport chain (retry spam). Toggle Illegal Mode to resume.
-                        logger.Info("Path step canceled — pausing navigation until Illegal Mode is toggled");
-                        pathfinder.Stop();
-                        memory.Forget<GoalPathStepMemory>();
-                        memory.Forget<GoalMemory>();
-                        memory.TryAdd<NavigationInterruptedMemory>();
+                        PauseForManualPathing("Path step canceled — pausing navigation until Illegal Mode is toggled");
+                        return;
                     }
                     else
                     {
                         logger.Warning("Path step failed: {Error}", result.ErrorMessage ?? "unknown");
                         pathfinder.Stop();
-                        // Drop failed step; remaining plan continues (or empties → replan from here).
                         path.DequeuePathStep();
                     }
                 }
                 else if (currentPathTask.IsCanceled)
                 {
-                    logger.Warning("Path step canceled — pausing navigation until Illegal Mode is toggled");
-                    pathfinder.Stop();
-                    memory.Forget<GoalPathStepMemory>();
-                    memory.Forget<GoalMemory>();
-                    memory.TryAdd<NavigationInterruptedMemory>();
+                    PauseForManualPathing("Path step canceled — pausing navigation until Illegal Mode is toggled");
+                    return;
                 }
                 else
                 {

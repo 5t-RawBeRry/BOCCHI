@@ -12,9 +12,6 @@ using Ocelot.Windows;
 
 namespace BOCCHI.UI;
 
-/// <summary>
-///     Restores pre-rewrite Skull (toggle illegal) + Stop (emergency stop) title-bar buttons.
-/// </summary>
 public class IllegalModeTitleBarContributor(
     IAutomator automator,
     IPathfinder pathfinder,

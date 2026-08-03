@@ -11,9 +11,6 @@ using System.Numerics;
 
 namespace BOCCHI.World;
 
-/// <summary>
-///     Authored trap spawn highlights inside South Horn Forked Tower (#116).
-/// </summary>
 public class ForkedTowerTrapDrawer
 (
     ForkedTowerConfig config,

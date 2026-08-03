@@ -422,7 +422,6 @@ public class TreasureHunterService
             return;
         }
 
-        // Same AtkValues[7] filter as pre-rewrite — Return only.
         ReturnYesNo.TryAccept(&yesno->AtkUnitBase);
     }
 

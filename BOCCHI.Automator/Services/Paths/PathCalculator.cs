@@ -78,17 +78,11 @@ public class PathCalculator
                 Position = liveFate.Position,
                 Metadata = goalNode.Metadata
             };
-
-            // Path toward the FATE center — do not treat "inside the yellow circle" (~20y+) as arrived.
-            // InFateHandler continues into max melee of the boss once CurrentFate registers.
-            arrivalRadius = NavigationConstants.EventArrivalRadius;
         }
         else if (goal.GoalType is FateGoal potPreposition
                  && zone.IsPotFate(potPreposition.id.Value))
         {
-            // Predicted pot not up yet — stand on a random ring around the authored center (#112).
             potPrepositionStandOff = NavigationApproach.GetPotPrepositionPosition(goalNode.Position, player.Position);
-            arrivalRadius = NavigationConstants.EventArrivalRadius;
         }
         else if (goal.GoalType is CriticalEncounterGoal liveCeGoal
                  && criticalEncounters.SnapshotWithoutForkedTower()

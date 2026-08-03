@@ -55,17 +55,17 @@ public class CriticalEncounterRepository
             return;
         }
 
-        Dictionary<CriticalEncounterId, CriticalEncounter> current = oc->DynamicEventContainer.Events
-            .ToArray()
+        DynamicEvent[] events = oc->DynamicEventContainer.Events.ToArray();
+        Dictionary<CriticalEncounterId, CriticalEncounter> current = events
             .Where(e => e.State != DynamicEventState.Inactive)
             .Select(factory.Create)
             .ToDictionary(k => k.Id, v => v);
 
         RepositorySync.ApplySnapshot(data, current, CriticalEncounterAdded, CriticalEncounterRemoved);
 
-        foreach(CriticalEncounter criticalEncounter in data.GetAll())
+        foreach (CriticalEncounter criticalEncounter in data.GetAll())
         {
-            DynamicEvent? ev = oc->DynamicEventContainer.Events.ToArray().FirstOrNull(e => e.DynamicEventId == criticalEncounter.Id.Value);
+            DynamicEvent? ev = events.FirstOrNull(e => e.DynamicEventId == criticalEncounter.Id.Value);
             if (ev == null)
             {
                 continue;

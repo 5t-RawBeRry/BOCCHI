@@ -2,27 +2,9 @@ using System.Numerics;
 
 namespace BOCCHI.Common.Data.Traps;
 
-public sealed class TrapGroup(List<TrapDatum> traps, uint max = 1)
+public sealed class TrapGroup(List<TrapDatum> traps)
 {
     public IReadOnlyList<TrapDatum> Traps { get; } = traps;
-
-    public uint MaxInGroup { get; } = max;
-
-    public Vector3 GetCenter()
-    {
-        if (Traps.Count == 0)
-        {
-            return Vector3.Zero;
-        }
-
-        Vector3 sum = Vector3.Zero;
-        foreach (TrapDatum trap in Traps)
-        {
-            sum += trap.Position;
-        }
-
-        return sum / Traps.Count;
-    }
 
     public float GetDistance2D(Vector3 from)
     {

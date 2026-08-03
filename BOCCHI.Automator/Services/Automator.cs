@@ -166,23 +166,15 @@ public class Automator
         StateMachine.Update();
     }
 
-    private void PauseOutsideZone()
-    {
-        memory.Wipe();
-        manager.CancelAll();
-        pathfinder.Stop();
-        vnav.Stop();
-        autoRotation.DisableForTravel();
-        // Exit current handler (e.g. unregister Return SelectYesno) before leaving the zone hot.
-        if (stateMachine != null)
-        {
-            StateMachine.Reset();
-        }
-    }
+    private void PauseOutsideZone() => StopAutomation(resetPausedFlag: false);
 
-    private void StopAutomation()
+    private void StopAutomation(bool resetPausedFlag = true)
     {
-        pausedOutsideZone = false;
+        if (resetPausedFlag)
+        {
+            pausedOutsideZone = false;
+        }
+
         memory.Wipe();
         manager.CancelAll();
         pathfinder.Stop();

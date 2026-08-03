@@ -7,9 +7,6 @@ namespace BOCCHI.Common.Config;
 [ConfigGroup("forked_tower", GroupOrder = 50)]
 public class ForkedTowerConfig : IAutoConfig
 {
-    /// <summary>
-    ///     South Horn Forked Tower only for now (#116). North Horn later.
-    /// </summary>
     [Checkbox]
     public bool Enabled { get; set; } = true;
 

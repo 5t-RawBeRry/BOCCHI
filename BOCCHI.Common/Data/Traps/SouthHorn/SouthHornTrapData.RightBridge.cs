@@ -20,14 +20,14 @@ public static partial class SouthHornTrapData
             new TrapDatum(new Vector3(-538f, -852f, 322f), OccultObjectType.Trap),
             new TrapDatum(new Vector3(-538f, -852f, 329f), OccultObjectType.Trap),
             new TrapDatum(new Vector3(-538f, -852f, 336f), OccultObjectType.Trap),
-        ], 2),
+        ]),
 
         // Set 3
         new([
             new TrapDatum(new Vector3(-503f, -852f, 322f), OccultObjectType.Trap),
             new TrapDatum(new Vector3(-503f, -852f, 329f), OccultObjectType.BigTrap),
             new TrapDatum(new Vector3(-503f, -852f, 336f), OccultObjectType.Trap),
-        ], 2),
+        ]),
 
         // Set 4
         new([
@@ -35,7 +35,7 @@ public static partial class SouthHornTrapData
             new TrapDatum(new Vector3(-470f, -852f, 322f), OccultObjectType.BigTrap),
             new TrapDatum(new Vector3(-470f, -852f, 322f), OccultObjectType.Trap),
             new TrapDatum(new Vector3(-470f, -852f, 336f), OccultObjectType.Trap),
-        ], 2),
+        ]),
 
         // Set 5
         new([
