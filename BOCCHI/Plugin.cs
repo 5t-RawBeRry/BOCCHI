@@ -29,6 +29,7 @@ using Ocelot;
 using Ocelot.Chain.Services;
 using Ocelot.Config;
 using Ocelot.Config.Renderers;
+using Ocelot.Config.Renderers.Enum;
 using Ocelot.ECommons.Services;
 using Ocelot.Rotation.Services;
 using Ocelot.Pathfinding.Services;
@@ -69,6 +70,8 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<IFieldRenderer<DisabledFateIdsAttribute>, DisabledFateIdsRenderer>();
         services.AddSingleton<IFieldRenderer<DisabledCriticalEncounterIdsAttribute>, DisabledCriticalEncounterIdsRenderer>();
         services.AddSingleton<IFieldRenderer<MountSelectAttribute>, MountSelectRenderer>();
+        services.AddSingleton<UILanguageDisplay>();
+        services.AddSingleton<NoOpFilter<UILanguage>>();
 
         services.AddSingleton<ISupportJobFactory, SupportJobFactory>();
         services.AddSingleton<ISupportJobChanger, SupportJobChanger>();

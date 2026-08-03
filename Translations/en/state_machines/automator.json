@@ -1,0 +1,47 @@
+{
+  "entry": {
+    "label": "Entry"
+  },
+  "idle": {
+    "label": "Idle"
+  },
+  "dead": {
+    "label": "Dead"
+  },
+  "in_combat": {
+    "label": "In combat"
+  },
+  "casting_treasure_sight": {
+    "label": "Casting Treasure Sight"
+  },
+  "applying_buffs": {
+    "label": "Applying buffs"
+  },
+  "repairing": {
+    "label": "Repairing"
+  },
+  "choosing_activity": {
+    "label": "Choosing activity"
+  },
+  "returning": {
+    "label": "Returning"
+  },
+  "pathfinding": {
+    "label": "Pathfinding"
+  },
+  "in_fate": {
+    "label": "In FATE"
+  },
+  "waiting_for_critical_encounter": {
+    "label": "Waiting for CE"
+  },
+  "in_critical_encounter": {
+    "label": "In CE"
+  },
+  "returning_to_job": {
+    "label": "Returning to job"
+  },
+  "farming_pot_chests": {
+    "label": "Farming pot chests"
+  }
+}

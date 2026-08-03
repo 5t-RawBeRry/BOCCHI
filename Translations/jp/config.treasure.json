@@ -1,0 +1,54 @@
+{
+  "label": "宝箱",
+  "tooltip": "宝箱オーバーレイとトレジャーハント経路の設定です。",
+  "fields": {
+    "enabled": {
+      "label": "有効",
+      "tooltip": "宝箱関連のオーバーレイと機能を有効にします。"
+    },
+    "draw_line_to_bronze_chests": {
+      "label": "銅箱へのラインを表示",
+      "tooltip": "非戦闘時に、自分の位置から近くの銅箱までラインを表示します。"
+    },
+    "draw_line_to_silver_chests": {
+      "label": "銀箱へのラインを表示",
+      "tooltip": "非戦闘時に、自分の位置から近くの銀箱までラインを表示します。"
+    },
+    "draw_line_to_carrots": {
+      "label": "ニンジンへのラインを表示",
+      "tooltip": "非戦闘時に、自分の位置から近くのニンジンまで緑色のラインを表示します。"
+    },
+    "show_percentage_active_treasure_count": {
+      "label": "アクティブ宝箱を割合で表示",
+      "tooltip": "合計数の横にアクティブな宝箱数を割合で表示します。"
+    },
+    "enable_treasure_hunt": {
+      "label": "トレジャーハントボタンを表示",
+      "tooltip": "メインウィンドウにトレジャーハントボタンを表示します。"
+    },
+    "hunt_return_cost": {
+      "label": "デジョンコスト",
+      "tooltip": "ベースキャンプへデジョンする経路探索コストです。"
+    },
+    "hunt_teleport_cost": {
+      "label": "テレポートコスト",
+      "tooltip": "エーテライトテレポートの経路探索コストです。"
+    },
+    "hunt_detection_range": {
+      "label": "検出範囲",
+      "tooltip": "宝箱ノードにどれだけ近づいたらインタラクトするかの距離です。"
+    },
+    "hunt_max_level": {
+      "label": "最大宝箱レベル",
+      "tooltip": "ハント経路に含める宝箱ノードの最大レベルです。"
+    },
+    "restrict_coffer_base_ids": {
+      "label": "既知の宝箱IDのみに制限",
+      "tooltip": "既知の宝箱 BaseId のみインタラクトします。オフの場合は Treasure オブジェクト全般を対象にします。"
+    },
+    "skip_unsafe_treasure_windows": {
+      "label": "危険な宝箱時間帯を避ける",
+      "tooltip": "南征編のアシュキンや危険な天候時間帯では、トレジャーハントを一時停止します。"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "waiting": {
+    "label": "待機"
+  },
+  "buffing": {
+    "label": "バフ中"
+  },
+  "gathering": {
+    "label": "収集中"
+  },
+  "stacking": {
+    "label": "釣り中"
+  },
+  "fighting": {
+    "label": "戦闘中"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "label": "UI",
+  "tooltip": "メインウィンドウに表示するパネルを選択します。",
+  "fields": {
+    "language": {
+      "label": "言語",
+      "tooltip": "BOCCHI の表示言語を選択します。"
+    },
+    "show_experience_tracker": {
+      "label": "経験値トラッカーを表示",
+      "tooltip": "メインウィンドウに経験値トラッカーを表示します。"
+    },
+    "show_experience_tracker_graph": {
+      "label": "経験値グラフを表示",
+      "tooltip": "経験値トラッカーの下にグラフを表示します。"
+    },
+    "show_currency_tracker": {
+      "label": "通貨トラッカーを表示",
+      "tooltip": "メインウィンドウに通貨トラッカーを表示します。"
+    },
+    "show_currency_tracker_graph": {
+      "label": "通貨グラフを表示",
+      "tooltip": "通貨トラッカーの下にグラフを表示します。"
+    },
+    "show_world_section": {
+      "label": "ワールドセクションを表示",
+      "tooltip": "メインウィンドウに進行中の FATE とクリティカルエンカウントを表示します。"
+    },
+    "show_buff_section": {
+      "label": "バフボタンを表示",
+      "tooltip": "メインウィンドウ上部にバフ操作を表示します。"
+    },
+    "show_automation_section": {
+      "label": "自動化セクションを表示",
+      "tooltip": "メインウィンドウにオートメーターとモブファーム操作を表示します。"
+    },
+    "show_treasure_section": {
+      "label": "宝箱セクションを表示",
+      "tooltip": "メインウィンドウにトレジャーハントの状態と操作を表示します。"
+    }
+  }
+}

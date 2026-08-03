@@ -1,0 +1,72 @@
+{
+  "label": "モブファーム",
+  "tooltip": "対象モブの選択とファーム動作の設定です。",
+  "fields": {
+    "consider_special_mobs": {
+      "label": "特殊モブを考慮",
+      "tooltip": "近くの特殊モブを釣り対象やカウント対象に含めます。特殊モブは時間や天候で出現するモブです。"
+    },
+    "count_special_mobs_toward_minimum": {
+      "label": "特殊モブを必要数に数える",
+      "tooltip": "オフの場合、特殊モブは釣り対象になりますが、開始や戦闘移行に必要な最小数には数えません。"
+    },
+    "only_start_out_of_combat": {
+      "label": "非戦闘時のみ開始",
+      "tooltip": "InCombat フラグが消えるまで、新しいバフ付与から誘導のループ開始を待ちます。すでに敵視されている場合は戦闘に入ります。"
+    },
+    "max_mob_level": {
+      "label": "最大モブレベル",
+      "tooltip": "対象にするモブの最大レベルです。特殊モブやレベル幅のあるモブに便利です。"
+    },
+    "max_euclidean_distance": {
+      "label": "最大直線距離",
+      "tooltip": "この距離より遠いモブは無視します。特殊モブを考慮するとき、遠くまで引っ張られすぎるのを防ぐために使います。"
+    },
+    "min_euclidean_distance_to_return_home": {
+      "label": "開始位置へ戻る最小距離",
+      "tooltip": "戦闘後、開始位置からこの距離より離れている場合に戻ります。"
+    },
+    "return_to_start_in_waiting_phase": {
+      "label": "戦闘後に開始位置へ戻る",
+      "tooltip": "開始位置は Start を押した場所です。自動マウントが有効なら、帰路でマウントします。"
+    },
+    "render_debug_lines": {
+      "label": "デバッグラインを表示",
+      "tooltip": "非戦闘時は有効なモブへ赤線、戦闘中は有効なモブへ緑線を表示します。"
+    },
+    "render_debug_lines_while_not_running": {
+      "label": "停止中もデバッグラインを表示",
+      "tooltip": "モブファームが実行中でなくてもラインを表示します。"
+    },
+    "apply_battle_bell": {
+      "label": "バトルベルを使用",
+      "tooltip": "釣り始める前にバトルベルを使用します。"
+    },
+    "maximum_battle_bell_wait_time": {
+      "label": "バトルベル最大待機時間",
+      "tooltip": "バトルベルのクールダウンを待つ最大時間です。"
+    },
+    "minimum_mobs_to_start_loop": {
+      "label": "開始に必要な最小モブ数",
+      "tooltip": "ループを開始するために近くに必要な有効モブ数です。"
+    },
+    "minimum_mobs_to_start_fight": {
+      "label": "戦闘開始に必要な最小モブ数",
+      "tooltip": "戦闘に移る前に集めるモブ数です。周囲に未戦闘モブが残っていない場合は、この数に満たなくても戦闘を開始します。"
+    },
+    "stacking_timeout_seconds": {
+      "label": "集合タイムアウト（秒）",
+      "tooltip": "モブを集めるために移動する最大時間です。超過するとその時点で戦闘を開始します。"
+    },
+    "mobs": {
+      "label": "対象モブ",
+      "tooltip": "ファームで釣り、カウントするモブです。",
+      "search_hint": "名前またはIDで検索...",
+      "selected": "選択中",
+      "zone_filter": "ゾーン",
+      "zone_all": "すべてのゾーン",
+      "zone_south_horn": "南征編",
+      "zone_north_horn": "北征編"
+    }
+  }
+}
