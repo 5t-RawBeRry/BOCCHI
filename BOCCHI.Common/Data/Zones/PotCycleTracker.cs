@@ -184,6 +184,32 @@ public static class PotFallbackWindow
             timeUntilDeparture);
     }
 
+    /// <summary>
+    ///     True when pot gating has blocked other activities and we should path to the predicted pot early (#112).
+    /// </summary>
+    public static bool ShouldPreposition(
+        PotCycleSnapshot cycle,
+        DateTimeOffset now,
+        TimeSpan cutoffWindow,
+        int spawnLeadMinutes,
+        bool potFarmingEnabled)
+    {
+        if (!potFarmingEnabled || !cycle.HasPredictedNextPot)
+        {
+            return false;
+        }
+
+        PotFallbackStartDecision decision = Evaluate(
+            cycle,
+            now,
+            cutoffWindow,
+            spawnLeadMinutes,
+            potFarmingEnabled,
+            "preposition");
+
+        return !decision.AllowStart;
+    }
+
     private static string Format(TimeSpan value)
     {
         if (value <= TimeSpan.Zero)

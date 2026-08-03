@@ -22,9 +22,9 @@ public class AutomatorConfig : IAutoConfig
     [Checkbox] public bool ToggleAiProvider { get; set; } = true;
 
     /// <summary>
-    ///     After Return / aetheryte teleport toward a FATE or CE, stop and leave the walk for the player.
+    ///     After Return (and inbound aetheryte teleport) toward a FATE or CE, stop and leave the walk for the player.
     /// </summary>
-    [Checkbox] public bool StopAfterActivityAetheryte { get; set; } = false;
+    [Checkbox] public bool StopAfterReturn { get; set; } = false;
 
     /// <summary>
     ///     When the current phantom job is maxed, switch to the next unlocked non-maxed job.

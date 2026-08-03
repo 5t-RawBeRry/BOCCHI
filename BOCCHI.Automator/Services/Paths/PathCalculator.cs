@@ -67,6 +67,7 @@ public class PathCalculator
         // Prefer live FATE/CE center when available — authored graph points can sit outside the circle.
         Node pathGoal = goalNode;
         float arrivalRadius = NavigationConstants.EventArrivalRadius;
+        Vector3? potPrepositionStandOff = null;
         if (goal.GoalType is FateGoal liveFateGoal
             && fates.Snapshot().FirstOrDefault(f => f.Id.Value == liveFateGoal.id.Value) is { } liveFate)
         {
@@ -80,6 +81,13 @@ public class PathCalculator
 
             // Path toward the FATE center — do not treat "inside the yellow circle" (~20y+) as arrived.
             // InFateHandler continues into max melee of the boss once CurrentFate registers.
+            arrivalRadius = NavigationConstants.EventArrivalRadius;
+        }
+        else if (goal.GoalType is FateGoal potPreposition
+                 && zone.IsPotFate(potPreposition.id.Value))
+        {
+            // Predicted pot not up yet — stand on a random ring around the authored center (#112).
+            potPrepositionStandOff = NavigationApproach.GetPotPrepositionPosition(goalNode.Position, player.Position);
             arrivalRadius = NavigationConstants.EventArrivalRadius;
         }
         else if (goal.GoalType is CriticalEncounterGoal liveCeGoal
@@ -102,7 +110,8 @@ public class PathCalculator
             }
         }
 
-        float distanceToGoal = player.Position.Distance2D(pathGoal.Position);
+        Vector3 arrivalCheck = potPrepositionStandOff ?? pathGoal.Position;
+        float distanceToGoal = player.Position.Distance2D(arrivalCheck);
         if (distanceToGoal <= arrivalRadius)
         {
             logger.Debug("Too close to destination.");
@@ -130,13 +139,21 @@ public class PathCalculator
             .Select(step => AethernetNavigation.ResolveAetherytePathStep(step, zone))
             .ToList();
 
-        if (config.StopAfterActivityAetheryte)
+        if (potPrepositionStandOff is { } standOff)
+        {
+            // Replace approach offsets with the random stand-off so bots don't stack on pot center.
+            resolvedSteps = resolvedSteps
+                .Select(step => step.PathStepData is Pathfind ? PathStep.Pathfind(standOff) : step)
+                .ToList();
+        }
+
+        if (config.StopAfterReturn)
         {
             // Keep Return / Teleport; drop the walk to the FATE or CE (#109).
             resolvedSteps = resolvedSteps
                 .Where(step => step.Kind != PathStepKind.Pathfind)
                 .ToList();
-            logger.Debug("StopAfterActivityAetheryte: {Count} step(s) after dropping pathfinds", resolvedSteps.Count);
+            logger.Debug("StopAfterReturn: {Count} step(s) after dropping pathfinds", resolvedSteps.Count);
         }
 
         return new(resolvedSteps);

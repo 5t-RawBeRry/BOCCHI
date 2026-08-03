@@ -19,6 +19,11 @@ public static class NavigationConstants
 
     public const float CriticalEncounterRadiusPadding = 7f;
 
+    /// <summary>Random stand-off ring while waiting for a predicted pot FATE (#112).</summary>
+    public const float PotPrepositionMinRadius = 12f;
+
+    public const float PotPrepositionMaxRadius = 32f;
+
     /// <summary>Euclidean distance above which long pathfinds should mount first.</summary>
     public const float MountMinDistance = 20f;
 }
@@ -31,5 +36,25 @@ public static class NavigationApproach
                       + Random.Shared.NextSingle() * (NavigationConstants.EventApproachMaxRadius - NavigationConstants.EventApproachMinRadius);
 
         return destination.GetApproachPosition(from, range, NavigationConstants.CampApproachJitter);
+    }
+
+    /// <summary>
+    ///     Random point on a ring around the pot center so bots don't stack on one tile.
+    /// </summary>
+    public static Vector3 GetPotPrepositionPosition(Vector3 potCenter, Vector3 from)
+    {
+        float dist = from.Distance2D(potCenter);
+        if (dist >= NavigationConstants.PotPrepositionMinRadius
+            && dist <= NavigationConstants.PotPrepositionMaxRadius)
+        {
+            return from;
+        }
+
+        float range = NavigationConstants.PotPrepositionMinRadius
+                      + Random.Shared.NextSingle()
+                      * (NavigationConstants.PotPrepositionMaxRadius - NavigationConstants.PotPrepositionMinRadius);
+        float angle = Random.Shared.NextSingle() * MathF.PI * 2f;
+
+        return potCenter + new Vector3(MathF.Cos(angle) * range, 0f, MathF.Sin(angle) * range);
     }
 }

@@ -1,5 +1,4 @@
-﻿using BOCCHI.Common.Data.CriticalEncounters;
-using BOCCHI.Common.Data.Zones;
+﻿using BOCCHI.Common.Data;
 using ECommons;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using FFXIVClientStructs.FFXIV.Client.LayoutEngine;
@@ -16,6 +15,8 @@ public readonly record struct CriticalEncounterId(ushort Value)
 
 public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev, float radius, Vector3 fallbackPosition)
 {
+    private readonly Vector3 fallbackPosition = fallbackPosition;
+
     public readonly CriticalEncounterId Id = id;
 
     public readonly string Name = ev.Name.ToString();
@@ -63,13 +64,14 @@ public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev, float ra
 
     private static Vector3 ResolvePosition(DynamicEvent ev, Vector3 fallbackPosition)
     {
-        Vector3 live = TryReadLayoutPosition(ev);
-        if (!float.IsNaN(live.X))
+        // Authored staging points win when present — live LGB markers can sit under elevated CEs
+        // (e.g. Accept No Imitators on the tower: live at base, player at y=56).
+        if (!float.IsNaN(fallbackPosition.X))
         {
-            return live;
+            return fallbackPosition;
         }
 
-        return float.IsNaN(fallbackPosition.X) ? Vector3.NaN : fallbackPosition;
+        return TryReadLayoutPosition(ev);
     }
 
     public void Update(DynamicEvent ev)
@@ -77,10 +79,14 @@ public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev, float ra
         State = ev.State;
         Progress = ev.Progress;
 
-        Vector3 live = TryReadLayoutPosition(ev);
-        if (!float.IsNaN(live.X))
+        // Keep authored destination stable; only adopt live layout when we have no fallback.
+        if (float.IsNaN(fallbackPosition.X))
         {
-            Position = live;
+            Vector3 live = TryReadLayoutPosition(ev);
+            if (!float.IsNaN(live.X))
+            {
+                Position = live;
+            }
         }
 
         ProgressTracker.Observe(Progress);

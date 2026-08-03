@@ -14,6 +14,7 @@ public enum AutomatorState
     Pathfinding,
     InFate,
     WaitingForCriticalEncounter,
+    WaitingForPotFate,
     InCriticalEncounter,
     ReturningToJob,
     LevelingPhantomJob,

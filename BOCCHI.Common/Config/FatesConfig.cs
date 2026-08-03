@@ -15,6 +15,12 @@ public class FatesConfig : IAutoConfig
     public bool PreferPotFates { get; set; } = false;
 
     /// <summary>
+    ///     When pot farming is gated, path to the predicted pot spot before spawn and wait (#112).
+    /// </summary>
+    [Checkbox]
+    public bool ShouldPrepositionToPots { get; set; } = true;
+
+    /// <summary>
     ///     Skip / abandon pot FATEs with less than this many minutes left (0 = disabled).
     /// </summary>
     [IntRange(0, 15)]

@@ -16,9 +16,9 @@
       "label": "Toggle autorotation while traveling",
       "tooltip": "Toggle the BOCCHI AI BossMod preset off while pathing to a FATE or CE, and back on when you arrive."
     },
-    "stop_after_activity_aetheryte": {
-      "label": "Stop after aetheryte (no walk to FATE/CE)",
-      "tooltip": "Return and teleport toward the next FATE or CE, then pause at the aetheryte for manual pathing. Toggle Illegal Mode to resume auto-nav."
+    "stop_after_return": {
+      "label": "Stop after return",
+      "tooltip": "Return (and teleport to the inbound aetheryte) toward the next FATE or CE, then pause for manual pathing. Toggle Illegal Mode to resume auto-nav."
     },
     "phantom_jobs_leveling_mode": {
       "label": "Phantom jobs leveling mode",

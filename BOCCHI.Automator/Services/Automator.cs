@@ -75,6 +75,7 @@ public class Automator
         memory.Forget<NavigationInterruptedMemory>();
         memory.Forget<GoalPathStepMemory>();
         memory.Forget<WaitingForCriticalEncounterMemory>();
+        memory.Forget<WaitingForPotFateMemory>();
         manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
         pathfinder.Stop();
         vnav.Stop();
@@ -121,15 +122,17 @@ public class Automator
                 memory.Forget<GoalMemory>();
                 memory.Forget<GoalPathStepMemory>();
                 memory.Forget<WaitingForCriticalEncounterMemory>();
+                memory.Forget<WaitingForPotFateMemory>();
                 manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
                 pathfinder.Stop();
                 vnav.Stop();
             }
             else if (!memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _)
                      && !memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory _)
+                     && !memory.TryRemember<WaitingForPotFateMemory>(out WaitingForPotFateMemory _)
                      && !memory.TryRemember<ApplyingBuffsMemory>(out ApplyingBuffsMemory _))
             {
-                memory.TryAdd(new GoalPathStepMemory(goal.Goal, calculator, automatorConfig.StopAfterActivityAetheryte));
+                memory.TryAdd(new GoalPathStepMemory(goal.Goal, calculator, automatorConfig.StopAfterReturn));
             }
         }
 

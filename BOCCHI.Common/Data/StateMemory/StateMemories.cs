@@ -15,6 +15,11 @@ public sealed class CastingTreasureSightMemory;
 public class WaitingForCriticalEncounterMemory;
 
 /// <summary>
+///     Arrived at predicted pot stand-off; hold until the FATE spawns (#112).
+/// </summary>
+public sealed class WaitingForPotFateMemory;
+
+/// <summary>
 ///     User / soft-cancel stopped navigation. Blocks auto-replan until Illegal Mode is toggled.
 /// </summary>
 public sealed class NavigationInterruptedMemory;
