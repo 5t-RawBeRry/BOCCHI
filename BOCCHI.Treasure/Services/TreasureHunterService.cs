@@ -435,18 +435,44 @@ public class TreasureHunterService
         }
 
         Vector3 crystal = ResolveAethernet(step.Aethernet).Position;
-        Vector3 destination = crystal.GetApproachPosition(player.Position, AethernetNavigation.CampApproachRadius);
+        StepDistance = player.Position.Distance2D(crystal);
+
+        if (StepDistance <= AethernetData.LifestreamInteractRadius)
+        {
+            vnav.Stop();
+            return true;
+        }
+
+        // CampApproachRadius (3.0) + PathfindArrivalRadius (1.5) can stop at ~4.5y —
+        // outside the 3.5y Lifestream window — and vnav then won't move (#113).
+        // Keep stand-off + arrival inside LifestreamInteractRadius; pull tighter if
+        // we're already near the crystal but still short.
+        float standOff;
+        float arrival;
+        if (StepDistance <= AethernetData.LifestreamInteractRadius + AethernetNavigation.PathfindArrivalRadius + 0.5f)
+        {
+            standOff = 0.75f;
+            arrival = 0.5f;
+        }
+        else
+        {
+            standOff = Math.Min(
+                AethernetNavigation.CampApproachRadius,
+                AethernetData.LifestreamInteractRadius - AethernetNavigation.PathfindArrivalRadius - 0.25f);
+            arrival = AethernetNavigation.PathfindArrivalRadius;
+        }
+
+        Vector3 destination = crystal.GetApproachPosition(player.Position, standOff);
         destination = new Vector3(destination.X, crystal.Y, destination.Z);
 
         if (!vnav.IsRunning())
         {
-            vnav.PathfindAndMoveCloseTo(destination, false, AethernetNavigation.PathfindArrivalRadius);
+            vnav.PathfindAndMoveCloseTo(destination, false, arrival);
         }
 
         MaybeMount(destination);
 
-        StepDistance = player.Position.Distance2D(crystal);
-        return StepDistance <= AethernetData.LifestreamInteractRadius;
+        return false;
     }
 
     private bool HandleTeleportToAethernet(HuntPathfinderStep step)
