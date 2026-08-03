@@ -22,6 +22,7 @@ public class ZoneGraph
         JsonSerializerOptions options = new()
         {
             WriteIndented = true,
+            NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,
             Converters =
             {
                 new NodeMetadataConverter(),
@@ -36,6 +37,7 @@ public class ZoneGraph
     {
         JsonSerializerOptions options = new()
         {
+            NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,
             Converters =
             {
                 new Vector3Converter(),
@@ -89,6 +91,13 @@ public class ZoneGraph
         if (!Nodes.ContainsKey(from) || !Nodes.ContainsKey(to))
         {
             throw new InvalidOperationException("Both nodes must exist before adding an edge.");
+        }
+
+        // Unreachable walks report PositiveInfinity — omit them so they are not
+        // preferred in routing and so graph JSON stays valid by default.
+        if (!float.IsFinite(cost))
+        {
+            return;
         }
 
         Edges[from].Add(new()
