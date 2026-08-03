@@ -78,6 +78,13 @@ public class PathfindingHandler
 
         path.Update();
 
+        // Teleport-only mode: calc produced no Return/Teleport steps → pause for manual (#109).
+        if (path.PauseWhenPlanCompletes && path.IsEmptyPlan && currentPathTask == null)
+        {
+            PauseForManualPathing("No auto-walk steps — paused for manual pathing");
+            return;
+        }
+
         if (currentPathTask != null)
         {
             // Remount mid-route if Treasure Sight (or anything else) left us on foot.
@@ -94,7 +101,17 @@ public class PathfindingHandler
                     if (result.IsSuccess)
                     {
                         logger.Info("Finished current task step...");
+                        PathStepKind completedKind = path.GetNextPathStep()?.Kind ?? PathStepKind.Pathfind;
                         path.DequeuePathStep();
+
+                        if (path.PauseWhenPlanCompletes
+                            && path.GetNextPathStep() == null
+                            && completedKind is PathStepKind.Teleport or PathStepKind.Return)
+                        {
+                            currentPathTask = null;
+                            PauseForManualPathing("Arrived at aetheryte — paused for manual pathing");
+                            return;
+                        }
                     }
                     else if (result.IsCanceled)
                     {
@@ -141,6 +158,12 @@ public class PathfindingHandler
                 logger.Info("Handing off return step to ReturningHandler...");
                 memory.TryAdd(new ReturningStateMemory(ReturnDelay.Roll(config)));
                 path.DequeuePathStep();
+
+                if (path.PauseWhenPlanCompletes && path.GetNextPathStep() == null)
+                {
+                    PauseForManualPathing("Returned to camp — paused for manual pathing");
+                }
+
                 return;
             }
 
@@ -154,6 +177,16 @@ public class PathfindingHandler
         {
             memory.Forget<GoalPathStepMemory>();
         }
+    }
+
+    private void PauseForManualPathing(string reason)
+    {
+        logger.Info("{Reason} (toggle Illegal Mode to resume)", reason);
+        pathfinder.Stop();
+        ResetPathfinding();
+        memory.Forget<GoalPathStepMemory>();
+        memory.Forget<GoalMemory>();
+        memory.TryAdd<NavigationInterruptedMemory>();
     }
 
     private void ResetPathfinding()

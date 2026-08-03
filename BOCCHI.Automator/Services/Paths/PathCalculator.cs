@@ -1,4 +1,5 @@
 using BOCCHI.Common.Data.Aethernet;
+using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
@@ -24,6 +25,7 @@ public class PathCalculator
     IFateRepository fates,
     ICriticalEncounterRepository criticalEncounters,
     IFateContext fateContext,
+    AutomatorConfig config,
     ILogger<PathCalculator> logger
 ) : IPathCalculator
 {
@@ -127,6 +129,15 @@ public class PathCalculator
         List<PathStep> resolvedSteps = steps
             .Select(step => AethernetNavigation.ResolveAetherytePathStep(step, zone))
             .ToList();
+
+        if (config.StopAfterActivityAetheryte)
+        {
+            // Keep Return / Teleport; drop the walk to the FATE or CE (#109).
+            resolvedSteps = resolvedSteps
+                .Where(step => step.Kind != PathStepKind.Pathfind)
+                .ToList();
+            logger.Debug("StopAfterActivityAetheryte: {Count} step(s) after dropping pathfinds", resolvedSteps.Count);
+        }
 
         return new(resolvedSteps);
     }

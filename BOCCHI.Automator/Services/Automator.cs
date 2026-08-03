@@ -34,6 +34,7 @@ public class Automator
     IObjectTable objects,
     IChatGui chat,
     FatesConfig fatesConfig,
+    AutomatorConfig automatorConfig,
     AutoRotationController autoRotation,
     ILogger<Automator> logger
 ) : IAutomator, IOnUpdate, IOnStop
@@ -128,7 +129,7 @@ public class Automator
                      && !memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory _)
                      && !memory.TryRemember<ApplyingBuffsMemory>(out ApplyingBuffsMemory _))
             {
-                memory.TryAdd(new GoalPathStepMemory(goal.Goal, calculator));
+                memory.TryAdd(new GoalPathStepMemory(goal.Goal, calculator, automatorConfig.StopAfterActivityAetheryte));
             }
         }
 

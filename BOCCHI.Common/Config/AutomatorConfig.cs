@@ -21,6 +21,16 @@ public class AutomatorConfig : IAutoConfig
     /// </summary>
     [Checkbox] public bool ToggleAiProvider { get; set; } = true;
 
+    /// <summary>
+    ///     After Return / aetheryte teleport toward a FATE or CE, stop and leave the walk for the player.
+    /// </summary>
+    [Checkbox] public bool StopAfterActivityAetheryte { get; set; } = false;
+
+    /// <summary>
+    ///     When the current phantom job is maxed, switch to the next unlocked non-maxed job.
+    /// </summary>
+    [Checkbox] public bool PhantomJobsLevelingMode { get; set; } = false;
+
     [Checkbox] public bool ShouldCastTreasureSight { get; set; } = false;
 
     [IntRange(60, 600)] public int TreasureSightRecastIntervalSeconds { get; set; } = 120;

@@ -107,14 +107,22 @@ public sealed class PotChestFarmMemory(FateId fateId, IEnumerable<Vector3> chest
     public DateTimeOffset WaitingForSpawnSince { get; set; } = DateTimeOffset.MinValue;
 }
 
-public sealed class GoalPathStepMemory(IGoal goal, IPathCalculator calculator)
+public sealed class GoalPathStepMemory(IGoal goal, IPathCalculator calculator, bool pauseWhenPlanCompletes = false)
 {
     private Task<Queue<IPathStep>>? pathStepTask = calculator.Calculate(goal);
 
     /// <summary>Calc finished with no steps (already at destination). Keeps memory valid so Automator doesn't recreate an empty plan every tick.</summary>
     private bool emptyPlan;
 
+    /// <summary>When true, finishing the plan (or an empty teleport-only plan) pauses nav for manual travel (#109).</summary>
+    public bool PauseWhenPlanCompletes { get; } = pauseWhenPlanCompletes;
+
     public Queue<IPathStep> PathSteps { get; private set; } = [];
+
+    public bool IsCalculating => pathStepTask is { IsCompleted: false };
+
+    /// <summary>Calc finished with zero steps (already at destination, or walks-only plan stripped).</summary>
+    public bool IsEmptyPlan => emptyPlan && pathStepTask == null;
 
     public bool IsValid => pathStepTask != null || PathSteps.Count != 0 || emptyPlan;
 
