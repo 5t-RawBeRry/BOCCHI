@@ -71,10 +71,16 @@ if git ls-remote --tags origin | grep -q "refs/tags/$TAG"; then
   exit 1
 fi
 
-CS_VERSION=$(dotnet msbuild "$CSPROJ" -nologo -getProperty:Version 2>/dev/null | tail -n 1 || true)
+# Prefer msbuild (respects Directory.Build.props overrides); fall back to the csproj tag.
+CS_VERSION=$(dotnet msbuild "$CSPROJ" -nologo -getProperty:Version 2>/dev/null | tr -d '\r' | awk 'NF{line=$0} END{print line}' || true)
+if [ -z "$CS_VERSION" ]; then
+  CS_VERSION=$(sed -n 's/.*<Version>\([^<]*\)<\/Version>.*/\1/p' "$CSPROJ" | head -n 1 | tr -d '\r' || true)
+fi
 
 if [ -z "$CS_VERSION" ]; then
   echo "Error: Could not read <Version> from $CSPROJ"
+  echo "msbuild output:"
+  dotnet msbuild "$CSPROJ" -nologo -getProperty:Version || true
   exit 1
 fi
 
