@@ -12,55 +12,6 @@ if [ "${2:-}" == "--testing" ]; then
   IS_TESTING=true
 fi
 
-# Git Bash / MSYS often miss Windows tool installs on PATH.
-resolve_tool() {
-  local name="$1"
-  shift
-
-  if command -v "$name" >/dev/null 2>&1; then
-    command -v "$name"
-    return 0
-  fi
-
-  local candidate
-  for candidate in "$@"; do
-    # Git Bash often reports .exe as non-executable via -x; -f is enough to invoke.
-    if [ -n "$candidate" ] && { [ -x "$candidate" ] || [ -f "$candidate" ]; }; then
-      echo "$candidate"
-      return 0
-    fi
-  done
-
-  return 1
-}
-
-DOTNET="$(resolve_tool dotnet \
-  "${DOTNET_ROOT:+$DOTNET_ROOT/dotnet}" \
-  "${DOTNET_ROOT:+$DOTNET_ROOT/dotnet.exe}" \
-  "$HOME/.dotnet/dotnet" \
-  "$HOME/.dotnet/dotnet.exe" \
-  "/c/Program Files/dotnet/dotnet.exe" \
-  "/c/Program Files (x86)/dotnet/dotnet.exe"
-)" || {
-  echo "Error: dotnet not found. Install the .NET SDK or add it to PATH."
-  exit 1
-}
-echo "Using dotnet: $DOTNET"
-
-GH="$(resolve_tool gh \
-  "/c/Program Files/GitHub CLI/gh.exe" \
-  "$HOME/AppData/Local/Programs/GitHub CLI/gh.exe" \
-  "$HOME/scoop/apps/gh/current/bin/gh.exe" \
-  "/c/ProgramData/chocolatey/bin/gh.exe"
-)" || {
-  echo "Error: GitHub CLI (gh) not found."
-  echo "Install it, then re-run (or finish a partial release manually):"
-  echo "  winget install --id GitHub.cli"
-  echo "  https://cli.github.com/"
-  exit 1
-}
-echo "Using gh: $GH"
-
 echo "Ensuring head is not detached and working tree is clean..."
 
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
@@ -120,16 +71,10 @@ if git ls-remote --tags origin | grep -q "refs/tags/$TAG"; then
   exit 1
 fi
 
-# Prefer msbuild (respects Directory.Build.props overrides); fall back to the csproj tag.
-CS_VERSION=$("$DOTNET" msbuild "$CSPROJ" -nologo -getProperty:Version 2>/dev/null | tr -d '\r' | awk 'NF{line=$0} END{print line}' || true)
-if [ -z "$CS_VERSION" ]; then
-  CS_VERSION=$(sed -n 's/.*<Version>\([^<]*\)<\/Version>.*/\1/p' "$CSPROJ" | head -n 1 | tr -d '\r' || true)
-fi
+CS_VERSION=$(dotnet msbuild "$CSPROJ" -nologo -getProperty:Version 2>/dev/null | tail -n 1 || true)
 
 if [ -z "$CS_VERSION" ]; then
   echo "Error: Could not read <Version> from $CSPROJ"
-  echo "msbuild output:"
-  "$DOTNET" msbuild "$CSPROJ" -nologo -getProperty:Version || true
   exit 1
 fi
 
@@ -155,7 +100,7 @@ fi
 
 rm -f "$ZIP_PATH" "$ZIP_PATH_FALLBACK"
 echo "Building project..."
-"$DOTNET" build -c Release -p:Platform=x64
+dotnet build -c Release -p:Platform=x64
 if [ ! -f "$ZIP_PATH" ]; then
   if [ -f "$ZIP_PATH_FALLBACK" ]; then
     ZIP_PATH="$ZIP_PATH_FALLBACK"
@@ -179,13 +124,13 @@ EXTRA_ARGS=()
 if [ "$IS_TESTING" = true ]; then
   EXTRA_ARGS+=(--prerelease)
 fi
-"$GH" release create "$TAG" --title "$TAG" --generate-notes "${EXTRA_ARGS[@]}"
-"$GH" release upload "$TAG" "$ZIP_PATH" --clobber
+gh release create "$TAG" --title "$TAG" --generate-notes "${EXTRA_ARGS[@]}"
+gh release upload "$TAG" "$ZIP_PATH" --clobber
 
 
 echo "Updating manifest repo..."
 rm -rf plugins
-"$GH" repo clone OhKannaDuh/plugins
+gh repo clone OhKannaDuh/plugins
 cd plugins
 
 cd manifest-generator
