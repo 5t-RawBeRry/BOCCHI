@@ -24,6 +24,11 @@ public class TreasureConfig : IAutoConfig
 
     [Checkbox]
     public bool EnableTreasureHunt { get; set; } = false;
+
+    /// <summary>Cast Return to base camp after the last coffer on the hunt route.</summary>
+    [Checkbox]
+    public bool ReturnToBaseCampAfterHunt { get; set; } = true;
+
     [FloatRange(50f, 500f)]
     public float HuntReturnCost { get; set; } = 300f;
 

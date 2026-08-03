@@ -26,6 +26,10 @@
       "label": "Show Treasure Hunt button",
       "tooltip": "Show the treasure hunt button in the main window."
     },
+    "return_to_base_camp_after_hunt": {
+      "label": "Return after hunt",
+      "tooltip": "Cast Return to base camp after the last coffer on the route."
+    },
     "hunt_return_cost": {
       "label": "Return cost",
       "tooltip": "Pathfinding cost weight for returning to base camp"

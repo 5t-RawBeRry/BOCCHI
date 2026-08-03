@@ -123,6 +123,12 @@ public class TreasureHunterService
 
         if (steps.Count > 0 && StepIndex >= steps.Count)
         {
+            if (ShouldReturnAfterHunt())
+            {
+                steps.Add(HuntPathfinderStep.ReturnToBaseCamp());
+                return;
+            }
+
             Teardown();
             return;
         }
@@ -637,6 +643,22 @@ public class TreasureHunterService
             config.HuntReturnCost,
             config.HuntTeleportCost
         );
+    }
+
+    private bool ShouldReturnAfterHunt()
+    {
+        if (!config.ReturnToBaseCampAfterHunt)
+        {
+            return false;
+        }
+
+        if (zones.GetZone().IsInBasecamp())
+        {
+            return false;
+        }
+
+        // Already appended the epilogue Return for this run.
+        return steps[^1].Type != HuntPathfinderStepType.ReturnToBaseCamp;
     }
 
     private AethernetData ResolveAethernet(HuntAethernet aethernet)
