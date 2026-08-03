@@ -10,6 +10,7 @@ using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Ocelot.Actions;
 using Ocelot.Extensions;
@@ -28,6 +29,7 @@ public class ReturningHandler
     IFateRepository fates,
     IPlayer player,
     IGateService gate,
+    IGameGui gui,
     AutoRotationController autoRotation
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Returning)
 {
@@ -105,6 +107,17 @@ public class ReturningHandler
             return;
         }
 
+        // Poll confirm — PostSetup alone can miss when BossMod slows UI setup (#107).
+        if (TryConfirmReturnDialog())
+        {
+            return;
+        }
+
+        if (IsReturnDialogVisible())
+        {
+            return;
+        }
+
         // Path handoff: hold Returning while the rolled 2..max delay elapses.
         if (memory.TryRemember<ReturningStateMemory>(out ReturningStateMemory returning))
         {
@@ -135,14 +148,34 @@ public class ReturningHandler
 
     private unsafe void SelectYesNoListener(AddonEvent ev, AddonArgs args)
     {
-        // Death / raise prompts also use SelectYesno — never auto-accept while unconscious.
         if (conditions[ConditionFlag.Unconscious])
         {
             return;
         }
 
-        // Same filter as pre-rewrite TeleporterModule — only Return, not shops/etc.
         ReturnYesNo.TryAccept((AtkUnitBase*)args.Addon.Address);
+    }
+
+    private unsafe bool TryConfirmReturnDialog()
+    {
+        AddonSelectYesno* yesno = gui.GetAddonByName<AddonSelectYesno>("SelectYesno");
+        if (yesno == null)
+        {
+            return false;
+        }
+
+        return ReturnYesNo.TryAccept(&yesno->AtkUnitBase);
+    }
+
+    private unsafe bool IsReturnDialogVisible()
+    {
+        AddonSelectYesno* yesno = gui.GetAddonByName<AddonSelectYesno>("SelectYesno");
+        if (yesno == null)
+        {
+            return false;
+        }
+
+        return ReturnYesNo.IsReturnConfirmation(&yesno->AtkUnitBase);
     }
 
     private bool IsNearActiveFateGoal()
