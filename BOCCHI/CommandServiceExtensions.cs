@@ -24,6 +24,10 @@ public static class CommandServiceExtensions
         services.AddSingleton<IOcelotCommand>(sp => sp.GetRequiredService<CmdCommand>());
         services.AddSingleton<IMainCommandDelegate, CmdCommandDelegate>();
 
+        services.AddSingleton<DebugCommand>();
+        services.AddSingleton<IOcelotCommand>(sp => sp.GetRequiredService<DebugCommand>());
+        services.AddSingleton<IMainCommandDelegate, DebugCommandDelegate>();
+
         services.AddSingleton<IOcelotCommand, OchAliasCommand>();
     }
 }

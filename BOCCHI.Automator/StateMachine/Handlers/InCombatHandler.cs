@@ -22,6 +22,7 @@ public class InCombatHandler
     IPathfinder pathfinder,
     IAutomatorMemory memory,
     CombatConfig combat,
+    AutomatorConfig automatorConfig,
     ITargetManager targetManager
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InCombat)
 {
@@ -53,7 +54,10 @@ public class InCombatHandler
             return;
         }
 
-        if (combat.ShouldHandleTargeting && EzThrottler.Throttle("InCombat::Target", 250))
+        // When BOCCHI AI is used, VBM AutoTarget owns targeting.
+        if (!automatorConfig.ToggleAiProvider
+            && combat.ShouldHandleTargeting
+            && EzThrottler.Throttle("InCombat::Target", 250))
         {
             IBattleNpc? target = TargetHelper.Select(
                 TargetHelper.GetHostileEnemies(objects, player.Position),

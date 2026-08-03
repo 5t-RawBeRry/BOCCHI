@@ -14,7 +14,7 @@
     },
     "toggle_ai_provider": {
       "label": "Toggle autorotation while traveling",
-      "tooltip": "Toggle the BOCCHI AI BossMod preset off while pathing to a FATE or CE, and back on when you arrive."
+      "tooltip": "Toggle the BOCCHI AI BossMod preset off while pathing to a FATE or CE, and back on when you arrive. While on, VBM handles targeting and combat movement (BOCCHI's own targeting is skipped)."
     },
     "stop_after_return": {
       "label": "Stop after return",

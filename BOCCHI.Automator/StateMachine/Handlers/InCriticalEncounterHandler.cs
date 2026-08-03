@@ -21,6 +21,7 @@ public class InCriticalEncounterHandler
     ICondition conditions,
     IPathfinder pathfinder,
     CombatConfig combat,
+    AutomatorConfig automatorConfig,
     ITargetManager targetManager,
     AutoRotationController autoRotation
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InCriticalEncounter)
@@ -60,7 +61,8 @@ public class InCriticalEncounterHandler
                 conditions,
                 pathfinder,
                 "InCriticalEncounter",
-                approach.IsPending))
+                approach.IsPending,
+                deferCombatToBossModAi: automatorConfig.ToggleAiProvider))
         {
             approach.Complete();
         }

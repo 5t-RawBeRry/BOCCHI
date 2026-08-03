@@ -24,6 +24,7 @@ public class InFateHandler
     ICondition conditions,
     IPathfinder pathfinder,
     CombatConfig combat,
+    AutomatorConfig automatorConfig,
     ITargetManager targetManager,
     AutoRotationController autoRotation
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InFate)
@@ -76,7 +77,8 @@ public class InFateHandler
                 pathfinder,
                 "InFate",
                 approach.IsPending,
-                true))
+                true,
+                automatorConfig.ToggleAiProvider))
         {
             approach.Complete();
         }

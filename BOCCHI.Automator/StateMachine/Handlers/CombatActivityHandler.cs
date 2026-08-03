@@ -26,9 +26,17 @@ internal static class CombatActivityHandler
         IPathfinder pathfinder,
         string throttlePrefix,
         bool shouldApproachTarget,
-        bool stopPathfinderInCombat = false
+        bool stopPathfinderInCombat = false,
+        bool deferCombatToBossModAi = false
     )
     {
+        // BOCCHI AI (VBM AutoTarget + NormalMovement) owns targeting and combat movement.
+        if (deferCombatToBossModAi)
+        {
+            pathfinder.Stop();
+            return true;
+        }
+
         List<IBattleNpc> list = targets as List<IBattleNpc> ?? targets.ToList();
         IBattleNpc? target = TargetHelper.Select(list, combat.ForceTargetCentralEnemy);
         if (target == null)

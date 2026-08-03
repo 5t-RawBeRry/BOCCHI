@@ -41,11 +41,13 @@ public class Automator
 {
     private IStateMachine<AutomatorState>? stateMachine;
 
+    private bool pausedOutsideZone;
+
     private IStateMachine<AutomatorState> StateMachine => stateMachine ??= stateMachineFactory();
 
     public bool Enabled => context.Enabled;
 
-    public AutomatorState? CurrentState => Enabled ? StateMachine.State : null;
+    public AutomatorState? CurrentState => Enabled && !pausedOutsideZone ? StateMachine.State : null;
 
     public void OnStop() => StopAutomation();
 
@@ -61,12 +63,13 @@ public class Automator
         {
             // Fresh run clears a mid-route cancel pause from the previous session.
             memory.Forget<NavigationInterruptedMemory>();
+            pausedOutsideZone = false;
         }
     }
 
     public void RefreshPathfinding()
     {
-        if (!Enabled)
+        if (!Enabled || pausedOutsideZone)
         {
             return;
         }
@@ -92,6 +95,11 @@ public class Automator
 
     public void Render()
     {
+        if (!Enabled || pausedOutsideZone)
+        {
+            return;
+        }
+
         StateMachine.Render();
     }
 
@@ -100,6 +108,25 @@ public class Automator
         if (!Enabled)
         {
             return;
+        }
+
+        // Zone lock: never cast Return / path outside Occult Crescent (PvP, cities, etc.).
+        if (!zones.GetZone().IsOccultCrescentZone())
+        {
+            if (!pausedOutsideZone)
+            {
+                logger.Info("Left Occult Crescent — pausing Illegal Mode (zone lock)");
+                PauseOutsideZone();
+                pausedOutsideZone = true;
+            }
+
+            return;
+        }
+
+        if (pausedOutsideZone)
+        {
+            pausedOutsideZone = false;
+            logger.Info("Re-entered Occult Crescent — Illegal Mode resumed");
         }
 
         // Mid-route cancel (vnav stop / emergency) — don't replan until Illegal Mode is toggled.
@@ -139,13 +166,32 @@ public class Automator
         StateMachine.Update();
     }
 
-    private void StopAutomation()
+    private void PauseOutsideZone()
     {
         memory.Wipe();
         manager.CancelAll();
         pathfinder.Stop();
         vnav.Stop();
         autoRotation.DisableForTravel();
+        // Exit current handler (e.g. unregister Return SelectYesno) before leaving the zone hot.
+        if (stateMachine != null)
+        {
+            StateMachine.Reset();
+        }
+    }
+
+    private void StopAutomation()
+    {
+        pausedOutsideZone = false;
+        memory.Wipe();
+        manager.CancelAll();
+        pathfinder.Stop();
+        vnav.Stop();
+        autoRotation.DisableForTravel();
+        if (stateMachine != null)
+        {
+            StateMachine.Reset();
+        }
     }
 
     private void TryStartPotChestFarm(FateId fateId)

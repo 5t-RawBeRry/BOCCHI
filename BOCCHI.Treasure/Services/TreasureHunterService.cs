@@ -79,6 +79,12 @@ public class TreasureHunterService
             return;
         }
 
+        if (!zones.GetZone().IsOccultCrescentZone())
+        {
+            Teardown();
+            return;
+        }
+
         if (config.SkipUnsafeTreasureWindows && IsUnsafeTreasureWindow())
         {
             return;

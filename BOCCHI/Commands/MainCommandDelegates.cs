@@ -21,3 +21,8 @@ public class CmdCommandDelegate(CmdCommand command) : IMainCommandDelegate
 {
     public IOcelotCommand Command { get; } = command;
 }
+
+public class DebugCommandDelegate(DebugCommand command) : IMainCommandDelegate
+{
+    public IOcelotCommand Command { get; } = command;
+}

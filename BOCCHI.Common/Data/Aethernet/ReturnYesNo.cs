@@ -7,8 +7,7 @@ using Lumina.Excel.Sheets;
 namespace BOCCHI.Common.Data.Aethernet;
 
 /// <summary>
-///     Auto-accept Return/Demi-Return SelectYesno only. Party invites and other prompts are ignored
-///     (party invites are dismissed so Return can proceed).
+///     Auto-accept Return/Demi-Return SelectYesno only. Other prompts (party invites, etc.) are left alone.
 /// </summary>
 public static class ReturnYesNo
 {
@@ -68,17 +67,6 @@ public static class ReturnYesNo
     {
         if (addon == null || !addon->IsVisible)
         {
-            return false;
-        }
-
-        string prompt = ReadPrompt(addon);
-
-        // Dismiss party invites so a pending Return confirm can appear.
-        if (templatesLoaded
-            && partyInviteTemplate.Length > 0
-            && MatchesLocalizedPrompt(prompt, partyInviteTemplate))
-        {
-            addon->FireCallbackInt(-1);
             return false;
         }
 

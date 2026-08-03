@@ -23,6 +23,7 @@ namespace BOCCHI.Automator.StateMachine.Handlers;
 public class ReturningHandler
 (
     IAutomatorMemory memory,
+    IAutomatorContext automator,
     IZoneProvider zones,
     ICondition conditions,
     IAddonLifecycle addons,
@@ -35,6 +36,11 @@ public class ReturningHandler
 {
     public override StatePriority GetScore()
     {
+        if (!automator.Enabled || !zones.GetZone().IsOccultCrescentZone())
+        {
+            return StatePriority.Never;
+        }
+
         // Return while dead accepts the death prompt and force-respawns.
         if (conditions[ConditionFlag.Unconscious])
         {
@@ -70,6 +76,12 @@ public class ReturningHandler
 
     public override void Handle()
     {
+        if (!automator.Enabled || !zones.GetZone().IsOccultCrescentZone())
+        {
+            memory.Forget<ReturningStateMemory>();
+            return;
+        }
+
         if (conditions[ConditionFlag.Unconscious])
         {
             memory.Forget<ReturningStateMemory>();
@@ -148,7 +160,9 @@ public class ReturningHandler
 
     private unsafe void SelectYesNoListener(AddonEvent ev, AddonArgs args)
     {
-        if (conditions[ConditionFlag.Unconscious])
+        if (!automator.Enabled
+            || !zones.GetZone().IsOccultCrescentZone()
+            || conditions[ConditionFlag.Unconscious])
         {
             return;
         }
@@ -158,6 +172,11 @@ public class ReturningHandler
 
     private unsafe bool TryConfirmReturnDialog()
     {
+        if (!automator.Enabled || !zones.GetZone().IsOccultCrescentZone())
+        {
+            return false;
+        }
+
         AddonSelectYesno* yesno = gui.GetAddonByName<AddonSelectYesno>("SelectYesno");
         if (yesno == null)
         {

@@ -17,7 +17,7 @@ public class AutomatorConfig : IAutoConfig
     public uint PreferredMountId { get; set; } = 0;
 
     /// <summary>
-    ///     Toggle <c>BOCCHI AI</c> off while traveling, on at FATE/CE.
+    ///     Toggle <c>BOCCHI AI</c> off while traveling, on at FATE/CE (VBM movement + targeting).
     /// </summary>
     [Checkbox] public bool ToggleAiProvider { get; set; } = true;
 
