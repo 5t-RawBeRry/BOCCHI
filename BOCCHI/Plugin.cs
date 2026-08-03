@@ -30,7 +30,7 @@ using Ocelot.Chain.Services;
 using Ocelot.Config;
 using Ocelot.Config.Renderers;
 using Ocelot.ECommons.Services;
-using Ocelot.Mechanic.Services;
+using Ocelot.Rotation.Services;
 using Ocelot.Pathfinding.Services;
 using Ocelot.Pictomancy.Services;
 using Ocelot.Services.WindowManager;
@@ -107,7 +107,7 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.LoadPictomancy();
         services.LoadPathfinding();
         services.LoadChain();
-        services.LoadMechanics();
+        services.LoadRotations();
         services.LoadUI();
     }
 

@@ -1,4 +1,4 @@
-﻿using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.CriticalEncounters;
@@ -22,7 +22,7 @@ public class InCriticalEncounterHandler
     IPathfinder pathfinder,
     CombatConfig combat,
     ITargetManager targetManager,
-    MechanicAiController mechanicAi
+    AutoRotationController autoRotation
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InCriticalEncounter)
 {
     public override StatePriority GetScore() => context.IsInCriticalEncounter() ? StatePriority.VeryHigh : StatePriority.Never;
@@ -31,7 +31,7 @@ public class InCriticalEncounterHandler
     {
         base.Enter();
         memory.Forget<WaitingForCriticalEncounterMemory>();
-        mechanicAi.EnableForActivity();
+        autoRotation.EnableForActivity();
     }
 
     public override void Handle()

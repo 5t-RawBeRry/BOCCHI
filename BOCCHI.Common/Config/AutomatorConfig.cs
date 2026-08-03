@@ -17,7 +17,8 @@ public class AutomatorConfig : IAutoConfig
     public uint PreferredMountId { get; set; } = 0;
 
     /// <summary>
-    ///     Turn mechanic AI (BossMod / BMR) off while traveling, on at FATE/CE.
+    ///     Turn autorotation off while traveling, on at FATE/CE.
+    ///     BossMod / BossMod Reborn use the built-in VBM AI preset (not legacy /vbmai or /bmrai).
     /// </summary>
     [Checkbox] public bool ToggleAiProvider { get; set; } = true;
 

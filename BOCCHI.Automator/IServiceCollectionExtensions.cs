@@ -26,7 +26,7 @@ public static class IServiceCollectionExtensions
 
         services.AddSingleton<IGoalFactory, GoalFactory>();
         services.AddSingleton<IGoalValidator, GoalValidator>();
-        services.AddSingleton<MechanicAiController>();
+        services.AddSingleton<AutoRotationController>();
 
         services.AddSingleton<IPathCalculator, PathCalculator>();
         services.AddSingleton<IPathStepExecutor, PathStepExecutor>();

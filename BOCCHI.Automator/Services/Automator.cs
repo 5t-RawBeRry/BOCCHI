@@ -1,4 +1,4 @@
-﻿using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services.Goals;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Fates;
@@ -34,7 +34,7 @@ public class Automator
     IObjectTable objects,
     IChatGui chat,
     FatesConfig fatesConfig,
-    MechanicAiController mechanicAi,
+    AutoRotationController autoRotation,
     ILogger<Automator> logger
 ) : IAutomator, IOnUpdate, IOnStop
 {
@@ -141,7 +141,7 @@ public class Automator
         manager.CancelAll();
         pathfinder.Stop();
         vnav.Stop();
-        mechanicAi.DisableForTravel();
+        autoRotation.DisableForTravel();
     }
 
     private void TryStartPotChestFarm(FateId fateId)

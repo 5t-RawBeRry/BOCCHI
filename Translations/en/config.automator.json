@@ -13,8 +13,8 @@
       "search": "Search mounts..."
     },
     "toggle_ai_provider": {
-      "label": "Toggle AI while traveling",
-      "tooltip": "Turn BossMod / BossMod Reborn AI off while pathing to a FATE or CE, and back on when you arrive. Requires one of those plugins."
+      "label": "Toggle autorotation while traveling",
+      "tooltip": "Turn autorotation off while pathing to a FATE or CE, and back on when you arrive. For BossMod / BossMod Reborn this activates/clears the built-in VBM AI preset (not legacy /vbmai or /bmrai). Also supports Wrath / Rotation Solver when those are the active provider."
     },
     "should_cast_treasure_sight": {
       "label": "Cast Treasure Sight",

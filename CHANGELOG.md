@@ -7,4 +7,4 @@
 
 ### Features
 - UI: Show/hide Mob Farmer section (#104)
-- Illegal Mode: toggle BossMod/BMR AI off while traveling, on at FATE/CE (#105)
+- Illegal Mode: toggle autorotation off while traveling, on at FATE/CE (VBM/BMR VBM AI preset) (#105)

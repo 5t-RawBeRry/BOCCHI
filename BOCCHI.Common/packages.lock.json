@@ -134,13 +134,6 @@
           "FFXIVOcelot": "[1.0.0, )"
         }
       },
-      "FFXIVOcelot.Mechanic": {
-        "type": "Project",
-        "dependencies": {
-          "ECommons": "[3.2.1.16, )",
-          "FFXIVOcelot": "[1.0.0, )"
-        }
-      },
       "FFXIVOcelot.Pathfinding": {
         "type": "Project",
         "dependencies": {
@@ -152,6 +145,12 @@
         "dependencies": {
           "FFXIVOcelot": "[1.0.0, )",
           "Pictomancy": "[1.0.10, )"
+        }
+      },
+      "FFXIVOcelot.Rotation": {
+        "type": "Project",
+        "dependencies": {
+          "FFXIVOcelot": "[1.0.0, )"
         }
       },
       "FFXIVOcelot.UI": {

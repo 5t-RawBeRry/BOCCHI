@@ -24,7 +24,7 @@ public class PathfindingHandler
     ITargetManager targetManager,
     AutomatorConfig config,
     ICondition conditions,
-    MechanicAiController mechanicAi,
+    AutoRotationController autoRotation,
     ILogger<PathfindingHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Pathfinding)
 {
@@ -35,7 +35,7 @@ public class PathfindingHandler
         base.Enter();
         // Drop any leftover combat target so rotations don't pull trash mid-path.
         targetManager.Target = null;
-        mechanicAi.DisableForTravel();
+        autoRotation.DisableForTravel();
     }
 
     public override void Exit(AutomatorState next)

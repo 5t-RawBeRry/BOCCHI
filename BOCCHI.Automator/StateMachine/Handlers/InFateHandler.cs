@@ -25,7 +25,7 @@ public class InFateHandler
     IPathfinder pathfinder,
     CombatConfig combat,
     ITargetManager targetManager,
-    MechanicAiController mechanicAi
+    AutoRotationController autoRotation
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InFate)
 {
     private const float DismountDistance = 20f;
@@ -43,7 +43,7 @@ public class InFateHandler
     public override void Enter()
     {
         base.Enter();
-        mechanicAi.EnableForActivity();
+        autoRotation.EnableForActivity();
     }
 
     public override void Handle()

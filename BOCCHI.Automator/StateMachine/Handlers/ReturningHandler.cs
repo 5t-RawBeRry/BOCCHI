@@ -28,7 +28,7 @@ public class ReturningHandler
     IFateRepository fates,
     IPlayer player,
     IGateService gate,
-    MechanicAiController mechanicAi
+    AutoRotationController autoRotation
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Returning)
 {
     public override StatePriority GetScore()
@@ -62,7 +62,7 @@ public class ReturningHandler
     public override void Enter()
     {
         base.Enter();
-        mechanicAi.DisableForTravel();
+        autoRotation.DisableForTravel();
         addons.RegisterListener(AddonEvent.PostSetup, "SelectYesno", SelectYesNoListener);
     }
 

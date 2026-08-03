@@ -4,6 +4,6 @@
     <ItemGroup>
         <ProjectReference Include="$(MSBuildThisFileDirectory)Ocelot/Ocelot.Chain/Ocelot.Chain.csproj"/>
         <ProjectReference Include="$(MSBuildThisFileDirectory)Ocelot/Ocelot.Pictomancy/Ocelot.Pictomancy.csproj"/>
-        <ProjectReference Include="$(MSBuildThisFileDirectory)Ocelot/Ocelot.Mechanic/Ocelot.Mechanic.csproj"/>
+        <ProjectReference Include="$(MSBuildThisFileDirectory)Ocelot/Ocelot.Rotation/Ocelot.Rotation.csproj"/>
     </ItemGroup>
 </Project>
