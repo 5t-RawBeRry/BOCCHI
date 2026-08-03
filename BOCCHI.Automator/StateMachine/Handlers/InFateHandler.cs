@@ -30,15 +30,12 @@ public class InFateHandler
 
     public override StatePriority GetScore()
     {
-        FateId? currentFateId = context.GetFateId();
-        GetApproachMemory(currentFateId);
-
         if (!memory.TryRemember<GoalMemory>(out GoalMemory goal) || goal.Goal.GoalType is not FateGoal fateGoal)
         {
             return StatePriority.Never;
         }
 
-        return currentFateId == fateGoal.id ? StatePriority.VeryHigh : StatePriority.Never;
+        return context.GetFateId() == fateGoal.id ? StatePriority.VeryHigh : StatePriority.Never;
     }
 
     public override void Handle()
@@ -63,16 +60,15 @@ public class InFateHandler
         }
 
         if (CombatActivityHandler.HandleTargets(
-            player,
-            targets,
-            combat,
-            targetManager,
-            conditions,
-            pathfinder,
-            "InFate",
-            approach.IsPending,
-            true
-        ))
+                player,
+                targets,
+                combat,
+                targetManager,
+                conditions,
+                pathfinder,
+                "InFate",
+                approach.IsPending,
+                true))
         {
             approach.Complete();
         }

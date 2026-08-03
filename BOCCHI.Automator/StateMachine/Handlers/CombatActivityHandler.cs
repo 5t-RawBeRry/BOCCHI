@@ -16,10 +16,7 @@ internal static class CombatActivityHandler
     /// <summary>Standard max-melee distance past the target hitbox.</summary>
     private const float MaxMeleeRange = 3f;
 
-    /// <returns>
-    ///     <see langword="true"/> once the activity's initial approach was issued,
-    ///     was already unnecessary, or was superseded by entering combat.
-    /// </returns>
+    /// <returns>True when the initial approach is done (in melee, or combat took over).</returns>
     public static bool HandleTargets(
         IGameObject player,
         IEnumerable<IBattleNpc> targets,
@@ -56,8 +53,7 @@ internal static class CombatActivityHandler
             }
         }
 
-        // Once combat has started, FATE movement is deliberately handed back to the player.
-        // This must precede the out-of-range branch so that branch cannot re-start navigation.
+        // Hand movement back once combat starts (before the out-of-range branch can repath).
         if (stopPathfinderInCombat && conditions[ConditionFlag.InCombat])
         {
             pathfinder.Stop();
@@ -70,8 +66,7 @@ internal static class CombatActivityHandler
             return true;
         }
 
-        // Only issue the max-melee movement once for this FATE/CE. The caller keeps
-        // this completed across handler re-entry and re-arms it for a different event.
+        // One max-melee approach per FATE/CE — don't keep pulling the player back in.
         if (!shouldApproachTarget
             || !EzThrottler.Throttle($"{throttlePrefix}::Approach", 500)
             || !pathfinder.IsIdle())
@@ -86,6 +81,7 @@ internal static class CombatActivityHandler
             ShouldSnapToFloor = true,
         });
 
-        return true;
+        // Still pending until we arrive (or combat takes over) so a failed pathfind can retry.
+        return false;
     }
 }
