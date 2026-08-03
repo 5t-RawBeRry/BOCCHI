@@ -29,6 +29,14 @@ public class TreasureConfig : IAutoConfig
     [Checkbox]
     public bool ReturnToBaseCampAfterHunt { get; set; } = true;
 
+    /// <summary>Play a chat sound effect when the hunt finishes (#120).</summary>
+    [Checkbox]
+    public bool PlaySoundOnHuntComplete { get; set; } = true;
+
+    /// <summary>Chat SFX 1–16 (same IDs as System Config → Sound Effects).</summary>
+    [IntRange(1, 16)]
+    public int HuntCompleteSoundId { get; set; } = 2;
+
     [FloatRange(50f, 500f)]
     public float HuntReturnCost { get; set; } = 300f;
 

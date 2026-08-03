@@ -1,5 +1,8 @@
 using System.Numerics;
 using BOCCHI.Automator.Services;
+using BOCCHI.Buff.Services;
+using BOCCHI.MobFarmer.Services;
+using BOCCHI.Treasure.Services;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Windowing;
@@ -14,6 +17,9 @@ namespace BOCCHI.UI;
 
 public class IllegalModeTitleBarContributor(
     IAutomator automator,
+    IMobFarmer farmer,
+    ITreasureHunter treasureHunter,
+    IBuffRunner buffRunner,
     IPathfinder pathfinder,
     IVNavmeshIpc vnav,
     IChainManager chains,
@@ -50,6 +56,21 @@ public class IllegalModeTitleBarContributor(
                 if (automator.Enabled)
                 {
                     automator.Toggle();
+                }
+
+                if (farmer.Running)
+                {
+                    farmer.Toggle();
+                }
+
+                if (treasureHunter.Running)
+                {
+                    treasureHunter.Toggle();
+                }
+
+                if (buffRunner.IsRunning)
+                {
+                    buffRunner.Stop();
                 }
 
                 pathfinder.Stop();

@@ -30,6 +30,14 @@
       "label": "Return after hunt",
       "tooltip": "Cast Return to base camp after the last coffer on the route."
     },
+    "play_sound_on_hunt_complete": {
+      "label": "Play sound when hunt finishes",
+      "tooltip": "Play a chat sound effect when Treasure Hunt completes."
+    },
+    "hunt_complete_sound_id": {
+      "label": "Hunt complete sound",
+      "tooltip": "Chat sound effect ID (1–16), same as System Config → Sound Effects."
+    },
     "hunt_return_cost": {
       "label": "Return cost",
       "tooltip": "Pathfinding cost weight for returning to base camp"

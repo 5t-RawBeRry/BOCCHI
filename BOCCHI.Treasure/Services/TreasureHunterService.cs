@@ -129,7 +129,7 @@ public class TreasureHunterService
                 return;
             }
 
-            Teardown();
+            CompleteHunt();
             return;
         }
 
@@ -665,6 +665,31 @@ public class TreasureHunterService
     {
         uint placeNameId = (uint)aethernet;
         return zones.GetZone().GetAetherytes().First(a => a.Id == placeNameId);
+    }
+
+    private void CompleteHunt()
+    {
+        PlayHuntCompleteSound();
+        Teardown();
+    }
+
+    private unsafe void PlayHuntCompleteSound()
+    {
+        if (!config.PlaySoundOnHuntComplete)
+        {
+            return;
+        }
+
+        uint soundId = (uint)Math.Clamp(config.HuntCompleteSoundId, 1, 16);
+        try
+        {
+            // Avarice-style chat SFX: user IDs 1–16 map to game effect IDs 37–52.
+            UIGlobals.PlaySoundEffect(soundId + 36);
+        }
+        catch (Exception ex)
+        {
+            log.Warning(ex, "Failed to play treasure hunt complete sound");
+        }
     }
 
     private void Teardown()
