@@ -10,6 +10,7 @@ namespace BOCCHI.Automator.Services.Goals;
 public class GoalValidator
 (
     ICriticalEncounterRepository criticalEncounterRepository,
+    ICriticalEncounterContext criticalEncounterContext,
     IFateRepository fateRepository,
     IZoneProvider zones,
     FatesConfig fatesConfig,
@@ -41,9 +42,10 @@ public class GoalValidator
             return false;
         }
 
-        // Keep while Register/Warmup/Battle. Drop as soon as the CE ends so we can Return/rechoose
-        // instead of sitting on an empty path until the event goes Inactive.
-        return ce.IsPreparing() || ce.IsActive();
+        // Once Battle starts, keep the goal only if we actually made it into this CE. An active CE
+        // cannot be entered from outside, so abort its path and choose another activity immediately.
+        return ce.IsPreparing()
+               || (ce.IsActive() && criticalEncounterContext.GetCriticalEncounterId() == id);
     }
 
     private bool ValidateFate(FateId id)
