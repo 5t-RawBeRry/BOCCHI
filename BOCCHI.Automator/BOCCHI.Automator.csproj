@@ -3,6 +3,7 @@
         <ProjectReference Include="..\BOCCHI.Common\BOCCHI.Common.csproj"/>
         <ProjectReference Include="..\BOCCHI.Buff\BOCCHI.Buff.csproj"/>
         <ProjectReference Include="..\BOCCHI.Treasure\BOCCHI.Treasure.csproj"/>
+        <ProjectReference Include="..\Ocelot\Ocelot.Rotation\Ocelot.Rotation.csproj"/>
     </ItemGroup>
     <ItemGroup>
         <Folder Include="Data\Paths\"/>
