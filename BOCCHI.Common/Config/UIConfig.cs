@@ -21,5 +21,7 @@ public class UIConfig : IAutoConfig
 
     [Checkbox] public bool ShowAutomationSection { get; set; } = true;
 
+    [Checkbox] public bool ShowMobFarmerSection { get; set; } = true;
+
     [Checkbox] public bool ShowTreasureSection { get; set; } = true;
 }

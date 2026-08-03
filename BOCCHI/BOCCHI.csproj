@@ -2,7 +2,7 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
     <PropertyGroup>
         <AssemblyName>BOCCHI</AssemblyName>
-        <Version>4.0.2.0</Version>
+        <Version>4.0.2.1</Version>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 

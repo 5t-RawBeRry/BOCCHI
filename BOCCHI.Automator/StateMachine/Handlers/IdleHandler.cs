@@ -25,6 +25,7 @@ public class IdleHandler(
     IPathfinder pathfinder,
     IChainManager chains,
     AutomatorConfig config,
+    MechanicAiController mechanicAi,
     IUIService ui,
     ITranslator<MainWindow> translator
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Idle)
@@ -36,6 +37,7 @@ public class IdleHandler(
         base.Enter();
         chains.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
         pathfinder.Stop();
+        mechanicAi.DisableForTravel();
         memory.TryAdd(new IdleStateMemory(ReturnDelay.Roll(config)));
     }
 

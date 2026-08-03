@@ -36,11 +36,11 @@
     },
     "apply_battle_bell": {
       "label": "Apply Battle Bell",
-      "tooltip": "Apply Battle Bell before pulling"
+      "tooltip": "Switch to Geomancer and cast Battle Bell before each pull. Skips if the buff is already up or the cooldown is longer than the wait below."
     },
     "maximum_battle_bell_wait_time": {
       "label": "Maximum time to wait for Battle Bell",
-      "tooltip": "The maximum time you will wait for Battle Bell to be off of cooldown"
+      "tooltip": "If Battle Bell's remaining cooldown is longer than this, skip buffing and pull anyway. Checked against Battle Bell itself, not your combat job's Action I."
     },
     "minimum_mobs_to_start_loop": {
       "label": "Minimum mobs to start",

@@ -34,6 +34,7 @@ public class Automator
     IObjectTable objects,
     IChatGui chat,
     FatesConfig fatesConfig,
+    MechanicAiController mechanicAi,
     ILogger<Automator> logger
 ) : IAutomator, IOnUpdate, IOnStop
 {
@@ -140,6 +141,7 @@ public class Automator
         manager.CancelAll();
         pathfinder.Stop();
         vnav.Stop();
+        mechanicAi.DisableForTravel();
     }
 
     private void TryStartPotChestFarm(FateId fateId)

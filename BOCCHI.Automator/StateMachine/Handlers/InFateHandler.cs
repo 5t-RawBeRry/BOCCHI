@@ -1,4 +1,5 @@
 using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Services;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
@@ -23,7 +24,8 @@ public class InFateHandler
     ICondition conditions,
     IPathfinder pathfinder,
     CombatConfig combat,
-    ITargetManager targetManager
+    ITargetManager targetManager,
+    MechanicAiController mechanicAi
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InFate)
 {
     private const float DismountDistance = 20f;
@@ -36,6 +38,12 @@ public class InFateHandler
         }
 
         return context.GetFateId() == fateGoal.id ? StatePriority.VeryHigh : StatePriority.Never;
+    }
+
+    public override void Enter()
+    {
+        base.Enter();
+        mechanicAi.EnableForActivity();
     }
 
     public override void Handle()

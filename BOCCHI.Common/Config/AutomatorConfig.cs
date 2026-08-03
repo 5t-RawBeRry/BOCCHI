@@ -16,6 +16,11 @@ public class AutomatorConfig : IAutoConfig
     [MountSelect]
     public uint PreferredMountId { get; set; } = 0;
 
+    /// <summary>
+    ///     Turn mechanic AI (BossMod / BMR) off while traveling, on at FATE/CE.
+    /// </summary>
+    [Checkbox] public bool ToggleAiProvider { get; set; } = true;
+
     [Checkbox] public bool ShouldCastTreasureSight { get; set; } = false;
 
     [IntRange(60, 600)] public int TreasureSightRecastIntervalSeconds { get; set; } = 120;

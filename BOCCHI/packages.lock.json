@@ -140,6 +140,7 @@
           "FFXIVOcelot": "[1.0.0, )",
           "FFXIVOcelot.Chain": "[1.0.0, )",
           "FFXIVOcelot.ECommons": "[1.0.0, )",
+          "FFXIVOcelot.Mechanic": "[1.0.0, )",
           "FFXIVOcelot.Pathfinding": "[1.0.0, )",
           "FFXIVOcelot.Pictomancy": "[1.0.0, )",
           "FFXIVOcelot.UI": "[1.0.0, )"
@@ -161,6 +162,7 @@
           "FFXIVOcelot": "[1.0.0, )",
           "FFXIVOcelot.Chain": "[1.0.0, )",
           "FFXIVOcelot.ECommons": "[1.0.0, )",
+          "FFXIVOcelot.Mechanic": "[1.0.0, )",
           "FFXIVOcelot.Pathfinding": "[1.0.0, )",
           "FFXIVOcelot.Pictomancy": "[1.0.0, )",
           "FFXIVOcelot.UI": "[1.0.0, )"
@@ -174,6 +176,7 @@
           "FFXIVOcelot": "[1.0.0, )",
           "FFXIVOcelot.Chain": "[1.0.0, )",
           "FFXIVOcelot.ECommons": "[1.0.0, )",
+          "FFXIVOcelot.Mechanic": "[1.0.0, )",
           "FFXIVOcelot.Pathfinding": "[1.0.0, )",
           "FFXIVOcelot.Pictomancy": "[1.0.0, )",
           "FFXIVOcelot.UI": "[1.0.0, )"
@@ -186,6 +189,7 @@
           "FFXIVOcelot": "[1.0.0, )",
           "FFXIVOcelot.Chain": "[1.0.0, )",
           "FFXIVOcelot.ECommons": "[1.0.0, )",
+          "FFXIVOcelot.Mechanic": "[1.0.0, )",
           "FFXIVOcelot.Pathfinding": "[1.0.0, )",
           "FFXIVOcelot.Pictomancy": "[1.0.0, )",
           "FFXIVOcelot.UI": "[1.0.0, )"
@@ -206,6 +210,7 @@
           "FFXIVOcelot": "[1.0.0, )",
           "FFXIVOcelot.Chain": "[1.0.0, )",
           "FFXIVOcelot.ECommons": "[1.0.0, )",
+          "FFXIVOcelot.Mechanic": "[1.0.0, )",
           "FFXIVOcelot.Pathfinding": "[1.0.0, )",
           "FFXIVOcelot.Pictomancy": "[1.0.0, )",
           "FFXIVOcelot.UI": "[1.0.0, )"
@@ -234,6 +239,13 @@
         }
       },
       "FFXIVOcelot.ECommons": {
+        "type": "Project",
+        "dependencies": {
+          "ECommons": "[3.2.1.16, )",
+          "FFXIVOcelot": "[1.0.0, )"
+        }
+      },
+      "FFXIVOcelot.Mechanic": {
         "type": "Project",
         "dependencies": {
           "ECommons": "[3.2.1.16, )",

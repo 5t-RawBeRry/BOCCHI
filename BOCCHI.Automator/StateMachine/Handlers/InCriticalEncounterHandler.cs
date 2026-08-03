@@ -1,4 +1,5 @@
 ﻿using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Services;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.StateMemory;
@@ -20,21 +21,17 @@ public class InCriticalEncounterHandler
     ICondition conditions,
     IPathfinder pathfinder,
     CombatConfig combat,
-    ITargetManager targetManager
+    ITargetManager targetManager,
+    MechanicAiController mechanicAi
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InCriticalEncounter)
 {
-    public override StatePriority GetScore()
-    {
-        CriticalEncounterId? currentEncounterId = context.GetCriticalEncounterId();
-        GetApproachMemory(currentEncounterId);
-
-        return currentEncounterId != null ? StatePriority.VeryHigh : StatePriority.Never;
-    }
+    public override StatePriority GetScore() => context.IsInCriticalEncounter() ? StatePriority.VeryHigh : StatePriority.Never;
 
     public override void Enter()
     {
         base.Enter();
         memory.Forget<WaitingForCriticalEncounterMemory>();
+        mechanicAi.EnableForActivity();
     }
 
     public override void Handle()
@@ -52,18 +49,18 @@ public class InCriticalEncounterHandler
             pathfinder.Stop();
         }
 
-        InitialCombatApproachMemory<CriticalEncounterId> approach = GetApproachMemory(context.GetCriticalEncounterId());
+        InitialCombatApproachMemory<CriticalEncounterId> approach =
+            GetApproachMemory(context.GetCriticalEncounterId());
 
         if (CombatActivityHandler.HandleTargets(
-            player,
-            context.GetTargets(),
-            combat,
-            targetManager,
-            conditions,
-            pathfinder,
-            "InCriticalEncounter",
-            approach.IsPending
-        ))
+                player,
+                context.GetTargets(),
+                combat,
+                targetManager,
+                conditions,
+                pathfinder,
+                "InCriticalEncounter",
+                approach.IsPending))
         {
             approach.Complete();
         }

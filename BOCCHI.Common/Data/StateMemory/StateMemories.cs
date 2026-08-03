@@ -20,8 +20,7 @@ public class WaitingForCriticalEncounterMemory;
 public sealed class NavigationInterruptedMemory;
 
 /// <summary>
-///     Tracks the one initial combat approach for the lifetime of an activity.
-///     A different activity ID re-arms it; temporary Automator state changes do not.
+///     One initial combat approach per FATE/CE. Re-arms when the activity id changes.
 /// </summary>
 public sealed class InitialCombatApproachMemory<TActivityId>
     where TActivityId : struct
@@ -32,7 +31,7 @@ public sealed class InitialCombatApproachMemory<TActivityId>
 
     public void Track(TActivityId? currentActivityId)
     {
-        if (EqualityComparer<TActivityId?>.Default.Equals(activityId, currentActivityId))
+        if (Nullable.Equals(activityId, currentActivityId))
         {
             return;
         }
@@ -41,7 +40,10 @@ public sealed class InitialCombatApproachMemory<TActivityId>
         IsPending = currentActivityId.HasValue;
     }
 
-    public void Complete() => IsPending = false;
+    public void Complete()
+    {
+        IsPending = false;
+    }
 }
 
 public sealed class GoalMemory(IGoal goal)

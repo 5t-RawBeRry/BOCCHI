@@ -1,4 +1,5 @@
 using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Services;
 using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
@@ -26,7 +27,8 @@ public class ReturningHandler
     IAddonLifecycle addons,
     IFateRepository fates,
     IPlayer player,
-    IGateService gate
+    IGateService gate,
+    MechanicAiController mechanicAi
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Returning)
 {
     public override StatePriority GetScore()
@@ -55,6 +57,13 @@ public class ReturningHandler
 
         // Opportunistic Return while idle (OC has no Return CD). Keep below ChoosingActivity.
         return idle.IsReadyToReturn() ? StatePriority.VeryLow : StatePriority.Never;
+    }
+
+    public override void Enter()
+    {
+        base.Enter();
+        mechanicAi.DisableForTravel();
+        addons.RegisterListener(AddonEvent.PostSetup, "SelectYesno", SelectYesNoListener);
     }
 
     public override void Handle()
@@ -116,12 +125,6 @@ public class ReturningHandler
             memory.TryAdd(new ReturningStateMemory(TimeSpan.Zero));
             Actions.Return.Cast();
         }
-    }
-
-    public override void Enter()
-    {
-        base.Enter();
-        addons.RegisterListener(AddonEvent.PostSetup, "SelectYesno", SelectYesNoListener);
     }
 
     public override void Exit(AutomatorState next)

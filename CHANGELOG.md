@@ -1,16 +1,10 @@
-# 4.0.2.0
+# 4.0.2.1
 
 ### Fixes
-- Automator Idle↔Pathfinding flicker: live FATE/CE path goals keep graph node Id so teleport routes resolve (#92)
-- Treasure hunt: don't empty-skip at ~10y; only skip ~2y with no live coffer; wider search + open-range approach (#93)
-- Illegal Mode: random 2..max Return delay after FATE/CE; dismount before cast; drop finished CE goals
-- Illegal Mode: path FATEs to boss max melee instead of stopping ~20y inside the circle
-- Mob Farmer: stop Geo↔combat job flip-flop after Battle Bell (#94)
-- Mob Farmer: debug lines only while the farmer is running
-- Gold/silver tracker: don't count shop spend dip→recover as gains (#96)
+- Illegal Mode: only approach FATE/CE melee once; abandon CEs that start before you arrive (#101, #106)
+- Mob Farmer: Battle Bell CD gated on Battle Bell itself (not combat job Action I); wait for buff before job swap (#103)
+
 
 ### Features
-- Refresh Pathfinding button on Automator — replan from current position (#95)
-- Treasure hunt Pause / Resume — keeps the planned route (#98)
-- Rename Automator UI labels back to Illegal Mode
-- Treasure tethers: brown bronze / silver silver / green carrot lines (named in tooltips)
+- UI: Show/hide Mob Farmer section (#104)
+- Illegal Mode: toggle BossMod/BMR AI off while traveling, on at FATE/CE (#105)

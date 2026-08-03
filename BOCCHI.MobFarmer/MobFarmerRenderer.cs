@@ -48,5 +48,5 @@ public class MobFarmerRenderer
         }
     }
 
-    public bool ShouldRender() => uiConfig.ShowAutomationSection;
+    public bool ShouldRender() => uiConfig.ShowAutomationSection && uiConfig.ShowMobFarmerSection;
 }

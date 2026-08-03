@@ -42,8 +42,8 @@ public class GoalValidator
             return false;
         }
 
-        // Once Battle starts, keep the goal only if we actually made it into this CE. An active CE
-        // cannot be entered from outside, so abort its path and choose another activity immediately.
+        // Keep while Register/Warmup. During Battle only if we're already inside this CE —
+        // can't join from outside, so drop the goal and pick something else.
         return ce.IsPreparing()
                || (ce.IsActive() && criticalEncounterContext.GetCriticalEncounterId() == id);
     }

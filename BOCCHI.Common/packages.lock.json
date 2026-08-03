@@ -134,6 +134,13 @@
           "FFXIVOcelot": "[1.0.0, )"
         }
       },
+      "FFXIVOcelot.Mechanic": {
+        "type": "Project",
+        "dependencies": {
+          "ECommons": "[3.2.1.16, )",
+          "FFXIVOcelot": "[1.0.0, )"
+        }
+      },
       "FFXIVOcelot.Pathfinding": {
         "type": "Project",
         "dependencies": {
