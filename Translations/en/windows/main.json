@@ -15,7 +15,31 @@
     "off": "Off",
     "goal": "Goal",
     "current_step": "Current step",
-    "chests": "Pot chests"
+    "chests": "Pot chests",
+    "automator_states": {
+      "entry": "Entry",
+      "idle": "Idle",
+      "dead": "Dead",
+      "in_combat": "In combat",
+      "casting_treasure_sight": "Casting Treasure Sight",
+      "applying_buffs": "Applying buffs",
+      "repairing": "Repairing",
+      "choosing_activity": "Choosing activity",
+      "returning": "Returning",
+      "pathfinding": "Pathfinding",
+      "in_fate": "In FATE",
+      "waiting_for_critical_encounter": "Waiting for CE",
+      "in_critical_encounter": "In CE",
+      "returning_to_job": "Returning to job",
+      "farming_pot_chests": "Farming pot chests"
+    },
+    "farmer_phases": {
+      "waiting": "Waiting",
+      "buffing": "Buffing",
+      "gathering": "Gathering",
+      "stacking": "Stacking",
+      "fighting": "Fighting"
+    }
   },
   "goals": {
     "fate": "Fate: {0}",
@@ -44,9 +68,14 @@
       "title": "Illegal Mode",
       "enable": "Enable Illegal Mode",
       "disable": "Disable Illegal Mode",
+      "toggle_illegal_mode": "Toggle Illegal Mode",
       "refresh_pathfinding": "Refresh Pathfinding",
       "refresh_pathfinding_tooltip": "Drop the current route and replan from where you are standing. Useful after nudging out of a stuck spot or manually steering.",
       "details": "Details",
+      "illegal_mode_on": "[BOCCHI] Illegal Mode On",
+      "illegal_mode_off": "[BOCCHI] Illegal Mode Off",
+      "pathfinding_refreshed": "[BOCCHI] Pathfinding refreshed",
+      "pathfinding_refreshed_no_goal": "[BOCCHI] Pathfinding refreshed (no active goal)",
       "pot_chest_farm": "Pot chest farm",
       "chests_remaining": "Chests remaining",
       "time_idle": "Time idle"

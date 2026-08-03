@@ -2,6 +2,10 @@
   "label": "UI",
   "tooltip": "Choose which panels appear in the main window.",
   "fields": {
+    "language": {
+      "label": "Language",
+      "tooltip": "Choose the display language for BOCCHI."
+    },
     "show_experience_tracker": {
       "label": "Show experience tracker",
       "tooltip": "Display the experience tracker panel in the main window."

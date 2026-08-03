@@ -1,0 +1,38 @@
+{
+  "label": "バフ",
+  "tooltip": "サポートジョブのバフを自動で維持します。",
+  "fields": {
+    "should_automate_buffs": {
+      "label": "バフを自動化",
+      "tooltip": "選択したサポートバフを自動で維持します。"
+    },
+    "apply_romeos_ballad": {
+      "label": "あいのうたを使用する",
+      "tooltip": "バフ自動化中にあいのうたを維持します。"
+    },
+    "apply_enduring_fortitude": {
+      "label": "いのりを使用する",
+      "tooltip": "バフ自動化中にいのりを維持します。"
+    },
+    "apply_fleetfooted": {
+      "label": "かまえるを使用する",
+      "tooltip": "バフ自動化中にかまえるを維持します。"
+    },
+    "apply_quicker_step": {
+      "label": "クイックステップを使用する",
+      "tooltip": "バフ自動化中にクイックステップを維持します。"
+    },
+    "apply_buffs_using_inquiring_mind": {
+      "label": "たんきゅうしんを使用し一括付与",
+      "tooltip": "利用可能な場合、たんきゅうしんを使用してクイックステップを更新し、その後に選択したバフを個別に付与します。"
+    },
+    "reapply_threshold": {
+      "label": "再付与しきい値（分）",
+      "tooltip": "残り時間がこの分数以下になったらバフを再付与します。"
+    },
+    "knowledge_crystal_distance": {
+      "label": "ナレッジクリスタル距離",
+      "tooltip": "バフ用にナレッジクリスタルへ移動する最大距離です。"
+    }
+  }
+}

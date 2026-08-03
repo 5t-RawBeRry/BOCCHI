@@ -1,0 +1,14 @@
+{
+  "label": "トラッカー",
+  "tooltip": "経験値と通貨トラッカーのグラフ設定です。",
+  "fields": {
+    "tracked_duration": {
+      "label": "記録時間（分）",
+      "tooltip": "トラッカーが保持する履歴の長さです。"
+    },
+    "graph_bucket_size": {
+      "label": "グラフ集計間隔（秒）",
+      "tooltip": "グラフの各区間に含める秒数です。"
+    }
+  }
+}

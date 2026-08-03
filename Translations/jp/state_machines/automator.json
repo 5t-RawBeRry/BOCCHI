@@ -1,0 +1,47 @@
+{
+  "entry": {
+    "label": "開始"
+  },
+  "idle": {
+    "label": "待機"
+  },
+  "dead": {
+    "label": "戦闘不能"
+  },
+  "in_combat": {
+    "label": "戦闘中"
+  },
+  "casting_treasure_sight": {
+    "label": "トレジャーサイト使用中"
+  },
+  "applying_buffs": {
+    "label": "バフ付与中"
+  },
+  "repairing": {
+    "label": "修理中"
+  },
+  "choosing_activity": {
+    "label": "活動選択中"
+  },
+  "returning": {
+    "label": "帰還中"
+  },
+  "pathfinding": {
+    "label": "移動中"
+  },
+  "in_fate": {
+    "label": "FATE中"
+  },
+  "waiting_for_critical_encounter": {
+    "label": "CE待機中"
+  },
+  "in_critical_encounter": {
+    "label": "CE中"
+  },
+  "returning_to_job": {
+    "label": "ジョブ復帰中"
+  },
+  "farming_pot_chests": {
+    "label": "壺宝箱ファーム中"
+  }
+}

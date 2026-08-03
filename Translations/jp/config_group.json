@@ -1,0 +1,17 @@
+{
+  "automation": {
+    "label": "自動化"
+  },
+  "trackers": {
+    "label": "トラッカー"
+  },
+  "ux": {
+    "label": "UI"
+  },
+  "mob_farmer": {
+    "label": "モブファーム"
+  },
+  "treasure": {
+    "label": "宝箱"
+  }
+}

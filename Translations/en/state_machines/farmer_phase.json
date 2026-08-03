@@ -1,0 +1,17 @@
+{
+  "waiting": {
+    "label": "Waiting"
+  },
+  "buffing": {
+    "label": "Buffing"
+  },
+  "gathering": {
+    "label": "Gathering"
+  },
+  "stacking": {
+    "label": "Stacking"
+  },
+  "fighting": {
+    "label": "Fighting"
+  }
+}
