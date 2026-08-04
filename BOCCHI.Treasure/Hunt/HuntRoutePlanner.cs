@@ -18,35 +18,64 @@ public abstract class HuntRoutePlanner
     ZoneId zoneId,
     IDalamudPluginInterface plugin,
     IPluginLog log,
-    float returnCost = 300f,
     float teleportCost = 50f
 ) : IHuntRoutePlanner
 {
     private HuntNodeDataSchema data = new();
+
+    private List<uint>? canonicalOrder;
+
     public HuntPathfinderState State { get; private set; } = HuntPathfinderState.None;
 
+    /// <summary>
+    ///     Resume the fixed zone route from the nearest remaining coffer to <paramref name="start"/>.
+    /// </summary>
     public Task<List<HuntPathfinderStep>> FindPath(Vector3 start, List<uint> nodes)
     {
-        if (State != HuntPathfinderState.FileLoaded)
+        if (State != HuntPathfinderState.FileLoaded && State != HuntPathfinderState.PathfindingDone)
         {
             throw new InvalidOperationException("Hunt route data not loaded");
         }
 
         State = HuntPathfinderState.Pathfinding;
 
-        uint startNode = GetStartingNode(start, nodes);
-        Dictionary<uint, Dictionary<uint, (float Cost, List<HuntPathfinderStep> Steps)>> graph = BuildCostGraph(nodes);
-        List<uint> ordered = SolveTspNearestInsertion(startNode, nodes, graph);
-        List<HuntPathfinderStep> steps = BuildStepPath(ordered, graph);
+        EnsureCanonicalOrder();
 
-        steps.Insert(0, HuntPathfinderStep.WalkToDestination(startNode));
+        List<uint> remaining = canonicalOrder!
+            .Where(nodes.Contains)
+            .ToList();
+
+        if (remaining.Count == 0)
+        {
+            State = HuntPathfinderState.PathfindingDone;
+            return Task.FromResult(new List<HuntPathfinderStep>());
+        }
+
+        uint startNode = remaining
+            .OrderBy(id => Vector3.DistanceSquared(start, GetNodePosition(id)))
+            .First();
+        int startIndex = remaining.IndexOf(startNode);
+        List<uint> suffix = remaining.Skip(startIndex).ToList();
+
+        List<HuntPathfinderStep> steps = [HuntPathfinderStep.WalkToDestination(suffix[0])];
+        for (int i = 0; i < suffix.Count - 1; i++)
+        {
+            (float _, List<HuntPathfinderStep> segment) = GetBestSteps(suffix[i], suffix[i + 1]);
+            steps.AddRange(segment);
+        }
 
         PrintPath(steps);
         State = HuntPathfinderState.PathfindingDone;
         return Task.FromResult(steps);
     }
 
-    protected abstract uint GetStartingNode(Vector3 start, List<uint> nodes);
+    /// <summary>Stable seed for the canonical TSP (base camp / main aetheryte).</summary>
+    protected abstract Vector3 GetRouteSeedPosition();
+
+    protected abstract Vector3 GetNodePosition(uint nodeId);
+
+    /// <summary>All layout coffer IDs that participate in the zone route.</summary>
+    protected abstract IReadOnlyList<uint> GetAllRouteNodes();
 
     protected void LoadFile(string filename)
     {
@@ -61,9 +90,36 @@ public abstract class HuntRoutePlanner
 
         string json = File.ReadAllText(file);
         data = JsonSerializer.Deserialize<HuntNodeDataSchema>(json) ?? new HuntNodeDataSchema();
+        canonicalOrder = null;
         State = HuntPathfinderState.FileLoaded;
     }
 
+    private void EnsureCanonicalOrder()
+    {
+        if (canonicalOrder is { Count: > 0 })
+        {
+            return;
+        }
+
+        List<uint> allNodes = GetAllRouteNodes().Distinct().ToList();
+        if (allNodes.Count == 0)
+        {
+            canonicalOrder = [];
+            return;
+        }
+
+        Vector3 seed = GetRouteSeedPosition();
+        uint startNode = allNodes
+            .OrderBy(id => Vector3.DistanceSquared(seed, GetNodePosition(id)))
+            .First();
+
+        Dictionary<uint, Dictionary<uint, (float Cost, List<HuntPathfinderStep> Steps)>> graph =
+            BuildCostGraph(allNodes);
+        canonicalOrder = SolveTspNearestInsertion(startNode, allNodes, graph);
+        log.Info($"Treasure hunt canonical route: {canonicalOrder.Count} coffers (seed near base)");
+    }
+
+    /// <summary>Walk or aethernet only — never mid-route Return.</summary>
     protected (float Cost, List<HuntPathfinderStep> Steps) GetBestSteps(uint fromId, uint toId)
     {
         float bestCost = float.MaxValue;
@@ -82,7 +138,7 @@ public abstract class HuntRoutePlanner
         if (data.NodeToAethernetDistances.TryGetValue(fromId, out List<HuntToAethernet>? shardList) && shardList.Count > 0)
         {
             HuntToAethernet fromShard = shardList.OrderBy(x => x.Distance).First();
-            foreach((HuntAethernet aethernet, List<HuntToNode> list) in data.AethernetToNodeDistances)
+            foreach ((HuntAethernet aethernet, List<HuntToNode> list) in data.AethernetToNodeDistances)
             {
                 HuntToNode to = list.FirstOrDefault(x => x.Id == toId);
                 if (to.Id != toId)
@@ -104,33 +160,11 @@ public abstract class HuntRoutePlanner
             }
         }
 
-        foreach((HuntAethernet aethernet, List<HuntToNode> list) in data.AethernetToNodeDistances)
+        if (bestSteps.Count == 0)
         {
-            HuntToNode to = list.FirstOrDefault(x => x.Id == toId);
-            if (to.Id != toId)
-            {
-                continue;
-            }
-
-            float cost = returnCost + teleportCost + to.Distance;
-            if (cost >= bestCost)
-            {
-                continue;
-            }
-
-            bestCost = cost;
-            bestSteps = aethernet.IsBaseCamp()
-                ?
-                [
-                    HuntPathfinderStep.ReturnToBaseCamp(),
-                    HuntPathfinderStep.WalkToDestination(toId)
-                ]
-                :
-                [
-                    HuntPathfinderStep.ReturnToBaseCamp(),
-                    HuntPathfinderStep.TeleportToAethernet(aethernet),
-                    HuntPathfinderStep.WalkToDestination(toId)
-                ];
+            // Fallback when bake data is missing a pair — walk via destination id only.
+            bestCost = Vector3.Distance(GetNodePosition(fromId), GetNodePosition(toId));
+            bestSteps = [HuntPathfinderStep.WalkToDestination(toId)];
         }
 
         return (bestCost, bestSteps);
@@ -140,10 +174,10 @@ public abstract class HuntRoutePlanner
     {
         Dictionary<uint, Dictionary<uint, (float, List<HuntPathfinderStep>)>> graph = new();
 
-        foreach(uint from in nodes)
+        foreach (uint from in nodes)
         {
             graph[from] = new();
-            foreach(uint to in nodes)
+            foreach (uint to in nodes)
             {
                 if (from == to)
                 {
@@ -163,24 +197,23 @@ public abstract class HuntRoutePlanner
         Dictionary<uint, Dictionary<uint, (float Cost, List<HuntPathfinderStep> Steps)>> graph
     )
     {
-        if (nodes.Count == 1)
+        if (nodes.Count <= 1)
         {
-            return [start, nodes[0]];
+            return nodes.Count == 0 ? [] : [start];
         }
 
-        List<uint> route = new()
-            { start };
+        List<uint> route = [start];
         HashSet<uint> unvisited = new(nodes.Where(n => n != start));
 
-        while(unvisited.Count > 0)
+        while (unvisited.Count > 0)
         {
             float bestInsertionCost = float.MaxValue;
             int bestIndex = -1;
             uint bestNode = 0;
 
-            foreach(uint nodeToInsert in unvisited)
+            foreach (uint nodeToInsert in unvisited)
             {
-                for(int i = 0; i < route.Count; i++)
+                for (int i = 0; i < route.Count; i++)
                 {
                     uint from = route[i];
                     if (i == route.Count - 1)
@@ -196,7 +229,9 @@ public abstract class HuntRoutePlanner
                     else
                     {
                         uint to = route[i + 1];
-                        float addedCost = graph[from][nodeToInsert].Cost + graph[nodeToInsert][to].Cost - graph[from][to].Cost;
+                        float addedCost = graph[from][nodeToInsert].Cost
+                                          + graph[nodeToInsert][to].Cost
+                                          - graph[from][to].Cost;
                         if (addedCost < bestInsertionCost)
                         {
                             bestInsertionCost = addedCost;
@@ -219,26 +254,6 @@ public abstract class HuntRoutePlanner
         return route;
     }
 
-    private List<HuntPathfinderStep> BuildStepPath(
-        List<uint> orderedNodes,
-        Dictionary<uint, Dictionary<uint, (float Cost, List<HuntPathfinderStep> Steps)>> graph
-    )
-    {
-        List<HuntPathfinderStep> steps = [];
-
-        for(int i = 0; i < orderedNodes.Count - 1; i++)
-        {
-            uint from = orderedNodes[i];
-            uint to = orderedNodes[i + 1];
-            if (graph.TryGetValue(from, out Dictionary<uint, (float Cost, List<HuntPathfinderStep> Steps)>? edges) && edges.TryGetValue(to, out (float Cost, List<HuntPathfinderStep> Steps) segment))
-            {
-                steps.AddRange(segment.Steps);
-            }
-        }
-
-        return steps;
-    }
-
     private void PrintPath(List<HuntPathfinderStep> steps)
     {
         log.Info("== Treasure Hunt Steps ==");
@@ -246,7 +261,7 @@ public abstract class HuntRoutePlanner
         int index = 1;
         int treasureCount = 0;
 
-        foreach(HuntPathfinderStep step in steps)
+        foreach (HuntPathfinderStep step in steps)
         {
             string message = step.Type switch
             {

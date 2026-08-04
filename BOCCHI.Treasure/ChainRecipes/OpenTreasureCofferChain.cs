@@ -5,7 +5,6 @@ using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using Ocelot.Actions;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Chain.Middleware.Chain;
@@ -69,16 +68,6 @@ public class OpenTreasureCofferChain
 
         if (conditions[ConditionFlag.BetweenAreas])
         {
-            return false;
-        }
-
-        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
-        {
-            if (Actions.Dismount.CanCast())
-            {
-                Actions.Dismount.Cast();
-            }
-
             return false;
         }
 

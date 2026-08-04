@@ -124,7 +124,9 @@ public class TreasureHunterService
             }
 
             planningRoute = false;
-            List<uint> validNodes = GetValidNodes(config.HuntMaxLevel);
+            List<uint> validNodes = GetValidNodes(config.HuntMaxLevel)
+                .Where(id => !IsLayoutCofferOpened(id))
+                .ToList();
             steps.Clear();
             steps.AddRange(pathPlanner.FindPath(player.Position, validNodes).GetAwaiter().GetResult());
             pathPlanner = null;
@@ -140,12 +142,6 @@ public class TreasureHunterService
 
         if (TryBeginTreasureSight())
         {
-            return;
-        }
-
-        if (ShouldAbortForNoChests())
-        {
-            FinishHuntEarly("Treasure Sight reports no remaining coffers");
             return;
         }
 
@@ -729,6 +725,19 @@ public class TreasureHunterService
             .ToList();
     }
 
+    /// <summary>True when a live opened/looted coffer sits on this layout node (skip when resuming).</summary>
+    private bool IsLayoutCofferOpened(uint nodeId)
+    {
+        TreasureLayoutDatum layout = layoutTreasure.FirstOrDefault(t => t.Id == nodeId);
+        if (layout.Id != nodeId)
+        {
+            return false;
+        }
+
+        IGameObject? present = FindTreasureNear(layout.Position, ChestSearchRadius);
+        return present != null && IsChestOpened(present);
+    }
+
     private TreasureHuntPathfinder? CreatePathPlanner()
     {
         layoutTreasure.Clear();
@@ -789,8 +798,8 @@ public class TreasureHunterService
             zone.ZoneId,
             plugin,
             layoutTreasure,
+            zone.GetMainAetheryte().GetInteractPosition(),
             log,
-            config.HuntReturnCost,
             config.HuntTeleportCost
         );
     }
