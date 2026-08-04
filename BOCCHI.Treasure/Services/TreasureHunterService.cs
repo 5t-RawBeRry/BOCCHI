@@ -908,6 +908,8 @@ public class TreasureHunterService
 
     private void Teardown()
     {
+        bool wasStandalone = Running && !ManagedByPotsTreasure;
+
         Running = false;
         Paused = false;
         planningRoute = false;
@@ -926,5 +928,10 @@ public class TreasureHunterService
         steps.Clear();
         layoutTreasure.Clear();
         pathPlanner = null;
+
+        if (wasStandalone)
+        {
+            modeGuard.NotifyStandaloneTreasureHuntEnded();
+        }
     }
 }

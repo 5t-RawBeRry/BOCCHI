@@ -13,6 +13,10 @@
 - Config and UI cleanup
 
 ### Fixes
+- Illegal Mode: cast Return while mounted when allowed (no awkward dismount-then-Return when aborting a late FATE/CE)
+- Treasure Hunt: if Illegal Mode is on, soft-pause it for the hunt and auto-resume FATE/CE farming when the hunt ends (no concurrent pathing)
+- Plugin installer icon: restore real logo (was a blank navy square) and point IconUrl at the BOCCHI repo
+- BOCCHI AI: more reliable preset create on BossMod Reborn (retry while Illegal Mode is on; don't delete on provider flicker; BMR deactivate only clears when BOCCHI AI is active; stop eagerly injecting unused Ocelot Single Target)
 - Illegal Mode: mount when walking to mid-map aetherytes (Pathfind before Teleport again)
 - BOCCHI AI: Activate/Deactivate only that preset so travel no longer wipes the user's other BossMod presets
 - Treasure Hunt: defer Treasure Sight while in combat (no mid-fight PJ swap / stuck on foot) (#128)

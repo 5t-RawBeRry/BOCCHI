@@ -107,17 +107,6 @@ public class ReturningHandler
             return;
         }
 
-        // Return needs feet on the ground — lingering mount after a FATE/CE looked like a long wait.
-        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
-        {
-            if (Actions.Dismount.CanCast())
-            {
-                Actions.Dismount.Cast();
-            }
-
-            return;
-        }
-
         IZone zone = zones.GetZone();
         if (zone.IsInBasecamp())
         {
@@ -137,24 +126,28 @@ public class ReturningHandler
         }
 
         // Path handoff: hold Returning while the rolled 2..max delay elapses.
-        if (memory.TryRemember<ReturningStateMemory>(out ReturningStateMemory returning))
+        if (memory.TryRemember<ReturningStateMemory>(out ReturningStateMemory returning)
+            && !returning.IsReadyToCast())
         {
-            if (!returning.IsReadyToCast())
-            {
-                return;
-            }
-
-            if (!Actions.Return.CanCast())
-            {
-                return;
-            }
+            return;
         }
 
+        // Cast Return while mounted when allowed — separate dismount-then-Return looks odd (Discord).
         if (Actions.Return.CanCast())
         {
             // Opportunistic cast already waited via IdleStateMemory — no second delay.
             memory.TryAdd(new ReturningStateMemory(TimeSpan.Zero));
             Actions.Return.Cast();
+            return;
+        }
+
+        // Some clients block Return on mount; get feet on the ground then retry next tick.
+        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
+        {
+            if (Actions.Dismount.CanCast())
+            {
+                Actions.Dismount.Cast();
+            }
         }
     }
 

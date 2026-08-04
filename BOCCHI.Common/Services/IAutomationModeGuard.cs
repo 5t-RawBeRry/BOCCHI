@@ -15,6 +15,11 @@ public interface IAutomationModeGuard
     /// <summary>Stop every other mode before starting <paramref name="mode"/>.</summary>
     void EnsureExclusive(AutomationMode mode);
 
+    /// <summary>
+    /// Standalone treasure hunt finished — resume Illegal Mode if it was soft-paused for the hunt.
+    /// </summary>
+    void NotifyStandaloneTreasureHuntEnded();
+
     /// <summary>Stop all modes, buffs, pathfinding, and chains.</summary>
     void EmergencyStop();
 }

@@ -51,6 +51,8 @@ public class Automator
 
     public bool Enabled => context.IsIllegalMode;
 
+    public bool IsIllegalMode => context.IsIllegalMode;
+
     public bool IsActive => context.Enabled;
 
     public bool IsPotsAndTreasure => context.IsPotsAndTreasure;
