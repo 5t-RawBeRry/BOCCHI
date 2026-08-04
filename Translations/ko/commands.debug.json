@@ -1,3 +1,3 @@
 {
-  "help": "디버그 도우미. /bocchi-debug ai-preset — BOCCHI AI 보스 모드 프리셋을 생성/덮어쓰고 저장된 JSON을 출력합니다."
+  "help": "디버그 도우미. /bocchi debug ai-preset — BOCCHI AI BossMod 프리셋을 생성/덮어쓰고 저장된 JSON을 출력합니다."
 }

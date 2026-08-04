@@ -1,0 +1,26 @@
+{
+  "label": "항아리 타이밍",
+  "tooltip": "항아리로 떠날 시점, 짧은 항아리 포기, 리롤 상자 포함 여부입니다.",
+  "fields": {
+    "min_pot_fate_minutes_remaining": {
+      "label": "항아리 돌발 최소 남은 시간(분)",
+      "tooltip": "남은 시간이 이보다 짧은 항아리 돌발로는 가지 않거나 머무르지 않습니다. 0이면 비활성."
+    },
+    "pot_spawn_lead_minutes": {
+      "label": "항아리 스폰 선행(분)",
+      "tooltip": "예측 스폰 몇 분 전에 다른 활동을 그만두고 항아리로 향할지입니다."
+    },
+    "fate_fallback_cutoff_minutes": {
+      "label": "이 시간 이내면 항아리로 이동(분)",
+      "tooltip": "항아리 출발까지 이 분 이내면 일반 돌발을 시작하지 않습니다. 0이면 비활성."
+    },
+    "ce_fallback_cutoff_minutes": {
+      "label": "항아리 출발 전 비상 조우 컷오프(분)",
+      "tooltip": "항아리 출발까지 이 분 이내면 비상 조우를 시작하지 않습니다. 0이면 비활성."
+    },
+    "should_farm_reroll_pot_chests": {
+      "label": "리롤 항아리 상자 포함",
+      "tooltip": "항아리 돌발 후 공유 리롤 상자 위치도 수집합니다."
+    }
+  }
+}
