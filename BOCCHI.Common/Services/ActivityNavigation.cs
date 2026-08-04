@@ -135,7 +135,8 @@ public class ActivityNavigation
                     vnav,
                     lifestream,
                     logger,
-                    target.Id);
+                    target.Id,
+                    automatorConfig.SprintOnAetheryteApproach);
 
                 if (CanPathfind)
                 {

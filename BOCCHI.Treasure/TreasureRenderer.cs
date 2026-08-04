@@ -39,13 +39,7 @@ public class TreasureRenderer
 
     private void DrawHuntPanel()
     {
-        if (!config.EnableTreasureHunt)
-        {
-            return;
-        }
-
-        ImGui.Separator();
-        ui.Text(translator.T(".treasure.title"));
+        ImGui.Spacing();
 
         if (!hunter.IsVnavAvailable)
         {

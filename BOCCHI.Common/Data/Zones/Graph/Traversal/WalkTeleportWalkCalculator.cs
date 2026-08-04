@@ -1,3 +1,4 @@
+using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Paths;
 using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
@@ -56,7 +57,7 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
 
         return new(
             walkToDepartureCost + GraphTraverser.TeleportCost + walkToGoalFromInbound.Cost,
-            BuildTeleportSteps(inboundMeta.AetheryteId, goal, inbound));
+            BuildTeleportSteps(departure, inboundMeta.AetheryteId, goal, inbound, start));
     }
 
     private static async Task<(Node Departure, float WalkCost)?> ResolveDeparture(
@@ -126,9 +127,29 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
                 PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, start))
             ]);
 
-    private static List<PathStep> BuildTeleportSteps(uint aetheryteId, Node goal, Node inbound) =>
-    [
-        PathStep.Teleport(aetheryteId),
-        PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, inbound.Position))
-    ];
+    /// <summary>
+    ///     Pathfind (mountable) to departure aetheryte, then Teleport, then Pathfind to the goal.
+    ///     Without the departure Pathfind, mid-map hops walk on foot via AetheryteApproach.
+    /// </summary>
+    private static List<PathStep> BuildTeleportSteps(
+        Node departure,
+        uint aetheryteId,
+        Node goal,
+        Node inbound,
+        Vector3 start)
+    {
+        List<PathStep> steps = [];
+
+        Vector3 interact = departure.GetInteractPosition();
+        // Already in Lifestream range — AetheryteApproach is a no-op / short camp close-in.
+        if (start.Distance2D(departure.Position) > AethernetData.LifestreamInteractRadius
+            && start.Distance2D(interact) > AethernetData.LifestreamInteractRadius)
+        {
+            steps.Add(PathStep.Pathfind(interact, AethernetNavigation.AetherytePathfindArrivalRadius));
+        }
+
+        steps.Add(PathStep.Teleport(aetheryteId));
+        steps.Add(PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, inbound.Position)));
+        return steps;
+    }
 }

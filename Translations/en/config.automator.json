@@ -35,6 +35,10 @@
       "roulette": "Mount Roulette",
       "search": "Search mounts..."
     },
+    "sprint_on_aetheryte_approach": {
+      "label": "Sprint to aetherytes",
+      "tooltip": "Use Sprint when walking to an aetheryte (camp close-in, aethernet approach, hunt combat escape)."
+    },
     "stay_mounted_while_waiting_for_ce": {
       "label": "Stay mounted while waiting for CEs",
       "tooltip": "Do not auto-dismount after arriving at a preparing CE. You still dismount when the encounter starts."

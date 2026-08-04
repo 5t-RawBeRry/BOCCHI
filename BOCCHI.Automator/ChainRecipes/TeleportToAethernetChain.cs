@@ -1,4 +1,5 @@
-﻿using BOCCHI.Common.Data.Aethernet;
+﻿using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Zones;
 using Dalamud.Plugin.Services;
 using Ocelot.Chain;
@@ -17,6 +18,7 @@ public class TeleportToAethernetChain
     IObjectTable objects,
     IPathfinder pathfinder,
     IVNavmeshIpc vnav,
+    AutomatorConfig config,
     ILogger<TeleportToAethernetChain> logger
 ) : ChainRecipe<uint>(chains)
 {
@@ -26,5 +28,7 @@ public class TeleportToAethernetChain
     }
 
     protected override IChain Compose(IChain chain, uint id) =>
-        AethernetTeleport.BuildChain(chain, Chains, zones, objects, pathfinder, vnav, lifestream, logger, id);
+        AethernetTeleport.BuildChain(
+            chain, Chains, zones, objects, pathfinder, vnav, lifestream, logger, id,
+            config.SprintOnAetheryteApproach);
 }

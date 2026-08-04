@@ -39,39 +39,43 @@ public class AutomatorConfig : IAutoConfig
     [MountSelect(Order = 7)]
     public uint PreferredMountId { get; set; } = 0;
 
+    /// <summary>Use Sprint on foot when closing in on an aetheryte (#129).</summary>
+    [Checkbox(Order = 8)]
+    public bool SprintOnAetheryteApproach { get; set; } = true;
+
     /// <summary>
     ///     Stay mounted while a CE is preparing; dismount when it starts (#127).
     /// </summary>
-    [Checkbox(Order = 8)]
+    [Checkbox(Order = 9)]
     public bool StayMountedWhileWaitingForCe { get; set; } = false;
 
     /// <summary>
     ///     After Return (and inbound aetheryte teleport) toward a FATE or CE, stop and leave the walk for the player.
     /// </summary>
-    [Checkbox(Order = 9)]
+    [Checkbox(Order = 10)]
     public bool StopAfterReturn { get; set; } = false;
 
     /// <summary>
     ///     When the current phantom job is maxed, switch to the next unlocked non-maxed job.
     /// </summary>
-    [Checkbox(Order = 10)]
+    [Checkbox(Order = 11)]
     public bool PhantomJobsLevelingMode { get; set; } = false;
 
-    [Checkbox(Order = 11)]
+    [Checkbox(Order = 12)]
     public bool ShouldCastTreasureSight { get; set; } = false;
 
-    [IntRange(60, 600, Order = 12)]
+    [IntRange(60, 600, Order = 13)]
     public int TreasureSightRecastIntervalSeconds { get; set; } = 120;
 
     /// <summary>
     ///     Upper bound (seconds) for the random 2..max wait before Return after a FATE/CE.
     /// </summary>
-    [IntRange(2, 60, Order = 13)]
+    [IntRange(2, 60, Order = 14)]
     public int MaxRemoteIdleTimeSeconds { get; set; } = 10;
 
     /// <summary>
     ///     Repair equipped gear when any piece falls to or below this condition (%).
     /// </summary>
-    [IntRange(1, 99, Order = 14)]
+    [IntRange(1, 99, Order = 15)]
     public int AutoRepairThreshold { get; set; } = 30;
 }

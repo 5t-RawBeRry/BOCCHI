@@ -68,7 +68,7 @@ public static class MountWait
     }
 
     /// <summary>
-    ///     Returns true when ready to pathfind (mounted or giving up to walk).
+    ///     Returns true when ready to pathfind (mounted, mounting, or giving up to walk).
     ///     <paramref name="started"/> is when the wait began (UtcNow).
     /// </summary>
     public static bool IsReadyOrGiveUp(
@@ -79,15 +79,12 @@ public static class MountWait
         bool autoMountEnabled = true,
         uint preferredMountId = 0)
     {
-        if (!autoMountEnabled || conditions[ConditionFlag.Mounted])
+        // Ready once mounted or mount animation started — pathfind during Mounting (#130).
+        if (!autoMountEnabled
+            || conditions[ConditionFlag.Mounted]
+            || conditions[ConditionFlag.Mounting])
         {
             return true;
-        }
-
-        // Mount cast in progress — wait for Mounted (capped by Timeout on the WaitUntil).
-        if (conditions[ConditionFlag.Mounting])
-        {
-            return false;
         }
 
         if (conditions[ConditionFlag.InCombat] || conditions[ConditionFlag.Unconscious])

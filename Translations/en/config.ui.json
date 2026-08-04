@@ -43,8 +43,8 @@
       "tooltip": "Display Pots & Treasure controls in the main window."
     },
     "show_treasure_section": {
-      "label": "Show treasure section",
-      "tooltip": "Display treasure hunt status and controls in the main window."
+      "label": "Show Treasure Hunter section",
+      "tooltip": "Display Treasure Hunter status and controls in the main window."
     }
   }
 }

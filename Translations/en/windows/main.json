@@ -10,7 +10,7 @@
     "potstreasure": "Pots & Treasure",
     "mobfarmer": "Mob Farmer",
     "world": "World",
-    "treasure": "Treasure"
+    "treasure": "Treasure Hunter"
   },
     "status": {
     "automator": "Illegal Mode",
@@ -96,7 +96,7 @@
       "not_engaged": "Not engaged",
       "engaged": "Engaged",
       "selected_mobs": "Selected mobs",
-      "configure_mobs": "Configure target mobs in /bocchi-config → Mob Farmer."
+      "configure_mobs": "Configure target mobs in /bocchi config → Mob Farmer."
     },
     "pots_treasure": {
       "start": "Start Pots & Treasure",

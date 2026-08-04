@@ -10,7 +10,7 @@
     "potstreasure": "壺＆トレジャー",
     "mobfarmer": "モブファーム",
     "world": "ワールド",
-    "treasure": "宝箱"
+    "treasure": "トレジャーハンター"
   },
   "status": {
     "automator": "不正モード",
@@ -97,7 +97,7 @@
       "not_engaged": "未戦闘",
       "engaged": "戦闘中",
       "selected_mobs": "選択中のモブ",
-      "configure_mobs": "/bocchi-config -> モブファーム で対象モブを設定してください。"
+      "configure_mobs": "/bocchi config → モブファーム で対象モブを設定してください。"
     },
     "pots_treasure": {
       "start": "壺＆トレジャー開始",

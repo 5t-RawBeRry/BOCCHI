@@ -21,7 +21,8 @@ public static class AetheryteApproach
         IPathfinder pathfinder,
         IVNavmeshIpc vnav,
         ILifestreamIpc lifestream,
-        string chainName)
+        string chainName,
+        bool sprintEnabled = true)
     {
         if (objects.LocalPlayer is not { } player)
         {
@@ -62,6 +63,7 @@ public static class AetheryteApproach
                     Vector3 target = crystal.GetApproachPosition(current.Position, AethernetNavigation.CampApproachRadius);
                     target = new Vector3(target.X, crystal.Y, target.Z);
 
+                    SprintAssist.MaybeCast(sprintEnabled);
                     pathfinder.PathfindAndMoveTo(new PathfinderConfig(target)
                     {
                         DistanceThreshold = AethernetNavigation.PathfindArrivalRadius,

@@ -35,6 +35,10 @@
       "roulette": "マウントルーレット",
       "search": "マウントを検索..."
     },
+    "sprint_on_aetheryte_approach": {
+      "label": "エーテライトへスプリント",
+      "tooltip": "エーテライトへ徒歩で近づくときにスプリントを使います（キャンプ接近、エーテライト接近、ハント中の戦闘退避）。"
+    },
     "stay_mounted_while_waiting_for_ce": {
       "label": "CE 待機中はマウントしたまま",
       "tooltip": "準備中の CE に到着しても自動で降りません。エンカウント開始時には降ります。"

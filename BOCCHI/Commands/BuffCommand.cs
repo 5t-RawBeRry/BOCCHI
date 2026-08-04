@@ -7,9 +7,9 @@ namespace BOCCHI.Commands;
 
 public class BuffCommand(IBuffRunner buffs, IChatGui chat, ITranslator<BuffCommand> translator) : OcelotCommand(translator)
 {
-    public override string Command => "bocchi-buff";
+    public override string Command => "buff";
 
-    public override List<string> Aliases => ["bocchibuff"];
+    public override List<string> Aliases => [];
 
     public override void Execute(CommandContext context)
     {

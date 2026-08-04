@@ -1,5 +1,5 @@
 {
-  "label": "宝箱",
+  "label": "トレジャーハンター",
   "tooltip": "宝箱オーバーレイとトレジャーハント経路です。",
   "fields": {
     "draw_line_to_bronze_chests": {
@@ -17,10 +17,6 @@
     "show_percentage_active_treasure_count": {
       "label": "アクティブ宝箱を割合で表示",
       "tooltip": "合計数の横にアクティブな宝箱数を割合で表示します。"
-    },
-    "enable_treasure_hunt": {
-      "label": "トレジャーハントボタンを表示",
-      "tooltip": "メインウィンドウにトレジャーハントボタンを表示します。"
     },
     "return_to_base_camp_after_hunt": {
       "label": "ハント後にベースキャンプへ戻る",

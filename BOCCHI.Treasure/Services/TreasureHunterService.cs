@@ -89,12 +89,6 @@ public class TreasureHunterService
             return;
         }
 
-        if (!config.EnableTreasureHunt)
-        {
-            Teardown();
-            return;
-        }
-
         if (!zones.GetZone().IsOccultCrescentZone())
         {
             Teardown();
@@ -207,11 +201,6 @@ public class TreasureHunterService
         if (Running)
         {
             StopHunt();
-            return;
-        }
-
-        if (!config.EnableTreasureHunt)
-        {
             return;
         }
 
@@ -374,6 +363,12 @@ public class TreasureHunterService
                              >= automatorConfig.TreasureSightRecastIntervalSeconds;
 
         if (!dueForStart && !dueForRefresh)
+        {
+            return false;
+        }
+
+        // Defer while fighting — Sight dismounts + swaps PJ; remount fails in combat (#128).
+        if (conditions[ConditionFlag.InCombat])
         {
             return false;
         }
@@ -572,6 +567,7 @@ public class TreasureHunterService
 
         if (inCombat && !vnav.IsRunning())
         {
+            SprintAssist.MaybeCast(automatorConfig.SprintOnAetheryteApproach);
             vnav.PathfindAndMoveTo(zone.GetMainAetheryte().GetInteractPosition(), false);
             return false;
         }

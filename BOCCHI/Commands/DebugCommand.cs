@@ -12,9 +12,9 @@ public class DebugCommand
     ITranslator<DebugCommand> translator
 ) : OcelotCommand(translator)
 {
-    public override string Command => "bocchi-debug";
+    public override string Command => "debug";
 
-    public override List<string> Aliases => ["bocchidebug", "ochdebug"];
+    public override List<string> Aliases => [];
 
     public override bool Hidden => true;
 
@@ -22,7 +22,7 @@ public class DebugCommand
     {
         if (context.Args.Length == 0)
         {
-            chat.PrintError("Usage: /bocchi-debug ai-preset");
+            chat.PrintError("Usage: /bocchi debug ai-preset");
             return;
         }
 

@@ -1,5 +1,5 @@
 {
-  "label": "Treasure",
+  "label": "Treasure Hunter",
   "tooltip": "Coffer overlays and Treasure Hunt routing.",
   "fields": {
     "draw_line_to_bronze_chests": {
@@ -17,10 +17,6 @@
     "show_percentage_active_treasure_count": {
       "label": "Show active treasure as percentage",
       "tooltip": "Show active treasure as percentage next to the total"
-    },
-    "enable_treasure_hunt": {
-      "label": "Show Treasure Hunt button",
-      "tooltip": "Show the treasure hunt button in the main window."
     },
     "return_to_base_camp_after_hunt": {
       "label": "Return after hunt",

@@ -22,7 +22,8 @@ public static class AethernetTeleport
         IVNavmeshIpc vnav,
         ILifestreamIpc lifestream,
         ILogger logger,
-        uint placeNameId)
+        uint placeNameId,
+        bool sprintEnabled = true)
     {
         string chainName = chain.Name;
 
@@ -60,7 +61,8 @@ public static class AethernetTeleport
                 pathfinder,
                 vnav,
                 lifestream,
-                $"{chainName}::Approach"))
+                $"{chainName}::Approach",
+                sprintEnabled))
             .Then(_ =>
                 {
                     if (objects.LocalPlayer is not { } player)
