@@ -147,6 +147,12 @@
           "Pictomancy": "[1.0.10, )"
         }
       },
+      "FFXIVOcelot.Rotation": {
+        "type": "Project",
+        "dependencies": {
+          "FFXIVOcelot": "[1.0.0, )"
+        }
+      },
       "FFXIVOcelot.UI": {
         "type": "Project",
         "dependencies": {

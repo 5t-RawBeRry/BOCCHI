@@ -121,6 +121,7 @@
           "FFXIVOcelot.ECommons": "[1.0.0, )",
           "FFXIVOcelot.Pathfinding": "[1.0.0, )",
           "FFXIVOcelot.Pictomancy": "[1.0.0, )",
+          "FFXIVOcelot.Rotation": "[1.0.0, )",
           "FFXIVOcelot.UI": "[1.0.0, )"
         }
       },
@@ -133,6 +134,7 @@
           "FFXIVOcelot.ECommons": "[1.0.0, )",
           "FFXIVOcelot.Pathfinding": "[1.0.0, )",
           "FFXIVOcelot.Pictomancy": "[1.0.0, )",
+          "FFXIVOcelot.Rotation": "[1.0.0, )",
           "FFXIVOcelot.UI": "[1.0.0, )"
         }
       },
@@ -168,6 +170,12 @@
         "dependencies": {
           "FFXIVOcelot": "[1.0.0, )",
           "Pictomancy": "[1.0.10, )"
+        }
+      },
+      "FFXIVOcelot.Rotation": {
+        "type": "Project",
+        "dependencies": {
+          "FFXIVOcelot": "[1.0.0, )"
         }
       },
       "FFXIVOcelot.UI": {
