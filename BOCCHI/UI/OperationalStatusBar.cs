@@ -22,6 +22,7 @@ namespace BOCCHI.UI;
 public class OperationalStatusBar
 (
     Func<IAutomator> automatorFactory,
+    Func<IPotsTreasureMode> potsTreasureFactory,
     Func<IMobFarmer> farmerFactory,
     ITreasureHunter hunter,
     IBuffRunner buffRunner,
@@ -34,20 +35,26 @@ public class OperationalStatusBar
 {
     private IAutomator? automator;
 
+    private IPotsTreasureMode? potsTreasure;
+
     private IMobFarmer? farmer;
 
     private IAutomator Automator => automator ??= automatorFactory();
 
+    private IPotsTreasureMode PotsTreasure => potsTreasure ??= potsTreasureFactory();
+
     private IMobFarmer Farmer => farmer ??= farmerFactory();
 
     public bool IllegalModeActive => Automator.Enabled;
+
+    public bool PotsTreasureActive => PotsTreasure.Running;
 
     public bool MobFarmerActive => Farmer.Running;
 
     public bool TreasureHuntActive => hunter.Running;
 
     public bool AnyAutomationActive =>
-        IllegalModeActive || MobFarmerActive || TreasureHuntActive;
+        IllegalModeActive || PotsTreasureActive || MobFarmerActive || TreasureHuntActive;
 
     public void Render()
     {
@@ -57,6 +64,14 @@ public class OperationalStatusBar
             translator.T(".status.automator"),
             Automator.Enabled,
             Automator.CurrentState is { } state ? FormatAutomatorState(state) : null);
+
+        ImGui.SameLine();
+        DrawStatusChip(
+            translator.T(".status.pots_treasure"),
+            PotsTreasure.Running,
+            PotsTreasure.Running
+                ? translator.T($".automation.pots_treasure.phases.{PotsTreasure.Phase.ToString().ToSnakeCase()}")
+                : null);
 
         ImGui.SameLine();
         DrawStatusChip(

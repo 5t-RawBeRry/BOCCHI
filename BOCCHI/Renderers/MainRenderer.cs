@@ -50,6 +50,7 @@ public class MainRenderer
             bool defaultOpen = section switch
             {
                 MainWindowSection.Automation => statusBar.IllegalModeActive,
+                MainWindowSection.PotsTreasure => statusBar.PotsTreasureActive,
                 MainWindowSection.MobFarmer => statusBar.MobFarmerActive,
                 MainWindowSection.World => false,
                 var _ => true

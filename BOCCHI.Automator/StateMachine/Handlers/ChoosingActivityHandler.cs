@@ -1,4 +1,5 @@
 using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Services;
 using BOCCHI.Buff.Services;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.CriticalEncounters;
@@ -15,6 +16,7 @@ namespace BOCCHI.Automator.StateMachine.Handlers;
 public class ChoosingActivityHandler
 (
     IAutomatorMemory memory,
+    IAutomatorContext automatorContext,
     ICriticalEncounterRepository criticalEncounterRepository,
     IFateRepository fateRepository,
     IGoalFactory goalFactory,
@@ -28,6 +30,8 @@ public class ChoosingActivityHandler
     ILogger<ChoosingActivityHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.ChoosingActivity)
 {
+    private bool PotsOnly => automatorContext.IsPotsAndTreasure;
+
     public override StatePriority GetScore()
     {
         if (memory.TryRemember<GoalMemory>(out GoalMemory _))
@@ -56,7 +60,8 @@ public class ChoosingActivityHandler
         }
 
         // Only claim Choosing when Handle can actually start something (avoids pot-cutoff softlock).
-        if (FindStartableCriticalEncounter() == null
+        bool hasCriticalEncounter = !PotsOnly && FindStartableCriticalEncounter() != null;
+        if (!hasCriticalEncounter
             && FindStartableFate() == null
             && !CanPrepositionToPot(out _))
         {
@@ -68,13 +73,16 @@ public class ChoosingActivityHandler
 
     public override void Handle()
     {
-        CriticalEncounter? criticalEncounter = FindStartableCriticalEncounter();
-        if (criticalEncounter != null)
+        if (!PotsOnly)
         {
-            IGoal goal = goalFactory.CriticalEncounter(criticalEncounter.Id);
-            memory.TryAdd(new GoalMemory(goal));
-            logger.Info("Chose CE {Id} ({Name})", criticalEncounter.Id.Value, criticalEncounter.Name);
-            return;
+            CriticalEncounter? criticalEncounter = FindStartableCriticalEncounter();
+            if (criticalEncounter != null)
+            {
+                IGoal goal = goalFactory.CriticalEncounter(criticalEncounter.Id);
+                memory.TryAdd(new GoalMemory(goal));
+                logger.Info("Chose CE {Id} ({Name})", criticalEncounter.Id.Value, criticalEncounter.Name);
+                return;
+            }
         }
 
         Fate? fate = FindStartableFate();
@@ -96,9 +104,13 @@ public class ChoosingActivityHandler
 
     private Fate? FindStartableFate()
     {
-        // Prefer highest score among FATEs that pot cutoff will actually allow.
         IReadOnlyList<Fate> snapshot = fateRepository.Snapshot();
-        if (!fatesConfig.ShouldDoFates || snapshot.Count == 0)
+        if (snapshot.Count == 0)
+        {
+            return null;
+        }
+
+        if (!PotsOnly && !fatesConfig.ShouldDoFates)
         {
             return null;
         }
@@ -107,16 +119,26 @@ public class ChoosingActivityHandler
         float bestScore = float.MinValue;
         DateTimeOffset now = DateTimeOffset.UtcNow;
         PotCycleSnapshot cycle = potCycle.Snapshot;
-        bool potFarming = fatesConfig.IsPotFallbackGatingEnabled((uint)cycle.PredictedNextPotFateId);
+        bool potFarming = PotsOnly
+            || fatesConfig.IsPotFallbackGatingEnabled((uint)cycle.PredictedNextPotFateId);
+        IZone zone = zones.GetZone();
 
         foreach (Fate fate in snapshot)
         {
-            if (!fatesConfig.IsFateEnabled(fate.Id.Value))
+            bool isPot = zone.IsPotFate(fate.Id.Value);
+            if (PotsOnly)
+            {
+                if (!isPot)
+                {
+                    continue;
+                }
+            }
+            else if (!fatesConfig.IsFateEnabled(fate.Id.Value))
             {
                 continue;
             }
 
-            if (!zones.GetZone().IsPotFate(fate.Id.Value))
+            if (!isPot)
             {
                 PotFallbackStartDecision decision = PotFallbackWindow.Evaluate(
                     cycle,
@@ -131,13 +153,16 @@ public class ChoosingActivityHandler
                 }
             }
 
-            FateScore score = fateScorer.Score(fate);
-            if (score.Value <= 0f || score.Value <= bestScore)
+            // Pot-only mode: accept pots even when they sit in DisabledFateIds.
+            float scoreValue = PotsOnly && isPot
+                ? Math.Max(1f, fateScorer.Score(fate).Value)
+                : fateScorer.Score(fate).Value;
+            if (scoreValue <= 0f || scoreValue <= bestScore)
             {
                 continue;
             }
 
-            bestScore = score.Value;
+            bestScore = scoreValue;
             best = fate;
         }
 
@@ -160,14 +185,18 @@ public class ChoosingActivityHandler
     private bool CanPrepositionToPot(out FateId potId)
     {
         potId = default;
-        if (!fatesConfig.ShouldPrepositionToPots)
+        if (!PotsOnly && !fatesConfig.ShouldPrepositionToPots)
         {
             return false;
         }
 
         PotCycleSnapshot cycle = potCycle.Snapshot;
-        if (!fatesConfig.IsPotFallbackGatingEnabled((uint)cycle.PredictedNextPotFateId)
-            || !cycle.HasPredictedNextPot)
+        if (!cycle.HasPredictedNextPot)
+        {
+            return false;
+        }
+
+        if (!PotsOnly && !fatesConfig.IsPotFallbackGatingEnabled((uint)cycle.PredictedNextPotFateId))
         {
             return false;
         }

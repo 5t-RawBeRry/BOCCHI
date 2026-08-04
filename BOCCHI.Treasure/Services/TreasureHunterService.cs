@@ -13,6 +13,7 @@ using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.LayoutEngine;
 using FFXIVClientStructs.FFXIV.Client.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.Interop;
 using FFXIVClientStructs.STD;
 using Ocelot.Actions;
@@ -48,7 +49,8 @@ public class TreasureHunterService
     IPluginLog log,
     IGameGui gui,
     ITreasureTracker tracker,
-    ISupportJobFactory supportJobs
+    ISupportJobFactory supportJobs,
+    IClientState client
 ) : ITreasureHunter, IOnUpdate, IOnStop
 {
     private const float ChestSearchRadius = 25f;
@@ -161,6 +163,12 @@ public class TreasureHunterService
         // Clearing first re-starts the same teleport forever (#123 / #125).
         if (steps.Count > 0 && StepIndex < steps.Count && TryAdvanceCurrentStep())
         {
+            HuntPathfinderStep completed = steps[StepIndex];
+            if (completed.Type == HuntPathfinderStepType.WalkToNode)
+            {
+                LastCheckedNodeId = completed.NodeId;
+            }
+
             StepIndex++;
             StepDistance = 0f;
         }
@@ -183,6 +191,8 @@ public class TreasureHunterService
 
     public TimeSpan Elapsed => stopwatch.Elapsed;
 
+    public uint? LastCheckedNodeId { get; private set; }
+
     public bool IsVnavAvailable => vnav.IsAvailable();
 
     public bool IsVnavReady => vnav.IsNavmeshReady();
@@ -202,6 +212,7 @@ public class TreasureHunterService
 
         stopwatch.Restart();
         StepIndex = 0;
+        LastCheckedNodeId = null;
         Paused = false;
         steps.Clear();
         layoutTreasure.Clear();
@@ -255,6 +266,55 @@ public class TreasureHunterService
         }
 
         return steps[StepIndex];
+    }
+
+    public bool TryGetResumeCoffer(out uint nodeId, out Vector3 position)
+    {
+        nodeId = 0;
+        position = default;
+        if (!Running || steps.Count == 0)
+        {
+            return false;
+        }
+
+        for (int i = Math.Max(0, StepIndex); i < steps.Count; i++)
+        {
+            HuntPathfinderStep step = steps[i];
+            if (step.Type != HuntPathfinderStepType.WalkToNode)
+            {
+                continue;
+            }
+
+            int layoutIndex = layoutTreasure.FindIndex(t => t.Id == step.NodeId);
+            if (layoutIndex < 0)
+            {
+                continue;
+            }
+
+            nodeId = step.NodeId;
+            position = layoutTreasure[layoutIndex].Position;
+            return true;
+        }
+
+        return false;
+    }
+
+    public unsafe bool FlagResumePoint()
+    {
+        if (!TryGetResumeCoffer(out uint nodeId, out Vector3 position))
+        {
+            return false;
+        }
+
+        AgentMap* map = AgentMap.Instance();
+        if (map == null)
+        {
+            return false;
+        }
+
+        map->SetFlagMapMarker(client.TerritoryType, client.MapId, position);
+        log.Info("Flagged treasure hunt resume coffer {NodeId} at {Position:f0}", nodeId, position);
+        return true;
     }
 
     private void StopHunt()
@@ -866,6 +926,7 @@ public class TreasureHunterService
         stopwatch.Stop();
         StepIndex = 0;
         StepDistance = 0f;
+        LastCheckedNodeId = null;
         steps.Clear();
         layoutTreasure.Clear();
         pathPlanner = null;

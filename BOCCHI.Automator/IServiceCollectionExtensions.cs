@@ -22,7 +22,10 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<IAutomator, Services.Automator>();
         services.AddSingleton<Func<IAutomator>>(sp => () => sp.GetRequiredService<IAutomator>());
         services.AddSingleton<IAutomatorContext, AutomatorContext>();
+        services.AddSingleton<IPotsTreasureMode, PotsTreasureService>();
+        services.AddSingleton<Func<IPotsTreasureMode>>(sp => () => sp.GetRequiredService<IPotsTreasureMode>());
         services.AddSingleton<IDynamicRenderer, AutomatorRenderer>();
+        services.AddSingleton<IDynamicRenderer, PotsTreasureRenderer>();
 
         services.AddSingleton<IGoalFactory, GoalFactory>();
         services.AddSingleton<IGoalValidator, GoalValidator>();

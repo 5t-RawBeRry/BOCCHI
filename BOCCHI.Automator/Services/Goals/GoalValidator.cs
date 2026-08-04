@@ -1,3 +1,4 @@
+using BOCCHI.Automator.Data;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Fates;
@@ -15,7 +16,8 @@ public class GoalValidator
     IZoneProvider zones,
     FatesConfig fatesConfig,
     CriticalEncountersConfig criticalEncountersConfig,
-    IPotCycleTracker potCycle
+    IPotCycleTracker potCycle,
+    IAutomatorContext automatorContext
 ) : IGoalValidator
 {
     public bool Validate(IGoal goal)
@@ -30,6 +32,11 @@ public class GoalValidator
 
     private bool ValidateCriticalEncounter(CriticalEncounterId id)
     {
+        if (automatorContext.IsPotsAndTreasure)
+        {
+            return false;
+        }
+
         if (!criticalEncountersConfig.IsCriticalEncounterEnabled(id.Value))
         {
             return false;
@@ -50,12 +57,21 @@ public class GoalValidator
 
     private bool ValidateFate(FateId id)
     {
-        if (!fatesConfig.IsFateEnabled(id.Value))
+        bool isPot = zones.GetZone().IsPotFate(id.Value);
+        bool potsOnly = automatorContext.IsPotsAndTreasure;
+
+        if (potsOnly)
+        {
+            if (!isPot)
+            {
+                return false;
+            }
+        }
+        else if (!fatesConfig.IsFateEnabled(id.Value))
         {
             return false;
         }
 
-        bool isPot = zones.GetZone().IsPotFate(id.Value);
         if (isPot && IsValidPotPreposition(id))
         {
             return true;
@@ -103,14 +119,19 @@ public class GoalValidator
     /// </summary>
     private bool IsValidPotPreposition(FateId id)
     {
-        if (!fatesConfig.ShouldPrepositionToPots)
+        bool potsOnly = automatorContext.IsPotsAndTreasure;
+        if (!potsOnly && !fatesConfig.ShouldPrepositionToPots)
         {
             return false;
         }
 
         PotCycleSnapshot cycle = potCycle.Snapshot;
-        if (!fatesConfig.IsPotFallbackGatingEnabled((uint)cycle.PredictedNextPotFateId)
-            || cycle.PredictedNextPotFateId != id.Value)
+        if (cycle.PredictedNextPotFateId != id.Value)
+        {
+            return false;
+        }
+
+        if (!potsOnly && !fatesConfig.IsPotFallbackGatingEnabled((uint)cycle.PredictedNextPotFateId))
         {
             return false;
         }

@@ -17,6 +17,7 @@ namespace BOCCHI.UI;
 
 public class IllegalModeTitleBarContributor(
     IAutomator automator,
+    IPotsTreasureMode potsTreasure,
     IMobFarmer farmer,
     ITreasureHunter treasureHunter,
     IBuffRunner buffRunner,
@@ -56,6 +57,11 @@ public class IllegalModeTitleBarContributor(
                 if (automator.Enabled)
                 {
                     automator.Toggle();
+                }
+
+                if (potsTreasure.Running)
+                {
+                    potsTreasure.Toggle();
                 }
 
                 if (farmer.Running)

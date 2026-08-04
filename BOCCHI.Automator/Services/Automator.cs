@@ -48,32 +48,87 @@ public class Automator
 
     private IStateMachine<AutomatorState> StateMachine => stateMachine ??= stateMachineFactory();
 
-    public bool Enabled => context.Enabled;
+    public bool Enabled => context.IsIllegalMode;
 
-    public AutomatorState? CurrentState => Enabled && !pausedOutsideZone ? StateMachine.State : null;
+    public bool IsActive => context.Enabled;
+
+    public bool IsPotsAndTreasure => context.IsPotsAndTreasure;
+
+    public bool SuspendedForTreasure { get; private set; }
+
+    public AutomatorState? CurrentState =>
+        IsActive && !pausedOutsideZone && !SuspendedForTreasure ? StateMachine.State : null;
 
     public void OnStop() => StopAutomation();
 
+    public void SetSuspendedForTreasure(bool suspended)
+    {
+        if (SuspendedForTreasure == suspended)
+        {
+            return;
+        }
+
+        SuspendedForTreasure = suspended;
+        if (!suspended)
+        {
+            return;
+        }
+
+        // Soft-stop movement so Treasure Hunt can own vnav; keep GoalMemory if any.
+        memory.Forget<GoalPathStepMemory>();
+        memory.Forget<WaitingForCriticalEncounterMemory>();
+        memory.Forget<WaitingForPotFateMemory>();
+        manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
+        pathfinder.Stop();
+        vnav.Stop();
+        autoRotation.DisableForTravel();
+    }
+
     public void Toggle()
     {
-        context.Toggle();
-        chat.Print(translator.T(Enabled ? ".automation.automator.illegal_mode_on" : ".automation.automator.illegal_mode_off"));
-        if (!Enabled)
+        bool turningOn = !context.IsIllegalMode;
+        if (turningOn && context.IsPotsAndTreasure)
         {
             StopAutomation();
         }
-        else
+
+        context.SetRunMode(turningOn ? AutomatorRunMode.IllegalMode : AutomatorRunMode.Off);
+        chat.Print(translator.T(Enabled ? ".automation.automator.illegal_mode_on" : ".automation.automator.illegal_mode_off"));
+        ApplyRunModeSideEffects(turningOn);
+    }
+
+    public void TogglePotsAndTreasure()
+    {
+        bool turningOn = !context.IsPotsAndTreasure;
+        if (turningOn && context.IsIllegalMode)
         {
-            // Fresh run clears a mid-route cancel pause from the previous session.
-            memory.Forget<NavigationInterruptedMemory>();
-            pausedOutsideZone = false;
-            autoRotation.PrepareForIllegalMode();
+            StopAutomation();
         }
+
+        context.SetRunMode(turningOn ? AutomatorRunMode.PotsAndTreasure : AutomatorRunMode.Off);
+        chat.Print(translator.T(turningOn
+            ? ".automation.pots_treasure.on"
+            : ".automation.pots_treasure.off"));
+        ApplyRunModeSideEffects(turningOn);
+    }
+
+    private void ApplyRunModeSideEffects(bool turningOn)
+    {
+        SuspendedForTreasure = false;
+        if (!turningOn)
+        {
+            StopAutomation();
+            return;
+        }
+
+        memory.Forget<NavigationInterruptedMemory>();
+        pausedOutsideZone = false;
+        autoRotation.PrepareForIllegalMode();
     }
 
     public void RefreshPathfinding()
     {
-        if (!Enabled || pausedOutsideZone)
+        if (!IsActive || pausedOutsideZone || SuspendedForTreasure)
         {
             return;
         }
@@ -99,7 +154,7 @@ public class Automator
 
     public void Render()
     {
-        if (!Enabled || pausedOutsideZone)
+        if (!IsActive || pausedOutsideZone || SuspendedForTreasure)
         {
             return;
         }
@@ -109,7 +164,7 @@ public class Automator
 
     public void Update()
     {
-        if (!Enabled)
+        if (!IsActive || SuspendedForTreasure)
         {
             return;
         }
@@ -119,7 +174,7 @@ public class Automator
         {
             if (!pausedOutsideZone)
             {
-                logger.Info("Left Occult Crescent — pausing Illegal Mode (zone lock)");
+                logger.Info("Left Occult Crescent — pausing automator (zone lock)");
                 PauseOutsideZone();
                 pausedOutsideZone = true;
             }
@@ -130,10 +185,10 @@ public class Automator
         if (pausedOutsideZone)
         {
             pausedOutsideZone = false;
-            logger.Info("Re-entered Occult Crescent — Illegal Mode resumed");
+            logger.Info("Re-entered Occult Crescent — automator resumed");
         }
 
-        // Mid-route cancel (vnav stop / emergency) — don't replan until Illegal Mode is toggled.
+        // Mid-route cancel (vnav stop / emergency) — don't replan until mode is toggled.
         if (memory.TryRemember<NavigationInterruptedMemory>(out NavigationInterruptedMemory _))
         {
             StateMachine.Update();
@@ -179,13 +234,14 @@ public class Automator
             pausedOutsideZone = false;
         }
 
+        SuspendedForTreasure = false;
         memory.Wipe();
         manager.CancelAll();
         pathfinder.Stop();
         vnav.Stop();
         if (resetPausedFlag)
         {
-            // Illegal Mode off / plugin stop — delete ephemeral BOCCHI AI preset.
+            // Mode off / plugin stop — delete ephemeral BOCCHI AI preset.
             autoRotation.TeardownForIllegalMode();
         }
         else
@@ -202,7 +258,8 @@ public class Automator
 
     private void TryStartPotChestFarm(FateId fateId)
     {
-        if (!fatesConfig.ShouldFarmPotChests || memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _))
+        bool farmChests = fatesConfig.ShouldFarmPotChests || context.IsPotsAndTreasure;
+        if (!farmChests || memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _))
         {
             return;
         }

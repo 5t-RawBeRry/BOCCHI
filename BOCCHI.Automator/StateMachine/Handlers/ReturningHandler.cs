@@ -41,6 +41,12 @@ public class ReturningHandler
             return StatePriority.Never;
         }
 
+        // Treasure hunt is the idle filler in Pots & Treasure — never Return-to-camp.
+        if (automator.IsPotsAndTreasure)
+        {
+            return StatePriority.Never;
+        }
+
         // Return while dead accepts the death prompt and force-respawns.
         if (conditions[ConditionFlag.Unconscious])
         {

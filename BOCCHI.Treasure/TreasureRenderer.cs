@@ -2,7 +2,6 @@ using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.UI;
-using BOCCHI.Treasure.Hunt;
 using BOCCHI.Treasure.Services;
 using Dalamud.Bindings.ImGui;
 using Ocelot.Extensions;
@@ -98,24 +97,7 @@ public class TreasureRenderer
             ui.LabelledValue(translator.T(".treasure.elapsed"), $"{hunter.Elapsed:mm\\:ss}");
         }
 
-        if (hunter.Running && hunter.StepCount > 0)
-        {
-            string progress = $"{hunter.StepIndex}/{hunter.StepCount}";
-            if (hunter.Paused)
-            {
-                progress = $"{progress} ({translator.T(".treasure.paused")})";
-            }
-
-            ui.LabelledValue(translator.T(".treasure.progress"), progress);
-
-            HuntPathfinderStep? current = hunter.GetCurrentStep();
-            if (current?.Type == HuntPathfinderStepType.WalkToNode)
-            {
-                ui.LabelledValue(
-                    translator.T(".treasure.distance_to_chest"),
-                    $"{hunter.StepDistance:F2}/{config.HuntDetectionRange:F2}");
-            }
-        }
+        TreasureHuntStatusUi.DrawProgress(hunter, ui, translator, config);
     }
 
     private void DrawNearbyTreasures()

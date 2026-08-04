@@ -38,6 +38,10 @@
       "label": "Show Mob Farmer section",
       "tooltip": "Display Mob Farmer controls in the main window."
     },
+    "show_pots_treasure_section": {
+      "label": "Show Pots & Treasure section",
+      "tooltip": "Display dedicated Pots & Treasure mode controls in the main window."
+    },
     "show_treasure_section": {
       "label": "Show treasure section",
       "tooltip": "Display treasure hunt status and controls in the main window."
