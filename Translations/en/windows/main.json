@@ -12,7 +12,7 @@
     "world": "World",
     "treasure": "Treasure Hunter"
   },
-    "status": {
+  "status": {
     "automator": "Illegal Mode",
     "pots_treasure": "Pots & Treasure",
     "mob_farmer": "Mob Farmer",

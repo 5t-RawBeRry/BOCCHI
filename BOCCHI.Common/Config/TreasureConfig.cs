@@ -33,27 +33,34 @@ public class TreasureConfig : IAutoConfig
     public string HuntCompleteSound { get; set; } = "Moogle";
 
     /// <summary>
-    ///     Cast Treasure Sight at hunt start (and periodically mid-route); stop early when Sight
+    ///     Cast Treasure Sight at hunt start (and every N coffers mid-route); stop early when Sight
     ///     reports no remaining coffers (#120).
     /// </summary>
     [Checkbox(Order = 7)]
     public bool CastTreasureSightDuringHunt { get; set; } = true;
 
-    [FloatRange(50f, 500f, Order = 8)]
+    /// <summary>
+    ///     After the opening Sight cast, recast every N coffer stops. Higher = fewer Freelancer
+    ///     swaps / dismounts in contested areas.
+    /// </summary>
+    [IntRange(1, 50, Order = 8)]
+    public int TreasureSightEveryNLocations { get; set; } = 10;
+
+    [FloatRange(50f, 500f, Order = 9)]
     public float HuntReturnCost { get; set; } = 300f;
 
-    [FloatRange(10f, 500f, Order = 9)]
+    [FloatRange(10f, 500f, Order = 10)]
     public float HuntTeleportCost { get; set; } = 50f;
 
-    [FloatRange(10f, 100f, Order = 10)]
+    [FloatRange(10f, 100f, Order = 11)]
     public float HuntDetectionRange { get; set; } = 75f;
 
-    [IntRange(1, 50, Order = 11)]
+    [IntRange(1, 50, Order = 12)]
     public int HuntMaxLevel { get; set; } = 40;
 
     /// <summary>
     ///     Pause treasure hunting during Ashkin / unsafe weather windows (South Horn).
     /// </summary>
-    [Checkbox(Order = 12)]
+    [Checkbox(Order = 13)]
     public bool SkipUnsafeTreasureWindows { get; set; } = true;
 }

@@ -1,7 +1,15 @@
 {
-  "label": "몹 사냥",
-  "tooltip": "몬스터 선택 및 사냥 동작 설정입니다.",
+  "label": "몹 파머",
+  "tooltip": "몬스터 선택 및 파밍 동작입니다.",
   "fields": {
+    "should_handle_targeting": {
+      "label": "대상 자동 선택",
+      "tooltip": "팩을 잡을 때 BOCCHI가 대상을 고르고 전환합니다."
+    },
+    "force_target_central_enemy": {
+      "label": "무리 중심 우선",
+      "tooltip": "가장 가까운 적 대신 무리 중심에 가까운 적을 우선합니다. 대상 자동 선택과 함께 사용합니다."
+    },
     "consider_special_mobs": {
       "label": "특수 몬스터 포함",
       "tooltip": "끌어올 대상 및 몬스터 수를 계산할 때 주변의 특수 몬스터도 포함합니다. 특수 몬스터는 특정 시간이나 날씨에만 출현합니다."

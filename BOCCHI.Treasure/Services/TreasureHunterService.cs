@@ -78,7 +78,8 @@ public class TreasureHunterService
     private bool pendingStartSight;
     private bool waitingForSightCounts;
     private DateTime sightCastUtc = DateTime.MinValue;
-    private DateTime lastSightCastUtc = DateTime.MinValue;
+    /// <summary>Coffer stops completed since the last Treasure Sight cast.</summary>
+    private int locationsSinceLastSight;
 
     public void OnStop() => Teardown();
 
@@ -164,6 +165,7 @@ public class TreasureHunterService
             if (completed.Type == HuntPathfinderStepType.WalkToNode)
             {
                 LastCheckedNodeId = completed.NodeId;
+                locationsSinceLastSight++;
             }
 
             StepIndex++;
@@ -216,7 +218,7 @@ public class TreasureHunterService
         pendingStartSight = false;
         waitingForSightCounts = false;
         sightCastUtc = DateTime.MinValue;
-        lastSightCastUtc = DateTime.MinValue;
+        locationsSinceLastSight = 0;
         pathPlanner = CreatePathPlanner();
         if (pathPlanner == null || pathPlanner.State != HuntPathfinderState.FileLoaded)
         {
@@ -358,9 +360,7 @@ public class TreasureHunterService
         bool dueForRefresh = !pendingStartSight
                              && steps.Count > 0
                              && StepIndex < steps.Count
-                             && lastSightCastUtc != DateTime.MinValue
-                             && (DateTime.UtcNow - lastSightCastUtc).TotalSeconds
-                             >= automatorConfig.TreasureSightRecastIntervalSeconds;
+                             && locationsSinceLastSight >= config.TreasureSightEveryNLocations;
 
         if (!dueForStart && !dueForRefresh)
         {
@@ -377,7 +377,7 @@ public class TreasureHunterService
         pendingStartSight = false;
         waitingForSightCounts = true;
         sightCastUtc = DateTime.UtcNow;
-        lastSightCastUtc = sightCastUtc;
+        locationsSinceLastSight = 0;
 
         activeChain = chainManager.Manage(
             chains.Create("TreasureHunt::TreasureSight")
@@ -914,7 +914,7 @@ public class TreasureHunterService
         pendingStartSight = false;
         waitingForSightCounts = false;
         sightCastUtc = DateTime.MinValue;
-        lastSightCastUtc = DateTime.MinValue;
+        locationsSinceLastSight = 0;
 
         SoftStopMovement();
 

@@ -33,7 +33,11 @@
     },
     "cast_treasure_sight_during_hunt": {
       "label": "Cast Treasure Sight during hunt",
-      "tooltip": "Cast Treasure Sight when the hunt starts (and again periodically). Ends the hunt early when Sight reports no remaining coffers."
+      "tooltip": "Cast Treasure Sight when the hunt starts (and every N coffers mid-route). Ends the hunt early when Sight reports no remaining coffers."
+    },
+    "treasure_sight_every_n_locations": {
+      "label": "Treasure Sight every N coffers",
+      "tooltip": "After the opening cast, recast Treasure Sight every this many coffer stops. Raise this to dismount / swap Freelancer less often in contested areas."
     },
     "hunt_return_cost": {
       "label": "Return cost",

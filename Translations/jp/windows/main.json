@@ -24,7 +24,6 @@
     "emergency_stop_done": "[BOCCHI] 緊急停止",
     "goal": "目標",
     "current_step": "現在の手順",
-    "calculating_path": "経路計算中...",
     "chests": "壺宝箱",
     "automator_states": {
       "entry": "開始",

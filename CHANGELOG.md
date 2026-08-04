@@ -6,10 +6,11 @@
 - Dedicated **Pots & Treasure** mode (#114): pot FATEs (+ pot chests) when up / near spawn; soft-pauses Treasure Hunt between windows and resumes mid-map (covers Discord pause/resume for pot interrupts)
 - Treasure Hunt / Pots & Treasure: show last-checked and resume coffer IDs, plus a flag button to mark the resume point on the map
 - Sprint to aetherytes (#129) — toggleable (on by default)
+- Treasure Hunt: configurable Treasure Sight every N coffers (default 10) — fewer Freelancer swaps / dismounts in contested areas
 - Treasure section renamed to Treasure Hunter; hunt controls always available (removed Show Treasure Hunt button)
 - Commands unified under `/bocchi <subcommand>` (e.g. `/bocchi config`); legacy `/bocchi-*` slash commands removed
 - BOCCHI AI (melee): include Misc AI Goes to specified positional (Any)
-- UX: cleanup
+- Config and UI cleanup
 
 ### Fixes
 - Illegal Mode: mount when walking to mid-map aetherytes (Pathfind before Teleport again)
