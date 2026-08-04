@@ -2,7 +2,7 @@
 
 ### Features
 - Korean localization (thanks FloweringKIM) — aligned with current UI labels (Illegal Mode, Treasure Hunter, Pots & Treasure, `/bocchi` commands)
-- Treasure Hunt: Saucy-style hunt-complete MP3s (bundled Moogle / Game Over / Time Up) plus a Sounds folder for custom clips
+- Treasure Hunt: hunt-complete MP3s (bundled Moogle / Game Over / Time Up) plus a Sounds folder for custom clips
 - Dedicated **Pots & Treasure** mode (#114): pot FATEs (+ pot chests) when up / near spawn; soft-pauses Treasure Hunt between windows and resumes mid-map (covers Discord pause/resume for pot interrupts)
 - Treasure Hunt / Pots & Treasure: show last-checked and resume coffer IDs, plus a flag button to mark the resume point on the map
 - Sprint to aetherytes (#129) — toggleable (on by default)
@@ -10,7 +10,6 @@
 - Commands unified under `/bocchi <subcommand>` (e.g. `/bocchi config`); legacy `/bocchi-*` slash commands removed
 - BOCCHI AI (melee): include Misc AI Goes to specified positional (Any)
 - UX: cleanup
-- Config: cleanup
 
 ### Fixes
 - Illegal Mode: mount when walking to mid-map aetherytes (Pathfind before Teleport again)
