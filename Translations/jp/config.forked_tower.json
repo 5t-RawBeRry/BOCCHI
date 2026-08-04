@@ -1,0 +1,22 @@
+{
+  "label": "フォークタワー",
+  "tooltip": "フォークタワー関連の補助設定です。",
+  "fields": {
+    "enabled": {
+      "label": "有効",
+      "tooltip": "フォークタワー関連の補助機能を有効にします。"
+    },
+    "draw_potential_trap_positions": {
+      "label": "トラップ候補地点を表示",
+      "tooltip": "フォークタワー内で、トラップの候補地点に円を表示します。"
+    },
+    "show_registration_countdown": {
+      "label": "突入受付カウントダウンを表示",
+      "tooltip": "CE一覧にフォークタワーの突入受付/準備時間のカウントダウンを表示します。"
+    },
+    "trap_draw_range": {
+      "label": "トラップ表示範囲",
+      "tooltip": "この範囲内のトラップマーカーのみ表示します。"
+    }
+  }
+}
