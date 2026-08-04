@@ -58,10 +58,6 @@
       "label": "最大宝箱レベル",
       "tooltip": "ハント経路に含める宝箱ノードの最大レベルです。"
     },
-    "restrict_coffer_base_ids": {
-      "label": "既知の宝箱IDのみに制限",
-      "tooltip": "既知の宝箱 BaseId のみインタラクトします。オフの場合は Treasure オブジェクト全般を対象にします。"
-    },
     "skip_unsafe_treasure_windows": {
       "label": "危険な宝箱時間帯を避ける",
       "tooltip": "南征編のアシュキンや危険な天候時間帯では、トレジャーハントを一時停止します。"

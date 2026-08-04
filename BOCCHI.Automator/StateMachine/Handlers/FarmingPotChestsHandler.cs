@@ -5,7 +5,6 @@ using BOCCHI.Treasure.ChainRecipes;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Ocelot.Chain;
 using Ocelot.Extensions;
 using Ocelot.Pathfinding.Extensions;
@@ -14,7 +13,6 @@ using Ocelot.Services.PlayerState;
 using Ocelot.States.Score;
 using System.Numerics;
 using DalamudObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
-using TreasureFlags = FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.TreasureFlags;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
@@ -159,8 +157,7 @@ public class FarmingPotChestsHandler
         return objects.Where(o => o is
         {
             ObjectKind: DalamudObjectKind.Treasure,
-            IsDead: false,
-            IsTargetable: true
+            IsDead: false
         } && o.IsValid());
     }
 
@@ -173,16 +170,6 @@ public class FarmingPotChestsHandler
     private bool IsChestOpened(Vector3 position)
     {
         IGameObject? chest = FindChestNear(position);
-        if (chest == null)
-        {
-            return false;
-        }
-
-        unsafe
-        {
-            GameObject* gameObject = (GameObject*)(void*)chest.Address;
-            FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure* instance = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
-            return instance->Flags.HasFlag(TreasureFlags.Opened);
-        }
+        return chest != null && OpenTreasureCofferChain.IsOpenedOrLooted(chest);
     }
 }

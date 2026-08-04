@@ -35,8 +35,6 @@ public readonly record struct ShoppingVendorData(uint DataId, uint PreferredAeth
 /// <summary>Visible coffer / treasure-route safety + area→aethernet hints (from AOCCH).</summary>
 public sealed class TreasureRoutePolicy
 {
-    public static readonly uint[] CofferBaseIds = [2014741, 2014742, 2014743];
-
     public IReadOnlyList<uint> UnsafeWeatherIds { get; init; } = [];
 
     /// <summary>Eorzea minute-of-day when Ashkin window starts (inclusive).</summary>

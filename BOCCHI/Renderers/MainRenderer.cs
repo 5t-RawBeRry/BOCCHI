@@ -49,7 +49,8 @@ public class MainRenderer
 
             bool defaultOpen = section switch
             {
-                MainWindowSection.Automation => statusBar.AnyAutomationActive,
+                MainWindowSection.Automation => statusBar.IllegalModeActive,
+                MainWindowSection.MobFarmer => statusBar.MobFarmerActive,
                 MainWindowSection.World => false,
                 var _ => true
             };

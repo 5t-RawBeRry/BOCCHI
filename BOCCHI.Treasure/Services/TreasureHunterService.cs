@@ -475,12 +475,13 @@ public class TreasureHunterService
             return false;
         }
 
-        if (StepDistance > OpenTreasureCofferChain.MaxInteractRange)
+        float dist3d = Vector3.Distance(player.Position, present.Position);
+        if (dist3d > OpenTreasureCofferChain.MaxInteractRange)
         {
             return false;
         }
 
-        if (vnav.IsRunning() && StepDistance > OpenTreasureCofferChain.PreferredOpenDistance)
+        if (vnav.IsRunning() && dist3d > OpenTreasureCofferChain.PreferredOpenDistance)
         {
             return false;
         }
@@ -496,12 +497,7 @@ public class TreasureHunterService
 
     private bool IsChestOpened(IGameObject chest)
     {
-        unsafe
-        {
-            GameObject* gameObject = (GameObject*)(void*)chest.Address;
-            FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure* instance = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
-            return instance->Flags.HasFlag(FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.TreasureFlags.Opened);
-        }
+        return OpenTreasureCofferChain.IsOpenedOrLooted(chest);
     }
 
     private bool HandleReturnToBaseCamp()
@@ -691,20 +687,9 @@ public class TreasureHunterService
         return objects
             .Where(o => o is { ObjectKind: ObjectKind.Treasure, IsDead: false }
                         && o.IsValid()
-                        && IsAllowedCofferBaseId(o.BaseId)
                         && layoutDestination.Distance2D(o.Position) <= radius)
             .OrderBy(o => layoutDestination.Distance2D(o.Position))
             .FirstOrDefault();
-    }
-
-    private bool IsAllowedCofferBaseId(uint baseId)
-    {
-        if (!config.RestrictCofferBaseIds)
-        {
-            return true;
-        }
-
-        return TreasureRoutePolicy.CofferBaseIds.Contains(baseId);
     }
 
     private bool IsUnsafeTreasureWindow()

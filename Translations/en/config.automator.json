@@ -16,6 +16,10 @@
       "label": "Toggle autorotation while traveling",
       "tooltip": "Toggle the BOCCHI AI BossMod preset off while pathing to a FATE or CE, and back on when you arrive. While on, VBM handles targeting and combat movement (BOCCHI's own targeting is skipped)."
     },
+    "stay_mounted_while_waiting_for_ce": {
+      "label": "Stay mounted while waiting for CEs",
+      "tooltip": "Do not auto-dismount after arriving at a preparing CE. You still dismount when the encounter starts."
+    },
     "stop_after_return": {
       "label": "Stop after return",
       "tooltip": "Return (and teleport to the inbound aetheryte) toward the next FATE or CE, then pause for manual pathing. Toggle Illegal Mode to resume auto-nav."

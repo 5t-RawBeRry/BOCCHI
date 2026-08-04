@@ -32,11 +32,11 @@
     },
     "show_automation_section": {
       "label": "自動化セクションを表示",
-      "tooltip": "メインウィンドウにオートメーターとモブファーム操作を表示します。"
+      "tooltip": "メインウィンドウに不正モード操作を表示します。"
     },
     "show_mob_farmer_section": {
       "label": "モブファームを表示",
-      "tooltip": "メインウィンドウの自動化内にモブファーム操作を表示します。"
+      "tooltip": "メインウィンドウにモブファーム操作を表示します。"
     },
     "show_treasure_section": {
       "label": "宝箱セクションを表示",

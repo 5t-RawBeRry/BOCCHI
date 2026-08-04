@@ -16,6 +16,10 @@
       "label": "移動中に自動戦闘を切り替える",
       "tooltip": "移動中は BOCCHI AI を無効化し、FATE/CE 到着後に有効化します。オンの場合、戦闘中のターゲット選択と戦闘移動は BOCCHI AI 側に任せます。"
     },
+    "stay_mounted_while_waiting_for_ce": {
+      "label": "CE 待機中はマウントしたまま",
+      "tooltip": "準備中の CE に到着しても自動で降りません。エンカウント開始時には降ります。"
+    },
     "stop_after_return": {
       "label": "デジョン後に停止",
       "tooltip": "次の FATE/CE に向かう際、デジョンやエーテライト移動後に停止し、徒歩移動を手動にします。"

@@ -36,7 +36,7 @@
     },
     "show_mob_farmer_section": {
       "label": "Show Mob Farmer section",
-      "tooltip": "Display Mob Farmer controls under Automation in the main window."
+      "tooltip": "Display Mob Farmer controls in the main window."
     },
     "show_treasure_section": {
       "label": "Show treasure section",

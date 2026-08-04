@@ -22,11 +22,7 @@ public class MobFarmerRenderer
 
     private IMobFarmer Farmer => farmer ??= farmerFactory();
 
-    public uint Order => 10;
-
-    public MainWindowSection Section => MainWindowSection.Automation;
-
-    public string? SubsectionTitle => translator.T(".automation.mob_farmer.title");
+    public MainWindowSection Section => MainWindowSection.MobFarmer;
 
     public void Render()
     {
@@ -48,5 +44,5 @@ public class MobFarmerRenderer
         }
     }
 
-    public bool ShouldRender() => uiConfig.ShowAutomationSection && uiConfig.ShowMobFarmerSection;
+    public bool ShouldRender() => uiConfig.ShowMobFarmerSection;
 }

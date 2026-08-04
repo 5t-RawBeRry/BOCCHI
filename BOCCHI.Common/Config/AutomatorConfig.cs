@@ -22,6 +22,11 @@ public class AutomatorConfig : IAutoConfig
     [Checkbox] public bool ToggleAiProvider { get; set; } = true;
 
     /// <summary>
+    ///     Stay mounted while a CE is preparing; dismount when it starts (#127).
+    /// </summary>
+    [Checkbox] public bool StayMountedWhileWaitingForCe { get; set; } = false;
+
+    /// <summary>
     ///     After Return (and inbound aetheryte teleport) toward a FATE or CE, stop and leave the walk for the player.
     /// </summary>
     [Checkbox] public bool StopAfterReturn { get; set; } = false;

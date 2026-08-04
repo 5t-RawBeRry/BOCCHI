@@ -125,13 +125,13 @@ public class WaitingForCriticalEncounterHandler
             return;
         }
 
-        if (conditions[ConditionFlag.Mounted])
+        if (!config.StayMountedWhileWaitingForCe
+            && conditions[ConditionFlag.Mounted]
+            && EzThrottler.Throttle("WaitingForCriticalEncounter::Unmount")
+            && Actions.Unmount.CanCast())
         {
-            if (EzThrottler.Throttle("WaitingForCriticalEncounter::Unmount") && Actions.Unmount.CanCast())
-            {
-                Actions.Unmount.Cast();
-                pathfinder.Stop();
-            }
+            Actions.Unmount.Cast();
+            pathfinder.Stop();
         }
     }
 }

@@ -40,8 +40,14 @@ public class OperationalStatusBar
 
     private IMobFarmer Farmer => farmer ??= farmerFactory();
 
+    public bool IllegalModeActive => Automator.Enabled;
+
+    public bool MobFarmerActive => Farmer.Running;
+
+    public bool TreasureHuntActive => hunter.Running;
+
     public bool AnyAutomationActive =>
-        Automator.Enabled || Farmer.Running || hunter.Running;
+        IllegalModeActive || MobFarmerActive || TreasureHuntActive;
 
     public void Render()
     {

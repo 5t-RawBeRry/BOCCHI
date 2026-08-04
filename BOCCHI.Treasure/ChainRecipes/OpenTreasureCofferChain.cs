@@ -4,6 +4,7 @@ using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using Ocelot.Actions;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
@@ -19,11 +20,13 @@ using TreasureState = FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.Treas
 
 namespace BOCCHI.Treasure.ChainRecipes;
 
+/// <summary>
+///     Open a treasure coffer using the same interact rules as Pandora's AutoOpenChests.
+/// </summary>
 public class OpenTreasureCofferChain
 (
     IChainFactory chains,
     IObjectTable objects,
-    ITargetManager targets,
     IPlayer player,
     ICondition conditions,
     IVNavmeshIpc vnav
@@ -31,6 +34,7 @@ public class OpenTreasureCofferChain
 {
     public const float PathArrivalRange = 1.0f;
 
+    /// <summary>Pandora AutoOpenChests uses 3D distance ≤ 2y.</summary>
     public const float PreferredOpenDistance = 2.0f;
 
     public const float MaxInteractRange = 2.75f;
@@ -50,14 +54,20 @@ public class OpenTreasureCofferChain
             .WaitUntil(
                 _ => ValueTask.FromResult(TryInteract(targetPosition, pathState)),
                 TimeSpan.FromSeconds(45),
-                TimeSpan.FromMilliseconds(250),
+                TimeSpan.FromMilliseconds(200),
                 "OpenTreasureCofferChain::Interact"
             );
     }
 
     private bool TryInteract(Vector3 targetPosition, PathState pathState)
     {
-        if (!EzThrottler.Throttle("ChestInteract", 250))
+        // Match Pandora's ChestThrottle cadence.
+        if (!EzThrottler.Throttle("ChestInteract", 200))
+        {
+            return false;
+        }
+
+        if (conditions[ConditionFlag.BetweenAreas])
         {
             return false;
         }
@@ -81,51 +91,37 @@ public class OpenTreasureCofferChain
         unsafe
         {
             GameObject* gameObject = (GameObject*)(void*)chest.Address;
-            FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure* instance =
+            FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure* tr =
                 (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
 
-            if (IsOpened(instance))
+            if (IsOpenedOrLooted(chest, tr))
             {
                 return true;
             }
 
-            if (instance->State is TreasureState.Opening)
+            if (tr->State is TreasureState.Opening)
             {
                 return false;
             }
-        }
 
-        float dist2d = player.Position.Distance2D(chest.Position);
-
-        if (dist2d > PreferredOpenDistance)
-        {
-            EnsurePathing(chest.Position, pathState);
-            return false;
-        }
-
-        if (vnav.IsRunning())
-        {
-            vnav.Stop();
-        }
-
-        pathState.LastTarget = null;
-
-        unsafe
-        {
-            GameObject* gameObject = (GameObject*)(void*)chest.Address;
-            FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure* instance =
-                (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
-
-            if (!gameObject->GetIsTargetable())
+            // Pandora: Vector3.Distance (3D) ≤ 2f + GetIsTargetable.
+            float dist3d = Vector3.Distance(player.Position, chest.Position);
+            if (dist3d > PreferredOpenDistance || !gameObject->GetIsTargetable())
             {
                 EnsurePathing(chest.Position, pathState);
                 return false;
             }
 
-            targets.Target = chest;
-            TargetSystem.Instance()->InteractWithObject(gameObject, false);
+            if (vnav.IsRunning())
+            {
+                vnav.Stop();
+            }
 
-            return IsOpened(instance);
+            pathState.LastTarget = null;
+
+            // Pandora does not pre-target; InteractWithObject with default LoS check.
+            TargetSystem.Instance()->InteractWithObject(gameObject);
+            return IsOpenedOrLooted(chest, tr);
         }
     }
 
@@ -142,20 +138,51 @@ public class OpenTreasureCofferChain
         }
     }
 
-    private static unsafe bool IsOpened(FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure* instance)
+    /// <summary>Pandora success: Opened/FadedOut flags, or already listed in the Loot window.</summary>
+    public static unsafe bool IsOpenedOrLooted(IGameObject chest)
     {
-        return instance->Flags.HasFlag(TreasureFlags.Opened)
-               || instance->Flags.HasFlag(TreasureFlags.FadedOut)
-               || instance->State is TreasureState.Opened or TreasureState.FadingOut or TreasureState.FadedOut;
+        GameObject* gameObject = (GameObject*)(void*)chest.Address;
+        var tr = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
+        return IsOpenedOrLooted(chest, tr);
+    }
+
+    private static unsafe bool IsOpenedOrLooted(
+        IGameObject chest,
+        FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure* tr
+    )
+    {
+        if (tr->Flags.HasFlag(TreasureFlags.Opened)
+            || tr->Flags.HasFlag(TreasureFlags.FadedOut)
+            || tr->State is TreasureState.Opened or TreasureState.FadingOut or TreasureState.FadedOut)
+        {
+            return true;
+        }
+
+        Loot* loot = Loot.Instance();
+        if (loot == null)
+        {
+            return false;
+        }
+
+        foreach (LootItem item in loot->Items)
+        {
+            if (item.ChestObjectId == chest.GameObjectId)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private IGameObject? GetChestAt(Vector3 position)
     {
+        // Prefer nearest live Treasure near the snapshot (no BaseId filter — same as Pandora).
         const float SearchRadius = 6f;
         return objects
             .Where(o => o is { ObjectKind: DalamudObjectKind.Treasure, IsDead: false } && o.IsValid())
-            .OrderBy(o => position.Distance2D(o.Position))
-            .FirstOrDefault(o => position.Distance2D(o.Position) <= SearchRadius);
+            .OrderBy(o => Vector3.DistanceSquared(position, o.Position))
+            .FirstOrDefault(o => Vector3.Distance(position, o.Position) <= SearchRadius);
     }
 
     private sealed class PathState

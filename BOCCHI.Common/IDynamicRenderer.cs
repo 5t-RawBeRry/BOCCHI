@@ -4,8 +4,9 @@ public enum MainWindowSection
 {
     Trackers = 0,
     Automation = 1,
-    World = 2,
-    Treasure = 3
+    MobFarmer = 2,
+    World = 3,
+    Treasure = 4
 }
 
 public interface IDynamicRenderer
