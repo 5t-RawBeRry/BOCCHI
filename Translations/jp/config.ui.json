@@ -31,7 +31,7 @@
       "tooltip": "メインウィンドウ上部にバフ操作を表示します。"
     },
     "show_automation_section": {
-      "label": "自動化セクションを表示",
+      "label": "不正モードセクションを表示",
       "tooltip": "メインウィンドウに不正モード操作を表示します。"
     },
     "show_mob_farmer_section": {

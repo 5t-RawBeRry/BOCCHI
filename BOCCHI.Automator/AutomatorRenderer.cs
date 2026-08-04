@@ -27,8 +27,6 @@ public class AutomatorRenderer
 
     public MainWindowSection Section => MainWindowSection.Automation;
 
-    public string? SubsectionTitle => translator.T(".automation.automator.title");
-
     public void Render()
     {
         if (ImGui.Button(Automator.Enabled
