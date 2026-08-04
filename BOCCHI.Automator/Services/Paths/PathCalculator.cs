@@ -66,7 +66,6 @@ public class PathCalculator
 
         // Prefer live FATE/CE center when available — authored graph points can sit outside the circle.
         Node pathGoal = goalNode;
-        float arrivalRadius = NavigationConstants.EventArrivalRadius;
         Vector3? potPrepositionStandOff = null;
         if (goal.GoalType is FateGoal liveFateGoal
             && fates.Snapshot().FirstOrDefault(f => f.Id.Value == liveFateGoal.id.Value) is { } liveFate)
@@ -89,6 +88,8 @@ public class PathCalculator
                      .FirstOrDefault(c => c.Id.Value == liveCeGoal.id.Value) is { } liveCe
                  && !float.IsNaN(liveCe.Position.X))
         {
+            // Always path to the authored/staging center — a large combat-radius arrival
+            // left bots ~3y outside gates after nearby aetheryte hops (#122 / #124).
             pathGoal = new Node
             {
                 Id = goalNode.Id,
@@ -96,17 +97,11 @@ public class PathCalculator
                 Position = liveCe.Position,
                 Metadata = goalNode.Metadata
             };
-
-            float combatRadius = liveCe.Radius - NavigationConstants.CriticalEncounterRadiusPadding;
-            if (combatRadius > 0f)
-            {
-                arrivalRadius = Math.Max(arrivalRadius, combatRadius * 0.85f);
-            }
         }
 
         Vector3 arrivalCheck = potPrepositionStandOff ?? pathGoal.Position;
         float distanceToGoal = player.Position.Distance2D(arrivalCheck);
-        if (distanceToGoal <= arrivalRadius)
+        if (distanceToGoal <= NavigationConstants.EventArrivalRadius)
         {
             logger.Debug("Too close to destination.");
             return [];

@@ -9,6 +9,7 @@ using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
 using Ocelot.Actions;
 using Ocelot.Services.Pathfinding;
+using Ocelot.Services.PlayerState;
 using Ocelot.States.Score;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
@@ -23,7 +24,8 @@ public class InCriticalEncounterHandler
     CombatConfig combat,
     AutomatorConfig automatorConfig,
     ITargetManager targetManager,
-    AutoRotationController autoRotation
+    AutoRotationController autoRotation,
+    IPlayer playerState
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InCriticalEncounter)
 {
     public override StatePriority GetScore() => context.IsInCriticalEncounter() ? StatePriority.VeryHigh : StatePriority.Never;
@@ -55,6 +57,7 @@ public class InCriticalEncounterHandler
 
         if (CombatActivityHandler.HandleTargets(
                 player,
+                playerState,
                 context.GetTargets(),
                 combat,
                 targetManager,

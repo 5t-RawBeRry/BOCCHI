@@ -1,10 +1,10 @@
-# 4.0.2.3
+# 4.0.2.4
 
 ### Fixes
-- Illegal Mode: soften `BOCCHI AI` preset — Pathfind (not MaxRange) + no Always-retarget, so FATE handoff walks in / dismounts instead of stopping at range; retry preset Create when BossMod/BMR IPC becomes ready
-- Emergency stop also stops Treasure Hunt, Mob Farmer, and buffs
+- Treasure Hunt: stop re-running the same aetheryte teleport forever after a hop (#123, #125)
+- Illegal Mode: path to FATE/CE centers instead of treating “near combat radius” as arrived (stuck at aetheryte / outside CE gates) (#122, #124)
+- Illegal Mode: with BOCCHI AI on, still approach and dismount to the FATE boss before handing movement to BossMod (#123)
 
 ### Features
-- Treasure Hunt: play chat sound when hunt finishes (#120)
-- Treasure Hunt: cast Treasure Sight at start / mid-route and end early when no coffers remain (#120)
-- UI: Japanese localization (language selector + JP translations) (#117)
+- Illegal Mode: role-based combat positioning — melee/tank to hitbox edge, ranged/healer/caster hold 15y (BOCCHI AI StayCloseToTarget)
+- Illegal Mode: BOCCHI AI BossMod preset is ephemeral — created when mode starts, deleted when it stops

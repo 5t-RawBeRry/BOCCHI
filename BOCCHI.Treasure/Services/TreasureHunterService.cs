@@ -138,11 +138,6 @@ public class TreasureHunterService
             return;
         }
 
-        if (activeChain is { IsCompleted: true })
-        {
-            activeChain = null;
-        }
-
         if (TryBeginTreasureSight())
         {
             return;
@@ -166,7 +161,8 @@ public class TreasureHunterService
             return;
         }
 
-        // Step handlers (teleport/return) must see completed chains before we clear them.
+        // Teleport/return handlers must observe completed chains before we clear them.
+        // Clearing first re-starts the same teleport forever (#123 / #125).
         if (steps.Count > 0 && StepIndex < steps.Count && TryAdvanceCurrentStep())
         {
             StepIndex++;

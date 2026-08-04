@@ -12,6 +12,7 @@ using ECommons.Throttlers;
 using Ocelot.Actions;
 using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
+using Ocelot.Services.PlayerState;
 using Ocelot.States.Score;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
@@ -26,7 +27,8 @@ public class InFateHandler
     CombatConfig combat,
     AutomatorConfig automatorConfig,
     ITargetManager targetManager,
-    AutoRotationController autoRotation
+    AutoRotationController autoRotation,
+    IPlayer playerState
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InFate)
 {
     private const float DismountDistance = 20f;
@@ -70,6 +72,7 @@ public class InFateHandler
 
         if (CombatActivityHandler.HandleTargets(
                 player,
+                playerState,
                 targets,
                 combat,
                 targetManager,

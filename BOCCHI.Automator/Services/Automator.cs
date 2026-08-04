@@ -67,6 +67,7 @@ public class Automator
             // Fresh run clears a mid-route cancel pause from the previous session.
             memory.Forget<NavigationInterruptedMemory>();
             pausedOutsideZone = false;
+            autoRotation.PrepareForIllegalMode();
         }
     }
 
@@ -182,7 +183,17 @@ public class Automator
         manager.CancelAll();
         pathfinder.Stop();
         vnav.Stop();
-        autoRotation.DisableForTravel();
+        if (resetPausedFlag)
+        {
+            // Illegal Mode off / plugin stop — delete ephemeral BOCCHI AI preset.
+            autoRotation.TeardownForIllegalMode();
+        }
+        else
+        {
+            // Zone pause — deactivate only; recreate isn't needed until activity resumes.
+            autoRotation.DisableForTravel();
+        }
+
         if (stateMachine != null)
         {
             StateMachine.Reset();
