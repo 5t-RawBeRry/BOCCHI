@@ -1,0 +1,67 @@
+using BOCCHI.Common.Config;
+using BOCCHI.Treasure.Hunt;
+using BOCCHI.Treasure.Services;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
+using Dalamud.Interface.Utility.Raii;
+using Ocelot.Services.Translation;
+using Ocelot.Services.UI;
+using Ocelot.Windows;
+
+namespace BOCCHI.Treasure;
+
+/// <summary>Shared hunt progress / Discord resume UX (last coffer id + map flag).</summary>
+public static class TreasureHuntStatusUi
+{
+    public static void DrawProgress(
+        ITreasureHunter hunter,
+        IUIService ui,
+        ITranslator<MainWindow> translator,
+        TreasureConfig? config = null)
+    {
+        if (!hunter.Running || hunter.StepCount <= 0)
+        {
+            return;
+        }
+
+        string progress = $"{hunter.StepIndex}/{hunter.StepCount}";
+        if (hunter.Paused)
+        {
+            progress = $"{progress} ({translator.T(".treasure.paused")})";
+        }
+
+        ui.LabelledValue(translator.T(".treasure.progress"), progress);
+
+        if (hunter.LastCheckedNodeId is { } lastId)
+        {
+            ui.LabelledValue(translator.T(".treasure.last_checked"), lastId.ToString());
+        }
+
+        if (hunter.TryGetResumeCoffer(out uint resumeId, out _))
+        {
+            ui.LabelledValue(translator.T(".treasure.resume_coffer"), resumeId.ToString());
+
+            ImGui.SameLine(0f, 8f);
+            using (ImRaii.PushFont(UiBuilder.IconFont))
+            {
+                if (ImGui.SmallButton($"{FontAwesomeIcon.Flag.ToIconString()}##flag_hunt_resume"))
+                {
+                    hunter.FlagResumePoint();
+                }
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip(translator.T(".treasure.flag_resume_tooltip"));
+            }
+        }
+
+        HuntPathfinderStep? current = hunter.GetCurrentStep();
+        if (config != null && current?.Type == HuntPathfinderStepType.WalkToNode)
+        {
+            ui.LabelledValue(
+                translator.T(".treasure.distance_to_chest"),
+                $"{hunter.StepDistance:F2}/{config.HuntDetectionRange:F2}");
+        }
+    }
+}
