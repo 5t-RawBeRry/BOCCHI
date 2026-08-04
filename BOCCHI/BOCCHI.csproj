@@ -20,6 +20,9 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
             <Link>Translations\%(RecursiveDir)%(Filename)%(Extension)</Link>
         </None>
+        <None Include="Sounds\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>

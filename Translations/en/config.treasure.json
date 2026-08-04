@@ -28,29 +28,12 @@
     },
     "play_sound_on_hunt_complete": {
       "label": "Play sound when hunt finishes",
-      "tooltip": "Play a chat sound effect when Treasure Hunt completes."
+      "tooltip": "Play an MP3 when Treasure Hunt completes."
     },
-    "hunt_complete_sound_id": {
+    "hunt_complete_sound": {
       "label": "Hunt complete sound",
-      "tooltip": "Chat sound effect when Treasure Hunt finishes. Click an option to preview.",
-      "sounds": {
-        "1": "Sound Effect 1",
-        "2": "Sound Effect 2",
-        "3": "Sound Effect 3",
-        "4": "Sound Effect 4",
-        "5": "Sound Effect 5",
-        "6": "Sound Effect 6",
-        "7": "Sound Effect 7",
-        "8": "Sound Effect 8",
-        "9": "Sound Effect 9",
-        "10": "Sound Effect 10",
-        "11": "Sound Effect 11",
-        "12": "Sound Effect 12",
-        "13": "Sound Effect 13",
-        "14": "Sound Effect 14",
-        "15": "Sound Effect 15",
-        "16": "Sound Effect 16"
-      }
+      "tooltip": "MP3 from the plugin Sounds folder. Click an option to preview.",
+      "open_folder": "Open sound folder — drop MP3s here to add your own."
     },
     "cast_treasure_sight_during_hunt": {
       "label": "Cast Treasure Sight during hunt",

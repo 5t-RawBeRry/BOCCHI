@@ -27,13 +27,13 @@ public class TreasureConfig : IAutoConfig
     [Checkbox(Order = 5)]
     public bool ReturnToBaseCampAfterHunt { get; set; } = true;
 
-    /// <summary>Play a chat sound effect when the hunt finishes (#120).</summary>
+    /// <summary>Play an MP3 when the hunt finishes (#120).</summary>
     [Checkbox(Order = 6)]
     public bool PlaySoundOnHuntComplete { get; set; } = true;
 
-    /// <summary>Chat SFX 1–16 (same IDs as System Config → Sound Effects).</summary>
-    [ChatSoundSelect(Order = 7)]
-    public int HuntCompleteSoundId { get; set; } = 2;
+    /// <summary>MP3 name (without extension) from the plugin Sounds folder. Default Moogle.</summary>
+    [Mp3SoundSelect(Order = 7)]
+    public string HuntCompleteSound { get; set; } = "Moogle";
 
     /// <summary>
     ///     Cast Treasure Sight at hunt start (and periodically mid-route); stop early when Sight

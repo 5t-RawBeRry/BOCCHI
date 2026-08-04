@@ -52,7 +52,8 @@ public class TreasureHunterService
     ITreasureTracker tracker,
     ISupportJobFactory supportJobs,
     IClientState client,
-    IAutomationModeGuard modeGuard
+    IAutomationModeGuard modeGuard,
+    IMp3SoundPlayer sounds
 ) : ITreasureHunter, IOnUpdate, IOnStop
 {
     private const float ChestSearchRadius = 25f;
@@ -899,23 +900,14 @@ public class TreasureHunterService
         Teardown();
     }
 
-    private unsafe void PlayHuntCompleteSound()
+    private void PlayHuntCompleteSound()
     {
         if (!config.PlaySoundOnHuntComplete)
         {
             return;
         }
 
-        uint soundId = (uint)Math.Clamp(config.HuntCompleteSoundId, 1, 16);
-        try
-        {
-            // Avarice-style chat SFX: user IDs 1–16 map to game effect IDs 37–52.
-            UIGlobals.PlaySoundEffect(soundId + 36);
-        }
-        catch (Exception ex)
-        {
-            log.Warning(ex, "Failed to play treasure hunt complete sound");
-        }
+        sounds.Play(config.HuntCompleteSound);
     }
 
     private void Teardown()
