@@ -1,0 +1,14 @@
+{
+  "start": "시작",
+  "stop": "정지",
+  "enabled": "활성화됨",
+  "disabled": "비활성화됨",
+  "toggle": "토글",
+  "toggle_config_window": "설정 창 켜기",
+  "emergency_stop": "긴급 정지",
+  "toggle_illegal_mode": "자동 모드 켜기",
+  "yes": "예",
+  "no": "아니오",
+  "state": "상태",
+  "substate": "하위 항목"
+}

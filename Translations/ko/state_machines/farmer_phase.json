@@ -1,0 +1,17 @@
+{
+  "waiting": {
+    "label": "대기 중"
+  },
+  "buffing": {
+    "label": "버프 중"
+  },
+  "gathering": {
+    "label": "모으는 중"
+  },
+  "stacking": {
+    "label": "쌓는 중"
+  },
+  "fighting": {
+    "label": "전투 중"
+  }
+}
