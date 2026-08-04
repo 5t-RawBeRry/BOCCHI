@@ -69,7 +69,7 @@ public class WaitingForCriticalEncounterHandler
             return StatePriority.Normal;
         }
 
-        if (percent >= 0.85f)
+        if (percent >= NavigationConstants.CriticalEncounterWaitInnerRatio)
         {
             return StatePriority.AboveNormal;
         }
@@ -112,14 +112,20 @@ public class WaitingForCriticalEncounterHandler
 
         float percent = player.Position.Distance2D(ce.Position) / combatRadius;
 
-        if (percent >= 1.0f)
+        // Keep walking until clearly inside the registration box — not just within authored radius.
+        if (percent >= NavigationConstants.CriticalEncounterWaitInnerRatio)
         {
-            Vector3 approach = ce.Position.GetApproachPosition(player.Position, combatRadius * 0.8f, 30f);
+            float approachRange = combatRadius * NavigationConstants.CriticalEncounterWaitApproachRatio;
+            Vector3 approach = ce.Position.GetApproachPosition(player.Position, approachRange);
             AutoMount.MaybeRemount(config, conditions, objects, approach);
 
             if (pathfinder.IsIdle())
             {
-                pathfinder.PathfindAndMoveTo(new(approach));
+                pathfinder.PathfindAndMoveTo(new PathfinderConfig(approach)
+                {
+                    DistanceThreshold = 1.5f,
+                    ShouldSnapToFloor = true,
+                });
             }
 
             return;

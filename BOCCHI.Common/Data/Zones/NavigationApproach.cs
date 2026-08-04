@@ -19,6 +19,15 @@ public static class NavigationConstants
 
     public const float CriticalEncounterRadiusPadding = 7f;
 
+    /// <summary>
+    /// Fraction of combat radius that counts as safely inside the registration circle.
+    /// Stopping at 1.0 left bots on the blue-box edge (Discord: A Beast Unleashed).
+    /// </summary>
+    public const float CriticalEncounterWaitInnerRatio = 0.7f;
+
+    /// <summary>While waiting for a CE, stand this far from center (inside the blue box).</summary>
+    public const float CriticalEncounterWaitApproachRatio = 0.5f;
+
     /// <summary>Random stand-off ring while waiting for a predicted pot FATE (#112).</summary>
     public const float PotPrepositionMinRadius = 12f;
 
