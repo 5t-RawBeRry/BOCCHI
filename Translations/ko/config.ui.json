@@ -1,0 +1,46 @@
+{
+  "label": "UI",
+  "tooltip": "메인 창에 표시할 패널을 선택합니다.",
+  "fields": {
+    "language": {
+      "label": "언어",
+      "tooltip": "BOCCHI에서 사용할 표시 언어를 선택합니다."
+    },
+    "show_experience_tracker": {
+      "label": "경험치 추적기 표시",
+      "tooltip": "메인 창에 경험치 추적기 패널을 표시합니다."
+    },
+    "show_experience_tracker_graph": {
+      "label": "경험치 추적 그래프 표시",
+      "tooltip": "추적기 아래에 경험치 그래프를 표시합니다."
+    },
+    "show_currency_tracker": {
+      "label": "화폐 추적기 표시",
+      "tooltip": "메인 창에 화폐 추적기 패널을 표시합니다."
+    },
+    "show_currency_tracker_graph": {
+      "label": "화폐 추적 그래프 표시",
+      "tooltip": "추적기 아래에 화폐 그래프를 표시합니다."
+    },
+    "show_world_section": {
+      "label": "월드 섹션 표시",
+      "tooltip": "메인 창에 진행 중인 돌발과 비상 조우를 표시합니다."
+    },
+    "show_buff_section": {
+      "label": "강화 효과 버튼 표시",
+      "tooltip": "메인 창 상단의 상태 아이콘 옆에 강화 효과 기능 버튼을 표시합니다."
+    },
+    "show_automation_section": {
+      "label": "자동 모드 섹션 표시",
+      "tooltip": "메인 창에 자동 모드 제어 항목을 표시합니다."
+    },
+    "show_mob_farmer_section": {
+      "label": "몹 사냥 섹션 표시",
+      "tooltip": "메인 창에 몹 사냥 제어 항목을 표시합니다."
+    },
+    "show_treasure_section": {
+      "label": "보물상자 섹션 표시",
+      "tooltip": "메인 창에 보물상자 탐색 상태 및 제어 항목을 표시합니다."
+    }
+  }
+}

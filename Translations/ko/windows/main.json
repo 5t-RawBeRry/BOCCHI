@@ -1,0 +1,126 @@
+{
+  "title": "BOCCHI",
+  "unsupported_zone": "현재 위치는 초승달 섬이 아닙니다. 초승달 섬에서 사용해주세요.",
+  "support": {
+    "kofi_tooltip": "♥ Ko-fi (so you can keep touching grass)"
+  },
+  "sections": {
+    "trackers": "추적기",
+    "automation": "자동 모드",
+    "mobfarmer": "몹 사냥",
+    "world": "서버",
+    "treasure": "보물상자"
+  },
+  "status": {
+    "automator": "자동 모드",
+    "mob_farmer": "몹 사냥",
+    "treasure_hunt": "보물상자 찾기",
+    "on": "켜기",
+    "off": "끄기",
+    "goal": "목표 달성",
+    "current_step": "현재 단계",
+    "chests": "항아리보물상자",
+    "automator_states": {
+      "entry": "조우",
+      "idle": "대기",
+      "dead": "사망",
+      "in_combat": "전투 중",
+      "casting_treasure_sight": "마기 보물 탐색 사용 중",
+      "applying_buffs": "버프 적용 중",
+      "repairing": "수리 중",
+      "choosing_activity": "활동 선택 중",
+      "returning": "복귀 중",
+      "pathfinding": "길 찾는 중",
+      "in_fate": "돌발 중",
+      "waiting_for_critical_encounter": "비상 조우 대기 중",
+      "in_critical_encounter": "비상 조우 하는 중",
+      "returning_to_job": "원래 잡으로 되돌아가는 중",
+      "farming_pot_chests": "항아리 보물 상자 찾는 중"
+    },
+    "farmer_phases": {
+      "waiting": "대기 중",
+      "buffing": "버프 중",
+      "gathering": "모으는 중",
+      "stacking": "쌓는 중",
+      "fighting": "전투 중"
+    }
+  },
+  "goals": {
+    "fate": "돌발 : {0}",
+    "critical_encounter": "비상 조우 : {0}"
+  },
+  "trackers": {
+    "experience": {
+      "current_job": "현재 잡",
+      "no_job": "서포트 잡을 찾을 수 없습니다",
+      "level": "레벨 : {0} ({1})",
+      "per_hour": "시간 당 경험치"
+    },
+    "currency": {
+      "gold_per_hour": "시간 당 금화/백금화",
+      "silver_per_hour": "시간 당 은화/백은화"
+    }
+  },
+  "buffs": {
+    "title": "강화 효과",
+    "apply_tooltip": "설정한 지식 크리스탈 강화 효과를 적용합니다.",
+    "stop_tooltip": "강화 효과 적용을 중지합니다.",
+    "applying": "적용 중…"
+  },
+  "automation": {
+    "automator": {
+      "title": "자동 모드",
+      "enable": "자동 모드 활성화",
+      "disable": "자동 모드 비활성화",
+      "toggle_illegal_mode": "자동 모드 전환",
+      "refresh_pathfinding": "경로 탐색 갱신",
+      "refresh_pathfinding_tooltip": "현재 경로를 취소하고 현재 위치에서 다시 경로를 계산합니다. 막힌 위치에서 빠져나오거나 수동으로 이동 방향을 조정한 후 유용합니다.",
+      "details": "상세 정보",
+      "illegal_mode_on": "[BOCCHI] 자동 모드 활성화",
+      "illegal_mode_off": "[BOCCHI] 자동 모드 비활성화",
+      "pathfinding_refreshed": "[BOCCHI] 경로 탐색 갱신 완료",
+      "pathfinding_refreshed_no_goal": "[BOCCHI] 경로 탐색 갱신 완료 (활성 목표 없음)",
+      "pot_chest_farm": "항아리 보물상자 파밍",
+      "chests_remaining": "남은 보물상자",
+      "time_idle": "대기 시간"
+    },
+    "mob_farmer": {
+      "title": "몹 사냥",
+      "start": "몹 사냥 시작",
+      "stop": "몹 사냥 중지",
+      "not_engaged": "비 전투 상태",
+      "engaged": "전투 중",
+      "selected_mobs": "선택한 몬스터",
+      "configure_mobs": "/bocchi-config → 몹 사냥에서 대상 몬스터를 설정하세요."
+    }
+  },
+  "world": {
+    "fates": {
+      "title": "돌발",
+      "none": "진행 중인 돌발이 없습니다."
+    },
+    "critical_encounters": {
+      "title": "비상 조우",
+      "none": "진행 중인 비상 조우가 없습니다."
+    }
+  },
+  "treasure": {
+    "title": "보물상자 찾기",
+    "requires_vnav": "vnavmesh 플러그인이 필요합니다.",
+    "waiting_navmesh": "navmesh 대기 중...",
+    "start_hunt": "탐색 시작",
+    "pause_hunt": "일시 정지",
+    "resume_hunt": "재개",
+    "stop_hunt": "탐색 중지",
+    "paused": "일시 정지됨",
+    "elapsed": "경과 시간",
+    "progress": "진행도",
+    "distance_to_chest": "보물상자까지의 거리",
+    "nearby_title": "주변 보물상자",
+    "none_nearby": "주변에 보물상자가 없습니다.",
+    "active_bronze": "활성 동색 보물상자",
+    "active_silver": "활성 은색 보물상자",
+    "distance": "거리: {0:F1}일름",
+    "position": "({0:F1}, {1:F1}, {2:F1})"
+  }
+}

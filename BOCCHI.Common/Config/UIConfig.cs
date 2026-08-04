@@ -7,7 +7,8 @@ namespace BOCCHI.Common.Config;
 public enum UILanguage
 {
     English,
-    Japanese
+    Japanese,
+    Korean
 }
 
 public static class UILanguageExtensions
@@ -17,6 +18,7 @@ public static class UILanguageExtensions
         public string TranslationCode() => language switch
         {
             UILanguage.Japanese => "jp",
+            UILanguage.Korean => "ko",
             _ => "en"
         };
     }
@@ -27,6 +29,7 @@ public class UILanguageDisplay : IEnumDisplay<UILanguage>
     public string Display(UILanguage value) => value switch
     {
         UILanguage.Japanese => "日本語",
+        UILanguage.Korean => "한국어",
         _ => "English"
     };
 }

@@ -1,0 +1,18 @@
+{
+  "label": "전투",
+  "tooltip": "전투 지원 설정입니다.",
+  "fields": {
+    "should_handle_targeting": {
+      "label": "대상 자동 선택",
+      "tooltip": "돌발/비상 조우, 일반 전투 및 몹 사냥에서 BOCCHI가 전투 대상을 자동으로 선택합니다."
+    },
+    "force_target_central_enemy": {
+      "label": "적 무리 중심 우선",
+      "tooltip": "가장 가까운 적 대신 적 무리의 중심에 가장 가까운 적을 우선 대상으로 선택합니다."
+    },
+    "auto_repair_threshold": {
+      "label": "자동 수리 기준(%)",
+      "tooltip": "장착 중인 장비의 내구도가 설정한 값 이하가 되면 자동으로 수리합니다."
+    }
+  }
+}
