@@ -1,11 +1,9 @@
 using BOCCHI.Automator.Data;
-using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
-using BOCCHI.MobFarmer.Services;
 using BOCCHI.Treasure.Services;
 using Dalamud.Plugin.Services;
 using Ocelot.Lifecycle;
@@ -16,8 +14,8 @@ using Ocelot.Windows;
 namespace BOCCHI.Automator.Services;
 
 /// <summary>
-/// Dedicated pots + treasure mode (#114): pot FATEs (and chests) when up / near spawn;
-/// soft-pauses treasure hunt as filler between pot windows.
+/// Dedicated pots + treasure mode (#114): pot FATEs and chests, then treasure hunt
+/// until ~3 minutes before the next pot spawn; preposition and repeat.
 /// </summary>
 public class PotsTreasureService
 (
@@ -25,11 +23,10 @@ public class PotsTreasureService
     IAutomatorContext context,
     IAutomatorMemory memory,
     ITreasureHunter hunter,
-    IMobFarmer farmer,
     IPotCycleTracker potCycle,
     IFateRepository fates,
     IZoneProvider zones,
-    FatesConfig fatesConfig,
+    IAutomationModeGuard modeGuard,
     IChatGui chat,
     ITranslator<MainWindow> translator,
     ILogger<PotsTreasureService> logger
@@ -60,15 +57,13 @@ public class PotsTreasureService
             return;
         }
 
-        if (farmer.Running)
+        if (!hunter.IsVnavAvailable)
         {
-            farmer.Toggle();
+            chat.PrintError(translator.T(".automation.pots_treasure.requires_vnav"));
+            return;
         }
 
-        if (context.IsIllegalMode)
-        {
-            automator.Toggle();
-        }
+        modeGuard.EnsureExclusive(AutomationMode.PotsAndTreasure);
 
         // Fresh hunt session for this mode (location-resume still applies if coffers remain).
         if (hunter.Running)
@@ -76,13 +71,8 @@ public class PotsTreasureService
             hunter.Toggle();
         }
 
-        if (!hunter.IsVnavAvailable)
-        {
-            chat.PrintError(translator.T(".automation.pots_treasure.requires_vnav"));
-            return;
-        }
-
         automator.TogglePotsAndTreasure();
+        hunter.ManagedByPotsTreasure = true;
         Phase = PotsTreasurePhase.DoingPots;
         logger.Info("Pots & Treasure mode started");
     }
@@ -94,6 +84,7 @@ public class PotsTreasureService
             if (Phase != PotsTreasurePhase.Off)
             {
                 automator.SetSuspendedForTreasure(false);
+                hunter.ManagedByPotsTreasure = false;
                 if (hunter.Running)
                 {
                     hunter.Toggle();
@@ -104,6 +95,8 @@ public class PotsTreasureService
 
             return;
         }
+
+        hunter.ManagedByPotsTreasure = true;
 
         if (!zones.GetZone().IsOccultCrescentZone())
         {
@@ -146,6 +139,7 @@ public class PotsTreasureService
         if (!hunter.Running)
         {
             hunter.Toggle();
+            hunter.ManagedByPotsTreasure = true;
             logger.Info("Pots & Treasure: started treasure hunt filler");
             return;
         }
@@ -160,6 +154,7 @@ public class PotsTreasureService
     private void StopHuntSession()
     {
         automator.SetSuspendedForTreasure(false);
+        hunter.ManagedByPotsTreasure = false;
         if (hunter.Running)
         {
             hunter.Toggle();
@@ -197,7 +192,6 @@ public class PotsTreasureService
             return true;
         }
 
-        // Preposition window — always on for this mode (ignore PreferPotFates / disabled pot IDs).
         if (!cycle.HasPredictedNextPot)
         {
             return false;
@@ -206,8 +200,8 @@ public class PotsTreasureService
         return PotFallbackWindow.ShouldPreposition(
             cycle,
             DateTimeOffset.UtcNow,
-            TimeSpan.FromMinutes(Math.Max(0, fatesConfig.FateFallbackCutoffMinutes)),
-            fatesConfig.PotSpawnLeadMinutes,
+            TimeSpan.Zero,
+            PotsTreasureDefaults.PrepositionLeadMinutes,
             potFarmingEnabled: true);
     }
 }

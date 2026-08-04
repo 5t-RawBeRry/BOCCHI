@@ -2,6 +2,14 @@
   "label": "Mob Farmer",
   "tooltip": "Mob selection and farming behavior.",
   "fields": {
+    "should_handle_targeting": {
+      "label": "Handle targeting",
+      "tooltip": "BOCCHI picks and switches targets while fighting packs."
+    },
+    "force_target_central_enemy": {
+      "label": "Target pack center",
+      "tooltip": "Prefer the enemy nearest the pack center instead of the closest one. Used with Handle targeting."
+    },
     "consider_special_mobs": {
       "label": "Consider special mobs",
       "tooltip": "Consider nearby special mobs to pull and in counts. These are mobs that spawn during specific times and weather."
@@ -40,7 +48,7 @@
     },
     "maximum_battle_bell_wait_time": {
       "label": "Maximum time to wait for Battle Bell",
-      "tooltip": "If Battle Bell's remaining cooldown is longer than this, skip buffing and pull anyway. Checked against Battle Bell itself, not your combat job's Action I."
+      "tooltip": "If Battle Bell's remaining cooldown is longer than this, skip buffing and pull anyway."
     },
     "minimum_mobs_to_start_loop": {
       "label": "Minimum mobs to start",

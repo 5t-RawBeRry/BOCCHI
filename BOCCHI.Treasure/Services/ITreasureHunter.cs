@@ -21,6 +21,9 @@ public interface ITreasureHunter
     /// <summary>Layout node ID of the last coffer step that was completed this session.</summary>
     uint? LastCheckedNodeId { get; }
 
+    /// <summary>True while Pots &amp; Treasure owns this hunt session (hide standalone Start Hunt).</summary>
+    bool ManagedByPotsTreasure { get; set; }
+
     bool IsVnavAvailable { get; }
 
     bool IsVnavReady { get; }

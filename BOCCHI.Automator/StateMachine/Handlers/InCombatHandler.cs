@@ -1,10 +1,7 @@
 ﻿using BOCCHI.Automator.Data;
-using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
-using BOCCHI.Common.Targeting;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
 using Ocelot.Actions;
@@ -20,10 +17,7 @@ public class InCombatHandler
     IFateContext fateContext,
     ICriticalEncounterContext criticalEncounterContext,
     IPathfinder pathfinder,
-    IAutomatorMemory memory,
-    CombatConfig combat,
-    AutomatorConfig automatorConfig,
-    ITargetManager targetManager
+    IAutomatorMemory memory
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InCombat)
 {
     public override StatePriority GetScore()
@@ -49,25 +43,13 @@ public class InCombatHandler
 
     public override void Handle()
     {
-        if (objects.LocalPlayer is not { } player)
+        if (objects.LocalPlayer is null)
         {
             return;
         }
 
-        // When BOCCHI AI is used, VBM AutoTarget owns targeting.
-        if (!automatorConfig.ToggleAiProvider
-            && combat.ShouldHandleTargeting
-            && EzThrottler.Throttle("InCombat::Target", 250))
-        {
-            IBattleNpc? target = TargetHelper.Select(
-                TargetHelper.GetHostileEnemies(objects, player.Position),
-                combat.ForceTargetCentralEnemy);
-
-            if (target != null && targetManager.Target?.GameObjectId != target.GameObjectId)
-            {
-                targetManager.Target = target;
-            }
-        }
+        // Illegal Mode open combat: BOCCHI AI owns targeting when enabled; otherwise leave target alone.
+        // (ShouldHandleTargeting is Mob Farmer only.)
 
         if (conditions[ConditionFlag.Mounted])
         {

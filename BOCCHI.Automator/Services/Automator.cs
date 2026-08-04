@@ -35,9 +35,10 @@ public class Automator
     IZoneProvider zones,
     IObjectTable objects,
     IChatGui chat,
-    FatesConfig fatesConfig,
+    PotsConfig potsConfig,
     AutomatorConfig automatorConfig,
     AutoRotationController autoRotation,
+    IAutomationModeGuard modeGuard,
     ITranslator<MainWindow> translator,
     ILogger<Automator> logger
 ) : IAutomator, IOnUpdate, IOnStop
@@ -87,9 +88,9 @@ public class Automator
     public void Toggle()
     {
         bool turningOn = !context.IsIllegalMode;
-        if (turningOn && context.IsPotsAndTreasure)
+        if (turningOn)
         {
-            StopAutomation();
+            modeGuard.EnsureExclusive(AutomationMode.IllegalMode);
         }
 
         context.SetRunMode(turningOn ? AutomatorRunMode.IllegalMode : AutomatorRunMode.Off);
@@ -100,6 +101,7 @@ public class Automator
     public void TogglePotsAndTreasure()
     {
         bool turningOn = !context.IsPotsAndTreasure;
+        // Exclusivity is handled by PotsTreasureService before this is called when turning on.
         if (turningOn && context.IsIllegalMode)
         {
             StopAutomation();
@@ -258,7 +260,7 @@ public class Automator
 
     private void TryStartPotChestFarm(FateId fateId)
     {
-        bool farmChests = fatesConfig.ShouldFarmPotChests || context.IsPotsAndTreasure;
+        bool farmChests = automatorConfig.ShouldFarmPotChests || context.IsPotsAndTreasure;
         if (!farmChests || memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _))
         {
             return;
@@ -276,7 +278,7 @@ public class Automator
         }
 
         List<Vector3> positions = chestData.Select(chest => chest.Position).ToList();
-        if (fatesConfig.ShouldFarmRerollPotChests)
+        if (context.IsPotsAndTreasure || potsConfig.ShouldFarmRerollPotChests)
         {
             positions.AddRange(zone.GetRerollPotChestData().Select(chest => chest.Position));
         }

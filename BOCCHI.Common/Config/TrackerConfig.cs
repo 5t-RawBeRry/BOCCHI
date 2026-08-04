@@ -4,7 +4,7 @@ using Ocelot.Config.Fields;
 namespace BOCCHI.Common.Config;
 
 [Serializable]
-[ConfigGroup("trackers", GroupOrder = 30)]
+[ConfigGroup("trackers", GroupOrder = 40)]
 public class TrackerConfig : IAutoConfig
 {
     [IntRange(1, 180)] public int TrackedDuration { get; set; } = 5;

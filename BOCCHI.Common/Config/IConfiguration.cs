@@ -11,11 +11,11 @@ public interface IConfiguration : IPluginConfiguration
 
     BuffConfig BuffConfig { get; set; }
 
-    CombatConfig CombatConfig { get; set; }
-
     MobFarmerConfig MobFarmerConfig { get; set; }
 
     FatesConfig FatesConfig { get; set; }
+
+    PotsConfig PotsConfig { get; set; }
 
     CriticalEncountersConfig CriticalEncountersConfig { get; set; }
 

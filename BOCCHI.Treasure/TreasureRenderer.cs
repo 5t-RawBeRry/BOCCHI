@@ -30,17 +30,12 @@ public class TreasureRenderer
 
     public void Render()
     {
-        if (!config.Enabled)
-        {
-            return;
-        }
-
         DrawActiveChests();
         DrawHuntPanel();
         DrawNearbyTreasures();
     }
 
-    public bool ShouldRender() => uiConfig.ShowTreasureSection && config.Enabled;
+    public bool ShouldRender() => uiConfig.ShowTreasureSection;
 
     private void DrawHuntPanel()
     {
@@ -61,6 +56,18 @@ public class TreasureRenderer
         if (!hunter.IsVnavReady)
         {
             ImGui.TextUnformatted(translator.T(".treasure.waiting_navmesh"));
+            return;
+        }
+
+        if (hunter.ManagedByPotsTreasure)
+        {
+            ImGui.TextWrapped(translator.T(".treasure.managed_by_pots"));
+            if (hunter.Elapsed > TimeSpan.Zero)
+            {
+                ui.LabelledValue(translator.T(".treasure.elapsed"), $"{hunter.Elapsed:mm\\:ss}");
+            }
+
+            TreasureHuntStatusUi.DrawProgress(hunter, ui, translator, config);
             return;
         }
 

@@ -5,43 +5,73 @@ using Ocelot.Config.Fields;
 namespace BOCCHI.Common.Config;
 
 [Serializable]
-[ConfigGroup("automation", GroupOrder = 10, Order = 0)]
+[ConfigGroup("automation", GroupOrder = 0, Order = 0)]
 public class AutomatorConfig : IAutoConfig
 {
-    [Checkbox] public bool ShouldAutoMount { get; set; } = true;
+    [Checkbox(Order = 0)]
+    public bool ShouldDoFates { get; set; } = true;
+
+    [Checkbox(Order = 1)]
+    public bool PreferPotFates { get; set; } = false;
+
+    [Checkbox(Order = 2)]
+    public bool ShouldFarmPotChests { get; set; } = false;
+
+    [Checkbox(Order = 3)]
+    public bool ShouldPrepositionToPots { get; set; } = true;
+
+    [Checkbox(Order = 4)]
+    public bool ShouldDoCriticalEncounters { get; set; } = true;
+
+    /// <summary>
+    ///     Use the BOCCHI AI BossMod preset for FATE/CE combat. When on, the preset is
+    ///     disabled while pathfinding and re-enabled on arrival.
+    /// </summary>
+    [Checkbox(Order = 5)]
+    public bool ToggleAiProvider { get; set; } = true;
+
+    [Checkbox(Order = 6)]
+    public bool ShouldAutoMount { get; set; } = true;
 
     /// <summary>
     ///     Preferred mount sheet row ID. 0 = Mount Roulette.
     /// </summary>
-    [MountSelect]
+    [MountSelect(Order = 7)]
     public uint PreferredMountId { get; set; } = 0;
-
-    /// <summary>
-    ///     Toggle <c>BOCCHI AI</c> off while traveling, on at FATE/CE (VBM movement + targeting).
-    /// </summary>
-    [Checkbox] public bool ToggleAiProvider { get; set; } = true;
 
     /// <summary>
     ///     Stay mounted while a CE is preparing; dismount when it starts (#127).
     /// </summary>
-    [Checkbox] public bool StayMountedWhileWaitingForCe { get; set; } = false;
+    [Checkbox(Order = 8)]
+    public bool StayMountedWhileWaitingForCe { get; set; } = false;
 
     /// <summary>
     ///     After Return (and inbound aetheryte teleport) toward a FATE or CE, stop and leave the walk for the player.
     /// </summary>
-    [Checkbox] public bool StopAfterReturn { get; set; } = false;
+    [Checkbox(Order = 9)]
+    public bool StopAfterReturn { get; set; } = false;
 
     /// <summary>
     ///     When the current phantom job is maxed, switch to the next unlocked non-maxed job.
     /// </summary>
-    [Checkbox] public bool PhantomJobsLevelingMode { get; set; } = false;
+    [Checkbox(Order = 10)]
+    public bool PhantomJobsLevelingMode { get; set; } = false;
 
-    [Checkbox] public bool ShouldCastTreasureSight { get; set; } = false;
+    [Checkbox(Order = 11)]
+    public bool ShouldCastTreasureSight { get; set; } = false;
 
-    [IntRange(60, 600)] public int TreasureSightRecastIntervalSeconds { get; set; } = 120;
+    [IntRange(60, 600, Order = 12)]
+    public int TreasureSightRecastIntervalSeconds { get; set; } = 120;
 
     /// <summary>
     ///     Upper bound (seconds) for the random 2..max wait before Return after a FATE/CE.
     /// </summary>
-    [IntRange(2, 60)] public int MaxRemoteIdleTimeSeconds { get; set; } = 10;
+    [IntRange(2, 60, Order = 13)]
+    public int MaxRemoteIdleTimeSeconds { get; set; } = 10;
+
+    /// <summary>
+    ///     Repair equipped gear when any piece falls to or below this condition (%).
+    /// </summary>
+    [IntRange(1, 99, Order = 14)]
+    public int AutoRepairThreshold { get; set; } = 30;
 }

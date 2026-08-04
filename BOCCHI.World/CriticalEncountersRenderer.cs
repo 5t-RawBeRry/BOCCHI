@@ -84,7 +84,7 @@ public class CriticalEncountersRenderer
     private void RenderForkedTower(out bool showed)
     {
         showed = false;
-        if (!forkedTowerConfig.Enabled || !forkedTowerConfig.ShowRegistrationCountdown)
+        if (!forkedTowerConfig.ShowRegistrationCountdown)
         {
             return;
         }

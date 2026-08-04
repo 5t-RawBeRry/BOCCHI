@@ -12,13 +12,16 @@
     "world": "World",
     "treasure": "Treasure"
   },
-  "status": {
+    "status": {
     "automator": "Illegal Mode",
     "pots_treasure": "Pots & Treasure",
     "mob_farmer": "Mob Farmer",
     "treasure_hunt": "Treasure Hunt",
     "on": "On",
     "off": "Off",
+    "idle": "Idle",
+    "emergency_stop_tooltip": "Emergency Stop — halt all automation, pathfinding, and buffs",
+    "emergency_stop_done": "[BOCCHI] Emergency Stop",
     "goal": "Goal",
     "current_step": "Current step",
     "chests": "Pot chests",
@@ -100,7 +103,7 @@
       "stop": "Stop Pots & Treasure",
       "on": "[BOCCHI] Pots & Treasure On",
       "off": "[BOCCHI] Pots & Treasure Off",
-      "description": "Runs pot FATEs (and pot chests when configured). Soft-pauses Treasure Hunt between pot windows and resumes mid-map. Does not do CEs or other FATEs.",
+      "description": "Runs pot FATEs and pot chests, then Treasure Hunt until about 3 minutes before the next pot spawn, prepositions, and repeats. Does not do CEs or other FATEs.",
       "phase": "Phase",
       "requires_vnav": "[BOCCHI] Pots & Treasure requires vnavmesh.",
       "phases": {
@@ -134,6 +137,7 @@
     "last_checked": "Last checked coffer",
     "resume_coffer": "Resume coffer",
     "flag_resume_tooltip": "Place a map flag on the coffer where the hunt continues",
+    "managed_by_pots": "Hunt is managed by Pots & Treasure — use that section to start/stop.",
     "distance_to_chest": "Distance to chest",
     "nearby_title": "Nearby treasures",
     "none_nearby": "No nearby treasure.",

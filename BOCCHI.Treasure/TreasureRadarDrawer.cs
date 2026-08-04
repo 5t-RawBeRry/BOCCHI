@@ -25,11 +25,6 @@ public class TreasureRadarDrawer
 {
     public void Render()
     {
-        if (!config.Enabled)
-        {
-            return;
-        }
-
         if (!zones.GetZone().IsOccultCrescentZone() || conditions[ConditionFlag.InCombat])
         {
             return;

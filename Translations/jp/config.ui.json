@@ -1,6 +1,6 @@
 {
   "label": "UI",
-  "tooltip": "メインウィンドウに表示するパネルを選択します。",
+  "tooltip": "メインウィンドウの言語と表示セクションです。",
   "fields": {
     "language": {
       "label": "言語",
@@ -40,7 +40,7 @@
     },
     "show_pots_treasure_section": {
       "label": "壺＆トレジャーを表示",
-      "tooltip": "メインウィンドウに壺＆トレジャー専用モード操作を表示します。"
+      "tooltip": "メインウィンドウに壺＆トレジャー操作を表示します。"
     },
     "show_treasure_section": {
       "label": "宝箱セクションを表示",

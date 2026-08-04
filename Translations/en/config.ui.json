@@ -1,6 +1,6 @@
 {
   "label": "UI",
-  "tooltip": "Choose which panels appear in the main window.",
+  "tooltip": "Main-window language and which sections are visible.",
   "fields": {
     "language": {
       "label": "Language",
@@ -40,7 +40,7 @@
     },
     "show_pots_treasure_section": {
       "label": "Show Pots & Treasure section",
-      "tooltip": "Display dedicated Pots & Treasure mode controls in the main window."
+      "tooltip": "Display Pots & Treasure controls in the main window."
     },
     "show_treasure_section": {
       "label": "Show treasure section",

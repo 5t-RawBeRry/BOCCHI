@@ -1,6 +1,5 @@
 using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services;
-using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
@@ -24,9 +23,6 @@ public class InFateHandler
     IObjectTable objects,
     ICondition conditions,
     IPathfinder pathfinder,
-    CombatConfig combat,
-    AutomatorConfig automatorConfig,
-    ITargetManager targetManager,
     AutoRotationController autoRotation,
     IPlayer playerState
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InFate)
@@ -74,14 +70,12 @@ public class InFateHandler
                 player,
                 playerState,
                 targets,
-                combat,
-                targetManager,
                 conditions,
                 pathfinder,
                 "InFate",
                 approach.IsPending,
                 true,
-                automatorConfig.ToggleAiProvider))
+                deferCombatToBossModAi: true))
         {
             approach.Complete();
         }

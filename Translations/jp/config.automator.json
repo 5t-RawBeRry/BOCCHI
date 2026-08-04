@@ -1,20 +1,39 @@
 {
-  "label": "オートメーター",
-  "tooltip": "基本的な自動化の動作と待機時の扱いです。",
+  "label": "一般",
+  "tooltip": "実行するコンテンツ、マウント、AI、デジョン、修理です。",
   "fields": {
+    "should_do_fates": {
+      "label": "FATE を実行",
+      "tooltip": "FATE 目標を選択して実行します。"
+    },
+    "prefer_pot_fates": {
+      "label": "マジックポットFATEを優先",
+      "tooltip": "FATE 選択時に壺 FATE のスコアを上げます。壺タイミングと事前配置も有効になります（壺タイミングを参照）。"
+    },
+    "should_farm_pot_chests": {
+      "label": "壺 FATE 後に壺宝箱を回収",
+      "tooltip": "壺 FATE 後に紐づく宝箱を開けます。リロール宝箱は壺タイミングです。"
+    },
+    "should_preposition_to_pots": {
+      "label": "スポーン前に壺へ事前配置",
+      "tooltip": "早めに出て予測地点で待機します。タイミングは壺タイミングです。"
+    },
+    "should_do_critical_encounters": {
+      "label": "CE を実行",
+      "tooltip": "クリティカルエンカウント目標を選択して実行します。"
+    },
+    "toggle_ai_provider": {
+      "label": "BOCCHI AI を使用",
+      "tooltip": "FATE/CE 戦闘で BOCCHI AI（BossMod プリセット）を使います（ターゲット選択と戦闘移動）。移動中はオフにし、到着後にオンに戻します。オフにすると BOCCHI AI は使いません。"
+    },
     "should_auto_mount": {
       "label": "移動中に自動マウント",
       "tooltip": "FATEやCEへ向かう長距離移動の前にマウントし、途中で降りた場合も再マウントします。"
     },
     "preferred_mount_id": {
       "label": "使用マウント",
-      "tooltip": "自動移動で使うマウントです。マウントルーレットか解放済みマウントを選べます。",
       "roulette": "マウントルーレット",
       "search": "マウントを検索..."
-    },
-    "toggle_ai_provider": {
-      "label": "移動中に自動戦闘を切り替える",
-      "tooltip": "移動中は BOCCHI AI を無効化し、FATE/CE 到着後に有効化します。オンの場合、戦闘中のターゲット選択と戦闘移動は BOCCHI AI 側に任せます。"
     },
     "stay_mounted_while_waiting_for_ce": {
       "label": "CE 待機中はマウントしたまま",
@@ -22,7 +41,7 @@
     },
     "stop_after_return": {
       "label": "デジョン後に停止",
-      "tooltip": "次の FATE/CE に向かう際、デジョンやエーテライト移動後に停止し、徒歩移動を手動にします。"
+      "tooltip": "次の FATE/CE に向かう際、デジョンやエーテライト移動後に停止し、徒歩移動を手動にします。再開するにはモードを切り替えてください。"
     },
     "phantom_jobs_leveling_mode": {
       "label": "サポートジョブレベリングモード",
@@ -30,7 +49,7 @@
     },
     "should_cast_treasure_sight": {
       "label": "トレジャーサイトを使用",
-      "tooltip": "オートメーター実行中にトレジャーサイトを自動でかけ直します。"
+      "tooltip": "実行中にトレジャーサイトを自動でかけ直します。"
     },
     "treasure_sight_recast_interval_seconds": {
       "label": "トレジャーサイト再使用間隔（秒）",
@@ -40,9 +59,9 @@
       "label": "リモート待機判定時間（秒）",
       "tooltip": "リモートプレイヤーを待機中として扱うまでの時間です。"
     },
-    "critical_encounter_approach_percent": {
-      "label": "CE 停止距離",
-      "tooltip": "CE へ移動・待機する時に止まる位置です。0.95 は内側の外周付近、1.00 は外周、より大きい値は少し外側で待機します。"
+    "auto_repair_threshold": {
+      "label": "自動修理しきい値（%）",
+      "tooltip": "装備中アイテムの耐久がこの値以下になったら、ベースキャンプで修理します。"
     }
   }
 }

@@ -1,7 +1,15 @@
 {
   "label": "モブファーム",
-  "tooltip": "対象モブの選択とファーム動作の設定です。",
+  "tooltip": "対象モブの選択とファーム動作です。",
   "fields": {
+    "should_handle_targeting": {
+      "label": "ターゲットを管理",
+      "tooltip": "戦闘中に BOCCHI がターゲットを選びます。"
+    },
+    "force_target_central_enemy": {
+      "label": "敵グループの中央を狙う",
+      "tooltip": "最も近い敵ではなく、パック中央に近い敵を優先します。「ターゲットを管理」と併用します。"
+    },
     "consider_special_mobs": {
       "label": "特殊モブを考慮",
       "tooltip": "近くの特殊モブを釣り対象やカウント対象に含めます。特殊モブは時間や天候で出現するモブです。"
@@ -33,10 +41,6 @@
     "render_debug_lines": {
       "label": "デバッグラインを表示",
       "tooltip": "非戦闘時は有効なモブへ赤線、戦闘中は有効なモブへ緑線を表示します。"
-    },
-    "render_debug_lines_while_not_running": {
-      "label": "停止中もデバッグラインを表示",
-      "tooltip": "モブファームが実行中でなくてもラインを表示します。"
     },
     "apply_battle_bell": {
       "label": "バトルベルを使用",

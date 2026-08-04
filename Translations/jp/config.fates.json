@@ -1,47 +1,11 @@
 {
   "label": "FATE",
-  "tooltip": "FATE 自動化とマジックポット宝箱回収の設定です。",
+  "tooltip": "許可する FATE です。",
   "fields": {
-    "should_do_fates": {
-      "label": "FATE を実行",
-      "tooltip": "オートメーターが FATE 目標を選択して実行できるようにします。"
-    },
-    "prefer_pot_fates": {
-      "label": "マジックポットFATEを優先",
-      "tooltip": "FATE 選択時に Persistent Pots と Pleading Pots の評価を上げます。"
-    },
-    "should_preposition_to_pots": {
-      "label": "マジックポットFATEへ事前移動",
-      "tooltip": "マジックポット宝箱回収が有効なとき、周期を一度観測した後、予測された出現地点付近へ早めに移動して待機します。"
-    },
-    "min_pot_fate_minutes_remaining": {
-      "label": "マジックポットFATEの最低残り時間（分）",
-      "tooltip": "この分数より残り時間が少ないマジックポットFATEには向かわず、参加中なら離脱します。0 で無効です。"
-    },
-    "pot_spawn_lead_minutes": {
-      "label": "マジックポット出現前の移動開始（分）",
-      "tooltip": "予測されたマジックポットFATE出現時刻の何分前から向かうかを指定します。"
-    },
-    "fate_fallback_cutoff_minutes": {
-      "label": "マジックポット前のFATE停止時間（分）",
-      "tooltip": "マジックポットFATEへ向かう予定がこの分数以内なら、通常FATEを新しく開始しません。0 で無効です。"
-    },
-    "ce_fallback_cutoff_minutes": {
-      "label": "マジックポット前のCE停止時間（分）",
-      "tooltip": "マジックポットFATEへ向かう予定がこの分数以内なら、CEを新しく開始しません。0 で無効です。"
-    },
-    "should_farm_pot_chests": {
-      "label": "マジックポットFATE後に宝箱を回収",
-      "tooltip": "マジックポットFATE完了後、関連する宝箱位置へ移動して開封してから次の行動を選びます。"
-    },
-    "should_farm_reroll_pot_chests": {
-      "label": "リロール用宝箱も含める",
-      "tooltip": "マジックポットFATE後に共通のリロール宝箱位置も回収します。"
-    },
     "disabled_fate_ids": {
-      "label": "FATE の有効状態",
-      "tooltip": "チェックを外した FATE はオートメーターの選択対象から除外します。",
-      "empty": "現在のゾーンに定義済みの FATE がありません。"
+      "label": "FATE の有効／無効",
+      "tooltip": "チェックを外すと選択対象から除外します。",
+      "empty": "現在のゾーンに定義された FATE はありません。"
     }
   }
 }

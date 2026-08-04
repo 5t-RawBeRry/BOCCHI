@@ -1,20 +1,26 @@
 {
-  "forked_tower": {
-    "label": "Forked Tower"
-  },
   "automation": {
-    "label": "Illegal Mode"
-  },
-  "trackers": {
-    "label": "Trackers"
-  },
-  "ux": {
-    "label": "UI"
+    "label": "Illegal Mode",
+    "tooltip": "General options, pot timing, FATEs, Critical Encounters, and buffs."
   },
   "mob_farmer": {
-    "label": "Mob Farmer"
+    "label": "Mob Farmer",
+    "tooltip": "Mob farming options."
   },
   "treasure": {
-    "label": "Treasure"
+    "label": "Treasure",
+    "tooltip": "Coffer overlays and Treasure Hunt routing."
+  },
+  "ux": {
+    "label": "UI",
+    "tooltip": "Main-window language and which sections are visible."
+  },
+  "trackers": {
+    "label": "Trackers",
+    "tooltip": "Experience and currency tracker options."
+  },
+  "forked_tower": {
+    "label": "Forked Tower",
+    "tooltip": "Forked Tower alerts and overlays."
   }
 }

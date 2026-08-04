@@ -13,6 +13,23 @@ namespace BOCCHI.Treasure;
 /// <summary>Shared hunt progress / Discord resume UX (last coffer id + map flag).</summary>
 public static class TreasureHuntStatusUi
 {
+    /// <summary>1-based step display shared by status chip and panels.</summary>
+    public static string FormatProgress(ITreasureHunter hunter, ITranslator<MainWindow> translator)
+    {
+        if (hunter.StepCount <= 0)
+        {
+            return hunter.Paused ? translator.T(".treasure.paused") : string.Empty;
+        }
+
+        string progress = $"{hunter.StepIndex + 1}/{hunter.StepCount}";
+        if (hunter.Paused)
+        {
+            progress = $"{progress} ({translator.T(".treasure.paused")})";
+        }
+
+        return progress;
+    }
+
     public static void DrawProgress(
         ITreasureHunter hunter,
         IUIService ui,
@@ -24,13 +41,7 @@ public static class TreasureHuntStatusUi
             return;
         }
 
-        string progress = $"{hunter.StepIndex}/{hunter.StepCount}";
-        if (hunter.Paused)
-        {
-            progress = $"{progress} ({translator.T(".treasure.paused")})";
-        }
-
-        ui.LabelledValue(translator.T(".treasure.progress"), progress);
+        ui.LabelledValue(translator.T(".treasure.progress"), FormatProgress(hunter, translator));
 
         if (hunter.LastCheckedNodeId is { } lastId)
         {
@@ -40,7 +51,6 @@ public static class TreasureHuntStatusUi
         if (hunter.TryGetResumeCoffer(out uint resumeId, out _))
         {
             ui.LabelledValue(translator.T(".treasure.resume_coffer"), resumeId.ToString());
-
             ImGui.SameLine(0f, 8f);
             using (ImRaii.PushFont(UiBuilder.IconFont))
             {

@@ -2,10 +2,6 @@
   "label": "Forked Tower",
   "tooltip": "South Horn Forked Tower helpers. North Horn support comes later.",
   "fields": {
-    "enabled": {
-      "label": "Enabled",
-      "tooltip": "Master toggle for South Horn Forked Tower helpers."
-    },
     "draw_potential_trap_positions": {
       "label": "Draw potential trap positions",
       "tooltip": "Draw circles at authored trap spawn points while inside South Horn Forked Tower."

@@ -3,6 +3,7 @@ using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph;
+using BOCCHI.Common.Services;
 using BOCCHI.Treasure.ChainRecipes;
 using BOCCHI.Treasure.Hunt;
 using Dalamud.Game.ClientState.Conditions;
@@ -50,7 +51,8 @@ public class TreasureHunterService
     IGameGui gui,
     ITreasureTracker tracker,
     ISupportJobFactory supportJobs,
-    IClientState client
+    IClientState client,
+    IAutomationModeGuard modeGuard
 ) : ITreasureHunter, IOnUpdate, IOnStop
 {
     private const float ChestSearchRadius = 25f;
@@ -193,6 +195,8 @@ public class TreasureHunterService
 
     public uint? LastCheckedNodeId { get; private set; }
 
+    public bool ManagedByPotsTreasure { get; set; }
+
     public bool IsVnavAvailable => vnav.IsAvailable();
 
     public bool IsVnavReady => vnav.IsNavmeshReady();
@@ -210,9 +214,12 @@ public class TreasureHunterService
             return;
         }
 
+        modeGuard.EnsureExclusive(AutomationMode.TreasureHunt);
+
         stopwatch.Restart();
         StepIndex = 0;
         LastCheckedNodeId = null;
+        ManagedByPotsTreasure = false;
         Paused = false;
         steps.Clear();
         layoutTreasure.Clear();
@@ -927,6 +934,7 @@ public class TreasureHunterService
         StepIndex = 0;
         StepDistance = 0f;
         LastCheckedNodeId = null;
+        ManagedByPotsTreasure = false;
         steps.Clear();
         layoutTreasure.Clear();
         pathPlanner = null;

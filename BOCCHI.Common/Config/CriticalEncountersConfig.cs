@@ -5,15 +5,12 @@ using Ocelot.Config.Fields;
 namespace BOCCHI.Common.Config;
 
 [Serializable]
-[ConfigGroup("automation", GroupOrder = 10, Order = 2)]
+[ConfigGroup("automation", GroupOrder = 0, Order = 3)]
 public class CriticalEncountersConfig : IAutoConfig
 {
-    [Checkbox]
-    public bool ShouldDoCriticalEncounters { get; set; } = true;
-
-    [DisabledCriticalEncounterIds]
+    [DisabledCriticalEncounterIds(Order = 0)]
     public HashSet<uint> DisabledCriticalEncounterIds { get; set; } = [];
 
     public bool IsCriticalEncounterEnabled(uint criticalEncounterId) =>
-        ShouldDoCriticalEncounters && !DisabledCriticalEncounterIds.Contains(criticalEncounterId);
+        !DisabledCriticalEncounterIds.Contains(criticalEncounterId);
 }

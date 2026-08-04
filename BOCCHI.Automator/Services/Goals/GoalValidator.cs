@@ -1,4 +1,5 @@
 using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Services;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Fates;
@@ -14,7 +15,9 @@ public class GoalValidator
     ICriticalEncounterContext criticalEncounterContext,
     IFateRepository fateRepository,
     IZoneProvider zones,
+    AutomatorConfig automatorConfig,
     FatesConfig fatesConfig,
+    PotsConfig potsConfig,
     CriticalEncountersConfig criticalEncountersConfig,
     IPotCycleTracker potCycle,
     IAutomatorContext automatorContext
@@ -37,7 +40,8 @@ public class GoalValidator
             return false;
         }
 
-        if (!criticalEncountersConfig.IsCriticalEncounterEnabled(id.Value))
+        if (!automatorConfig.ShouldDoCriticalEncounters
+            || !criticalEncountersConfig.IsCriticalEncounterEnabled(id.Value))
         {
             return false;
         }
@@ -67,7 +71,7 @@ public class GoalValidator
                 return false;
             }
         }
-        else if (!fatesConfig.IsFateEnabled(id.Value))
+        else if (!automatorConfig.ShouldDoFates || !fatesConfig.IsFateEnabled(id.Value))
         {
             return false;
         }
@@ -85,12 +89,17 @@ public class GoalValidator
         if (!isPot)
         {
             PotCycleSnapshot cycle = potCycle.Snapshot;
-            bool potFarming = fatesConfig.IsPotFallbackGatingEnabled((uint)cycle.PredictedNextPotFateId);
+            bool potFarming = fatesConfig.IsPotFallbackGatingEnabled(
+                (uint)cycle.PredictedNextPotFateId,
+                automatorConfig.ShouldDoFates,
+                automatorConfig.PreferPotFates,
+                automatorConfig.ShouldFarmPotChests);
+            (TimeSpan cutoff, int lead) = GetIllegalPotWindow();
             PotFallbackStartDecision decision = PotFallbackWindow.Evaluate(
                 cycle,
                 DateTimeOffset.UtcNow,
-                TimeSpan.FromMinutes(Math.Max(0, fatesConfig.FateFallbackCutoffMinutes)),
-                fatesConfig.PotSpawnLeadMinutes,
+                cutoff,
+                lead,
                 potFarming,
                 "FATE");
             if (!decision.AllowStart)
@@ -99,7 +108,10 @@ public class GoalValidator
             }
         }
 
-        if (fatesConfig.MinPotFateMinutesRemaining <= 0 || !isPot)
+        int minRemaining = potsOnly
+            ? PotsTreasureDefaults.MinPotFateMinutesRemaining
+            : potsConfig.MinPotFateMinutesRemaining;
+        if (minRemaining <= 0 || !isPot)
         {
             return true;
         }
@@ -111,7 +123,7 @@ public class GoalValidator
         }
 
         // Drop pot FATE goals that are about to expire so we don't path into an empty event.
-        return fate.TimeRemainingSeconds >= fatesConfig.MinPotFateMinutesRemaining * 60L;
+        return fate.TimeRemainingSeconds >= minRemaining * 60L;
     }
 
     /// <summary>
@@ -120,7 +132,7 @@ public class GoalValidator
     private bool IsValidPotPreposition(FateId id)
     {
         bool potsOnly = automatorContext.IsPotsAndTreasure;
-        if (!potsOnly && !fatesConfig.ShouldPrepositionToPots)
+        if (!potsOnly && !automatorConfig.ShouldPrepositionToPots)
         {
             return false;
         }
@@ -131,7 +143,11 @@ public class GoalValidator
             return false;
         }
 
-        if (!potsOnly && !fatesConfig.IsPotFallbackGatingEnabled((uint)cycle.PredictedNextPotFateId))
+        if (!potsOnly && !fatesConfig.IsPotFallbackGatingEnabled(
+                (uint)cycle.PredictedNextPotFateId,
+                automatorConfig.ShouldDoFates,
+                automatorConfig.PreferPotFates,
+                automatorConfig.ShouldFarmPotChests))
         {
             return false;
         }
@@ -151,8 +167,14 @@ public class GoalValidator
         return PotFallbackWindow.ShouldPreposition(
             cycle,
             DateTimeOffset.UtcNow,
-            TimeSpan.FromMinutes(Math.Max(0, fatesConfig.FateFallbackCutoffMinutes)),
-            fatesConfig.PotSpawnLeadMinutes,
+            potsOnly ? TimeSpan.Zero : TimeSpan.FromMinutes(Math.Max(0, potsConfig.FateFallbackCutoffMinutes)),
+            potsOnly ? PotsTreasureDefaults.PrepositionLeadMinutes : potsConfig.PotSpawnLeadMinutes,
             true);
     }
+
+    private (TimeSpan Cutoff, int Lead) GetIllegalPotWindow() =>
+    (
+        TimeSpan.FromMinutes(Math.Max(0, potsConfig.FateFallbackCutoffMinutes)),
+        potsConfig.PotSpawnLeadMinutes
+    );
 }

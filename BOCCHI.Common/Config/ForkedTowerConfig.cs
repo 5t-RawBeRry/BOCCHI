@@ -7,15 +7,12 @@ namespace BOCCHI.Common.Config;
 [ConfigGroup("forked_tower", GroupOrder = 50)]
 public class ForkedTowerConfig : IAutoConfig
 {
-    [Checkbox]
-    public bool Enabled { get; set; } = true;
-
-    [Checkbox]
+    [Checkbox(Order = 0)]
     public bool DrawPotentialTrapPositions { get; set; } = true;
 
-    [Checkbox]
+    [Checkbox(Order = 1)]
     public bool ShowRegistrationCountdown { get; set; } = true;
 
-    [FloatRange(20f, 300f)]
+    [FloatRange(20f, 300f, Order = 2)]
     public float TrapDrawRange { get; set; } = 150f;
 }

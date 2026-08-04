@@ -5,7 +5,7 @@ namespace BOCCHI.Config;
 
 public class Configuration : IConfiguration
 {
-    public const int CurrentVersion = 3;
+    public const int CurrentVersion = 9;
 
     [ConfigHidden] public int Version { get; set; } = CurrentVersion;
 
@@ -17,11 +17,11 @@ public class Configuration : IConfiguration
 
     public BuffConfig BuffConfig { get; set; } = new();
 
-    public CombatConfig CombatConfig { get; set; } = new();
-
     public MobFarmerConfig MobFarmerConfig { get; set; } = new();
 
     public FatesConfig FatesConfig { get; set; } = new();
+
+    public PotsConfig PotsConfig { get; set; } = new();
 
     public CriticalEncountersConfig CriticalEncountersConfig { get; set; } = new();
 

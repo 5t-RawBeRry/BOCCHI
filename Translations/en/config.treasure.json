@@ -1,11 +1,7 @@
 {
   "label": "Treasure",
-  "tooltip": "Treasure coffer overlays and treasure hunt routing.",
+  "tooltip": "Coffer overlays and Treasure Hunt routing.",
   "fields": {
-    "enabled": {
-      "label": "Enabled",
-      "tooltip": "Enable treasure-related overlays and features."
-    },
     "draw_line_to_bronze_chests": {
       "label": "Draw lines to bronze coffers",
       "tooltip": "Render a brown line from your character to nearby bronze coffers, while out of combat."
@@ -36,7 +32,25 @@
     },
     "hunt_complete_sound_id": {
       "label": "Hunt complete sound",
-      "tooltip": "Chat sound effect ID (1–16), same as System Config → Sound Effects."
+      "tooltip": "Chat sound effect when Treasure Hunt finishes. Click an option to preview.",
+      "sounds": {
+        "1": "Sound Effect 1",
+        "2": "Sound Effect 2",
+        "3": "Sound Effect 3",
+        "4": "Sound Effect 4",
+        "5": "Sound Effect 5",
+        "6": "Sound Effect 6",
+        "7": "Sound Effect 7",
+        "8": "Sound Effect 8",
+        "9": "Sound Effect 9",
+        "10": "Sound Effect 10",
+        "11": "Sound Effect 11",
+        "12": "Sound Effect 12",
+        "13": "Sound Effect 13",
+        "14": "Sound Effect 14",
+        "15": "Sound Effect 15",
+        "16": "Sound Effect 16"
+      }
     },
     "cast_treasure_sight_during_hunt": {
       "label": "Cast Treasure Sight during hunt",
@@ -57,6 +71,10 @@
     "hunt_max_level": {
       "label": "Max chest level",
       "tooltip": "Maximum treasure node level to include in the hunt route"
+    },
+    "skip_unsafe_treasure_windows": {
+      "label": "Skip unsafe treasure windows",
+      "tooltip": "Pause Treasure Hunt during South Horn Ashkin / dangerous weather windows."
     }
   }
 }

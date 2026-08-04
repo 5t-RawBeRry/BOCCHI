@@ -28,6 +28,8 @@ public class PotsTreasureRenderer
 
     public void Render()
     {
+        ImGui.Spacing();
+
         if (ImGui.Button(PotsTreasure.Running
             ? translator.T(".automation.pots_treasure.stop")
             : translator.T(".automation.pots_treasure.start")))
@@ -35,6 +37,7 @@ public class PotsTreasureRenderer
             PotsTreasure.Toggle();
         }
 
+        ImGui.Spacing();
         ImGui.TextWrapped(translator.T(".automation.pots_treasure.description"));
 
         if (!PotsTreasure.Running)
@@ -42,6 +45,7 @@ public class PotsTreasureRenderer
             return;
         }
 
+        ImGui.Spacing();
         ui.LabelledValue(
             translator.T(".automation.pots_treasure.phase"),
             translator.T($".automation.pots_treasure.phases.{PotsTreasure.Phase.ToString().ToSnakeCase()}"));

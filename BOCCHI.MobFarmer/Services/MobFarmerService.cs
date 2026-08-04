@@ -1,3 +1,4 @@
+using BOCCHI.Common.Services;
 using BOCCHI.MobFarmer.Data;
 using Ocelot.Lifecycle;
 using Ocelot.Services.Pathfinding;
@@ -13,7 +14,8 @@ public class MobFarmerService
     IMobScanner scanner,
     Func<IStateMachine<FarmerPhase>> stateMachineFactory,
     IPathfinder pathfinder,
-    IPlayer player
+    IPlayer player,
+    IAutomationModeGuard modeGuard
 ) : IMobFarmer, IOnUpdate, IOnStop
 {
     private IStateMachine<FarmerPhase>? stateMachine;
@@ -34,16 +36,24 @@ public class MobFarmerService
 
     public void Toggle()
     {
-        Running = !Running;
+        if (Running)
+        {
+            Running = false;
+            if (StateMachine is FlowStateMachine<FarmerPhase> flowOff)
+            {
+                flowOff.Reset();
+            }
+
+            pathfinder.Stop();
+            return;
+        }
+
+        modeGuard.EnsureExclusive(AutomationMode.MobFarmer);
+
+        Running = true;
         if (StateMachine is FlowStateMachine<FarmerPhase> flow)
         {
             flow.Reset();
-        }
-
-        if (!Running)
-        {
-            pathfinder.Stop();
-            return;
         }
 
         StartingPoint = player.Position;

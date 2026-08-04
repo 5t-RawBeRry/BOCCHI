@@ -1,46 +1,10 @@
 {
-  "label": "Fates",
-  "tooltip": "Settings for FATE automation and pot chest farming.",
+  "label": "FATEs",
+  "tooltip": "Which FATEs to allow.",
   "fields": {
-    "should_do_fates": {
-      "label": "Do FATEs",
-      "tooltip": "Allow Illegal Mode to select and run FATE goals."
-    },
-    "prefer_pot_fates": {
-      "label": "Prefer pot FATEs",
-      "tooltip": "Boost scoring for Persistent Pots and Pleading Pots when choosing a FATE."
-    },
-    "should_preposition_to_pots": {
-      "label": "Preposition to pots before spawn",
-      "tooltip": "When pot farming is enabled, leave early (spawn lead + FATE cutoff) and wait near the predicted north/south pot spot with a random stand-off. Requires observing one pot FATE first to learn the cycle."
-    },
-    "min_pot_fate_minutes_remaining": {
-      "label": "Min pot FATE time remaining (minutes)",
-      "tooltip": "Do not path to (or stay on) a pot FATE with fewer minutes left than this. Set to 0 to disable."
-    },
-    "pot_spawn_lead_minutes": {
-      "label": "Pot spawn lead (minutes)",
-      "tooltip": "Minutes before the predicted pot spawn to leave for pots. Used with FATE/CE cutoffs and preposition."
-    },
-    "fate_fallback_cutoff_minutes": {
-      "label": "FATE cutoff before pot departure (minutes)",
-      "tooltip": "Do not start a non-pot FATE when pot departure is within this many minutes. Also starts pot preposition when enabled. Set to 0 to disable."
-    },
-    "ce_fallback_cutoff_minutes": {
-      "label": "CE cutoff before pot departure (minutes)",
-      "tooltip": "Do not start a Critical Encounter when pot departure is within this many minutes. Set to 0 to disable."
-    },
-    "should_farm_pot_chests": {
-      "label": "Farm pot chests after pot FATEs",
-      "tooltip": "After completing a pot FATE, walk to linked chest positions and open them before choosing a new activity."
-    },
-    "should_farm_reroll_pot_chests": {
-      "label": "Include reroll pot chests",
-      "tooltip": "Also farm the shared reroll chest positions after a pot FATE."
-    },
     "disabled_fate_ids": {
       "label": "FATE availability",
-      "tooltip": "Uncheck a FATE to exclude it from Illegal Mode selection.",
+      "tooltip": "Uncheck a FATE to exclude it from selection.",
       "empty": "No FATEs defined for the current zone."
     }
   }

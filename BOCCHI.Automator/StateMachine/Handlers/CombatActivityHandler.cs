@@ -1,5 +1,4 @@
 using System.Numerics;
-using BOCCHI.Common.Config;
 using BOCCHI.Common.Targeting;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
@@ -29,8 +28,6 @@ internal static class CombatActivityHandler
         IGameObject player,
         IPlayer playerState,
         IEnumerable<IBattleNpc> targets,
-        CombatConfig combat,
-        ITargetManager targetManager,
         ICondition conditions,
         IPathfinder pathfinder,
         string throttlePrefix,
@@ -40,7 +37,8 @@ internal static class CombatActivityHandler
     )
     {
         List<IBattleNpc> list = targets as List<IBattleNpc> ?? targets.ToList();
-        IBattleNpc? target = TargetHelper.Select(list, combat.ForceTargetCentralEnemy);
+        // Illegal Mode / Pots: nearest enemy only. Pack-center targeting is Mob Farmer.
+        IBattleNpc? target = TargetHelper.Select(list, preferCentroid: false);
         if (target == null)
         {
             return false;
@@ -48,15 +46,6 @@ internal static class CombatActivityHandler
 
         bool isMelee = playerState.IsMelee();
         float distance = player.Position.Distance2D(target.Position) - target.HitboxRadius;
-
-        // BossMod owns targeting once AI is on — still close in / dismount first (#123).
-        if (!deferCombatToBossModAi
-            && combat.ShouldHandleTargeting
-            && EzThrottler.Throttle($"{throttlePrefix}::Target")
-            && targetManager.Target?.GameObjectId != target.GameObjectId)
-        {
-            targetManager.Target = target;
-        }
 
         if (conditions[ConditionFlag.Mounted]
             && distance <= DismountRange

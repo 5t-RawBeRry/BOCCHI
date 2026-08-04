@@ -1,20 +1,26 @@
 {
-  "forked_tower": {
-    "label": "フォークタワー"
-  },
   "automation": {
-    "label": "不正モード"
-  },
-  "trackers": {
-    "label": "トラッカー"
-  },
-  "ux": {
-    "label": "UI"
+    "label": "不正モード",
+    "tooltip": "一般設定、壺タイミング、FATE、CE、バフです。"
   },
   "mob_farmer": {
-    "label": "モブファーム"
+    "label": "モブファーム",
+    "tooltip": "モブファームの設定です。"
   },
   "treasure": {
-    "label": "宝箱"
+    "label": "宝箱",
+    "tooltip": "宝箱オーバーレイとトレジャーハント経路です。"
+  },
+  "ux": {
+    "label": "UI",
+    "tooltip": "メインウィンドウの言語と表示セクションです。"
+  },
+  "trackers": {
+    "label": "トラッカー",
+    "tooltip": "経験値・通貨トラッカーの設定です。"
+  },
+  "forked_tower": {
+    "label": "フォークタワー",
+    "tooltip": "フォークタワーの通知とオーバーレイです。"
   }
 }
