@@ -78,7 +78,6 @@ public class TreasureHunterService
     private bool pendingStartSight;
     private bool waitingForSightCounts;
     private DateTime sightCastUtc = DateTime.MinValue;
-    /// <summary>Coffer stops completed since the last Treasure Sight cast.</summary>
     private int locationsSinceLastSight;
 
     public void OnStop() => Teardown();

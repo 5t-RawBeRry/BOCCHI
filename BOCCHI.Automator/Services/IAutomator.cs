@@ -12,15 +12,13 @@ public interface IAutomator
 
     bool IsPotsAndTreasure { get; }
 
-    /// <summary>
-    /// When true, treasure hunt owns vnav — skip automator Update (Illegal Mode soft-pause or Pots &amp; Treasure filler).
-    /// </summary>
+    /// <summary>Treasure hunt owns vnav (Illegal Mode soft-pause or Pots &amp; Treasure filler).</summary>
     bool SuspendedForTreasure { get; }
 
-    /// <summary>Illegal Mode run mode is active (even while suspended for treasure).</summary>
+    /// <summary>Illegal Mode is on (including while suspended for treasure).</summary>
     bool IsIllegalMode { get; }
 
-    /// <summary>Suspend or resume the automator pipeline for treasure-hunt filler.</summary>
+    /// <summary>Suspend or resume the automator pipeline so treasure hunt can own vnav.</summary>
     void SetSuspendedForTreasure(bool suspended);
 
     AutomatorState? CurrentState { get; }

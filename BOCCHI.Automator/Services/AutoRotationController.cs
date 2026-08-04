@@ -1,45 +1,76 @@
 using BOCCHI.Common.Config;
-using Ocelot.Rotation.Services;
+using Dalamud.Plugin.Services;
+using Ocelot.Rotation.Services.BossMod;
+using Ocelot.Services.PlayerState;
 
 namespace BOCCHI.Automator.Services;
 
-/// <summary>
-///     Owns the ephemeral <c>BOCCHI AI</c> BossMod preset while Illegal Mode is on
-///     when <see cref="AutomatorConfig.ToggleAiProvider"/> is set.
-/// </summary>
-public class AutoRotationController(IRotationService rotations, AutomatorConfig config)
+/// <summary>Owns the ephemeral BOCCHI AI BossMod/VBM preset while Illegal Mode is on.</summary>
+public class AutoRotationController(
+    BossModRotationService bossMod,
+    AutomatorConfig config,
+    IPlayer player,
+    IChatGui chat
+)
 {
-    /// <summary>Illegal Mode started — create the preset (not yet active).</summary>
     public void PrepareForIllegalMode()
     {
-        if (config.ToggleAiProvider)
+        if (!config.ToggleAiProvider)
         {
-            rotations.EnsureAutoRotationPreset();
+            return;
+        }
+
+        if (!bossMod.TryEnsureBocchiAiPreset(out _))
+        {
+            PrintNotReady();
         }
     }
 
-    /// <summary>Illegal Mode stopped — clear active and delete the preset.</summary>
     public void TeardownForIllegalMode()
     {
-        if (config.ToggleAiProvider)
+        if (!config.ToggleAiProvider)
         {
-            rotations.DestroyAutoRotationPreset();
+            return;
         }
+
+        bossMod.DestroyAutoRotationPreset();
     }
 
     public void EnableForActivity()
     {
-        if (config.ToggleAiProvider)
+        if (!config.ToggleAiProvider)
         {
-            rotations.EnableAutoRotation();
+            return;
         }
+
+        bossMod.EnableAutoRotation();
     }
 
     public void DisableForTravel()
     {
-        if (config.ToggleAiProvider)
+        if (!config.ToggleAiProvider)
         {
-            rotations.DisableAutoRotation();
+            return;
         }
+
+        bossMod.DisableAutoRotation();
+    }
+
+    public void Tick()
+    {
+        if (!config.ToggleAiProvider)
+        {
+            return;
+        }
+
+        bossMod.Refresh();
+    }
+
+    private void PrintNotReady()
+    {
+        var job = player.GetClassJob();
+        chat.PrintError(
+            $"[BOCCHI] BOCCHI AI not ready (is BossMod / BMR loaded?). "
+            + $"job={job?.Abbreviation.ToString() ?? "?"} melee={player.IsMelee()}");
     }
 }

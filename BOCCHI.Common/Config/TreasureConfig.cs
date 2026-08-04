@@ -32,17 +32,11 @@ public class TreasureConfig : IAutoConfig
     [Mp3SoundSelect(Order = 6)]
     public string HuntCompleteSound { get; set; } = "Moogle";
 
-    /// <summary>
-    ///     Cast Treasure Sight at hunt start (and every N coffers mid-route); stop early when Sight
-    ///     reports no remaining coffers (#120).
-    /// </summary>
+    /// <summary>Cast Treasure Sight at hunt start and every N coffers; abort early when Sight reports none left (#120).</summary>
     [Checkbox(Order = 7)]
     public bool CastTreasureSightDuringHunt { get; set; } = true;
 
-    /// <summary>
-    ///     After the opening Sight cast, recast every N coffer stops. Higher = fewer Freelancer
-    ///     swaps / dismounts in contested areas.
-    /// </summary>
+    /// <summary>Recast Treasure Sight every N coffer stops after the opening cast.</summary>
     [IntRange(1, 50, Order = 8)]
     public int TreasureSightEveryNLocations { get; set; } = 10;
 

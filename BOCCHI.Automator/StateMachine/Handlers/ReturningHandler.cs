@@ -132,16 +132,15 @@ public class ReturningHandler
             return;
         }
 
-        // Cast Return while mounted when allowed — separate dismount-then-Return looks odd (Discord).
+        // Prefer Return while mounted when allowed.
         if (Actions.Return.CanCast())
         {
-            // Opportunistic cast already waited via IdleStateMemory — no second delay.
             memory.TryAdd(new ReturningStateMemory(TimeSpan.Zero));
             Actions.Return.Cast();
             return;
         }
 
-        // Some clients block Return on mount; get feet on the ground then retry next tick.
+        // Fallback: some clients block Return on mount.
         if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
         {
             if (Actions.Dismount.CanCast())

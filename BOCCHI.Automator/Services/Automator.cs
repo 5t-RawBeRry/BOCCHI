@@ -192,6 +192,8 @@ public class Automator
             logger.Info("Re-entered Occult Crescent — automator resumed");
         }
 
+        autoRotation.Tick();
+
         // Mid-route cancel (vnav stop / emergency) — don't replan until mode is toggled.
         if (memory.TryRemember<NavigationInterruptedMemory>(out NavigationInterruptedMemory _))
         {

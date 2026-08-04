@@ -1,6 +1,7 @@
 using Dalamud.Plugin.Services;
 using Ocelot.Rotation.Services.BossMod;
 using Ocelot.Services.Commands;
+using Ocelot.Services.PlayerState;
 using Ocelot.Services.Translation;
 
 namespace BOCCHI.Commands;
@@ -8,6 +9,7 @@ namespace BOCCHI.Commands;
 public class DebugCommand
 (
     BossModRotationService bossModRotation,
+    IPlayer player,
     IChatGui chat,
     ITranslator<DebugCommand> translator
 ) : OcelotCommand(translator)
@@ -40,6 +42,11 @@ public class DebugCommand
 
     private void MakeAiPreset()
     {
+        var job = player.GetClassJob();
+        chat.Print(
+            $"[BOCCHI] Base job={job?.Abbreviation.ToString() ?? "?"} Role={job?.Role.ToString() ?? "?"} "
+            + $"IsMelee={player.IsMelee()} IsMeleeDps={player.IsMeleeDps()}");
+
         if (!bossModRotation.TryEnsureBocchiAiPreset(out string? storedJson))
         {
             chat.PrintError("[BOCCHI] Failed to create BOCCHI AI preset (is BossMod / BMR loaded?)");

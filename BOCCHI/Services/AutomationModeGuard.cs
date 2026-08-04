@@ -46,8 +46,7 @@ public class AutomationModeGuard
         stopping = true;
         try
         {
-            // Treasure Hunt soft-pauses Illegal Mode (keeps it "on") so FATEs resume when the hunt ends.
-            // True concurrency would fight over vnav — only one path owner at a time.
+            // Soft-pause Illegal Mode for hunt (resume when hunt ends); don't Toggle off.
             if (mode == AutomationMode.TreasureHunt && Automator.IsIllegalMode)
             {
                 Automator.SetSuspendedForTreasure(true);
@@ -67,8 +66,7 @@ public class AutomationModeGuard
                 Farmer.Toggle();
             }
 
-            // Pots & Treasure owns the hunter; leave it alone when entering that mode
-            // (caller may stop/restart for a fresh session).
+            // Pots & Treasure owns the hunter — leave it running when entering that mode.
             if (mode is not AutomationMode.TreasureHunt and not AutomationMode.PotsAndTreasure
                 && Hunter.Running)
             {
@@ -88,7 +86,7 @@ public class AutomationModeGuard
             return;
         }
 
-        // Only resume Illegal Mode soft-pause — Pots & Treasure manages its own suspension.
+        // Resume Illegal Mode only — Pots & Treasure manages its own suspension.
         if (Automator.IsIllegalMode && Automator.SuspendedForTreasure)
         {
             Automator.SetSuspendedForTreasure(false);

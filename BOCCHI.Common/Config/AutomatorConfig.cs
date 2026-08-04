@@ -23,10 +23,7 @@ public class AutomatorConfig : IAutoConfig
     [Checkbox(Order = 4)]
     public bool ShouldDoCriticalEncounters { get; set; } = true;
 
-    /// <summary>
-    ///     Use the BOCCHI AI BossMod preset for FATE/CE combat. When on, the preset is
-    ///     disabled while pathfinding and re-enabled on arrival.
-    /// </summary>
+    /// <summary>Use BOCCHI AI BossMod preset in FATE/CE combat (off while pathfinding).</summary>
     [Checkbox(Order = 5)]
     public bool ToggleAiProvider { get; set; } = true;
 
