@@ -12,6 +12,7 @@ public class TranslationLoader(ITranslationRepository translations, UIConfig con
     {
         translations.LoadFromDirectory("Translations", "en");
         translations.LoadFromDirectory("Translations", "jp");
+        translations.LoadFromDirectory("Translations", "ko");
         ApplyConfiguredLanguage();
     }
 

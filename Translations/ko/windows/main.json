@@ -61,7 +61,6 @@
       "silver_per_hour": "시간 당 은화/백은화"
     }
   },
-  {
   "buffs": {
     "title": "강화 효과",
     "apply_tooltip": "설정한 지식 크리스탈 강화 효과를 적용합니다.",
@@ -82,7 +81,7 @@
       "pathfinding_refreshed": "[BOCCHI] 경로 탐색 갱신 완료",
       "pathfinding_refreshed_no_goal": "[BOCCHI] 경로 탐색 갱신 완료 (활성 목표 없음)",
       "pot_chest_farm": "항아리 보물상자 파밍",
-      "chests_remaining": "남은 상자",
+      "chests_remaining": "남은 보물상자",
       "time_idle": "대기 시간"
     },
     "mob_farmer": {
@@ -117,8 +116,8 @@
     "elapsed": "경과 시간",
     "progress": "진행도",
     "distance_to_chest": "보물상자까지의 거리",
-    "nearby_title": "주변 보물",
-    "none_nearby": "주변에 보물이 없습니다.",
+    "nearby_title": "주변 보물상자",
+    "none_nearby": "주변에 보물상자가 없습니다.",
     "active_bronze": "활성 동색 보물상자",
     "active_silver": "활성 은색 보물상자",
     "distance": "거리: {0:F1}일름",

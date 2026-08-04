@@ -4,27 +4,27 @@
   "fields": {
     "enabled": {
       "label": "사용",
-      "tooltip": "보물 관련 표시 및 기능을 활성화합니다."
+      "tooltip": "보물상자 관련 표시 및 기능을 활성화합니다."
     },
     "draw_line_to_bronze_chests": {
-      "label": "동색 보물상자 연결선 표시",
-      "tooltip": "비전투 상태에서 주변의 동색 보물상자까지 갈색 연결선을 표시합니다."
+      "label": "청동 보물상자 연결선 표시",
+      "tooltip": "비전투 상태에서 주변의 청동 보물상자까지 갈색 연결선을 표시합니다."
     },
     "draw_line_to_silver_chests": {
-      "label": "은색 보물상자 연결선 표시",
-      "tooltip": "비전투 상태에서 주변의 은색 보물상자까지 은색 연결선을 표시합니다."
+      "label": "백은 보물상자 연결선 표시",
+      "tooltip": "비전투 상태에서 주변의 백은 보물상자까지 은색 연결선을 표시합니다."
     },
     "draw_line_to_carrots": {
-      "label": "당근 연결선 표시",
-      "tooltip": "비전투 상태에서 주변의 당근까지 초록색 연결선을 표시합니다."
+      "label": "재물당근 연결선 표시",
+      "tooltip": "비전투 상태에서 주변의 재물당근까지 초록색 연결선을 표시합니다."
     },
     "show_percentage_active_treasure_count": {
       "label": "활성 보물을 백분율로 표시",
-      "tooltip": "전체 개수 옆에 현재 활성화된 보물의 비율을 백분율로 표시합니다."
+      "tooltip": "전체 개수 옆에 현재 활성화된 보물상자의 비율을 백분율로 표시합니다."
     },
     "enable_treasure_hunt": {
       "label": "보물 탐색 버튼 표시",
-      "tooltip": "메인 창에 보물 탐색 버튼을 표시합니다."
+      "tooltip": "메인 창에 보물상자 탐색 버튼을 표시합니다."
     },
     "return_to_base_camp_after_hunt": {
       "label": "탐색 완료 후 귀환",
@@ -32,7 +32,7 @@
     },
     "play_sound_on_hunt_complete": {
       "label": "탐색 완료 시 효과음 재생",
-      "tooltip": "보물 탐색이 완료되면 채팅 효과음을 재생합니다."
+      "tooltip": "보물상자 탐색이 완료되면 채팅 효과음을 재생합니다."
     },
     "hunt_complete_sound_id": {
       "label": "탐색 완료 효과음",
@@ -48,15 +48,15 @@
     },
     "hunt_teleport_cost": {
       "label": "순간이동 비용",
-      "tooltip": "에테르넷 순간이동을 사용할 때 경로 탐색에 적용할 비용 가중치입니다."
+      "tooltip": "에테라이트 순간이동을 사용할 때 경로 탐색에 적용할 비용 가중치입니다."
     },
     "hunt_detection_range": {
       "label": "탐지 범위",
-      "tooltip": "보물 노드와 상호작용하기 위해 접근해야 하는 거리입니다."
+      "tooltip": "보물상자 노드와 상호작용하기 위해 접근해야 하는 거리입니다."
     },
     "hunt_max_level": {
       "label": "최대 보물 레벨",
-      "tooltip": "보물 탐색 경로에 포함할 보물 노드의 최대 레벨입니다."
+      "tooltip": "보물상자 탐색 경로에 포함할 보물상자 노드의 최대 레벨입니다."
     }
   }
 }
