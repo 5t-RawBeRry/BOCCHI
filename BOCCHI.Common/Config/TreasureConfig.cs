@@ -64,7 +64,10 @@ public class TreasureConfig : IAutoConfig
     [Checkbox(Order = 14)]
     public bool EnableAutomaticTreasureHuntDuringIllegalMode { get; set; } = false;
 
-    /// <summary>Opt-in anonymous coffer position submission (BOCCHI observation API).</summary>
+    /// <summary>
+    ///     Opt-in coffer observation network: submit opens anonymously, and prefer accepted
+    ///     crowdsourced spots for hunt routing when the catalog has data (authored map otherwise).
+    /// </summary>
     [Checkbox(Order = 15)]
     public bool EnableCofferObservationSubmission { get; set; } = false;
 }

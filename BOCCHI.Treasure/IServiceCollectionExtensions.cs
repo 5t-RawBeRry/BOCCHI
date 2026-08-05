@@ -13,6 +13,7 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<ICarrotTracker, CarrotTracker>();
         services.AddSingleton<ITreasureHunter, TreasureHunterService>();
         services.AddSingleton<CofferObservationSubmissionService>();
+        services.AddSingleton<CofferObservationCatalogService>();
         services.AddSingleton<Func<ITreasureHunter>>(sp => () => sp.GetRequiredService<ITreasureHunter>());
         services.AddSingleton<IDynamicRenderer, TreasureRenderer>();
         services.AddSingleton<TreasureRadarDrawer>();

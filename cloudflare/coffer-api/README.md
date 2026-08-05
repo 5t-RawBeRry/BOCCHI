@@ -16,6 +16,7 @@ npm run dev
 
 - `GET http://localhost:8787/health`
 - `POST http://localhost:8787/api/v1/observations`
+- `GET http://localhost:8787/api/v1/candidates?territoryId=1252` (accepted catalog for hunt routing)
 
 ## Deploy
 

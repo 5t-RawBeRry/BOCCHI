@@ -53,10 +53,16 @@ public class TreasureHunterService
     ISupportJobFactory supportJobs,
     IClientState client,
     IAutomationModeGuard modeGuard,
-    IMp3SoundPlayer sounds
+    IMp3SoundPlayer sounds,
+    CofferObservationCatalogService cofferCatalog
 ) : ITreasureHunter, IOnUpdate, IOnStop
 {
     private const float ChestSearchRadius = 25f;
+
+    /// <summary>Match layout coffers to crowdsourced centroids (API cluster radius is 1.5).</summary>
+    private const float CrowdsourcedMatchRadius = 3.5f;
+
+    private const float CrowdsourcedMatchRadiusSq = CrowdsourcedMatchRadius * CrowdsourcedMatchRadius;
 
     /// <summary>
     /// Only treat a node as empty once we're essentially on top of the layout point.
@@ -75,6 +81,7 @@ public class TreasureHunterService
 
     private IHuntRoutePlanner? pathPlanner;
     private bool planningRoute;
+    private bool usingCrowdsourcedRoute;
     private bool pendingStartSight;
     private bool waitingForSightCounts;
     private DateTime sightCastUtc = DateTime.MinValue;
@@ -221,6 +228,8 @@ public class TreasureHunterService
         waitingForSightCounts = false;
         sightCastUtc = DateTime.MinValue;
         locationsSinceLastSight = 0;
+        usingCrowdsourcedRoute = false;
+        cofferCatalog.EnsureFreshForHunt();
         pathPlanner = CreatePathPlanner();
         if (pathPlanner == null || pathPlanner.State != HuntPathfinderState.FileLoaded)
         {
@@ -777,6 +786,19 @@ public class TreasureHunterService
     private List<uint> GetValidNodes(int maxLevel)
     {
         List<TreasureData> treasureData = zones.GetZone().GetTreasureData();
+        if (usingCrowdsourcedRoute)
+        {
+            // Layout list already matched crowdsourced centroids; level-gate via authored when known.
+            return layoutTreasure
+                .Where(t =>
+                {
+                    TreasureData? authored = treasureData.FirstOrDefault(d => d.Matches(t.Id, t.Position));
+                    return authored == null || authored.Level <= maxLevel;
+                })
+                .Select(t => t.Id)
+                .ToList();
+        }
+
         if (treasureData.Exists(d => d.Position.HasValue))
         {
             return layoutTreasure
@@ -825,12 +847,15 @@ public class TreasureHunterService
 
             List<TreasureData> treasureData = zones.GetZone().GetTreasureData();
             bool hasPositionData = treasureData.Exists(d => d.Position.HasValue);
+            IReadOnlyList<CrowdsourcedCofferCandidate> liveSpots = cofferCatalog.GetAcceptedForCurrentZone();
+            bool preferCrowdsourced = liveSpots.Count > 0;
+            usingCrowdsourcedRoute = false;
 
             foreach(ILayoutInstance* instance in mapPtr.Value->Values)
             {
                 Transform* transform = instance->GetTransformImpl();
                 Vector3 position = transform->Translation;
-                if (position.Y <= -10f && !hasPositionData)
+                if (position.Y <= -10f && !hasPositionData && !preferCrowdsourced)
                 {
                     continue;
                 }
@@ -842,12 +867,54 @@ public class TreasureHunterService
                     continue;
                 }
 
-                if (hasPositionData && !treasureData.Any(d => d.Matches(treasureRowId, position)))
+                if (preferCrowdsourced)
+                {
+                    if (!liveSpots.Any(c => Vector3.DistanceSquared(c.Position, position) <= CrowdsourcedMatchRadiusSq))
+                    {
+                        continue;
+                    }
+                }
+                else if (hasPositionData && !treasureData.Any(d => d.Matches(treasureRowId, position)))
                 {
                     continue;
                 }
 
                 layoutTreasure.Add(new(treasureRowId, position, sgbId));
+            }
+
+            if (preferCrowdsourced && layoutTreasure.Count == 0)
+            {
+                log.Info(
+                    "Crowdsourced catalog has {Count} spot(s) but none matched layout — falling back to authored map",
+                    liveSpots.Count);
+                foreach(ILayoutInstance* instance in mapPtr.Value->Values)
+                {
+                    Transform* transform = instance->GetTransformImpl();
+                    Vector3 position = transform->Translation;
+                    if (position.Y <= -10f && !hasPositionData)
+                    {
+                        continue;
+                    }
+
+                    uint treasureRowId = Unsafe.Read<uint>((byte*)instance + 0x30);
+                    uint sgbId = data.GetExcelSheet<TreasureSheet>().GetRow(treasureRowId).SGB.RowId;
+                    if (sgbId != 1596 && sgbId != 1597)
+                    {
+                        continue;
+                    }
+
+                    if (hasPositionData && !treasureData.Any(d => d.Matches(treasureRowId, position)))
+                    {
+                        continue;
+                    }
+
+                    layoutTreasure.Add(new(treasureRowId, position, sgbId));
+                }
+            }
+            else if (preferCrowdsourced)
+            {
+                usingCrowdsourcedRoute = true;
+                log.Info("Treasure hunt using {Count} crowdsourced layout match(es)", layoutTreasure.Count);
             }
         }
 
@@ -931,6 +998,7 @@ public class TreasureHunterService
         ManagedByIllegalModeFiller = false;
         layoutTreasure.Clear();
         pathPlanner = null;
+        usingCrowdsourcedRoute = false;
 
         if (wasStandalone)
         {

@@ -21,7 +21,9 @@ public sealed class CofferObservationSubmissionService
     ILogger<CofferObservationSubmissionService> logger
 ) : IOnUpdate
 {
-    public const string ApiUrl = "https://bocchi-coffer-api.kagekazu.workers.dev/api/v1/observations";
+    public const string ApiBaseUrl = CofferObservationCatalogService.ApiBaseUrl;
+
+    public const string ApiUrl = ApiBaseUrl + "/api/v1/observations";
 
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
 

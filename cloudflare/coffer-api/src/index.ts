@@ -184,18 +184,36 @@ async function getCandidateDetail(candidateId: number, env: Env): Promise<Respon
   return jsonResponse({ candidate, members: members.results });
 }
 
-async function exportAcceptedCandidates(request: Request, env: Env): Promise<Response> {
+async function buildAcceptedCandidatesPayload(request: Request, env: Env): Promise<{
+  schemaVersion: number;
+  generatedAtUtc: string;
+  candidates: Array<{
+    candidateId: number;
+    territoryId: number;
+    dataId: number;
+    position: { x: number; y: number; z: number };
+    observationCount: number;
+    distinctInstallationCount: number;
+    firstObservedAtUtc: string;
+    lastObservedAtUtc: string;
+    acceptanceMethod: "automatic" | "manual" | null;
+  }>;
+}> {
   const url = new URL(request.url);
   const territoryId = url.searchParams.get("territoryId");
   const parsedTerritoryId = territoryId === null ? null : parsePositiveInteger(territoryId);
   if (territoryId !== null && parsedTerritoryId === null) {
-    return jsonResponse({ error: "Invalid territoryId." }, 400);
+    throw jsonResponse({ error: "Invalid territoryId." }, 400);
+  }
+
+  if (parsedTerritoryId !== null && !OCCULT_CRESCENT_TERRITORY_IDS.has(parsedTerritoryId)) {
+    throw jsonResponse({ error: "territoryId must be an Occult Crescent zone." }, 400);
   }
 
   const dataId = url.searchParams.get("dataId");
   const parsedDataId = dataId === null ? null : parsePositiveInteger(dataId);
   if (dataId !== null && parsedDataId === null) {
-    return jsonResponse({ error: "Invalid dataId." }, 400);
+    throw jsonResponse({ error: "Invalid dataId." }, 400);
   }
 
   const clauses = ["status = 'accepted'"];
@@ -233,29 +251,56 @@ async function exportAcceptedCandidates(request: Request, env: Env): Promise<Res
     acceptance_method: "automatic" | "manual" | null;
   }>();
 
-  return jsonResponse(
-    {
-      schemaVersion: 1,
-      generatedAtUtc: new Date().toISOString(),
-      candidates: candidates.results.map(candidate => ({
-        candidateId: candidate.id,
-        territoryId: candidate.territory_id,
-        dataId: candidate.data_id,
-        position: {
-          x: candidate.centroid_x,
-          y: candidate.centroid_y,
-          z: candidate.centroid_z,
-        },
-        observationCount: candidate.observation_count,
-        distinctInstallationCount: candidate.distinct_installation_count,
-        firstObservedAtUtc: candidate.first_observed_at_utc,
-        lastObservedAtUtc: candidate.last_observed_at_utc,
-        acceptanceMethod: candidate.acceptance_method,
-      })),
-    },
-    200,
-    { "Content-Disposition": "attachment; filename=\"accepted-candidates.json\"" },
-  );
+  return {
+    schemaVersion: 1,
+    generatedAtUtc: new Date().toISOString(),
+    candidates: candidates.results.map(candidate => ({
+      candidateId: candidate.id,
+      territoryId: candidate.territory_id,
+      dataId: candidate.data_id,
+      position: {
+        x: candidate.centroid_x,
+        y: candidate.centroid_y,
+        z: candidate.centroid_z,
+      },
+      observationCount: candidate.observation_count,
+      distinctInstallationCount: candidate.distinct_installation_count,
+      firstObservedAtUtc: candidate.first_observed_at_utc,
+      lastObservedAtUtc: candidate.last_observed_at_utc,
+      acceptanceMethod: candidate.acceptance_method,
+    })),
+  };
+}
+
+async function exportAcceptedCandidates(request: Request, env: Env): Promise<Response> {
+  try {
+    const payload = await buildAcceptedCandidatesPayload(request, env);
+    return jsonResponse(
+      payload,
+      200,
+      { "Content-Disposition": "attachment; filename=\"accepted-candidates.json\"" },
+    );
+  } catch (error) {
+    if (error instanceof Response) {
+      return error;
+    }
+
+    throw error;
+  }
+}
+
+/** Public plugin catalog — accepted candidates only (no admin token). */
+async function listAcceptedCandidatesPublic(request: Request, env: Env): Promise<Response> {
+  try {
+    const payload = await buildAcceptedCandidatesPayload(request, env);
+    return jsonResponse(payload, 200, { "Cache-Control": "public, max-age=60" });
+  } catch (error) {
+    if (error instanceof Response) {
+      return error;
+    }
+
+    throw error;
+  }
 }
 
 async function reviewCandidate(request: Request, candidateId: number, env: Env): Promise<Response> {
@@ -512,11 +557,24 @@ async function submitObservation(request: Request, env: Env): Promise<Response> 
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
     if (request.method === "GET" && url.pathname === "/health") {
       return jsonResponse({ status: "ok" });
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/v1/candidates") {
+      try {
+        return await listAcceptedCandidatesPublic(request, env);
+      } catch (error) {
+        if (error instanceof Response) {
+          return error;
+        }
+
+        console.error(error);
+        return jsonResponse({ error: "Unexpected server error." }, 500);
+      }
     }
 
     if (url.pathname.startsWith("/api/v1/admin/")) {
@@ -568,7 +626,12 @@ export default {
           return rateLimitResponse;
         }
 
-        return await submitObservation(request, env);
+        const response = await submitObservation(request, env);
+        // Cluster / auto-accept promptly so the public catalog does not wait on cron alone.
+        ctx.waitUntil(processPendingObservations(env).then(result => {
+          console.log("Observation processor (post-submit)", result);
+        }));
+        return response;
       } catch (error) {
         if (error instanceof Response) {
           return error;

@@ -61,19 +61,11 @@
     },
     "enable_automatic_treasure_hunt_during_illegal_mode": {
       "label": "불법 모드 자동 트레저 헌트",
-      "tooltip": "CE/FATE 후 베이스캠프로 귀환해 트레저 사이트를 시전하고, 조사 수치가 임계값을 넘으면 헌트를 시작합니다 (AOCC 방식)."
-    },
-    "automatic_treasure_silver_threshold": {
-      "label": "자동 헌트 은 임계값",
-      "tooltip": "헌트 시작에 필요한 최소 은 상자 수. 0 = 은 1개 이상."
-    },
-    "automatic_treasure_bronze_threshold": {
-      "label": "자동 헌트 동 임계값",
-      "tooltip": "헌트 시작에 필요한 최소 동 상자 수. 0 = 동 1개 이상. 둘 다 0이면 아무 상자나."
+      "tooltip": "CE/FATE 후 베이스캠프로 귀환하고, 트레저 사이트가 가능하면 사용한 뒤 헌트를 시작합니다. (트레저 사이트 습득 후에만 동작)"
     },
     "enable_coffer_observation_submission": {
-      "label": "상자 관측 제출",
-      "tooltip": "익명 상자 위치를 BOCCHI 관측 API로 전송"
+      "label": "상자 관측 네트워크",
+      "tooltip": "선택: 상자 개봉 위치를 익명 제출하고, 승인된 지점이 있으면 보물 헌트에 우선 사용합니다 (없으면 기존 맵으로 대체)."
     }
   }
 }

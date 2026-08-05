@@ -9,7 +9,7 @@
 - Pathing: start vnav movement first, then cast mount while running (no mount-before-walk wait)
 - Illegal Mode: while waiting inside a CE blue box, hold position instead of re-pathing to the walk-in spot
 - Illegal Mode: optional auto treasure hunt — after CE/FATE, Return, Treasure Sight (when learned), then hunt if coffers remain
-- Treasure: opt-in coffer observation submission
+- Treasure: coffer observation network — opt-in submit + hunt prefers accepted crowdsourced spots (authored map fallback when empty)
 - UI: option to show/hide the [BOCCHI] chat prefix
 - UI: FATE/CE lists no longer reserve a large empty box when only a few are up
 - World: restore South Horn FATE/CE reward icons (demiatma / notes / soul shards; demiatma ownership tint)
