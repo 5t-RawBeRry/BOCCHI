@@ -51,8 +51,8 @@ public class WaitingForCriticalEncounterHandler
             return StatePriority.Never;
         }
 
-        // ce.Radius includes padding; score against the real combat circle.
-        float combatRadius = ce.Radius - NavigationConstants.CriticalEncounterRadiusPadding;
+        // ce.Radius is padded (green); red = combat, yellow = combat+5.
+        float combatRadius = NavigationConstants.CriticalEncounterRedRadius(ce.Radius);
         if (combatRadius <= 0f)
         {
             return StatePriority.Never;
@@ -95,7 +95,8 @@ public class WaitingForCriticalEncounterHandler
             return;
         }
 
-        float combatRadius = ce.Radius - NavigationConstants.CriticalEncounterRadiusPadding;
+        float combatRadius = NavigationConstants.CriticalEncounterRedRadius(ce.Radius);
+        float yellowRadius = NavigationConstants.CriticalEncounterYellowRadius(ce.Radius);
         if (combatRadius <= 0f)
         {
             return;
@@ -106,10 +107,10 @@ public class WaitingForCriticalEncounterHandler
             return;
         }
 
-        float percent = player.Position.Distance2D(ce.Position) / combatRadius;
+        float dist = player.Position.Distance2D(ce.Position);
 
-        // Inside the blue box — hold wherever we are; don't yank back to the walk-in target.
-        if (percent <= NavigationConstants.CriticalEncounterRegistrationMaxRatio)
+        // Inside the yellow ring (yellow–red band or deeper) — hold; don't yank to center.
+        if (dist <= yellowRadius)
         {
             wait.HoldingPosition = true;
             StopNavigation();
@@ -127,9 +128,11 @@ public class WaitingForCriticalEncounterHandler
 
         wait.HoldingPosition = false;
 
-        // Outside registration but still in CE wait range — walk in once, then hold above.
-        float approachRange = combatRadius * NavigationConstants.CriticalEncounterWaitApproachRatio;
-        Vector3 approach = ce.Position.GetApproachPosition(player.Position, approachRange);
+        // Outside yellow — walk into the yellow–red band.
+        Vector3 approach = NavigationApproach.GetCriticalEncounterApproachPosition(
+            ce.Position,
+            player.Position,
+            combatRadius);
 
         if (pathfinder.IsIdle())
         {

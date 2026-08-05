@@ -18,22 +18,17 @@ public static class NavigationConstants
 
     public const float CampApproachJitter = 30f;
 
+    /// <summary>
+    /// Added to authored CE combat radius for <see cref="CriticalEncounter.Radius"/> / debug green ring.
+    /// Red debug ring = padded − this (= combat radius).
+    /// </summary>
     public const float CriticalEncounterRadiusPadding = 7f;
 
-    /// <summary>
-    /// Fraction of combat radius that counts as safely inside the registration circle.
-    /// Stopping at 1.0 left bots on the blue-box edge (Discord: A Beast Unleashed).
-    /// </summary>
-    public const float CriticalEncounterWaitInnerRatio = 0.7f;
+    /// <summary>Yellow debug ring inset from padded CE radius (green − this).</summary>
+    public const float CriticalEncounterYellowInset = 2f;
 
     /// <summary>Fraction of combat radius treated as inside the CE registration (blue) circle.</summary>
     public const float CriticalEncounterRegistrationMaxRatio = 1.0f;
-
-    /// <summary>Re-arm CE walk-in after drifting this far out while holding position.</summary>
-    public const float CriticalEncounterWaitHoldReleaseRatio = 0.95f;
-
-    /// <summary>While waiting for a CE, stand this far from center (inside the blue box).</summary>
-    public const float CriticalEncounterWaitApproachRatio = 0.5f;
 
     /// <summary>Random stand-off ring while waiting for a predicted pot FATE (#112).</summary>
     public const float PotPrepositionMinRadius = 12f;
@@ -42,6 +37,18 @@ public static class NavigationConstants
 
     /// <summary>Euclidean distance above which long pathfinds should mount first.</summary>
     public const float MountMinDistance = 20f;
+
+    /// <summary>Red debug / combat radius from padded <c>ce.Radius</c>.</summary>
+    public static float CriticalEncounterRedRadius(float paddedRadius) =>
+        MathF.Max(0f, paddedRadius - CriticalEncounterRadiusPadding);
+
+    /// <summary>Yellow debug radius from padded <c>ce.Radius</c>.</summary>
+    public static float CriticalEncounterYellowRadius(float paddedRadius) =>
+        MathF.Max(0f, paddedRadius - CriticalEncounterYellowInset);
+
+    /// <summary>Outer edge of the yellow–red wait band from authored combat radius.</summary>
+    public static float CriticalEncounterYellowFromCombat(float combatRadius) =>
+        combatRadius + CriticalEncounterRadiusPadding - CriticalEncounterYellowInset;
 }
 
 public static class NavigationApproach
@@ -55,11 +62,18 @@ public static class NavigationApproach
     }
 
     /// <summary>
-    ///     Random point on a ring around the pot center so bots don't stack on one tile.
+    ///     Random point in the yellow–red band (combat radius … combat+5) so pathing matches debug rings.
     /// </summary>
     public static Vector3 GetCriticalEncounterApproachPosition(Vector3 center, Vector3 from, float combatRadius)
     {
-        float approachRange = combatRadius * NavigationConstants.CriticalEncounterWaitApproachRatio;
+        float red = MathF.Max(0f, combatRadius);
+        float yellow = NavigationConstants.CriticalEncounterYellowFromCombat(combatRadius);
+        if (yellow < red)
+        {
+            yellow = red;
+        }
+
+        float approachRange = red + Random.Shared.NextSingle() * (yellow - red);
         return center.GetApproachPosition(from, approachRange);
     }
 

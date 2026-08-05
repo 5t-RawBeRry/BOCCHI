@@ -36,7 +36,8 @@ public sealed class PluginDependencyStatusRenderer(
         Draw("BossMod", "BossMod", translator, BossModIpcIfLoaded);
         Draw("BossMod Reborn", "BossModReborn", translator, BossModIpcIfLoaded);
         Draw("Wrath Combo", "WrathCombo", translator);
-        Draw("Rotation Solver Reborn", "RotationSolverReborn", translator);
+        // Dalamud InternalName is still "RotationSolver" (display name is Rotation Solver Reborn).
+        Draw("Rotation Solver Reborn", "RotationSolver", translator);
 
         return false;
     }
