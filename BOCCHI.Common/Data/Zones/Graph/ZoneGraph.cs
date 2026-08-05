@@ -177,11 +177,34 @@ public class ZoneGraph
 
     public Node? GetInboundTeleport(Node goal)
     {
-        return Edges
+        uint? preferredId = goal.Metadata is ActivityNodeMetadata { PreferredAethernetId: { } id } ? id : null;
+
+        List<(Node Teleport, float Cost)> inbound = Edges
             .Where(kvp => Nodes[kvp.Key].IsTeleport())
-            .Where(kvp => kvp.Value.Any(e => e.To == goal.Id))
-            .Select(kvp => Nodes[kvp.Key])
-            .FirstOrDefault();
+            .SelectMany(kvp => kvp.Value
+                .Where(e => e.To == goal.Id)
+                .Select(e => (Teleport: Nodes[kvp.Key], Cost: e.Cost)))
+            .Where(entry => !float.IsPositiveInfinity(entry.Cost) && !float.IsNaN(entry.Cost))
+            .ToList();
+
+        if (inbound.Count == 0)
+        {
+            return null;
+        }
+
+        if (preferredId is { } preferred)
+        {
+            (Node Teleport, float Cost) preferredInbound = inbound
+                .Where(entry => entry.Teleport.Metadata is TeleportNodeMetadata tm && tm.AetheryteId == preferred)
+                .OrderBy(entry => entry.Cost)
+                .FirstOrDefault();
+            if (preferredInbound.Teleport != null)
+            {
+                return preferredInbound.Teleport;
+            }
+        }
+
+        return inbound.OrderBy(entry => entry.Cost).First().Teleport;
     }
 
     public IEnumerable<Node> GetNodesByTypes(params NodeType[] types)
@@ -237,6 +260,7 @@ public class ZoneGraph
         foreach (Node node in nodes)
         {
             // Prefer authored aethernet when present (AOCCH preferred shard), else nearest few.
+            // If the preferred shard cannot walk to the activity, fall back to scoring nearby shards.
             List<Node> candidateTeleports = teleports;
             if (node.Metadata is ActivityNodeMetadata { PreferredAethernetId: { } preferredId })
             {
@@ -280,6 +304,38 @@ public class ZoneGraph
                 {
                     bestOutboundCost = fromActivity;
                     bestOutbound = teleport;
+                }
+            }
+
+            // Preferred shard unreachable (island / water gap) — retry nearest walkable shards.
+            if ((bestInbound == null || float.IsPositiveInfinity(bestInboundCost))
+                && candidateTeleports != teleports)
+            {
+                nearestTeleports = teleports
+                    .OrderBy(t => t.Position.Distance2D(node.Position))
+                    .Take(3)
+                    .ToList();
+
+                foreach (Node teleport in nearestTeleports)
+                {
+                    if (teleport.Metadata is not TeleportNodeMetadata meta)
+                    {
+                        throw new("Teleport node metadata is not set");
+                    }
+
+                    float toActivity = await config.GetWalkingCost(meta.Destination, node.Position);
+                    if (toActivity < bestInboundCost)
+                    {
+                        bestInboundCost = toActivity;
+                        bestInbound = teleport;
+                    }
+
+                    float fromActivity = await config.GetWalkingCost(node.Position, meta.Destination);
+                    if (fromActivity < bestOutboundCost)
+                    {
+                        bestOutboundCost = fromActivity;
+                        bestOutbound = teleport;
+                    }
                 }
             }
 

@@ -59,20 +59,12 @@ public class TreasureConfig : IAutoConfig
     public bool SkipUnsafeTreasureWindows { get; set; } = true;
 
     /// <summary>
-    ///     Illegal Mode: after CE/FATE, Return to camp, cast Treasure Sight, then hunt when survey counts pass thresholds (AOCC-style).
+    ///     Illegal Mode: after CE/FATE, Return to camp, use Treasure Sight when available, then start a treasure hunt.
     /// </summary>
     [Checkbox(Order = 14)]
     public bool EnableAutomaticTreasureHuntDuringIllegalMode { get; set; } = false;
 
-    /// <summary>0 = any silver on survey triggers (when auto hunt enabled).</summary>
-    [IntRange(0, 8, Order = 15)]
-    public int AutomaticTreasureSilverThreshold { get; set; } = 0;
-
-    /// <summary>0 = any bronze on survey triggers (when auto hunt enabled).</summary>
-    [IntRange(0, 30, Order = 16)]
-    public int AutomaticTreasureBronzeThreshold { get; set; } = 0;
-
     /// <summary>Opt-in anonymous coffer position submission (BOCCHI observation API).</summary>
-    [Checkbox(Order = 17)]
+    [Checkbox(Order = 15)]
     public bool EnableCofferObservationSubmission { get; set; } = false;
 }

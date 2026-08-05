@@ -1,6 +1,7 @@
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Zones;
+using BOCCHI.Common.Data.Zones.Graph;
 using Dalamud.Plugin.Services;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
@@ -170,9 +171,8 @@ public class ActivityNavigation
 
     /// <summary>
     ///     Pick an aethernet that can walk to <paramref name="destination"/>.
-    ///     Tries Euclidean-nearest first and returns the first reachable shard so the UI
-    ///     button starts Lifestream after typically one vnav query (scoring every shard
-    ///     felt sluggish). Unreachable nearest (island water gaps) are skipped.
+    ///     Honors authored preferred shards for known activities (Eye to Eye → Crown, not Unhallowed),
+    ///     then scores a few Euclidean-near reachable shards by walk distance so island gaps do not win.
     /// </summary>
     private async Task<AethernetData?> SelectBestAetheryteAsync(Vector3 destination)
     {
@@ -182,8 +182,11 @@ public class ActivityNavigation
             return null;
         }
 
+        uint? preferredId = FindPreferredAethernetId(destination);
+
         AethernetData? ByEuclidean() => aetherytes
-            .OrderBy(a => destination.Distance2D(a.Position))
+            .OrderBy(a => preferredId is { } pid && a.Id == pid ? 0 : 1)
+            .ThenBy(a => destination.Distance2D(a.Position))
             .FirstOrDefault();
 
         if (!vnav.IsNavmeshReady())
@@ -191,7 +194,36 @@ public class ActivityNavigation
             return ByEuclidean();
         }
 
+        // Preferred first, then a few Euclidean-nearest. Cap queries so the UI button stays snappy.
+        List<AethernetData> candidates = [];
+        if (preferredId is { } preferred)
+        {
+            AethernetData? preferredShard = aetherytes.FirstOrDefault(a => a.Id == preferred);
+            if (preferredShard != null)
+            {
+                candidates.Add(preferredShard);
+            }
+        }
+
         foreach (AethernetData aetheryte in aetherytes.OrderBy(a => destination.Distance2D(a.Position)))
+        {
+            if (candidates.Count >= 4)
+            {
+                break;
+            }
+
+            if (candidates.Any(c => c.Id == aetheryte.Id))
+            {
+                continue;
+            }
+
+            candidates.Add(aetheryte);
+        }
+
+        AethernetData? best = null;
+        float bestDistance = float.PositiveInfinity;
+
+        foreach (AethernetData aetheryte in candidates)
         {
             Vector3 from = aetheryte.GetInteractPosition();
             Path path = await pathfinder.Pathfind(new PathfinderConfig(destination)
@@ -202,13 +234,47 @@ public class ActivityNavigation
                 })
                 .ConfigureAwait(false);
 
-            if (path.Nodes.Count >= 2)
+            // Unreachable paths report Distance 0 / fewer than 2 nodes.
+            if (path.Nodes.Count < 2 || float.IsPositiveInfinity(path.Distance) || path.Distance <= 0f)
+            {
+                continue;
+            }
+
+            if (preferredId is { } pid && aetheryte.Id == pid)
             {
                 return aetheryte;
             }
+
+            if (path.Distance < bestDistance)
+            {
+                bestDistance = path.Distance;
+                best = aetheryte;
+            }
         }
 
-        return ByEuclidean();
+        return best ?? ByEuclidean();
+    }
+
+    private uint? FindPreferredAethernetId(Vector3 destination)
+    {
+        IZone zone = zones.GetZone();
+        const float matchRadius = 80f;
+        foreach (ActivityData activity in zone.GetNormalFateData()
+                     .Concat(zone.GetPotFateData())
+                     .Concat(zone.GetCriticalEncounterData()))
+        {
+            if (activity.PreferredAethernetId is not { } preferred)
+            {
+                continue;
+            }
+
+            if (destination.Distance2D(activity.Position) <= matchRadius)
+            {
+                return preferred;
+            }
+        }
+
+        return null;
     }
 
     private void CancelActivityChains()

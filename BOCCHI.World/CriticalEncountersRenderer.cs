@@ -1,6 +1,7 @@
 ﻿using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.CriticalEncounters;
+using BOCCHI.Common.Data.EventDrops;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.UI;
@@ -18,6 +19,8 @@ public class CriticalEncountersRenderer
     IZoneProvider zones,
     ForkedTowerConfig forkedTowerConfig,
     UIConfig uiConfig,
+    EventDropConfig eventDropConfig,
+    EventDropIconRenderer eventDrops,
     IBrandingService branding,
     IUIService ui,
     ITranslator<MainWindow> translator
@@ -42,7 +45,14 @@ public class CriticalEncountersRenderer
             return;
         }
 
-        using ImGuiSectionHelper.BoundedListScope list = ImGuiSectionHelper.BoundedList("##ce_list", 120f);
+        bool southHorn = zones.GetZone().ZoneId == ZoneId.SouthHorn;
+        float dropExtra = southHorn && eventDropConfig.AnyEnabled
+            ? EventDropIconRenderer.IconBoxSize + 4f
+            : 0f;
+        float maxHeight = dropExtra > 0f ? 240f : 120f;
+
+        using ImGuiSectionHelper.BoundedListScope list =
+            ImGuiSectionHelper.BoundedList("##ce_list", snapshots.Count, maxHeight, dropExtra);
         if (!list.IsOpen)
         {
             return;
@@ -77,6 +87,14 @@ public class CriticalEncountersRenderer
                     branding.DalamudGrey,
                     criticalEncounter.Name,
                     details);
+            }
+
+            if (southHorn
+                && SouthHornEventDrops.TryGetCriticalEncounter(
+                    criticalEncounter.Id.Value,
+                    out EventDropInfo drops))
+            {
+                eventDrops.Render(criticalEncounter.Id.Value, drops);
             }
         }
     }

@@ -14,7 +14,7 @@ public sealed class ManualBuffRunMemory;
 public sealed class CastingTreasureSightMemory;
 
 /// <summary>
-///     AOCC-style post-activity Treasure Sight latch for Illegal Mode auto hunts.
+///     Post-activity Treasure Sight latch for Illegal Mode auto hunts.
 /// </summary>
 public sealed class AutomaticTreasureSurveyMemory
 {
@@ -28,15 +28,6 @@ public sealed class AutomaticTreasureSurveyMemory
     public int MinAcceptedRevision { get; set; }
 
     public DateTime SurveyWaitDeadlineUtc { get; set; }
-
-    /// <summary>CE/FATE completions to skip before the next rescan (silver deficit).</summary>
-    public int RemainingSilverCompletionsUntilRescan { get; set; }
-
-    /// <summary>CE/FATE completions to skip before the next rescan (bronze deficit).</summary>
-    public int RemainingBronzeCompletionsUntilRescan { get; set; }
-
-    public bool IsRescanDue =>
-        RemainingSilverCompletionsUntilRescan <= 0 && RemainingBronzeCompletionsUntilRescan <= 0;
 }
 
 /// <summary>

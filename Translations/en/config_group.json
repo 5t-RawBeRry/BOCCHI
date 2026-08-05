@@ -11,6 +11,10 @@
     "label": "Treasure Hunter",
     "tooltip": "Coffer overlays and Treasure Hunt routing."
   },
+  "event_drops": {
+    "label": "Event drops",
+    "tooltip": "South Horn FATE/CE reward icons."
+  },
   "ux": {
     "label": "UI",
     "tooltip": "Main-window language and which sections are visible."

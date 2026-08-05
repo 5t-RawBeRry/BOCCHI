@@ -108,7 +108,7 @@ public class NorthHorn
     [
         new(2081, new(-440f, 47.02659f, -790f), PreferredAethernetId: MolderingOutskirts.Id), // A Rotten Affair
         new(2078, new(-402.0002f, 29.76808f, -252.9997f)), // Allure of the Occult
-        new(2075, new(510f, 16.76658f, -29.99999f), 30f, SinkingSanctuary.Id), // Eye to Eye
+        new(2075, new(510f, 16.76658f, -29.99999f), 30f, TheCrownOfKarnak.Id), // Eye to Eye (not Unhallowed — water gap)
         new(2082, new(-855.7433f, 70.67716f, 482.1518f), 30f), // Gale-force Encounter
         new(2079, new(-170f, 30f, -500f), 30f), // Inconstant Gardener
         new(2074, new(724f, 70f, 220f), 30f), // Raging Thrall

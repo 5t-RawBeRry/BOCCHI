@@ -159,8 +159,8 @@ public abstract class BaseZone
         Directory.CreateDirectory(dir);
 
         // Bump when walk-cost / edge semantics or which nodes are wired change.
-        // v5: preferred aethernet inbound edges + CE staging positions.
-        const int graphSchemaVersion = 5;
+        // v6: Eye to Eye prefers Crown of Karnak (Unhallowed is Euclidean-near but cut off).
+        const int graphSchemaVersion = 6;
         string path = Path.Combine(dir, $"{TerritoryType}.v{graphSchemaVersion}.json");
 
         if (File.Exists(path))

@@ -12,8 +12,8 @@ using Ocelot.Services.Logger;
 namespace BOCCHI.Automator.Services;
 
 /// <summary>
-///     AOCC-style Illegal Mode treasure filler: after CE/FATE, Return to camp, cast Treasure Sight,
-///     then start a hunt when survey thresholds pass (with rescan deferral when they don't).
+///     Illegal Mode treasure filler: after CE/FATE, Return to camp, cast Treasure Sight when learned,
+///     then start a hunt if the survey reports any coffers.
 /// </summary>
 public class IllegalModeTreasureFillerService
 (
@@ -158,29 +158,7 @@ public class IllegalModeTreasureFillerService
             return;
         }
 
-        if (!CanCastTreasureSight())
-        {
-            LogSightUnavailableOnce();
-            return;
-        }
-
-        if (survey.IsRescanDue)
-        {
-            LatchSurvey(survey, "activity completed");
-            return;
-        }
-
-        survey.RemainingSilverCompletionsUntilRescan = Math.Max(0, survey.RemainingSilverCompletionsUntilRescan - 1);
-        survey.RemainingBronzeCompletionsUntilRescan = Math.Max(0, survey.RemainingBronzeCompletionsUntilRescan - 1);
-        logger.Info(
-            "Illegal Mode: deferred treasure survey — {Silver} silver / {Bronze} bronze completions until rescan",
-            survey.RemainingSilverCompletionsUntilRescan,
-            survey.RemainingBronzeCompletionsUntilRescan);
-
-        if (survey.IsRescanDue)
-        {
-            LatchSurvey(survey, "rescan deferral elapsed");
-        }
+        LatchSurvey(survey, "activity completed");
     }
 
     private void LatchSurvey(AutomaticTreasureSurveyMemory survey, string reason)
@@ -259,58 +237,25 @@ public class IllegalModeTreasureFillerService
 
         int silver = tracker.SilverChests;
         int bronze = tracker.BronzeChests;
-        bool met = TreasureSurveyGate.MeetsThresholds(
-            silver,
-            bronze,
-            treasureConfig.AutomaticTreasureSilverThreshold,
-            treasureConfig.AutomaticTreasureBronzeThreshold);
-
-        if (met)
+        if (silver + bronze <= 0)
         {
-            survey.RemainingSilverCompletionsUntilRescan = 0;
-            survey.RemainingBronzeCompletionsUntilRescan = 0;
-            logger.Info(
-                "Illegal Mode: survey met thresholds ({Silver} silver, {Bronze} bronze) — starting hunt",
-                silver,
-                bronze);
-            EnterHuntPhase();
+            logger.Info("Illegal Mode: survey found no coffers — continuing CE/FATE farming");
             return;
         }
 
-        // AOCC: defer rescans by the deficit so we don't spam Sight every activity.
-        if (treasureConfig.AutomaticTreasureSilverThreshold <= 0
-            && treasureConfig.AutomaticTreasureBronzeThreshold <= 0
-            && silver + bronze > 0)
-        {
-            survey.RemainingSilverCompletionsUntilRescan = 0;
-            survey.RemainingBronzeCompletionsUntilRescan = 0;
-        }
-        else
-        {
-            survey.RemainingSilverCompletionsUntilRescan = TreasureSurveyGate.Deficit(
-                treasureConfig.AutomaticTreasureSilverThreshold,
-                silver);
-            survey.RemainingBronzeCompletionsUntilRescan = TreasureSurveyGate.Deficit(
-                treasureConfig.AutomaticTreasureBronzeThreshold,
-                bronze);
-        }
-
         logger.Info(
-            "Illegal Mode: survey below thresholds ({Silver} silver, {Bronze} bronze) — defer {SilverLeft}/{BronzeLeft} completions",
+            "Illegal Mode: survey found {Silver} silver, {Bronze} bronze — starting hunt",
             silver,
-            bronze,
-            survey.RemainingSilverCompletionsUntilRescan,
-            survey.RemainingBronzeCompletionsUntilRescan);
+            bronze);
+        EnterHuntPhase();
     }
 
     private void OnFillerHuntEnded(AutomaticTreasureSurveyMemory survey)
     {
-        // AOCC: after a route, require a fresh Sight on the next base-camp recovery.
+        // After a route, require a fresh Sight on the next idle.
         survey.PendingSurvey = false;
         survey.WaitingForSurveyResult = false;
         survey.MinAcceptedRevision = tracker.SurveyRevision;
-        survey.RemainingSilverCompletionsUntilRescan = 0;
-        survey.RemainingBronzeCompletionsUntilRescan = 0;
         automator.SetSuspendedForTreasure(false);
         logger.Info("Illegal Mode: treasure hunt ended — fresh survey required next idle");
     }
@@ -327,11 +272,7 @@ public class IllegalModeTreasureFillerService
             return false;
         }
 
-        if (!TreasureSurveyGate.MeetsThresholds(
-                tracker.SilverChests,
-                tracker.BronzeChests,
-                treasureConfig.AutomaticTreasureSilverThreshold,
-                treasureConfig.AutomaticTreasureBronzeThreshold))
+        if (tracker.SilverChests + tracker.BronzeChests <= 0)
         {
             return false;
         }

@@ -61,15 +61,7 @@
     },
     "enable_automatic_treasure_hunt_during_illegal_mode": {
       "label": "Auto treasure hunt in Illegal Mode",
-      "tooltip": "After a CE/FATE, Return to camp, cast Treasure Sight, then start a hunt when survey counts pass the thresholds below (AOCC-style). Defers rescans when counts are low."
-    },
-    "automatic_treasure_silver_threshold": {
-      "label": "Auto-hunt silver threshold",
-      "tooltip": "Minimum silver coffers on survey to start a hunt. 0 = any silver (>0)."
-    },
-    "automatic_treasure_bronze_threshold": {
-      "label": "Auto-hunt bronze threshold",
-      "tooltip": "Minimum bronze coffers on survey to start a hunt. 0 = any bronze (>0). Both thresholds 0 = any coffers."
+      "tooltip": "After a CE/FATE, Return to camp, use Treasure Sight when available, and start a treasure hunt. (Only works when Treasure Sight is learned)"
     },
     "enable_coffer_observation_submission": {
       "label": "Submit coffer observations",

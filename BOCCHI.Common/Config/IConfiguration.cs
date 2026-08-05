@@ -21,6 +21,8 @@ public interface IConfiguration : IPluginConfiguration
 
     TreasureConfig TreasureConfig { get; set; }
 
+    EventDropConfig EventDropConfig { get; set; }
+
     ForkedTowerConfig ForkedTowerConfig { get; set; }
 
     ShoppingConfig ShoppingConfig { get; set; }
