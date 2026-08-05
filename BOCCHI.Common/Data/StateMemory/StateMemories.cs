@@ -120,7 +120,7 @@ public class TreasureSightSupportJobMemory(SupportJobId job)
 
 public enum PotChestFarmMode
 {
-    /// <summary>Magical Elixir + compass hints (South Horn AOCC groups / North Horn binned spots).</summary>
+    /// <summary>Magical Elixir + compass hints (South Horn authored groups / North Horn binned spots).</summary>
     Smart,
 
     /// <summary>Visit authored positions (missing buff/elixir/hints, or rerolls).</summary>

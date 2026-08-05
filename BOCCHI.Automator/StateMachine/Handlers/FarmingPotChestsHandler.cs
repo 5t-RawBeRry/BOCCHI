@@ -660,7 +660,7 @@ public class FarmingPotChestsHandler
 
     private static Vector3 NormalizeY(Vector3 position)
     {
-        // AOCC: reveal objects sometimes sit at Y ≈ -500.
+        // Reveal objects sometimes sit at Y ≈ -500.
         if (MathF.Abs(position.Y + 500f) < 0.5f)
         {
             return position with { Y = 0f };

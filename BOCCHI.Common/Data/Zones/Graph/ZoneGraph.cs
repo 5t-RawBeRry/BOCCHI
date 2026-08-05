@@ -259,7 +259,7 @@ public class ZoneGraph
 
         foreach (Node node in nodes)
         {
-            // Prefer authored aethernet when present (AOCCH preferred shard), else nearest few.
+            // Prefer authored aethernet when present (preferred shard), else nearest few.
             // If the preferred shard cannot walk to the activity, fall back to scoring nearby shards.
             List<Node> candidateTeleports = teleports;
             if (node.Metadata is ActivityNodeMetadata { PreferredAethernetId: { } preferredId })

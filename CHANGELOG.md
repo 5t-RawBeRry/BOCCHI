@@ -13,6 +13,7 @@
 - UI: Event drops (demiatma / notes / soul shards) live under UI config instead of a separate page
 - World: restore South Horn FATE/CE reward icons (demiatma / notes / soul shards; demiatma ownership tint)
 - Pots & Treasure: hunt filler no longer fights mode exclusivity (StartManaged; On/Off spam fixed)
+- Treasure: North Horn chest 2061 (Suspended Masonry, map ~5.4 34.1) approaches via safe spots so vnav skips the wind updraft
 
 ### Features
 - Treasure: Auto treasure hunt in Illegal Mode — after CE/FATE, Return, Treasure Sight (when learned), then hunt if coffers remain

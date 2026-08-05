@@ -1,6 +1,5 @@
 {
   "label": "依存関係",
-  "tooltip": "BOCCHI が利用する必須・任意プラグインのインストール／読み込み／IPC 状態です。",
   "fields": {
     "status": {
       "label": "状態",

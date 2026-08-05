@@ -38,7 +38,7 @@ public interface IPotCycleTracker
 }
 
 /// <summary>
-/// Tracks the 30-minute alternating pot FATE cycle (AOCCH algorithm).
+/// Tracks the 30-minute alternating pot FATE cycle.
 /// Observing one pot predicts the opposite pot's next spawn.
 /// </summary>
 public sealed class PotCycleTracker

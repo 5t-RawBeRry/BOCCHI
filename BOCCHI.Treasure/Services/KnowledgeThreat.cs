@@ -7,7 +7,7 @@ using Ocelot.Extensions;
 
 namespace BOCCHI.Treasure.Services;
 
-/// <summary>Live foray knowledge threats that warrant Ninja Hide (AOCC-style).</summary>
+/// <summary>Live foray knowledge threats that warrant Ninja Hide.</summary>
 public static class KnowledgeThreat
 {
     public const uint OccultIsleblazerBaseId = 17900;

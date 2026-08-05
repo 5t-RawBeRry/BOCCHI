@@ -91,6 +91,12 @@ public class TreasureHunterService
     /// <summary>Hysteresis: Hide required until threats leave exit distance.</summary>
     private bool ninjaHideRequired;
 
+    /// <summary>Via-points for the current WalkToNode (departure of previous + approach of current).</summary>
+    private readonly List<Vector3> walkVias = [];
+
+    private int walkViaIndex;
+    private int walkViaStepIndex = -1;
+
     public void OnStop() => Teardown();
 
     public void Update()
@@ -180,6 +186,9 @@ public class TreasureHunterService
 
             StepIndex++;
             StepDistance = 0f;
+            walkViaStepIndex = -1;
+            walkVias.Clear();
+            walkViaIndex = 0;
         }
 
         if (activeChain is { IsCompleted: true })
@@ -507,6 +516,30 @@ public class TreasureHunterService
         {
             vnav.Stop();
             return true;
+        }
+
+        EnsureWalkVias(step);
+        if (walkViaIndex < walkVias.Count)
+        {
+            Vector3 via = walkVias[walkViaIndex];
+            float viaDist = player.Position.Distance2D(via);
+            StepDistance = viaDist;
+
+            const float viaArrival = 2.5f;
+            if (viaDist > viaArrival)
+            {
+                if (!vnav.IsRunning())
+                {
+                    vnav.PathfindAndMoveCloseTo(via, false, OpenTreasureCofferChain.PathArrivalRange);
+                }
+
+                MaybeMount(via);
+                return false;
+            }
+
+            walkViaIndex++;
+            vnav.Stop();
+            return false;
         }
 
         Vector3 layoutDestination = layoutTreasure.First(t => t.Id == step.NodeId).Position;
@@ -1044,6 +1077,58 @@ public class TreasureHunterService
         return steps.Count == 0 || steps[^1].Type != HuntPathfinderStepType.ReturnToBaseCamp;
     }
 
+    private void EnsureWalkVias(HuntPathfinderStep step)
+    {
+        if (walkViaStepIndex == StepIndex)
+        {
+            return;
+        }
+
+        walkViaStepIndex = StepIndex;
+        walkViaIndex = 0;
+        walkVias.Clear();
+
+        ZoneId zoneId = zones.GetZone().ZoneId;
+
+        // Leave previous coffer through its safe exit before heading to the next.
+        for (int i = StepIndex - 1; i >= 0; i--)
+        {
+            HuntPathfinderStep prev = steps[i];
+            if (prev.Type != HuntPathfinderStepType.WalkToNode)
+            {
+                continue;
+            }
+
+            if (TreasureHuntPathOverrides.TryGetDeparture(zoneId, prev.NodeId, out IReadOnlyList<Vector3> departure))
+            {
+                walkVias.AddRange(departure);
+            }
+
+            break;
+        }
+
+        if (TreasureHuntPathOverrides.TryGetApproach(zoneId, step.NodeId, out IReadOnlyList<Vector3> approach))
+        {
+            walkVias.AddRange(approach);
+        }
+
+        // Skip vias we are already on (e.g. resumed mid-route next to the safe spot).
+        while (walkViaIndex < walkVias.Count
+               && player.Position.Distance2D(walkVias[walkViaIndex]) <= 3f)
+        {
+            walkViaIndex++;
+        }
+
+        if (walkVias.Count > 0)
+        {
+            log.Info(
+                "Treasure hunt: {Count} via(s) for node {NodeId} (index {Index})",
+                walkVias.Count,
+                step.NodeId,
+                walkViaIndex);
+        }
+    }
+
     private AethernetData ResolveAethernet(HuntAethernet aethernet)
     {
         uint placeNameId = (uint)aethernet;
@@ -1079,6 +1164,9 @@ public class TreasureHunterService
         sightCastUtc = DateTime.MinValue;
         locationsSinceLastSight = 0;
         ninjaHideRequired = false;
+        walkViaStepIndex = -1;
+        walkViaIndex = 0;
+        walkVias.Clear();
 
         SoftStopMovement();
 

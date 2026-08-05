@@ -1,4 +1,4 @@
-﻿// Auto-ported from AOCCH OccultCrescentData.json treasureCofferGroups (South Horn).
+﻿// Authored South Horn pot-chest directional groups (treasureCofferGroups).
 using BOCCHI.Common.Data.Zones;
 using System.Numerics;
 

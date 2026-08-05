@@ -10,7 +10,7 @@ using ActionType = FFXIVClientStructs.FFXIV.Client.Game.ActionType;
 
 namespace BOCCHI.Treasure.Services;
 
-/// <summary>Real Ninja Hide (2245 / status 614) + optional gearset swap — AOCC DangerousTreasure pattern.</summary>
+/// <summary>Real Ninja Hide (2245 / status 614) + optional gearset swap for dangerous coffer approaches.</summary>
 public sealed class NinjaHideAssist(IPlayer player, ICondition conditions, IPluginLog log)
 {
     public const uint HideActionId = 2245;

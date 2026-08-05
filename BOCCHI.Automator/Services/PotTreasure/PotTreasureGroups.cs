@@ -6,7 +6,7 @@ namespace BOCCHI.Automator.Services.PotTreasure;
 
 /// <summary>
 ///     Directional pot-chest candidates for Magical Elixir hints.
-///     South Horn uses authored AOCC groups; North Horn (and any other zone) bins authored
+///     South Horn uses authored directional groups; North Horn (and any other zone) bins authored
 ///     flat <see cref="IZone.GetPotChestData"/> positions by compass bearing from the pot center.
 /// </summary>
 public static class PotTreasureGroups

@@ -2,7 +2,7 @@ using System.Numerics;
 
 namespace BOCCHI.Common.Data.Zones;
 
-/// <summary>Fixed annulus around the knowledge crystal for buff casting (from AOCCH).</summary>
+/// <summary>Fixed annulus around the knowledge crystal for buff casting.</summary>
 public readonly record struct BuffZone(Vector3 Center, float RadiusMin, float RadiusMax)
 {
     public bool Contains2D(Vector3 position)
@@ -32,7 +32,7 @@ public readonly record struct BuffZone(Vector3 Center, float RadiusMin, float Ra
 /// <summary>Expedition Antiquarian vendor used for currency shopping.</summary>
 public readonly record struct ShoppingVendorData(uint DataId, uint PreferredAethernetId);
 
-/// <summary>Visible coffer / treasure-route safety + area→aethernet hints (from AOCCH).</summary>
+/// <summary>Visible coffer / treasure-route safety + area→aethernet hints.</summary>
 public sealed class TreasureRoutePolicy
 {
     public IReadOnlyList<uint> UnsafeWeatherIds { get; init; } = [];
@@ -67,7 +67,7 @@ public sealed class TreasureRoutePolicy
         return eorzeaMinuteOfDay >= AshkinStartEorzeaMinute || eorzeaMinuteOfDay < AshkinEndEorzeaMinute;
     }
 
-    /// <summary>Eorzea minute-of-day from Unix epoch (same formula as AOCCH).</summary>
+    /// <summary>Eorzea minute-of-day from Unix epoch.</summary>
     public static int GetEorzeaMinuteOfDay(DateTimeOffset utc)
     {
         long eorzeaSeconds = utc.ToUnixTimeSeconds() * 3600L / 175L;

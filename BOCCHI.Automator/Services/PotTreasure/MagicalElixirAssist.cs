@@ -5,7 +5,7 @@ using Dalamud.Plugin.Services;
 
 namespace BOCCHI.Automator.Services.PotTreasure;
 
-/// <summary>Uses Magical Elixir (item 2003296) via inventory / key items — AOCC pattern.</summary>
+/// <summary>Uses Magical Elixir (item 2003296) via inventory / key items.</summary>
 public sealed class MagicalElixirAssist(IPluginLog log)
 {
     public unsafe bool HasElixir()
@@ -59,7 +59,7 @@ public sealed class MagicalElixirAssist(IPluginLog log)
             return false;
         }
 
-        // Prefer general UseItem path (AOCC production).
+        // Prefer general UseItem path.
         long result = agent->UseItem(PotTreasureIds.MagicalElixirItemId);
         if (result is 0 or 1)
         {

@@ -117,7 +117,7 @@ public class SouthHorn
         new(1977, new(-481f, 75f, 528f), PreferredAethernetId: Stonemarsh.Id) // "Pleading Pots" (South)
     ];
 
-    // Positions are AOCCH staging points; CombatRadius keeps BOCCHI engage padding behavior.
+    // Staging positions; CombatRadius keeps BOCCHI engage padding behavior.
     public override List<ActivityData> GetCriticalEncounterData() =>
     [
         new(33, new(300.109f, 70f, 730.029f), 20f, Eldergrowth.Id), // "Scourge of the Mind"

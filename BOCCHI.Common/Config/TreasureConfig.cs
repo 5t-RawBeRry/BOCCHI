@@ -64,7 +64,7 @@ public class TreasureConfig : IAutoConfig
     [Checkbox(Order = 15)]
     public bool EnableCofferObservationSubmission { get; set; } = false;
 
-    /// <summary>Use real Ninja Hide near high-knowledge hostiles while hunting coffers (AOCC-style).</summary>
+    /// <summary>Use real Ninja Hide near high-knowledge hostiles while hunting coffers.</summary>
     [Checkbox(Order = 16)]
     public bool UseNinjaHideOnDangerousRoutes { get; set; } = false;
 

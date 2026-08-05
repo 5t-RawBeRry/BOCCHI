@@ -61,7 +61,7 @@ public class ChoosingActivityHandler
             return StatePriority.Never;
         }
 
-        // AOCC-style: finish camp survey before picking the next CE/FATE
+        // Finish camp survey before picking the next CE/FATE.
         // (filler clears the latch if Treasure Sight is unavailable).
         if (memory.TryRemember<AutomaticTreasureSurveyMemory>(out AutomaticTreasureSurveyMemory survey)
             && (survey.PendingSurvey || survey.WaitingForSurveyResult))

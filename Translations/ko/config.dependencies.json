@@ -1,6 +1,5 @@
 {
   "label": "의존성",
-  "tooltip": "BOCCHI가 사용하는 필수/선택 플러그인의 설치·로드·IPC 상태입니다.",
   "fields": {
     "status": {
       "label": "상태",

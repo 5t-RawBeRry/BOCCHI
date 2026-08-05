@@ -50,7 +50,7 @@ public class CastingTreasureSightHandler
             return StatePriority.Never;
         }
 
-        // AOCC-style: post-activity survey latch owns Sight while auto-hunt is enabled.
+        // Post-activity survey latch owns Sight while auto-hunt is enabled.
         if (treasureConfig.EnableAutomaticTreasureHuntDuringIllegalMode
             && memory.TryRemember<AutomaticTreasureSurveyMemory>(out AutomaticTreasureSurveyMemory survey)
             && survey.PendingSurvey

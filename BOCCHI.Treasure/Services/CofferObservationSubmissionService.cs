@@ -11,7 +11,7 @@ namespace BOCCHI.Treasure.Services;
 
 /// <summary>
 ///     Opt-in anonymous coffer observations for the BOCCHI Worker.
-///     Payload is AOCC-compatible; endpoint is fixed (not user-configurable).
+///     Endpoint is fixed (not user-configurable).
 /// </summary>
 public sealed class CofferObservationSubmissionService
 (

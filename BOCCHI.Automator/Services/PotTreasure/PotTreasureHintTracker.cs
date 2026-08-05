@@ -4,7 +4,7 @@ using Ocelot.Lifecycle;
 
 namespace BOCCHI.Automator.Services.PotTreasure;
 
-/// <summary>Parses Magical Elixir / Cache Me If You Can LogMessages (AOCC TreasureHintTracker).</summary>
+/// <summary>Parses Magical Elixir / Cache Me If You Can LogMessages for directional hints.</summary>
 public sealed class PotTreasureHintTracker(IChatGui chat) : IOnStart, IOnStop
 {
     private readonly object gate = new();

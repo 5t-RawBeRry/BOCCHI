@@ -15,7 +15,7 @@ public class PotsConfig : IAutoConfig
     public int MinPotFateMinutesRemaining { get; set; } = 2;
 
     /// <summary>
-    ///     Minutes before predicted pot spawn to leave for pot (AOCCH SpawnLeadMinutes).
+    ///     Minutes before predicted pot spawn to leave for pot.
     /// </summary>
     [IntRange(0, 15, Order = 1)]
     public int PotSpawnLeadMinutes { get; set; } = 3;

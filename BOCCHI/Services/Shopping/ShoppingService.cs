@@ -21,7 +21,7 @@ namespace BOCCHI.Services.Shopping;
 
 /// <summary>
 /// Approaches the Expedition Antiquarian when currency thresholds are hit and
-/// purchases preferred catalog items from ShopExchangeCurrency (AOCCH-style callbacks).
+/// purchases preferred catalog items from ShopExchangeCurrency.
 /// </summary>
 public sealed class ShoppingService
 (

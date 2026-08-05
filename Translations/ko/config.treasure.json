@@ -69,7 +69,7 @@
     },
     "use_ninja_hide_on_dangerous_routes": {
       "label": "위험 경로에서 닌자 은신",
-      "tooltip": "실험적: 높은 지식 적대 대상이 가까우면 닌자 기어셋으로 바꾼 뒤 Hide로 은신하고 도보로 상자에 접근합니다(AOCC 스타일). 지식이 높을 때 권장."
+      "tooltip": "실험적: 높은 지식 적대 대상이 가까우면 닌자 기어셋으로 바꾼 뒤 Hide로 은신하고 도보로 상자에 접근합니다. 지식이 높을 때 권장."
     },
     "ninja_gearset_number": {
       "label": "닌자 기어셋 번호",

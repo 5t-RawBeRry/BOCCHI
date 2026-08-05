@@ -1,6 +1,5 @@
 {
   "label": "Dependencies",
-  "tooltip": "Required and optional plugins BOCCHI talks to, and whether they are installed, loaded, and reachable over IPC.",
   "fields": {
     "status": {
       "label": "Status",
