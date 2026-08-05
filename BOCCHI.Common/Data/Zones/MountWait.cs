@@ -7,16 +7,19 @@ using System.Numerics;
 namespace BOCCHI.Common.Data.Zones;
 
 /// <summary>
-///     Shared mount-before-pathfind wait: try preferred mount or Mount Roulette briefly, then walk.
-///     Avoids burning a long timeout when mount never starts (UI/busy/cast lock).
+///     Shared mount helpers: cast while pathing (mount is usable on the move).
 /// </summary>
 public static class MountWait
 {
-    /// <summary>Max wait while Mounting, or overall cap.</summary>
+    /// <summary>Legacy cap for callers that still poll mount readiness.</summary>
     public static readonly TimeSpan Timeout = TimeSpan.FromSeconds(6);
 
-    /// <summary>If mount cast never enters Mounting within this, pathfind on foot.</summary>
+    /// <summary>Legacy grace before walking when mount never starts.</summary>
     public static readonly TimeSpan StartGrace = TimeSpan.FromSeconds(1.5);
+
+    private static DateTime lastTryCastUtc = DateTime.MinValue;
+
+    private static readonly TimeSpan TryCastInterval = TimeSpan.FromMilliseconds(750);
 
     public static bool ShouldSkip(
         ICondition conditions,
@@ -65,6 +68,28 @@ public static class MountWait
         {
             Actions.MountRoulette.Cast();
         }
+    }
+
+    /// <summary>Cast mount while pathing if far enough and not already mounted.</summary>
+    public static void TryCastIfNeeded(
+        ICondition conditions,
+        IObjectTable objects,
+        Vector3 destination,
+        bool autoMountEnabled = true,
+        uint preferredMountId = 0)
+    {
+        if (ShouldSkip(conditions, objects, destination, autoMountEnabled))
+        {
+            return;
+        }
+
+        if (DateTime.UtcNow - lastTryCastUtc < TryCastInterval)
+        {
+            return;
+        }
+
+        lastTryCastUtc = DateTime.UtcNow;
+        TryCast(preferredMountId);
     }
 
     /// <summary>

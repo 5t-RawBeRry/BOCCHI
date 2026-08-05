@@ -124,7 +124,7 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
             cost,
             [
                 // Destination is already offset via GetEventPosition — don't also give vnav a 20y arrival.
-                PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, start))
+                PathStep.Pathfind(NavigationApproach.ResolveActivityApproach(goal, start))
             ]);
 
     /// <summary>
@@ -149,7 +149,7 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
         }
 
         steps.Add(PathStep.Teleport(aetheryteId));
-        steps.Add(PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, inbound.Position)));
+        steps.Add(PathStep.Pathfind(NavigationApproach.ResolveActivityApproach(goal, inbound.Position)));
         return steps;
     }
 }

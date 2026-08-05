@@ -138,6 +138,7 @@
     "resume_coffer": "Resume coffer",
     "flag_resume_tooltip": "Place a map flag on the coffer where the hunt continues",
     "managed_by_pots": "Hunt is managed by Pots & Treasure — use that section to start/stop.",
+    "managed_by_illegal_mode": "Hunt is managed by Illegal Mode (auto survey filler).",
     "distance_to_chest": "Distance to chest",
     "nearby_title": "Nearby treasures",
     "none_nearby": "No nearby treasure.",

@@ -49,15 +49,15 @@
     },
     "phantom_jobs_leveling_mode": {
       "label": "Phantom jobs leveling mode",
-      "tooltip": "When your current phantom job reaches max level, switch to the next unlocked job that is not maxed. Stays put if every unlocked job is maxed."
+      "tooltip": "When your current phantom job reaches max level, switch to the next unlocked job that is not maxed. Freelancer is skipped (it does not level from combat XP). Stays put if every unlocked XP job is maxed."
     },
     "should_cast_treasure_sight": {
-      "label": "Cast Treasure Sight",
-      "tooltip": "Automatically recast Treasure Sight while running."
+      "label": "Cast Treasure Sight at camp",
+      "tooltip": "Periodically cast Treasure Sight while idle at base camp. Ignored when Auto treasure hunt in Illegal Mode is on (that mode surveys after each CE/FATE instead)."
     },
     "treasure_sight_recast_interval_seconds": {
       "label": "Treasure Sight recast interval (seconds)",
-      "tooltip": "How often to recast Treasure Sight."
+      "tooltip": "How often to recast Treasure Sight at camp when periodic Sight is enabled."
     },
     "max_remote_idle_time_seconds": {
       "label": "Max Return delay after FATE/CE (seconds)",

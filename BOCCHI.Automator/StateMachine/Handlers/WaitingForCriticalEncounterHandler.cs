@@ -12,6 +12,7 @@ using ECommons.Throttlers;
 using Ocelot.Actions;
 using Ocelot.Chain;
 using Ocelot.Extensions;
+using Ocelot.Ipc.VNavmesh;
 using Ocelot.Pathfinding.Extensions;
 using Ocelot.Services.Pathfinding;
 using Ocelot.States.Score;
@@ -25,6 +26,7 @@ public class WaitingForCriticalEncounterHandler
     IObjectTable objects,
     ICondition conditions,
     IPathfinder pathfinder,
+    IVNavmeshIpc vnav,
     IChainManager manager,
     ICriticalEncounterRepository repo,
     AutomatorConfig config
@@ -64,26 +66,16 @@ public class WaitingForCriticalEncounterHandler
             return StatePriority.Never;
         }
 
-        if (percent >= 0.95f)
-        {
-            return StatePriority.Normal;
-        }
-
-        if (percent >= NavigationConstants.CriticalEncounterWaitInnerRatio)
-        {
-            return StatePriority.AboveNormal;
-        }
-
+        // Beat Pathfinding (High) while walking the last stretch into registration (#132).
         return StatePriority.VeryHigh;
     }
 
     public override void Enter()
     {
         base.Enter();
-        manager.CancelAll();
+        StopNavigation();
         memory.Forget<GoalPathStepMemory>();
-        memory.TryAdd<WaitingForCriticalEncounterMemory>();
-        pathfinder.Stop();
+        memory.TryAdd(new WaitingForCriticalEncounterMemory());
     }
 
     public override void Handle()
@@ -110,34 +102,52 @@ public class WaitingForCriticalEncounterHandler
             return;
         }
 
+        if (!memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory wait))
+        {
+            return;
+        }
+
         float percent = player.Position.Distance2D(ce.Position) / combatRadius;
 
-        // Keep walking until clearly inside the registration box — not just within authored radius.
-        if (percent >= NavigationConstants.CriticalEncounterWaitInnerRatio)
+        // Inside the blue box — hold wherever we are; don't yank back to the walk-in target.
+        if (percent <= NavigationConstants.CriticalEncounterRegistrationMaxRatio)
         {
-            float approachRange = combatRadius * NavigationConstants.CriticalEncounterWaitApproachRatio;
-            Vector3 approach = ce.Position.GetApproachPosition(player.Position, approachRange);
-            AutoMount.MaybeRemount(config, conditions, objects, approach);
+            wait.HoldingPosition = true;
+            StopNavigation();
 
-            if (pathfinder.IsIdle())
+            if (!config.StayMountedWhileWaitingForCe
+                && conditions[ConditionFlag.Mounted]
+                && EzThrottler.Throttle("WaitingForCriticalEncounter::Unmount")
+                && Actions.Unmount.CanCast())
             {
-                pathfinder.PathfindAndMoveTo(new PathfinderConfig(approach)
-                {
-                    DistanceThreshold = 1.5f,
-                    ShouldSnapToFloor = true,
-                });
+                Actions.Unmount.Cast();
             }
 
             return;
         }
 
-        if (!config.StayMountedWhileWaitingForCe
-            && conditions[ConditionFlag.Mounted]
-            && EzThrottler.Throttle("WaitingForCriticalEncounter::Unmount")
-            && Actions.Unmount.CanCast())
+        wait.HoldingPosition = false;
+
+        // Outside registration but still in CE wait range — walk in once, then hold above.
+        float approachRange = combatRadius * NavigationConstants.CriticalEncounterWaitApproachRatio;
+        Vector3 approach = ce.Position.GetApproachPosition(player.Position, approachRange);
+
+        if (pathfinder.IsIdle())
         {
-            Actions.Unmount.Cast();
-            pathfinder.Stop();
+            pathfinder.PathfindAndMoveTo(new PathfinderConfig(approach)
+            {
+                DistanceThreshold = 1.5f,
+                ShouldSnapToFloor = true,
+            });
         }
+
+        AutoMount.MaybeRemount(config, conditions, objects, approach);
+    }
+
+    private void StopNavigation()
+    {
+        manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
+        pathfinder.Stop();
+        vnav.Stop();
     }
 }

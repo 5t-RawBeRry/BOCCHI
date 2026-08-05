@@ -12,7 +12,41 @@ public sealed class ApplyingBuffsMemory;
 public sealed class ManualBuffRunMemory;
 
 public sealed class CastingTreasureSightMemory;
-public class WaitingForCriticalEncounterMemory;
+
+/// <summary>
+///     AOCC-style post-activity Treasure Sight latch for Illegal Mode auto hunts.
+/// </summary>
+public sealed class AutomaticTreasureSurveyMemory
+{
+    /// <summary>Cast Sight when idle at base camp.</summary>
+    public bool PendingSurvey { get; set; }
+
+    /// <summary>Waiting for WideText after a Sight cast.</summary>
+    public bool WaitingForSurveyResult { get; set; }
+
+    /// <summary>Accept surveys with Tracker.SurveyRevision &gt; this value.</summary>
+    public int MinAcceptedRevision { get; set; }
+
+    public DateTime SurveyWaitDeadlineUtc { get; set; }
+
+    /// <summary>CE/FATE completions to skip before the next rescan (silver deficit).</summary>
+    public int RemainingSilverCompletionsUntilRescan { get; set; }
+
+    /// <summary>CE/FATE completions to skip before the next rescan (bronze deficit).</summary>
+    public int RemainingBronzeCompletionsUntilRescan { get; set; }
+
+    public bool IsRescanDue =>
+        RemainingSilverCompletionsUntilRescan <= 0 && RemainingBronzeCompletionsUntilRescan <= 0;
+}
+
+/// <summary>
+///     Inside registration — don't re-path unless we drift back toward the edge.
+/// </summary>
+public sealed class WaitingForCriticalEncounterMemory
+{
+    /// <summary>Inside registration — don't re-path unless we drift back toward the edge.</summary>
+    public bool HoldingPosition { get; set; }
+}
 
 /// <summary>
 ///     Arrived at predicted pot stand-off; hold until the FATE spawns (#112).

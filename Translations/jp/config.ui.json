@@ -45,6 +45,10 @@
     "show_treasure_section": {
       "label": "トレジャーハンターを表示",
       "tooltip": "メインウィンドウにトレジャーハンターの状態と操作を表示します。"
+    },
+    "show_bocchi_chat_prefix": {
+      "label": "[BOCCHI] チャット接頭辞を表示",
+      "tooltip": "プラグインのチャット通知に [BOCCHI] を付けます。オフにするとすっきりします。"
     }
   }
 }

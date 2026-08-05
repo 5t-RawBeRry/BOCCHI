@@ -24,6 +24,9 @@ public interface ITreasureHunter
     /// <summary>True while Pots &amp; Treasure owns this hunt session (hide standalone Start Hunt).</summary>
     bool ManagedByPotsTreasure { get; set; }
 
+    /// <summary>True while Illegal Mode auto-filler owns this hunt session.</summary>
+    bool ManagedByIllegalModeFiller { get; set; }
+
     bool IsVnavAvailable { get; }
 
     bool IsVnavReady { get; }

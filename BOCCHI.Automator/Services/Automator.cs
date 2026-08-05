@@ -1,5 +1,6 @@
 using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services.Goals;
+using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
@@ -37,6 +38,7 @@ public class Automator
     IChatGui chat,
     PotsConfig potsConfig,
     AutomatorConfig automatorConfig,
+    UIConfig uiConfig,
     AutoRotationController autoRotation,
     IAutomationModeGuard modeGuard,
     ITranslator<MainWindow> translator,
@@ -96,7 +98,7 @@ public class Automator
         }
 
         context.SetRunMode(turningOn ? AutomatorRunMode.IllegalMode : AutomatorRunMode.Off);
-        chat.Print(translator.T(Enabled ? ".automation.automator.illegal_mode_on" : ".automation.automator.illegal_mode_off"));
+        chat.Print(BocchiChat.Format(translator.T(Enabled ? ".automation.automator.illegal_mode_on" : ".automation.automator.illegal_mode_off"), uiConfig));
         ApplyRunModeSideEffects(turningOn);
     }
 
@@ -110,9 +112,9 @@ public class Automator
         }
 
         context.SetRunMode(turningOn ? AutomatorRunMode.PotsAndTreasure : AutomatorRunMode.Off);
-        chat.Print(translator.T(turningOn
+        chat.Print(BocchiChat.Format(translator.T(turningOn
             ? ".automation.pots_treasure.on"
-            : ".automation.pots_treasure.off"));
+            : ".automation.pots_treasure.off"), uiConfig));
         ApplyRunModeSideEffects(turningOn);
     }
 
@@ -149,11 +151,11 @@ public class Automator
         // GoalMemory kept — Update() will rebuild GoalPathStepMemory from here.
         if (!memory.TryRemember<GoalMemory>(out GoalMemory _))
         {
-            chat.Print(translator.T(".automation.automator.pathfinding_refreshed_no_goal"));
+            chat.Print(BocchiChat.Format(translator.T(".automation.automator.pathfinding_refreshed_no_goal"), uiConfig));
             return;
         }
 
-        chat.Print(translator.T(".automation.automator.pathfinding_refreshed"));
+        chat.Print(BocchiChat.Format(translator.T(".automation.automator.pathfinding_refreshed"), uiConfig));
     }
 
     public void Render()

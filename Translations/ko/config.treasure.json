@@ -58,6 +58,22 @@
     "skip_unsafe_treasure_windows": {
       "label": "위험한 보물 시간대 건너뛰기",
       "tooltip": "남쪽 뿔의 애쉬킨/위험 날씨 구간에는 트레저 헌트를 일시 정지합니다."
+    },
+    "enable_automatic_treasure_hunt_during_illegal_mode": {
+      "label": "불법 모드 자동 트레저 헌트",
+      "tooltip": "CE/FATE 후 베이스캠프로 귀환해 트레저 사이트를 시전하고, 조사 수치가 임계값을 넘으면 헌트를 시작합니다 (AOCC 방식)."
+    },
+    "automatic_treasure_silver_threshold": {
+      "label": "자동 헌트 은 임계값",
+      "tooltip": "헌트 시작에 필요한 최소 은 상자 수. 0 = 은 1개 이상."
+    },
+    "automatic_treasure_bronze_threshold": {
+      "label": "자동 헌트 동 임계값",
+      "tooltip": "헌트 시작에 필요한 최소 동 상자 수. 0 = 동 1개 이상. 둘 다 0이면 아무 상자나."
+    },
+    "enable_coffer_observation_submission": {
+      "label": "상자 관측 제출",
+      "tooltip": "익명 상자 위치를 BOCCHI 관측 API로 전송"
     }
   }
 }

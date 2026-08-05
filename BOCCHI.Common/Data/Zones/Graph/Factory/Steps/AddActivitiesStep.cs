@@ -41,7 +41,8 @@ public class AddActivitiesStep : IGraphBuildStep
                 Metadata = new ActivityNodeMetadata
                 {
                     Id = criticalEncounter.Id,
-                    PreferredAethernetId = criticalEncounter.PreferredAethernetId
+                    PreferredAethernetId = criticalEncounter.PreferredAethernetId,
+                    CombatRadius = criticalEncounter.CombatRadius ?? 0f
                 }
             });
         }

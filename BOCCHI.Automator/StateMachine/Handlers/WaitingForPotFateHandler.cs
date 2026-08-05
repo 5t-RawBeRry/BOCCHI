@@ -110,12 +110,13 @@ public class WaitingForPotFateHandler
         if (dist > NavigationConstants.PotPrepositionMaxRadius)
         {
             Vector3 approach = NavigationApproach.GetPotPrepositionPosition(potCenter, player.Position);
-            AutoMount.MaybeRemount(config, conditions, objects, approach);
 
             if (pathfinder.IsIdle())
             {
                 pathfinder.PathfindAndMoveTo(new(approach));
             }
+
+            AutoMount.MaybeRemount(config, conditions, objects, approach);
 
             return;
         }

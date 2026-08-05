@@ -58,6 +58,22 @@
     "skip_unsafe_treasure_windows": {
       "label": "危険な宝箱時間帯を避ける",
       "tooltip": "南征編のアシュキンや危険な天候時間帯では、トレジャーハントを一時停止します。"
+    },
+    "enable_automatic_treasure_hunt_during_illegal_mode": {
+      "label": "不正モードで自動トレジャーハント",
+      "tooltip": "CE/FATE後にベースキャンプへ帰還し、トレジャーサイトを唱えて、調査数が閾値を満たしたらハントを開始します（AOCC方式）。"
+    },
+    "automatic_treasure_silver_threshold": {
+      "label": "自動ハント銀閾値",
+      "tooltip": "ハント開始に必要な銀宝箱の最小数。0 = 銀が1つ以上。"
+    },
+    "automatic_treasure_bronze_threshold": {
+      "label": "自動ハント銅閾値",
+      "tooltip": "ハント開始に必要な銅宝箱の最小数。0 = 銅が1つ以上。両方0 = いずれかがあれば開始。"
+    },
+    "enable_coffer_observation_submission": {
+      "label": "宝箱観測を送信",
+      "tooltip": "匿名の宝箱位置をBOCCHI観測APIへ送信"
     }
   }
 }

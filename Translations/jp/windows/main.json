@@ -138,6 +138,7 @@
     "resume_coffer": "再開する宝箱",
     "flag_resume_tooltip": "ハント再開地点の宝箱にマップフラグを立てます",
     "managed_by_pots": "ハントは壺＆トレジャーが管理中です。開始／停止はそのセクションから行ってください。",
+    "managed_by_illegal_mode": "ハントは違法モード（自動サーベイ）が管理中です。",
     "distance_to_chest": "宝箱までの距離",
     "nearby_title": "近くの宝箱",
     "none_nearby": "近くに宝箱はありません。",

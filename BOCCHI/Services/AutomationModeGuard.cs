@@ -1,5 +1,7 @@
 using BOCCHI.Automator.Services;
 using BOCCHI.Buff.Services;
+using BOCCHI.Common;
+using BOCCHI.Common.Config;
 using BOCCHI.Common.Services;
 using BOCCHI.MobFarmer.Services;
 using BOCCHI.Treasure.Services;
@@ -23,6 +25,7 @@ public class AutomationModeGuard
     IVNavmeshIpc vnav,
     IChainManager chains,
     IChatGui chat,
+    UIConfig uiConfig,
     ITranslator<MainWindow> translator
 ) : IAutomationModeGuard
 {
@@ -66,8 +69,9 @@ public class AutomationModeGuard
                 Farmer.Toggle();
             }
 
-            // Pots & Treasure owns the hunter — leave it running when entering that mode.
+            // Pots & Treasure or Illegal Mode filler owns the hunter — leave it running when entering that mode.
             if (mode is not AutomationMode.TreasureHunt and not AutomationMode.PotsAndTreasure
+                and not AutomationMode.IllegalMode
                 && Hunter.Running)
             {
                 Hunter.Toggle();
@@ -87,6 +91,19 @@ public class AutomationModeGuard
         }
 
         // Resume Illegal Mode only — Pots & Treasure manages its own suspension.
+        if (Automator.IsIllegalMode && Automator.SuspendedForTreasure)
+        {
+            Automator.SetSuspendedForTreasure(false);
+        }
+    }
+
+    public void NotifyIllegalModeFillerHuntEnded()
+    {
+        if (stopping)
+        {
+            return;
+        }
+
         if (Automator.IsIllegalMode && Automator.SuspendedForTreasure)
         {
             Automator.SetSuspendedForTreasure(false);
@@ -131,7 +148,7 @@ public class AutomationModeGuard
             pathfinder.Stop();
             vnav.Stop();
             chains.CancelAll();
-            chat.Print(translator.T(".status.emergency_stop_done"));
+            chat.Print(BocchiChat.Format(translator.T(".status.emergency_stop_done"), uiConfig));
         }
         finally
         {

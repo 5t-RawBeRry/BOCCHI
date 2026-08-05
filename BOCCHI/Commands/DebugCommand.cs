@@ -1,3 +1,5 @@
+using BOCCHI.Common;
+using BOCCHI.Common.Config;
 using Dalamud.Plugin.Services;
 using Ocelot.Rotation.Services.BossMod;
 using Ocelot.Services.Commands;
@@ -11,6 +13,7 @@ public class DebugCommand
     BossModRotationService bossModRotation,
     IPlayer player,
     IChatGui chat,
+    UIConfig uiConfig,
     ITranslator<DebugCommand> translator
 ) : OcelotCommand(translator)
 {
@@ -43,23 +46,26 @@ public class DebugCommand
     private void MakeAiPreset()
     {
         var job = player.GetClassJob();
-        chat.Print(
-            $"[BOCCHI] Base job={job?.Abbreviation.ToString() ?? "?"} Role={job?.Role.ToString() ?? "?"} "
-            + $"IsMelee={player.IsMelee()} IsMeleeDps={player.IsMeleeDps()}");
+        chat.Print(BocchiChat.Format(
+            $"Base job={job?.Abbreviation.ToString() ?? "?"} Role={job?.Role.ToString() ?? "?"} "
+            + $"IsMelee={player.IsMelee()} IsMeleeDps={player.IsMeleeDps()}",
+            uiConfig));
 
         if (!bossModRotation.TryEnsureBocchiAiPreset(out string? storedJson))
         {
-            chat.PrintError("[BOCCHI] Failed to create BOCCHI AI preset (is BossMod / BMR loaded?)");
+            chat.PrintError(BocchiChat.Format("Failed to create BOCCHI AI preset (is BossMod / BMR loaded?)", uiConfig));
             return;
         }
 
-        chat.Print($"[BOCCHI] Created/updated preset '{BossModRotationService.AiPresetName}'.");
+        chat.Print(BocchiChat.Format($"Created/updated preset '{BossModRotationService.AiPresetName}'.", uiConfig));
         if (string.IsNullOrWhiteSpace(storedJson))
         {
-            chat.PrintError("[BOCCHI] Preset Create succeeded but Get returned empty — check BossMod Presets IPC.");
+            chat.PrintError(BocchiChat.Format(
+                "Preset Create succeeded but Get returned empty — check BossMod Presets IPC.",
+                uiConfig));
             return;
         }
 
-        chat.Print($"[BOCCHI] Stored JSON:\n{storedJson}");
+        chat.Print(BocchiChat.Format($"Stored JSON:\n{storedJson}", uiConfig));
     }
 }

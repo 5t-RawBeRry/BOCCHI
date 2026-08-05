@@ -155,45 +155,18 @@ public class ActivityNavigation
     private IChain BuildPathChain(string name, Vector3 destination) =>
         AppendPath(chains.Create(name), name, destination);
 
-    private IChain AppendPath(IChain chain, string name, Vector3 destination)
-    {
-        DateTime mountStarted = DateTime.MinValue;
-
-        return chain
-            .Then(_ =>
-            {
-                mountStarted = DateTime.UtcNow;
-
-                if (MountWait.ShouldSkip(conditions, objects, destination, automatorConfig.ShouldAutoMount))
-                {
-                    return StepResult.Success();
-                }
-
-                MountWait.TryCast(automatorConfig.PreferredMountId);
-                return StepResult.Success();
-            }, $"{name}::MaybeMount")
-            .WaitUntil(
-                _ =>
-                {
-                    DateTime started = mountStarted == DateTime.MinValue ? DateTime.UtcNow : mountStarted;
-                    return ValueTask.FromResult(
-                        MountWait.IsReadyOrGiveUp(
-                            conditions,
-                            objects,
-                            destination,
-                            started,
-                            automatorConfig.ShouldAutoMount,
-                            automatorConfig.PreferredMountId));
-                },
-                MountWait.Timeout,
-                TimeSpan.FromMilliseconds(250),
-                $"{name}::WaitForMount")
-            .Then<PathfindToChain, PathfinderConfig>(new(destination)
-            {
-                DistanceThreshold = 2f,
-                ShouldSnapToFloor = true
-            });
-    }
+    private IChain AppendPath(IChain chain, string name, Vector3 destination) =>
+        chain.Then<PathfindToChain, PathfinderConfig>(new(destination)
+        {
+            DistanceThreshold = 2f,
+            ShouldSnapToFloor = true,
+            WhileMoving = () => MountWait.TryCastIfNeeded(
+                conditions,
+                objects,
+                destination,
+                automatorConfig.ShouldAutoMount,
+                automatorConfig.PreferredMountId),
+        });
 
     /// <summary>
     ///     Pick an aethernet that can walk to <paramref name="destination"/>.

@@ -61,6 +61,14 @@ public class ChoosingActivityHandler
             return StatePriority.Never;
         }
 
+        // AOCC-style: finish camp survey before picking the next CE/FATE
+        // (filler clears the latch if Treasure Sight is unavailable).
+        if (memory.TryRemember<AutomaticTreasureSurveyMemory>(out AutomaticTreasureSurveyMemory survey)
+            && (survey.PendingSurvey || survey.WaitingForSurveyResult))
+        {
+            return StatePriority.Never;
+        }
+
         // Only claim Choosing when Handle can actually start something (avoids pot-cutoff softlock).
         bool hasCriticalEncounter = !PotsOnly && FindStartableCriticalEncounter() != null;
         if (!hasCriticalEncounter

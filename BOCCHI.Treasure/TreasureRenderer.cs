@@ -65,6 +65,18 @@ public class TreasureRenderer
             return;
         }
 
+        if (hunter.ManagedByIllegalModeFiller)
+        {
+            ImGui.TextWrapped(translator.T(".treasure.managed_by_illegal_mode"));
+            if (hunter.Elapsed > TimeSpan.Zero)
+            {
+                ui.LabelledValue(translator.T(".treasure.elapsed"), $"{hunter.Elapsed:mm\\:ss}");
+            }
+
+            TreasureHuntStatusUi.DrawProgress(hunter, ui, translator, config);
+            return;
+        }
+
         if (!hunter.Running)
         {
             if (ImGui.Button(translator.T(".treasure.start_hunt")))

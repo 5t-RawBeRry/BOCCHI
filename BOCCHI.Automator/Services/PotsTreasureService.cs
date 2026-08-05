@@ -1,4 +1,6 @@
 using BOCCHI.Automator.Data;
+using BOCCHI.Common;
+using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
@@ -28,6 +30,7 @@ public class PotsTreasureService
     IZoneProvider zones,
     IAutomationModeGuard modeGuard,
     IChatGui chat,
+    UIConfig uiConfig,
     ITranslator<MainWindow> translator,
     ILogger<PotsTreasureService> logger
 ) : IPotsTreasureMode, IOnUpdate, IOnStop
@@ -59,7 +62,7 @@ public class PotsTreasureService
 
         if (!hunter.IsVnavAvailable)
         {
-            chat.PrintError(translator.T(".automation.pots_treasure.requires_vnav"));
+            chat.PrintError(BocchiChat.Format(translator.T(".automation.pots_treasure.requires_vnav"), uiConfig));
             return;
         }
 

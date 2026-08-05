@@ -24,6 +24,7 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<IAutomatorContext, AutomatorContext>();
         services.AddSingleton<IPotsTreasureMode, PotsTreasureService>();
         services.AddSingleton<Func<IPotsTreasureMode>>(sp => () => sp.GetRequiredService<IPotsTreasureMode>());
+        services.AddSingleton<IllegalModeTreasureFillerService>();
         services.AddSingleton<IDynamicRenderer, AutomatorRenderer>();
         services.AddSingleton<IDynamicRenderer, PotsTreasureRenderer>();
 

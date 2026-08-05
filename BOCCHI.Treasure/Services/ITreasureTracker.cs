@@ -12,4 +12,7 @@ public interface ITreasureTracker
     int BronzeChests { get; }
 
     int SilverChests { get; }
+
+    /// <summary>Increments on each successful Treasure Sight WideText parse.</summary>
+    int SurveyRevision { get; }
 }

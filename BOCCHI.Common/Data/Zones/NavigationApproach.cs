@@ -1,3 +1,4 @@
+using BOCCHI.Common.Data.Zones.Graph;
 using Ocelot.Extensions;
 using System.Numerics;
 
@@ -25,6 +26,12 @@ public static class NavigationConstants
     /// </summary>
     public const float CriticalEncounterWaitInnerRatio = 0.7f;
 
+    /// <summary>Fraction of combat radius treated as inside the CE registration (blue) circle.</summary>
+    public const float CriticalEncounterRegistrationMaxRatio = 1.0f;
+
+    /// <summary>Re-arm CE walk-in after drifting this far out while holding position.</summary>
+    public const float CriticalEncounterWaitHoldReleaseRatio = 0.95f;
+
     /// <summary>While waiting for a CE, stand this far from center (inside the blue box).</summary>
     public const float CriticalEncounterWaitApproachRatio = 0.5f;
 
@@ -50,6 +57,23 @@ public static class NavigationApproach
     /// <summary>
     ///     Random point on a ring around the pot center so bots don't stack on one tile.
     /// </summary>
+    public static Vector3 GetCriticalEncounterApproachPosition(Vector3 center, Vector3 from, float combatRadius)
+    {
+        float approachRange = combatRadius * NavigationConstants.CriticalEncounterWaitApproachRatio;
+        return center.GetApproachPosition(from, approachRange);
+    }
+
+    public static Vector3 ResolveActivityApproach(Node goal, Vector3 from)
+    {
+        if (goal.Type == NodeType.CriticalEncounter
+            && goal.Metadata is ActivityNodeMetadata { CombatRadius: > 0 } meta)
+        {
+            return GetCriticalEncounterApproachPosition(goal.Position, from, meta.CombatRadius);
+        }
+
+        return GetEventPosition(goal.Position, from);
+    }
+
     public static Vector3 GetPotPrepositionPosition(Vector3 potCenter, Vector3 from)
     {
         float dist = from.Distance2D(potCenter);

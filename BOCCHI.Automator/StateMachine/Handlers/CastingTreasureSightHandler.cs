@@ -4,6 +4,7 @@ using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
+using BOCCHI.Treasure.Services;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
 using Ocelot.Actions;
@@ -18,7 +19,9 @@ public class CastingTreasureSightHandler
     ISupportJobFactory supportJobs,
     ISupportJobChanger changer,
     IAutomatorMemory memory,
-    AutomatorConfig config
+    AutomatorConfig config,
+    TreasureConfig treasureConfig,
+    ITreasureTracker tracker
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.CastingTreasureSight)
 {
     private DateTime lastCast = DateTime.MinValue;
@@ -42,7 +45,24 @@ public class CastingTreasureSightHandler
             return StatePriority.Never;
         }
 
-        if (zone.GetZone().IsInBasecamp() && config.ShouldCastTreasureSight && GetLastCastDeltaSeconds() >= config.TreasureSightRecastIntervalSeconds)
+        if (!zone.GetZone().IsInBasecamp())
+        {
+            return StatePriority.Never;
+        }
+
+        // AOCC-style: post-activity survey latch owns Sight while auto-hunt is enabled.
+        if (treasureConfig.EnableAutomaticTreasureHuntDuringIllegalMode
+            && memory.TryRemember<AutomaticTreasureSurveyMemory>(out AutomaticTreasureSurveyMemory survey)
+            && survey.PendingSurvey
+            && !survey.WaitingForSurveyResult)
+        {
+            return StatePriority.Always;
+        }
+
+        // Periodic basecamp Sight only when auto-hunt is off (latch replaces it otherwise).
+        if (!treasureConfig.EnableAutomaticTreasureHuntDuringIllegalMode
+            && config.ShouldCastTreasureSight
+            && GetLastCastDeltaSeconds() >= config.TreasureSightRecastIntervalSeconds)
         {
             return StatePriority.Always;
         }
@@ -99,6 +119,16 @@ public class CastingTreasureSightHandler
             {
                 lastCast = DateTime.Now;
                 memory.Forget<CastingTreasureSightMemory>();
+
+                if (memory.TryRemember<AutomaticTreasureSurveyMemory>(out AutomaticTreasureSurveyMemory survey)
+                    && survey.PendingSurvey)
+                {
+                    survey.PendingSurvey = false;
+                    survey.WaitingForSurveyResult = true;
+                    survey.MinAcceptedRevision = tracker.SurveyRevision;
+                    survey.SurveyWaitDeadlineUtc = DateTime.UtcNow + TimeSpan.FromSeconds(8);
+                }
+
                 // Job restore is ReturningToJobHandler (must beat Pathfinding priority).
             }
         }

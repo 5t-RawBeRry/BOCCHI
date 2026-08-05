@@ -1,6 +1,5 @@
 using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Config;
-using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.Paths;
@@ -23,7 +22,6 @@ public class PathCalculator
     IObjectTable objects,
     IZoneProvider zones,
     IFateRepository fates,
-    ICriticalEncounterRepository criticalEncounters,
     IFateContext fateContext,
     AutomatorConfig config,
     ILogger<PathCalculator> logger
@@ -64,7 +62,7 @@ public class PathCalculator
             return [];
         }
 
-        // Prefer live FATE/CE center when available — authored graph points can sit outside the circle.
+        // Prefer live FATE center when available — CEs use authored graph staging (#122).
         Node pathGoal = goalNode;
         Vector3? potPrepositionStandOff = null;
         if (goal.GoalType is FateGoal liveFateGoal
@@ -83,25 +81,26 @@ public class PathCalculator
         {
             potPrepositionStandOff = NavigationApproach.GetPotPrepositionPosition(goalNode.Position, player.Position);
         }
-        else if (goal.GoalType is CriticalEncounterGoal liveCeGoal
-                 && criticalEncounters.SnapshotWithoutForkedTower()
-                     .FirstOrDefault(c => c.Id.Value == liveCeGoal.id.Value) is { } liveCe
-                 && !float.IsNaN(liveCe.Position.X))
+
+        float ceCombatRadius = 0f;
+        if (goal.GoalType is CriticalEncounterGoal ceGoalForRadius)
         {
-            // Always path to the authored/staging center — a large combat-radius arrival
-            // left bots ~3y outside gates after nearby aetheryte hops (#122 / #124).
-            pathGoal = new Node
-            {
-                Id = goalNode.Id,
-                Type = goalNode.Type,
-                Position = liveCe.Position,
-                Metadata = goalNode.Metadata
-            };
+            ceCombatRadius = zone.GetCriticalEncounterData()
+                .FirstOrDefault(a => a.Id == ceGoalForRadius.id.Value)?.CombatRadius ?? 0f;
         }
 
         Vector3 arrivalCheck = potPrepositionStandOff ?? pathGoal.Position;
         float distanceToGoal = player.Position.Distance2D(arrivalCheck);
-        if (distanceToGoal <= NavigationConstants.EventArrivalRadius)
+        if (ceCombatRadius > 0f)
+        {
+            float innerArrival = ceCombatRadius * NavigationConstants.CriticalEncounterRegistrationMaxRatio;
+            if (distanceToGoal <= innerArrival)
+            {
+                logger.Debug("Inside CE registration circle.");
+                return [];
+            }
+        }
+        else if (distanceToGoal <= NavigationConstants.EventArrivalRadius)
         {
             logger.Debug("Too close to destination.");
             return [];
@@ -117,7 +116,10 @@ public class PathCalculator
         float distToCamp = graph.GetBaseCampAetheryteNode() is { } camp
             ? player.Position.Distance2D(camp.Position)
             : float.MaxValue;
-        if (distanceToGoal > NavigationConstants.MaxDirectWalkDistance
+        bool nearCriticalEncounter = ceCombatRadius > 0f
+                                     && distanceToGoal <= ceCombatRadius * 1.5f;
+        if (!nearCriticalEncounter
+            && distanceToGoal > NavigationConstants.MaxDirectWalkDistance
             && distanceToGoal >= distToCamp * 0.5f)
         {
             traverser.AddCalculator(new ReturnTeleportWalkCalculator());

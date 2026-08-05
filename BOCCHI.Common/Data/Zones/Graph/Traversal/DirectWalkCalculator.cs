@@ -1,4 +1,4 @@
-﻿using BOCCHI.Common.Data.Paths;
+using BOCCHI.Common.Data.Paths;
 using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
 using System.Numerics;
@@ -18,7 +18,7 @@ public class DirectWalkCalculator : IGraphCandidateCalculator
             return null;
         }
 
-        Vector3 approach = NavigationApproach.GetEventPosition(goal.Position, start);
+        Vector3 approach = NavigationApproach.ResolveActivityApproach(goal, start);
         Path path = await pathfinder.Pathfind(new(approach)
         {
             From = start,

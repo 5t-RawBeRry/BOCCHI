@@ -60,4 +60,8 @@ public class UIConfig : IAutoConfig
     [Checkbox] public bool ShowPotsTreasureSection { get; set; } = true;
 
     [Checkbox] public bool ShowTreasureSection { get; set; } = true;
+
+    /// <summary>Prefix chat notifications with [BOCCHI].</summary>
+    [Checkbox]
+    public bool ShowBocchiChatPrefix { get; set; } = true;
 }

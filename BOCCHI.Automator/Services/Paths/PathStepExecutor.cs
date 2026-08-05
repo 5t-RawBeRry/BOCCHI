@@ -40,42 +40,17 @@ public class PathStepExecutor
 
     private IChain BuildPathfindChain(System.Numerics.Vector3 destination, float range)
     {
-        // Set when MaybeMount runs so StartGrace is not burned at compose time.
-        DateTime mountStarted = DateTime.MinValue;
-
         return chains.Create($"PathStep::Pathfind({destination:f2}, {range:f2})")
-            .Then(_ =>
-            {
-                mountStarted = DateTime.UtcNow;
-
-                if (MountWait.ShouldSkip(conditions, objects, destination, config.ShouldAutoMount))
-                {
-                    return StepResult.Success();
-                }
-
-                MountWait.TryCast(config.PreferredMountId);
-                return StepResult.Success();
-            }, "PathStep::MaybeMount")
-            .WaitUntil(
-                _ =>
-                {
-                    DateTime started = mountStarted == DateTime.MinValue ? DateTime.UtcNow : mountStarted;
-                    return ValueTask.FromResult(
-                        MountWait.IsReadyOrGiveUp(
-                            conditions,
-                            objects,
-                            destination,
-                            started,
-                            config.ShouldAutoMount,
-                            config.PreferredMountId));
-                },
-                MountWait.Timeout,
-                TimeSpan.FromMilliseconds(250),
-                "PathStep::WaitForMount")
             .Then<PathfindToChain, PathfinderConfig>(new(destination)
             {
                 DistanceThreshold = range > 0f ? range : 2f,
-                ShouldSnapToFloor = true
+                ShouldSnapToFloor = true,
+                WhileMoving = () => MountWait.TryCastIfNeeded(
+                    conditions,
+                    objects,
+                    destination,
+                    config.ShouldAutoMount,
+                    config.PreferredMountId),
             });
     }
 }

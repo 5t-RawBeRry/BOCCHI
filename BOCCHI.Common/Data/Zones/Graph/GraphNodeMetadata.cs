@@ -29,6 +29,9 @@ public class ActivityNodeMetadata : INodeMetadata
     public int Id { get; set; }
 
     public uint? PreferredAethernetId { get; set; }
+
+    /// <summary>Authored engage radius for CE nodes; 0 for FATEs.</summary>
+    public float CombatRadius { get; set; }
 }
 
 public class TeleportNodeMetadata : INodeMetadata

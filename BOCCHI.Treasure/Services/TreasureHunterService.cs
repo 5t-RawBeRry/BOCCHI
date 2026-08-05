@@ -193,6 +193,8 @@ public class TreasureHunterService
 
     public bool ManagedByPotsTreasure { get; set; }
 
+    public bool ManagedByIllegalModeFiller { get; set; }
+
     public bool IsVnavAvailable => vnav.IsAvailable();
 
     public bool IsVnavReady => vnav.IsNavmeshReady();
@@ -211,6 +213,7 @@ public class TreasureHunterService
         StepIndex = 0;
         LastCheckedNodeId = null;
         ManagedByPotsTreasure = false;
+        ManagedByIllegalModeFiller = false;
         Paused = false;
         steps.Clear();
         layoutTreasure.Clear();
@@ -907,7 +910,8 @@ public class TreasureHunterService
 
     private void Teardown()
     {
-        bool wasStandalone = Running && !ManagedByPotsTreasure;
+        bool wasStandalone = Running && !ManagedByPotsTreasure && !ManagedByIllegalModeFiller;
+        bool wasIllegalFiller = ManagedByIllegalModeFiller;
 
         Running = false;
         Paused = false;
@@ -924,13 +928,17 @@ public class TreasureHunterService
         StepDistance = 0f;
         LastCheckedNodeId = null;
         ManagedByPotsTreasure = false;
-        steps.Clear();
+        ManagedByIllegalModeFiller = false;
         layoutTreasure.Clear();
         pathPlanner = null;
 
         if (wasStandalone)
         {
             modeGuard.NotifyStandaloneTreasureHuntEnded();
+        }
+        else if (wasIllegalFiller)
+        {
+            modeGuard.NotifyIllegalModeFillerHuntEnded();
         }
     }
 }

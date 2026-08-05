@@ -69,7 +69,7 @@ public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
                 [
                     PathStep.Return(),
                     // Destination is already offset via GetEventPosition — don't also give vnav a 20y arrival.
-                    PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, returnNode.Position))
+                    PathStep.Pathfind(NavigationApproach.ResolveActivityApproach(goal, returnNode.Position))
                 ]));
         }
 
@@ -78,7 +78,7 @@ public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
             [
                 PathStep.Return(),
                 PathStep.Teleport(meta.AetheryteId),
-                PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, inbound.Position))
+                PathStep.Pathfind(NavigationApproach.ResolveActivityApproach(goal, inbound.Position))
             ]));
     }
 }

@@ -58,6 +58,14 @@ public class ReturningHandler
             return StatePriority.VeryHigh;
         }
 
+        // AOCC-style: after activity, get to camp for Treasure Sight before the next CE/FATE.
+        if (memory.TryRemember<AutomaticTreasureSurveyMemory>(out AutomaticTreasureSurveyMemory survey)
+            && survey.PendingSurvey
+            && !zones.GetZone().IsInBasecamp())
+        {
+            return StatePriority.High;
+        }
+
         if (!memory.TryRemember<IdleStateMemory>(out IdleStateMemory idle) || zones.GetZone().IsInBasecamp())
         {
             return StatePriority.Never;
@@ -126,8 +134,12 @@ public class ReturningHandler
         }
 
         // Path handoff: hold Returning while the rolled 2..max delay elapses.
+        // Survey latch skips the humanize delay — get to camp for Sight ASAP (AOCC-style).
+        bool surveyLatch = memory.TryRemember<AutomaticTreasureSurveyMemory>(out AutomaticTreasureSurveyMemory latch)
+                           && latch.PendingSurvey;
         if (memory.TryRemember<ReturningStateMemory>(out ReturningStateMemory returning)
-            && !returning.IsReadyToCast())
+            && !returning.IsReadyToCast()
+            && !surveyLatch)
         {
             return;
         }

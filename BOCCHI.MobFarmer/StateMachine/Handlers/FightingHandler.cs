@@ -48,18 +48,6 @@ public class FightingHandler
         // Finish the fight before gathering again — do not top up mid-pack.
         if (shouldReturnHome && !anyInCombat)
         {
-            if (!MountWait.ShouldSkip(conditions, objects, farmer.StartingPoint, automatorConfig.ShouldAutoMount)
-                && EzThrottler.Throttle("MobFarmer::Fighting::MountHome", 750))
-            {
-                MountWait.TryCast(automatorConfig.PreferredMountId);
-                return null;
-            }
-
-            if (conditions[ConditionFlag.Mounting])
-            {
-                return null;
-            }
-
             if (pathfinder.GetState() == PathfindingState.Idle)
             {
                 pathfinder.PathfindAndMoveTo(new(farmer.StartingPoint)
@@ -67,6 +55,13 @@ public class FightingHandler
                     AllowFlying = false
                 });
             }
+
+            MountWait.TryCastIfNeeded(
+                conditions,
+                objects,
+                farmer.StartingPoint,
+                automatorConfig.ShouldAutoMount,
+                automatorConfig.PreferredMountId);
 
             return player.Position.Distance2D(farmer.StartingPoint) <= 2f ? FarmerPhase.Waiting : null;
         }

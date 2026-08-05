@@ -18,6 +18,9 @@ public interface IAutomationModeGuard
     /// <summary>Resume Illegal Mode after a standalone treasure hunt if it was soft-paused.</summary>
     void NotifyStandaloneTreasureHuntEnded();
 
+    /// <summary>Resume Illegal Mode after auto-filler treasure hunt completes.</summary>
+    void NotifyIllegalModeFillerHuntEnded();
+
     /// <summary>Stop all modes, buffs, pathfinding, and chains.</summary>
     void EmergencyStop();
 }

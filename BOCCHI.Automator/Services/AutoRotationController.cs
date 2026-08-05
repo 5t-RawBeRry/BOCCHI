@@ -1,3 +1,4 @@
+using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using Dalamud.Plugin.Services;
 using Ocelot.Rotation.Services.BossMod;
@@ -9,6 +10,7 @@ namespace BOCCHI.Automator.Services;
 public class AutoRotationController(
     BossModRotationService bossMod,
     AutomatorConfig config,
+    UIConfig uiConfig,
     IPlayer player,
     IChatGui chat
 )
@@ -69,8 +71,9 @@ public class AutoRotationController(
     private void PrintNotReady()
     {
         var job = player.GetClassJob();
-        chat.PrintError(
-            $"[BOCCHI] BOCCHI AI not ready (is BossMod / BMR loaded?). "
-            + $"job={job?.Abbreviation.ToString() ?? "?"} melee={player.IsMelee()}");
+        chat.PrintError(BocchiChat.Format(
+            $"BOCCHI AI not ready (is BossMod / BMR loaded?). "
+            + $"job={job?.Abbreviation.ToString() ?? "?"} melee={player.IsMelee()}",
+            uiConfig));
     }
 }

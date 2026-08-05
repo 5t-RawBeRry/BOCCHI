@@ -1,3 +1,5 @@
+using System.Numerics;
+using System.Text.RegularExpressions;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using BOCCHI.Treasure.Data;
@@ -10,7 +12,6 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using Ocelot.Extensions;
 using Ocelot.Lifecycle;
 using Ocelot.Services.PlayerState;
-using System.Text.RegularExpressions;
 
 namespace BOCCHI.Treasure.Services;
 
@@ -24,6 +25,7 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
     private readonly TimeSpan parseWideTextCooldown = TimeSpan.FromSeconds(5);
     private readonly IPlayer player;
     private readonly IZoneProvider zones;
+    private readonly CofferObservationSubmissionService observations;
 
     private DateTime lastParseWideText = DateTime.MinValue;
     private List<TreasureCoffer> treasures = [];
@@ -33,7 +35,8 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
         IAddonLifecycle addonLifecycle,
         IDataManager data,
         IZoneProvider zones,
-        IPlayer player
+        IPlayer player,
+        CofferObservationSubmissionService observations
     )
     {
         this.objects = objects;
@@ -41,6 +44,7 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
         this.data = data;
         this.zones = zones;
         this.player = player;
+        this.observations = observations;
         addonLifecycle.RegisterListener(AddonEvent.PostDraw, "_WideText", OnWideTextPostDraw);
     }
 
@@ -89,6 +93,14 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
                 continue;
             }
 
+            Vector3 position = treasure.GetPosition();
+            observations.Submit(
+                treasure.Id,
+                position.X,
+                position.Y,
+                position.Z,
+                treasure.GetCofferType().ToString());
+
             if (treasure.GetCofferType() == CofferType.Bronze)
             {
                 BronzeChests = Math.Max(0, BronzeChests - 1);
@@ -109,6 +121,9 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
     public int BronzeChests { get; private set; }
 
     public int SilverChests { get; private set; }
+
+    /// <summary>Increments on each successful Treasure Sight WideText parse.</summary>
+    public int SurveyRevision { get; private set; }
 
     private unsafe void OnWideTextPostDraw(AddonEvent type, AddonArgs args)
     {
@@ -142,5 +157,6 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
         BronzeChests = int.Parse(match.Groups[2].Value);
         CountInitialised = true;
         LastCountUpdateUtc = DateTime.UtcNow;
+        SurveyRevision++;
     }
 }
