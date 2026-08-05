@@ -81,7 +81,7 @@ public class PathfindingHandler
         // Teleport-only mode: calc produced no Return/Teleport steps → pause for manual (#109).
         if (path.PauseWhenPlanCompletes && path.IsEmptyPlan && currentPathTask == null)
         {
-            PauseForManualPathing("No auto-walk steps — paused for manual pathing");
+            PauseForManualPathing(StopAfterReturnMessage("no travel steps left"));
             return;
         }
 
@@ -109,7 +109,7 @@ public class PathfindingHandler
                             && completedKind is PathStepKind.Teleport or PathStepKind.Return)
                         {
                             currentPathTask = null;
-                            PauseForManualPathing("Arrived at aetheryte — paused for manual pathing");
+                            PauseForManualPathing(StopAfterReturnMessage("arrived at aetheryte"));
                             return;
                         }
                     }
@@ -152,7 +152,7 @@ public class PathfindingHandler
 
                 if (path.PauseWhenPlanCompletes && path.GetNextPathStep() == null)
                 {
-                    PauseForManualPathing("Returned to camp — paused for manual pathing");
+                    PauseForManualPathing(StopAfterReturnMessage("returned to camp"));
                 }
 
                 return;
@@ -169,6 +169,10 @@ public class PathfindingHandler
             memory.Forget<GoalPathStepMemory>();
         }
     }
+
+    private static string StopAfterReturnMessage(string where) =>
+        $"Stop after return: {where} — paused for manual pathing "
+        + "(Illegal Mode → Stop after return; toggle Illegal Mode to resume)";
 
     private void PauseForManualPathing(string reason)
     {

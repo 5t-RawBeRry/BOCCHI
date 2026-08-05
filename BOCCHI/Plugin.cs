@@ -136,6 +136,14 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
 
         Configuration cfg = plugin.GetPluginConfig() as Configuration ?? new Configuration();
         EnsureAutoConfigInstances(cfg);
+        EnsureConfigDefaults(cfg);
+
+        if (cfg.AutomatorConfig.StopAfterReturn)
+        {
+            logger.Info(
+                "Illegal Mode: Stop after return is ON — after Return/aetheryte BOCCHI pauses for manual pathing "
+                + "(Illegal Mode → Stop after return). Toggle Illegal Mode to resume, or turn the option off.");
+        }
 
         services.AddSingleton(cfg);
         services.AddSingleton<IConfiguration>(cfg);
@@ -179,5 +187,14 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
 
             prop.SetValue(cfg, Activator.CreateInstance(prop.PropertyType));
         }
+    }
+
+    /// <summary>Null HashSets from bad/partial JSON would NRE in allowlist checks.</summary>
+    private static void EnsureConfigDefaults(Configuration cfg)
+    {
+        cfg.FatesConfig.DisabledFateIds ??= [];
+        cfg.CriticalEncountersConfig.DisabledCriticalEncounterIds ??= [];
+        cfg.ShoppingConfig.PreferredItemIds ??= [];
+        cfg.MobFarmerConfig.Mobs ??= [];
     }
 }
