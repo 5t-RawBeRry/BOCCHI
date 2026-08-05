@@ -1,4 +1,4 @@
-﻿# 4.0.2.11
+﻿# 4.0.2.10
 
 ### Features
 - Pots & Treasure: restart treasure filler after a short delay, skip already-checked nodes, resume control (#137)
