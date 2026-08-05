@@ -38,6 +38,8 @@ using Ocelot.Services.WindowManager;
 using Ocelot.UI.Services;
 using Ocelot.Windows;
 using System.Reflection;
+using BOCCHI.Services.MOTD;
+using Ocelot.Lifecycle;
 #if DEBUG
 using BOCCHI.Debug;
 #endif
@@ -76,6 +78,9 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<IFieldRenderer<Mp3SoundSelectAttribute>, Mp3SoundSelectRenderer>();
         services.AddSingleton<UILanguageDisplay>();
         services.AddSingleton<NoOpFilter<UILanguage>>();
+
+        services.AddSingleton<IOnStart, MessageOfTheDayService>();
+        services.AddSingleton<IOnStop, MessageOfTheDayService>();
 
         services.AddSingleton<ISupportJobFactory, SupportJobFactory>();
         services.AddSingleton<ISupportJobChanger, SupportJobChanger>();
