@@ -210,7 +210,7 @@ public class TreasureHunterService
     {
         if (Running)
         {
-            StopHunt();
+            Teardown();
             return;
         }
 
@@ -327,11 +327,6 @@ public class TreasureHunterService
         return true;
     }
 
-    private void StopHunt()
-    {
-        Teardown();
-    }
-
     /// <summary>Stop movement/chains without clearing the planned route.</summary>
     private void SoftStopMovement()
     {
@@ -341,11 +336,7 @@ public class TreasureHunterService
         activeChain = null;
     }
 
-    private bool CanCastTreasureSight()
-    {
-        SupportJob freelancer = supportJobs.Create(SupportJobId.PhantomFreelancer);
-        return freelancer.Level >= 10;
-    }
+    private bool CanCastTreasureSight() => SupportJobTreasureSight.CanCast(supportJobs);
 
     private bool TryBeginTreasureSight()
     {
@@ -527,7 +518,7 @@ public class TreasureHunterService
             return false;
         }
 
-        if (present != null && IsChestOpened(present))
+        if (present != null && OpenTreasureCofferChain.IsOpenedOrLooted(present))
         {
             vnav.Stop();
             return true;
@@ -563,11 +554,6 @@ public class TreasureHunterService
         );
 
         return false;
-    }
-
-    private bool IsChestOpened(IGameObject chest)
-    {
-        return OpenTreasureCofferChain.IsOpenedOrLooted(chest);
     }
 
     private bool HandleReturnToBaseCamp()
@@ -823,7 +809,7 @@ public class TreasureHunterService
         }
 
         IGameObject? present = FindTreasureNear(layout.Position, ChestSearchRadius);
-        return present != null && IsChestOpened(present);
+        return present != null && OpenTreasureCofferChain.IsOpenedOrLooted(present);
     }
 
     private TreasureHuntPathfinder? CreatePathPlanner()

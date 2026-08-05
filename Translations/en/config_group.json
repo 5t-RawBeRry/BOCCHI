@@ -26,5 +26,9 @@
   "forked_tower": {
     "label": "Forked Tower",
     "tooltip": "Forked Tower alerts and overlays."
+  },
+  "dependencies": {
+    "label": "Dependencies",
+    "tooltip": "Required and optional plugin status."
   }
 }

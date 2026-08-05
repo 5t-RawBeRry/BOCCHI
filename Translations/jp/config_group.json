@@ -26,5 +26,9 @@
   "forked_tower": {
     "label": "フォークタワー",
     "tooltip": "フォークタワーの通知とオーバーレイです。"
+  },
+  "dependencies": {
+    "label": "依存関係",
+    "tooltip": "必須・任意プラグインの状態です。"
   }
 }

@@ -48,6 +48,7 @@ namespace BOCCHI;
 
 public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : OcelotPlugin(plugin, logger)
 {
+    // Avoid CS9107: primary-ctor params are also passed to the base ctor.
     private readonly IPluginLog logger = logger;
     private readonly IDalamudPluginInterface plugin = plugin;
 
@@ -74,13 +75,15 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<IFieldRenderer<DisabledFateIdsAttribute>, DisabledFateIdsRenderer>();
         services.AddSingleton<IFieldRenderer<DisabledCriticalEncounterIdsAttribute>, DisabledCriticalEncounterIdsRenderer>();
         services.AddSingleton<IFieldRenderer<MountSelectAttribute>, MountSelectRenderer>();
+        services.AddSingleton<IFieldRenderer<PluginDependencyStatusAttribute>, PluginDependencyStatusRenderer>();
         services.AddSingleton<IMp3SoundPlayer, Mp3SoundPlayer>();
         services.AddSingleton<IFieldRenderer<Mp3SoundSelectAttribute>, Mp3SoundSelectRenderer>();
         services.AddSingleton<UILanguageDisplay>();
         services.AddSingleton<NoOpFilter<UILanguage>>();
 
-        services.AddSingleton<IOnStart, MessageOfTheDayService>();
-        services.AddSingleton<IOnStop, MessageOfTheDayService>();
+        services.AddSingleton<MessageOfTheDayService>();
+        services.AddSingleton<IOnStart>(sp => sp.GetRequiredService<MessageOfTheDayService>());
+        services.AddSingleton<IOnStop>(sp => sp.GetRequiredService<MessageOfTheDayService>());
 
         services.AddSingleton<ISupportJobFactory, SupportJobFactory>();
         services.AddSingleton<ISupportJobChanger, SupportJobChanger>();
@@ -132,6 +135,8 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         }
 
         Configuration cfg = plugin.GetPluginConfig() as Configuration ?? new Configuration();
+        EnsureAutoConfigInstances(cfg);
+
         services.AddSingleton(cfg);
         services.AddSingleton<IConfiguration>(cfg);
         services.AddSingleton<IPluginConfiguration>(s => s.GetRequiredService<Configuration>());
@@ -156,6 +161,23 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
                     return prop.GetValue(conf)!;
                 });
             }
+        }
+    }
+
+    /// <summary>
+    ///     Dalamud/Newtonsoft can leave new IAutoConfig properties null when absent from saved JSON.
+    ///     Null entries break ConfigRenderer and hide those pages.
+    /// </summary>
+    private static void EnsureAutoConfigInstances(Configuration cfg)
+    {
+        foreach (PropertyInfo prop in typeof(IConfiguration).GetProperties(BindingFlags.Instance | BindingFlags.Public))
+        {
+            if (!typeof(IAutoConfig).IsAssignableFrom(prop.PropertyType) || prop.GetValue(cfg) is not null)
+            {
+                continue;
+            }
+
+            prop.SetValue(cfg, Activator.CreateInstance(prop.PropertyType));
         }
     }
 }

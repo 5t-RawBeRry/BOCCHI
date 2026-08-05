@@ -1,4 +1,4 @@
-﻿using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Data;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using Ocelot.Chain;
@@ -38,6 +38,5 @@ public class RepairingHandler(IZoneProvider zones, IRepairService repair) : Scor
 
     public override void Handle()
     {
-        // Do nothing this is handled by the task
     }
 }

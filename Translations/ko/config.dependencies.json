@@ -1,0 +1,20 @@
+{
+  "label": "의존성",
+  "tooltip": "BOCCHI가 사용하는 필수/선택 플러그인의 설치·로드·IPC 상태입니다.",
+  "fields": {
+    "status": {
+      "label": "상태",
+      "tooltip": "의존성 현재 상태.",
+      "intro": "각 줄은 설치/로드 상태와, IPC로 연결하는 경우 그 상태를 표시합니다. 이동과 에테르네트에는 필수 플러그인이 필요합니다. 선택 플러그인은 BossMod AI 또는 다른 로테이션 연동에 사용됩니다.",
+      "required": "필수",
+      "optional": "선택",
+      "ready": "준비됨",
+      "ipc_ok": "IPC OK",
+      "ipc_ok_mesh_pending": "IPC OK (내비메시 미준비)",
+      "ipc_missing": "IPC 없음",
+      "loaded": "로드됨",
+      "installed_not_loaded": "설치됨 (미로드)",
+      "not_installed": "미설치"
+    }
+  }
+}

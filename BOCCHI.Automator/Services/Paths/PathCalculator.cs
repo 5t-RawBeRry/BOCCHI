@@ -110,7 +110,6 @@ public class PathCalculator
         // Teleport-first: from camp this is usually instant (no vnav). DirectWalk only for short hops.
         traverser.AddCalculator(new WalkTeleportWalkCalculator());
         traverser.AddCalculator(new DirectWalkCalculator());
-        traverser.AddCalculator(new ReturnWalkCalculator());
 
         // Don't offer Return when already closer to the goal than to camp — that caused #84 loops.
         float distToCamp = graph.GetBaseCampAetheryteNode() is { } camp

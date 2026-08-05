@@ -64,8 +64,8 @@
       "tooltip": "After a CE/FATE, Return to camp, use Treasure Sight when available, and start a treasure hunt. (Only works when Treasure Sight is learned)"
     },
     "enable_coffer_observation_submission": {
-      "label": "Coffer observation network",
-      "tooltip": "Opt-in: anonymously submit coffer opens, and when the catalog has accepted spots, prefer those for Treasure Hunt (falls back to the authored map when empty)."
+      "label": "Opt in for live coffer routes",
+      "tooltip": "Anonymously send coffer open locations so we can build live Treasure Hunt routes. When enough spots are confirmed, hunts prefer those; otherwise the authored map is used."
     }
   }
 }

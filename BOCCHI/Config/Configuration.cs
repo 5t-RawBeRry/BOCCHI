@@ -13,6 +13,8 @@ public class Configuration : IConfiguration
 
     public UIConfig UIConfig { get; set; } = new();
 
+    public DependenciesConfig DependenciesConfig { get; set; } = new();
+
     public AutomatorConfig AutomatorConfig { get; set; } = new();
 
     public BuffConfig BuffConfig { get; set; } = new();

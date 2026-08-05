@@ -1,4 +1,4 @@
-﻿using BOCCHI.Common;
+using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.EventDrops;
 using BOCCHI.Common.Data.Fates;

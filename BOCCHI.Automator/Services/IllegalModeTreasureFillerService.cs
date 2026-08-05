@@ -195,11 +195,7 @@ public class IllegalModeTreasureFillerService
         LogSightUnavailableOnce();
     }
 
-    private bool CanCastTreasureSight()
-    {
-        SupportJob freelancer = supportJobs.Create(SupportJobId.PhantomFreelancer);
-        return freelancer.Level >= 10;
-    }
+    private bool CanCastTreasureSight() => SupportJobTreasureSight.CanCast(supportJobs);
 
     private void LogSightUnavailableOnce()
     {
@@ -210,7 +206,8 @@ public class IllegalModeTreasureFillerService
 
         loggedSightUnavailable = true;
         logger.Info(
-            "Illegal Mode: Treasure Sight unavailable (Freelancer below level 10) — skipping auto survey/hunt until unlocked");
+            "Illegal Mode: Treasure Sight unavailable (Freelancer below level {Level}) — skipping auto survey/hunt until unlocked",
+            SupportJobTreasureSight.RequiredFreelancerLevel);
     }
 
     private void TryApplySurveyResult(AutomaticTreasureSurveyMemory survey)

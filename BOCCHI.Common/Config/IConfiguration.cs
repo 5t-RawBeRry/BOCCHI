@@ -7,6 +7,8 @@ public interface IConfiguration : IPluginConfiguration
 
     UIConfig UIConfig { get; set; }
 
+    DependenciesConfig DependenciesConfig { get; set; }
+
     AutomatorConfig AutomatorConfig { get; set; }
 
     BuffConfig BuffConfig { get; set; }

@@ -3,12 +3,12 @@ using Ocelot.Lifecycle;
 
 namespace BOCCHI.Services.MOTD;
 
-public class MessageOfTheDayService(IChatGui chat, IClientState client) : IOnStart, IOnStop
+public class MessageOfTheDayService(IChatGui chat, IClientState client, IFramework framework) : IOnStart, IOnStop
 {
     /**
      * Dear cute maintainer, the divine doctrine of BOCCHI declares that the MOTD cannot be disabled.
      */
-    private readonly static string[] Messages =
+    private static readonly string[] Messages =
     [
         "Trans rights are human rights.",
         "Welcome to BOCCHI!",
@@ -23,22 +23,32 @@ public class MessageOfTheDayService(IChatGui chat, IClientState client) : IOnSta
         "Chika says that choice is an illusion.",
     ];
 
-    public string GetMessageOfTheDay() {
-        return Messages[DateTime.Now.DayOfYear % Messages.Length];
-    }
+    private bool printedThisSession;
+
+    public string GetMessageOfTheDay() =>
+        Messages[DateTime.Now.DayOfYear % Messages.Length];
 
     public void OnStart()
     {
         client.Login += OnLogin;
 
+        // Do not chat.Print during plugin StartHost — that can deadlock the load with no error.
         if (client.IsLoggedIn)
         {
-            chat.Print(GetMessageOfTheDay());
+            framework.RunOnTick(PrintMotdOnce);
         }
     }
 
-    private void OnLogin()
+    private void OnLogin() => framework.RunOnTick(PrintMotdOnce);
+
+    private void PrintMotdOnce()
     {
+        if (printedThisSession)
+        {
+            return;
+        }
+
+        printedThisSession = true;
         chat.Print($"[BOCCHI] {GetMessageOfTheDay()}");
     }
 

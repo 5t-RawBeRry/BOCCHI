@@ -144,7 +144,6 @@ public class ReturningHandler
             return;
         }
 
-        // Prefer Return while mounted when allowed.
         if (Actions.Return.CanCast())
         {
             memory.TryAdd(new ReturningStateMemory(TimeSpan.Zero));

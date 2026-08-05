@@ -1,0 +1,20 @@
+{
+  "label": "Dependencies",
+  "tooltip": "Required and optional plugins BOCCHI talks to, and whether they are installed, loaded, and reachable over IPC.",
+  "fields": {
+    "status": {
+      "label": "Status",
+      "tooltip": "Live dependency status.",
+      "intro": "Each line shows install/load state, plus IPC health when BOCCHI talks to that plugin. Required ones must be installed and loaded for pathing and aethernet teleports. Optional ones unlock BossMod AI / alternate rotation providers.",
+      "required": "Required",
+      "optional": "Optional",
+      "ready": "Ready",
+      "ipc_ok": "IPC OK",
+      "ipc_ok_mesh_pending": "IPC OK (navmesh not ready)",
+      "ipc_missing": "IPC missing",
+      "loaded": "Loaded",
+      "installed_not_loaded": "Installed (not loaded)",
+      "not_installed": "Not installed"
+    }
+  }
+}
