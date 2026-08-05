@@ -1,0 +1,76 @@
+{
+  "label": "刷怪",
+  "tooltip": "怪物选择与刷怪行为。",
+  "fields": {
+    "should_handle_targeting": {
+      "label": "接管选取目标",
+      "tooltip": "成群作战时，由 BOCCHI 挑选并切换目标。"
+    },
+    "force_target_central_enemy": {
+      "label": "优先怪群中心",
+      "tooltip": "优先选择最靠近怪群中心的敌人，而不是距离最近的。需要与“接管选取目标”配合使用。"
+    },
+    "consider_special_mobs": {
+      "label": "将特殊怪纳入考虑",
+      "tooltip": "把附近的特殊怪纳入拉怪目标与数量统计。这类怪只在特定时间和天气下出现。"
+    },
+    "count_special_mobs_toward_minimum": {
+      "label": "特殊怪计入最少数量",
+      "tooltip": "关闭时，特殊怪仍可被拉取，但不计入“开始刷怪的最少数量”与“开始战斗的最少数量”。"
+    },
+    "only_start_out_of_combat": {
+      "label": "仅在脱离战斗后开始",
+      "tooltip": "等到战斗状态解除后，才开始新一轮“上增益 → 聚怪”循环。已经仇恨你的怪仍会直接进入战斗阶段。"
+    },
+    "max_mob_level": {
+      "label": "怪物最高等级",
+      "tooltip": "允许拉取的怪物最高等级，在面对特殊怪或等级参差的怪时比较有用。"
+    },
+    "max_euclidean_distance": {
+      "label": "最大直线距离",
+      "tooltip": "超过该直线距离的怪物将被忽略。纳入特殊怪时，这项可以避免你被一路牵引着跑遍全图。"
+    },
+    "min_euclidean_distance_to_return_home": {
+      "label": "返回原地的最小距离",
+      "tooltip": "战斗结束后，若你距离起点超过该数值，就会走回去。"
+    },
+    "return_to_start_in_waiting_phase": {
+      "label": "战斗结束后返回起点",
+      "tooltip": "起点为你按下“开始”时所站的位置。启用自动上坐骑时会骑乘返回。"
+    },
+    "render_debug_lines": {
+      "label": "绘制调试连线",
+      "tooltip": "刷怪运行期间，用红线标出脱战状态的有效怪物，用绿线标出战斗中的有效怪物。"
+    },
+    "apply_battle_bell": {
+      "label": "使用战斗之铃",
+      "tooltip": "每次拉怪前切换到辅助风水师并使用战斗之铃。若增益仍在生效，或冷却时间长于下方设定的等待时间，则跳过。"
+    },
+    "maximum_battle_bell_wait_time": {
+      "label": "等待战斗之铃的最长时间",
+      "tooltip": "若战斗之铃的剩余冷却时间长于该数值，则跳过上增益直接拉怪。"
+    },
+    "minimum_mobs_to_start_loop": {
+      "label": "开始刷怪的最少数量",
+      "tooltip": "附近需要有多少只有效怪物才开始一轮循环。"
+    },
+    "minimum_mobs_to_start_fight": {
+      "label": "开始战斗的最少数量",
+      "tooltip": "聚集到多少只怪之后停下来开打。若周围已经没有脱战状态的怪，无论数量是否达标都会开始战斗。"
+    },
+    "stacking_timeout_seconds": {
+      "label": "聚怪超时（秒）",
+      "tooltip": "用于走动聚怪的最长时间，超时后无论如何都会开始战斗。"
+    },
+    "mobs": {
+      "label": "目标怪物",
+      "tooltip": "刷怪时会拉取并计入聚怪数量的怪物。",
+      "search_hint": "搜索名称或 ID……",
+      "selected": "已选择",
+      "zone_filter": "区域",
+      "zone_all": "全部区域",
+      "zone_south_horn": "新月岛南部",
+      "zone_north_horn": "新月岛北部"
+    }
+  }
+}

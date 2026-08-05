@@ -1,0 +1,50 @@
+{
+  "label": "界面",
+  "tooltip": "主窗口的语言，以及显示哪些板块。",
+  "fields": {
+    "language": {
+      "label": "语言",
+      "tooltip": "选择 BOCCHI 的显示语言。"
+    },
+    "show_experience_tracker": {
+      "label": "显示经验值统计",
+      "tooltip": "在主窗口中显示经验值统计面板。"
+    },
+    "show_experience_tracker_graph": {
+      "label": "显示经验值统计图表",
+      "tooltip": "在统计面板下方显示经验值曲线。"
+    },
+    "show_currency_tracker": {
+      "label": "显示货币统计",
+      "tooltip": "在主窗口中显示货币统计面板。"
+    },
+    "show_currency_tracker_graph": {
+      "label": "显示货币统计图表",
+      "tooltip": "在统计面板下方显示货币曲线。"
+    },
+    "show_world_section": {
+      "label": "显示区域板块",
+      "tooltip": "在主窗口中显示进行中的危命任务与紧急遭遇战。"
+    },
+    "show_buff_section": {
+      "label": "显示增益按钮",
+      "tooltip": "在主窗口顶部的状态标签旁显示“增益”操作。"
+    },
+    "show_automation_section": {
+      "label": "显示违规模式板块",
+      "tooltip": "在主窗口中显示违规模式的控制项。"
+    },
+    "show_mob_farmer_section": {
+      "label": "显示刷怪板块",
+      "tooltip": "在主窗口中显示刷怪的控制项。"
+    },
+    "show_pots_treasure_section": {
+      "label": "显示魔法罐与寻宝板块",
+      "tooltip": "在主窗口中显示魔法罐与寻宝的控制项。"
+    },
+    "show_treasure_section": {
+      "label": "显示寻宝板块",
+      "tooltip": "在主窗口中显示寻宝的状态与控制项。"
+    }
+  }
+}

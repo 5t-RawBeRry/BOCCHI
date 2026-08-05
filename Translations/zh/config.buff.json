@@ -1,0 +1,38 @@
+{
+  "label": "增益",
+  "tooltip": "自动维持辅助职业增益。",
+  "fields": {
+    "should_automate_buffs": {
+      "label": "自动维持增益",
+      "tooltip": "自动维持所选的辅助职业增益。"
+    },
+    "apply_romeos_ballad": {
+      "label": "使用爱之歌",
+      "tooltip": "自动维持增益时保持爱之歌处于生效状态。"
+    },
+    "apply_enduring_fortitude": {
+      "label": "使用守护之祈祷",
+      "tooltip": "自动维持增益时保持守护之祈祷处于生效状态。"
+    },
+    "apply_fleetfooted": {
+      "label": "使用架招疾行",
+      "tooltip": "自动维持增益时保持架招疾行处于生效状态。"
+    },
+    "apply_quicker_step": {
+      "label": "使用快攻步",
+      "tooltip": "自动维持增益时保持快攻步处于生效状态。"
+    },
+    "apply_buffs_using_inquiring_mind": {
+      "label": "借助探求心统一附加增益",
+      "tooltip": "条件允许时，使用辅助自由人的探求心刷新快攻步，然后再逐个附加其余所选增益。"
+    },
+    "reapply_threshold": {
+      "label": "重新附加阈值（分钟）",
+      "tooltip": "当某个增益的剩余时间不足该分钟数时，重新附加它。"
+    },
+    "knowledge_crystal_distance": {
+      "label": "知识水晶距离",
+      "tooltip": "为获取增益而步行前往知识水晶的最大距离。"
+    }
+  }
+}

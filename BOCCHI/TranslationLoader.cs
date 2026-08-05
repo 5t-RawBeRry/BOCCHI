@@ -10,9 +10,11 @@ public class TranslationLoader(ITranslationRepository translations, UIConfig con
 
     public void OnStart()
     {
-        translations.LoadFromDirectory("Translations", "en");
-        translations.LoadFromDirectory("Translations", "jp");
-        translations.LoadFromDirectory("Translations", "ko");
+        foreach (UILanguage language in Enum.GetValues<UILanguage>())
+        {
+            translations.LoadFromDirectory("Translations", language.TranslationCode());
+        }
+
         ApplyConfiguredLanguage();
     }
 

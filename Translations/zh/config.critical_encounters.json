@@ -1,0 +1,11 @@
+{
+  "label": "紧急遭遇战",
+  "tooltip": "允许参与哪些紧急遭遇战。",
+  "fields": {
+    "disabled_critical_encounter_ids": {
+      "label": "紧急遭遇战可选范围",
+      "tooltip": "取消勾选某个紧急遭遇战，即可将其排除在挑选范围之外。",
+      "empty": "当前区域没有已定义的紧急遭遇战。"
+    }
+  }
+}
