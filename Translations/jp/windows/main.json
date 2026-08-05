@@ -50,6 +50,17 @@
       "fighting": "戦闘中"
     }
   },
+  "pot_timer": {
+    "active": "壺 FATE 進行中",
+    "next": "次の壺",
+    "unknown": "次の壺：不明 — 壺 FATE を一度見るとタイマーが始まります。",
+    "chip_active": "進行中",
+    "chip_next": "次の壺",
+    "south_horn": "南征編",
+    "north_horn": "北征編",
+    "south_horn_short": "南",
+    "north_horn_short": "北"
+  },
   "goals": {
     "fate": "FATE: {0}",
     "critical_encounter": "クリティカルエンカウント: {0}"
@@ -106,6 +117,8 @@
       "description": "壺 FATE と壺の宝箱をやり、次の壺の約3分前までトレジャーハントし、壺付近で待って繰り返します。CE やほかの FATE はやりません。",
       "phase": "フェーズ",
       "requires_vnav": "[BOCCHI] 壺＆トレジャーには vnavmesh プラグインが必要です。",
+      "active_fates": "進行中の壺 FATE",
+      "no_active_fate": "いま壺 FATE はありません。",
       "phases": {
         "off": "オフ",
         "hunting": "トレジャーハント",

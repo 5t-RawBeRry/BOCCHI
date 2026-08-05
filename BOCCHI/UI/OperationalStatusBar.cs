@@ -3,6 +3,7 @@ using BOCCHI.Automator.Services;
 using BOCCHI.Buff.Services;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.StateMemory;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.UI;
 using BOCCHI.MobFarmer.Data;
@@ -12,6 +13,7 @@ using BOCCHI.Treasure.Services;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
+using Dalamud.Plugin.Services;
 using Ocelot.Extensions;
 using Ocelot.Graphics;
 using Ocelot.Services.Translation;
@@ -29,6 +31,8 @@ public class OperationalStatusBar
     IBuffRunner buffRunner,
     UIConfig uiConfig,
     IAutomatorMemory memory,
+    IPotCycleTracker potCycle,
+    IDataManager data,
     IBrandingService branding,
     IUIService ui,
     ITranslator<MainWindow> translator
@@ -113,6 +117,13 @@ public class OperationalStatusBar
                     translator.T(".status.treasure_hunt"),
                     TreasureHuntStatusUi.FormatProgress(hunter, translator));
             }
+        }
+
+        string? potChip = PotTimerUi.FormatCompact(potCycle, data, translator);
+        if (potChip != null)
+        {
+            ImGui.SameLine(0f, 16f);
+            ui.Text(potChip, branding.DalamudGrey);
         }
 
         if (uiConfig.ShowBuffSection)

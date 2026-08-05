@@ -50,6 +50,17 @@
       "fighting": "Fighting"
     }
   },
+  "pot_timer": {
+    "active": "Pot FATE active",
+    "next": "Next pot",
+    "unknown": "Next pot: unknown — stay for one pot FATE to start the timer.",
+    "chip_active": "active",
+    "chip_next": "Next pot",
+    "south_horn": "South Horn",
+    "north_horn": "North Horn",
+    "south_horn_short": "SH",
+    "north_horn_short": "NH"
+  },
   "goals": {
     "fate": "FATE: {0}",
     "critical_encounter": "Critical Encounter: {0}"
@@ -106,6 +117,8 @@
       "description": "Does pot FATEs and pot chests, then treasure hunts until about 3 minutes before the next pot, waits near pots, and repeats. Does not do CEs or other FATEs.",
       "phase": "Phase",
       "requires_vnav": "[BOCCHI] Pots & Treasure needs the vnavmesh plugin.",
+      "active_fates": "Active pot FATE",
+      "no_active_fate": "No pot FATE up right now.",
       "phases": {
         "off": "Off",
         "hunting": "Treasure Hunt",

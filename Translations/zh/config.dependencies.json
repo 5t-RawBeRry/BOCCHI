@@ -4,13 +4,13 @@
     "status": {
       "label": "状态",
       "tooltip": "辅助插件是否已安装并正常工作。",
-      "intro": "移动与以太网传送需要安装并加载必需插件。可选插件用于 BossMod AI 及其他循环辅助。“已联通”表示 BOCCHI 能与该插件通信。",
+      "intro": "移动与以太网传送需要安装并加载必需插件。可选插件用于 BossMod AI 及其他循环辅助。“IPC 就绪”表示 BOCCHI 能与该插件通信。",
       "required": "必需",
       "optional": "可选",
       "ready": "就绪",
-      "ipc_ok": "已联通",
-      "ipc_ok_mesh_pending": "已联通（地图尚未就绪）",
-      "ipc_missing": "未联通",
+      "ipc_ok": "IPC 就绪",
+      "ipc_ok_mesh_pending": "IPC 就绪（地图尚未就绪）",
+      "ipc_missing": "IPC 未就绪",
       "loaded": "已加载",
       "installed_not_loaded": "已安装（未加载）",
       "not_installed": "未安装"

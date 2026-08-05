@@ -1,9 +1,15 @@
 using BOCCHI.Automator.Services;
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.EventDrops;
+using BOCCHI.Common.Data.Fates;
+using BOCCHI.Common.Data.Zones;
+using BOCCHI.Common.Services;
+using BOCCHI.Common.UI;
 using BOCCHI.Treasure;
 using BOCCHI.Treasure.Services;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Plugin.Services;
 using Ocelot.Extensions;
 using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
@@ -17,7 +23,15 @@ public class PotsTreasureRenderer
     ITreasureHunter hunter,
     TreasureConfig treasureConfig,
     UIConfig uiConfig,
+    EventDropConfig eventDropConfig,
+    EventDropIconRenderer eventDrops,
+    IFateRepository fates,
+    IActivityNavigation navigation,
+    IPotCycleTracker potCycle,
+    IZoneProvider zones,
+    IDataManager data,
     IUIService ui,
+    IBrandingService branding,
     ITranslator<MainWindow> translator
 ) : IDynamicRenderer
 {
@@ -41,6 +55,11 @@ public class PotsTreasureRenderer
         ImGui.Spacing();
         ImGui.TextWrapped(translator.T(".automation.pots_treasure.description"));
 
+        ImGui.Spacing();
+        PotTimerUi.Draw(potCycle, zones, data, ui, translator, branding);
+
+        DrawActivePotFates();
+
         if (!PotsTreasure.Running)
         {
             return;
@@ -61,6 +80,65 @@ public class PotsTreasureRenderer
             }
 
             TreasureHuntStatusUi.DrawProgress(hunter, ui, translator, treasureConfig);
+        }
+    }
+
+    private void DrawActivePotFates()
+    {
+        IZone zone = zones.GetZone();
+        if (!zone.IsOccultCrescentZone())
+        {
+            return;
+        }
+
+        List<Fate> potFates = fates.Snapshot()
+            .Where(f => zone.IsPotFate(f.Id.Value))
+            .ToList();
+
+        ImGui.Spacing();
+        ui.Text(translator.T(".automation.pots_treasure.active_fates"), branding.DalamudYellow);
+
+        if (potFates.Count == 0)
+        {
+            ui.Text(translator.T(".automation.pots_treasure.no_active_fate"), branding.DalamudGrey);
+            return;
+        }
+
+        bool southHorn = zone.ZoneId == ZoneId.SouthHorn;
+        float dropExtra = southHorn && eventDropConfig.AnyEnabled
+            ? EventDropIconRenderer.IconBoxSize + 4f
+            : 0f;
+
+        using ImGuiSectionHelper.BoundedListScope list =
+            ImGuiSectionHelper.BoundedList("##pots_treasure_fates", potFates.Count, 120f, dropExtra);
+        if (!list.IsOpen)
+        {
+            return;
+        }
+
+        foreach (Fate fate in potFates)
+        {
+            string details = $"{fate.State} {fate.Progress}% · #{fate.Id.Value}";
+            if (fate.TimeRemainingSeconds > 0)
+            {
+                details += $" · {TimeSpan.FromSeconds(fate.TimeRemainingSeconds):mm\\:ss}";
+            }
+
+            ActivitySnapshotRenderer.RenderCompactWithActions(
+                ui,
+                navigation,
+                branding.DalamudYellow,
+                branding.DalamudGrey,
+                fate.Name,
+                details,
+                fate.Position,
+                $"pot_fate_{fate.Id.Value}");
+
+            if (southHorn
+                && SouthHornEventDrops.TryGetFate(fate.Id.Value, out EventDropInfo drops))
+            {
+                eventDrops.Render(fate.Id.Value, drops);
+            }
         }
     }
 

@@ -50,6 +50,17 @@
       "fighting": "전투 중"
     }
   },
+  "pot_timer": {
+    "active": "항아리 돌발 진행 중",
+    "next": "다음 항아리",
+    "unknown": "다음 항아리: 알 수 없음 — 항아리 돌발을 한 번 보면 타이머가 시작됩니다.",
+    "chip_active": "진행 중",
+    "chip_next": "다음 항아리",
+    "south_horn": "남쪽 뿔",
+    "north_horn": "북쪽 뿔",
+    "south_horn_short": "남",
+    "north_horn_short": "북"
+  },
   "goals": {
     "fate": "돌발: {0}",
     "critical_encounter": "비상 조우: {0}"
@@ -106,6 +117,8 @@
       "description": "항아리 돌발과 항아리 상자를 한 뒤, 다음 항아리 약 3분 전까지 트레저 헌트를 하고, 항아리 근처에서 기다린 다음 반복합니다. 비상 조우나 다른 돌발은 하지 않습니다.",
       "phase": "단계",
       "requires_vnav": "[BOCCHI] 항아리 & 트레저에는 vnavmesh 플러그인이 필요합니다.",
+      "active_fates": "진행 중인 항아리 돌발",
+      "no_active_fate": "지금은 항아리 돌발이 없습니다.",
       "phases": {
         "off": "꺼짐",
         "hunting": "트레저 헌트",

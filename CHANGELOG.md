@@ -21,3 +21,6 @@
 - Treasure: Opt in for live coffer routes — anonymously submit opens; hunts prefer accepted live spots (authored map fallback when empty)
 - Treasure: Ninja Hide on dangerous routes — optional gearset swap + Hide near high-knowledge hostiles, finish coffer approach on foot
 - Treasure: Farm pot chests uses Magical Elixir + compass hints on South and North Horn (blind sweep fallback if no buff/elixir)
+- UI: pot FATE countdown from local cycle tracker (Illegal Mode + Pots & Treasure + status bar; starts after you see one pot)
+- UI: track South Horn and North Horn pot cycles separately and keep both visible after leaving the zone
+- Pots & Treasure: show the active pot FATE (progress, time left, path/teleport) so World is not required

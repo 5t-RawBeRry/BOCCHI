@@ -4,13 +4,13 @@
     "status": {
       "label": "Status",
       "tooltip": "Whether helper plugins are installed and working.",
-      "intro": "Required plugins must be installed and loaded for pathing and aethernet teleports. Optional ones unlock BossMod AI and other rotation helpers. “Linked” means BOCCHI can talk to that plugin.",
+      "intro": "Required plugins must be installed and loaded for pathing and aethernet teleports. Optional ones unlock BossMod AI and other rotation helpers. “IPC ready” means BOCCHI can talk to that plugin.",
       "required": "Required",
       "optional": "Optional",
       "ready": "Ready",
-      "ipc_ok": "Linked",
-      "ipc_ok_mesh_pending": "Linked (map not ready yet)",
-      "ipc_missing": "Not linked",
+      "ipc_ok": "IPC ready",
+      "ipc_ok_mesh_pending": "IPC ready (map not ready yet)",
+      "ipc_missing": "IPC not ready",
       "loaded": "Loaded",
       "installed_not_loaded": "Installed (not loaded)",
       "not_installed": "Not installed"
