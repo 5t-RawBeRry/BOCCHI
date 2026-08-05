@@ -1,6 +1,6 @@
 {
   "label": "UI",
-  "tooltip": "メインウィンドウの言語と表示セクションです。",
+  "tooltip": "メインウィンドウの言語、表示セクション、FATE/CE報酬アイコンです。",
   "fields": {
     "language": {
       "label": "言語",

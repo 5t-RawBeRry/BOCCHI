@@ -1,5 +1,6 @@
 using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services.Goals;
+using BOCCHI.Automator.Services.PotTreasure;
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Fates;
@@ -97,7 +98,13 @@ public class Automator
             modeGuard.EnsureExclusive(AutomationMode.IllegalMode);
         }
 
-        context.SetRunMode(turningOn ? AutomatorRunMode.IllegalMode : AutomatorRunMode.Off);
+        AutomatorRunMode target = turningOn ? AutomatorRunMode.IllegalMode : AutomatorRunMode.Off;
+        if (context.RunMode == target)
+        {
+            return;
+        }
+
+        context.SetRunMode(target);
         BocchiChat.Print(chat, uiConfig, translator.T(Enabled ? ".automation.automator.illegal_mode_on" : ".automation.automator.illegal_mode_off"));
         ApplyRunModeSideEffects(turningOn);
     }
@@ -110,7 +117,13 @@ public class Automator
             StopAutomation();
         }
 
-        context.SetRunMode(turningOn ? AutomatorRunMode.PotsAndTreasure : AutomatorRunMode.Off);
+        AutomatorRunMode target = turningOn ? AutomatorRunMode.PotsAndTreasure : AutomatorRunMode.Off;
+        if (context.RunMode == target)
+        {
+            return;
+        }
+
+        context.SetRunMode(target);
         BocchiChat.Print(chat, uiConfig, translator.T(turningOn
             ? ".automation.pots_treasure.on"
             : ".automation.pots_treasure.off"));
@@ -277,6 +290,15 @@ public class Automator
             return;
         }
 
+        // Magical Elixir + compass hints whenever we have pot chest data (SH authored groups, NH binned).
+        ActivityData? potFate = zone.GetPotFateData().FirstOrDefault(f => f.Id == fateId.Value);
+        if (potFate != null && PotTreasureGroups.CanRunSmart(zone, fateId.Value))
+        {
+            logger.Info("Starting pot treasure (elixir/hints) for fate {FateId}", fateId.Value);
+            memory.TryAdd(PotChestFarmMemory.CreateSmart(fateId, potFate.Position));
+            return;
+        }
+
         if (!zone.GetPotChestData().TryGetValue(fateId.Value, out List<PotChestData>? chestData))
         {
             return;
@@ -303,6 +325,6 @@ public class Automator
         }
 
         logger.Info("Starting pot chest farm for fate {FateId} with {Count} chest positions", fateId.Value, positions.Count);
-        memory.TryAdd(new PotChestFarmMemory(fateId, positions));
+        memory.TryAdd(PotChestFarmMemory.CreateBlind(fateId, positions));
     }
 }

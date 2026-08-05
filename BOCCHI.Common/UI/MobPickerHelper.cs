@@ -64,7 +64,14 @@ public static class MobPickerHelper
         int selectedShown = selectedMobs.Count(m => selectableMobs.Contains(m));
         ui.LabelledValue(selectedLabel, $"{selectedShown} / {selectableMobs.Count} shown");
 
-        using ImGuiSectionHelper.BoundedListScope list = ImGuiSectionHelper.BoundedList(listId, listHeight);
+        if (selectableMobs.Count == 0)
+        {
+            return false;
+        }
+
+        // Content-sized up to listHeight (FATE/CE-style — no empty padding for short filters).
+        using ImGuiSectionHelper.BoundedListScope list =
+            ImGuiSectionHelper.BoundedList(listId, selectableMobs.Count, listHeight);
         if (!list.IsOpen)
         {
             return false;

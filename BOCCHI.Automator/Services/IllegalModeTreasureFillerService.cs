@@ -286,7 +286,7 @@ public class IllegalModeTreasureFillerService
         if (!hunter.Running)
         {
             hunter.ManagedByIllegalModeFiller = true;
-            hunter.Toggle();
+            hunter.StartManaged();
             hadFillerHunt = true;
             logger.Info(
                 "Illegal Mode: started automatic treasure hunt (survey {Silver} silver, {Bronze} bronze)",

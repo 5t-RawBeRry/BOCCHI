@@ -35,7 +35,7 @@ public class UILanguageDisplay : IEnumDisplay<UILanguage>
 }
 
 [Serializable]
-[ConfigGroup("ux", GroupOrder = 30)]
+[ConfigGroup("ux", GroupOrder = 30, Order = 0)]
 public class UIConfig : IAutoConfig
 {
     [EnumSelectDisplay<UILanguage, UILanguageDisplay>]

@@ -12,7 +12,7 @@
     },
     "should_farm_pot_chests": {
       "label": "壺 FATE 後に壺宝箱を回収",
-      "tooltip": "壺 FATE 後に紐づく宝箱を開けます。リロール宝箱は壺タイミングです。"
+      "tooltip": "壺 FATE 後（南・北の角）: Cache Me If You Can を待ち、マジカルエリクサーで方角ヒントを追い、出現した宝箱を開けます。バフ／エリクサー／ヒントがない場合は既存座標の巡回にフォールバック。リロール宝箱は壺タイミングです。"
     },
     "should_preposition_to_pots": {
       "label": "スポーン前に壺へ事前配置",

@@ -1,6 +1,6 @@
 {
   "label": "UI",
-  "tooltip": "Main-window language and which sections are visible.",
+  "tooltip": "Main-window language, section visibility, and FATE/CE reward icons.",
   "fields": {
     "language": {
       "label": "Language",

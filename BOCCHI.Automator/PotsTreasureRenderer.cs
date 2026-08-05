@@ -15,6 +15,7 @@ public class PotsTreasureRenderer
 (
     Func<IPotsTreasureMode> potsTreasureFactory,
     ITreasureHunter hunter,
+    TreasureConfig treasureConfig,
     UIConfig uiConfig,
     IUIService ui,
     ITranslator<MainWindow> translator
@@ -50,12 +51,17 @@ public class PotsTreasureRenderer
             translator.T(".automation.pots_treasure.phase"),
             translator.T($".automation.pots_treasure.phases.{PotsTreasure.Phase.ToString().ToSnakeCase()}"));
 
-        if (hunter.Elapsed > TimeSpan.Zero)
+        // Compact hunt status while this mode owns the treasure hunter.
+        if (hunter.ManagedByPotsTreasure && (hunter.Running || hunter.Elapsed > TimeSpan.Zero))
         {
-            ui.LabelledValue(translator.T(".treasure.elapsed"), $"{hunter.Elapsed:mm\\:ss}");
-        }
+            ImGui.Spacing();
+            if (hunter.Elapsed > TimeSpan.Zero)
+            {
+                ui.LabelledValue(translator.T(".treasure.elapsed"), $"{hunter.Elapsed:mm\\:ss}");
+            }
 
-        TreasureHuntStatusUi.DrawProgress(hunter, ui, translator);
+            TreasureHuntStatusUi.DrawProgress(hunter, ui, translator, treasureConfig);
+        }
     }
 
     public bool ShouldRender() => uiConfig.ShowPotsTreasureSection;

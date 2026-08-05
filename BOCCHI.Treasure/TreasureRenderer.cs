@@ -129,7 +129,9 @@ public class TreasureRenderer
             .OrderBy(t => player.Position.Distance(t.GetPosition()))
             .ToList();
 
-        using ImGuiSectionHelper.BoundedListScope list = ImGuiSectionHelper.BoundedList("##nearby_treasures", 200f);
+        // Content-sized child (same pattern as FATE/CE lists) — no empty padding for short lists.
+        using ImGuiSectionHelper.BoundedListScope list =
+            ImGuiSectionHelper.BoundedList("##nearby_treasures", treasures.Count, maxHeight: 120f);
         if (!list.IsOpen)
         {
             return;

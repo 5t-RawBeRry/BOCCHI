@@ -12,7 +12,7 @@
     },
     "should_farm_pot_chests": {
       "label": "항아리 돌발 후 항아리 보물상자 수집",
-      "tooltip": "항아리 돌발 후 연결된 상자를 엽니다. 리롤 상자는 항아리 타이밍에서 설정합니다."
+      "tooltip": "항아리 돌발 후(남·북쪽 뿔): Cache Me If You Can 버프를 기다린 뒤 Magical Elixir로 나침반 힌트를 따라 드러난 상자를 엽니다. 버프/엘릭서/힌트가 없으면 기존 좌표 순회로 폴백합니다. 리롤 상자는 항아리 타이밍에서 설정합니다."
     },
     "should_preposition_to_pots": {
       "label": "스폰 전 항아리로 사전 배치",

@@ -33,6 +33,12 @@ public interface ITreasureHunter
 
     void Toggle();
 
+    /// <summary>
+    ///     Start a hunt owned by Pots &amp; Treasure or Illegal Mode filler.
+    ///     Skips mode exclusivity so the parent mode is not torn down.
+    /// </summary>
+    void StartManaged();
+
     void Pause();
 
     void Resume();

@@ -12,7 +12,7 @@
     },
     "should_farm_pot_chests": {
       "label": "Farm pot chests after pot FATEs",
-      "tooltip": "After a pot FATE, open linked chests. Reroll chests are on Pot timing."
+      "tooltip": "After a pot FATE: wait for Cache Me If You Can, use Magical Elixir, follow compass hints to the reveal coffer (South + North Horn). Falls back to visiting authored spots if buff/elixir/hints are unavailable. Reroll chests (blind) are on Pot timing."
     },
     "should_preposition_to_pots": {
       "label": "Preposition to pots before spawn",

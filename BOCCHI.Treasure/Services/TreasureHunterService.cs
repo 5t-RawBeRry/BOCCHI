@@ -219,12 +219,26 @@ public class TreasureHunterService
         }
 
         modeGuard.EnsureExclusive(AutomationMode.TreasureHunt);
+        ManagedByPotsTreasure = false;
+        ManagedByIllegalModeFiller = false;
+        BeginHuntSession();
+    }
 
+    public void StartManaged()
+    {
+        if (Running)
+        {
+            return;
+        }
+
+        BeginHuntSession();
+    }
+
+    private void BeginHuntSession()
+    {
         stopwatch.Restart();
         StepIndex = 0;
         LastCheckedNodeId = null;
-        ManagedByPotsTreasure = false;
-        ManagedByIllegalModeFiller = false;
         Paused = false;
         steps.Clear();
         layoutTreasure.Clear();
@@ -233,6 +247,7 @@ public class TreasureHunterService
         sightCastUtc = DateTime.MinValue;
         locationsSinceLastSight = 0;
         usingCrowdsourcedRoute = false;
+        ninjaHideRequired = false;
         cofferCatalog.EnsureFreshForHunt();
         pathPlanner = CreatePathPlanner();
         if (pathPlanner == null || pathPlanner.State != HuntPathfinderState.FileLoaded)

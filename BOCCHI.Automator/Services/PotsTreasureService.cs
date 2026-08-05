@@ -84,7 +84,8 @@ public class PotsTreasureService
     {
         if (!Running)
         {
-            if (Phase != PotsTreasurePhase.Off)
+            // Mode was cleared externally (or EnsureExclusive race) — still stop a managed hunt.
+            if (Phase != PotsTreasurePhase.Off || hunter.ManagedByPotsTreasure)
             {
                 automator.SetSuspendedForTreasure(false);
                 hunter.ManagedByPotsTreasure = false;
@@ -141,8 +142,8 @@ public class PotsTreasureService
 
         if (!hunter.Running)
         {
-            hunter.Toggle();
             hunter.ManagedByPotsTreasure = true;
+            hunter.StartManaged();
             logger.Info("Pots & Treasure: started treasure hunt filler");
             return;
         }

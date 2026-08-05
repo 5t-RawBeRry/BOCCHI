@@ -1,6 +1,6 @@
 {
   "label": "UI",
-  "tooltip": "메인 창 언어와 표시할 섹션입니다.",
+  "tooltip": "메인 창 언어, 표시할 섹션, FATE/CE 보상 아이콘입니다.",
   "fields": {
     "language": {
       "label": "언어",

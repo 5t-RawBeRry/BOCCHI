@@ -4,7 +4,7 @@ using Ocelot.Config.Fields;
 namespace BOCCHI.Common.Config;
 
 [Serializable]
-[ConfigGroup("event_drops", GroupOrder = 25)]
+[ConfigGroup("ux", GroupOrder = 30, Order = 1)]
 public class EventDropConfig : IAutoConfig
 {
     [Checkbox(Order = 0)]

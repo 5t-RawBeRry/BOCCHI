@@ -11,13 +11,9 @@
     "label": "트레저 헌터",
     "tooltip": "보물상자 오버레이와 트레저 헌트 경로입니다."
   },
-  "event_drops": {
-    "label": "이벤트 드롭",
-    "tooltip": "남쪽 뿔 FATE/CE 보상 아이콘입니다."
-  },
   "ux": {
     "label": "UI",
-    "tooltip": "메인 창 언어와 표시할 섹션입니다."
+    "tooltip": "메인 창 언어, 표시할 섹션, FATE/CE 보상 아이콘입니다."
   },
   "trackers": {
     "label": "추적기",
