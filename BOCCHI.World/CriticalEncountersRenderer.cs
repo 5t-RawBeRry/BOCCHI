@@ -63,7 +63,6 @@ public class CriticalEncountersRenderer
             string details =
                 $"{criticalEncounter.State} · #{criticalEncounter.Id.Value} · {criticalEncounter.Position:f0}";
 
-            // Match old panel: action buttons while registering / preparing.
             bool showActions = criticalEncounter.State is DynamicEventState.Register or DynamicEventState.Warmup
                                && criticalEncounter.Position is { X: not float.NaN };
 

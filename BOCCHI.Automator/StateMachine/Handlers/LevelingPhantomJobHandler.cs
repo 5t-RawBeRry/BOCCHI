@@ -9,10 +9,7 @@ using Ocelot.States.Score;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
-/// <summary>
-///     When the current phantom job is maxed, switch to the next unlocked non-maxed XP job (#89).
-///     Freelancer is excluded — it does not level from combat XP.
-/// </summary>
+/// <summary>When the current phantom job is maxed, switch to the next unlocked non-maxed XP job (#89).</summary>
 public class LevelingPhantomJobHandler
 (
     IAutomatorMemory memory,

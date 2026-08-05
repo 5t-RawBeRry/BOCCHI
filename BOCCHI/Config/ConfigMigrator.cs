@@ -22,7 +22,6 @@ public class ConfigMigrator(IDalamudPluginInterface plugin, IPluginLog logger)
 
     public void Migrate()
     {
-        // We shouldn't be able to get into this block, but just in case
         if (GetCurrentConfigJObject() is not { } config)
         {
             logger.Warning("No config file found");

@@ -101,7 +101,6 @@ public class BuffRunner
             return;
         }
 
-        // Buff state machine finished — restore original phantom job, then clear.
         stateMachine = null;
         memory.Forget<ManualBuffRunMemory>();
         RestoreJobIfNeeded();

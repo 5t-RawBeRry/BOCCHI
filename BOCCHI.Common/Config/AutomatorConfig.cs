@@ -30,9 +30,7 @@ public class AutomatorConfig : IAutoConfig
     [Checkbox(Order = 6)]
     public bool ShouldAutoMount { get; set; } = true;
 
-    /// <summary>
-    ///     Preferred mount sheet row ID. 0 = Mount Roulette.
-    /// </summary>
+    /// <summary>Preferred mount sheet row ID. 0 = Mount Roulette.</summary>
     [MountSelect(Order = 7)]
     public uint PreferredMountId { get; set; } = 0;
 
@@ -46,9 +44,7 @@ public class AutomatorConfig : IAutoConfig
     [Checkbox(Order = 9)]
     public bool StayMountedWhileWaitingForCe { get; set; } = false;
 
-    /// <summary>
-    ///     After Return (and inbound aetheryte teleport) toward a FATE or CE, stop and leave the walk for the player.
-    /// </summary>
+    /// <summary>After Return/inbound aetheryte toward a FATE/CE, stop and leave the walk to the player.</summary>
     [Checkbox(Order = 10)]
     public bool StopAfterReturn { get; set; } = false;
 

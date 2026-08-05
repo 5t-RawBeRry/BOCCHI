@@ -93,7 +93,6 @@ public class OpenTreasureCofferChain
                 return false;
             }
 
-            // Pandora: Vector3.Distance (3D) ≤ 2f + GetIsTargetable.
             float dist3d = Vector3.Distance(player.Position, chest.Position);
             if (dist3d > PreferredOpenDistance || !gameObject->GetIsTargetable())
             {

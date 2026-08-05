@@ -105,7 +105,6 @@ public class Automator
     public void TogglePotsAndTreasure()
     {
         bool turningOn = !context.IsPotsAndTreasure;
-        // Exclusivity is handled by PotsTreasureService before this is called when turning on.
         if (turningOn && context.IsIllegalMode)
         {
             StopAutomation();

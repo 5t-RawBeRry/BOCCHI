@@ -11,10 +11,7 @@ using Ocelot.Services.Logger;
 
 namespace BOCCHI.Automator.Services;
 
-/// <summary>
-///     Illegal Mode treasure filler: after CE/FATE, Return to camp, cast Treasure Sight when learned,
-///     then start a hunt if the survey reports any coffers.
-/// </summary>
+/// <summary>Illegal Mode post-activity treasure filler.</summary>
 public class IllegalModeTreasureFillerService
 (
     IAutomator automator,

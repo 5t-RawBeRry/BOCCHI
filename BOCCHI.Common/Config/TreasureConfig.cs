@@ -52,21 +52,15 @@ public class TreasureConfig : IAutoConfig
     [IntRange(1, 50, Order = 12)]
     public int HuntMaxLevel { get; set; } = 40;
 
-    /// <summary>
-    ///     Pause treasure hunting during Ashkin / unsafe weather windows (South Horn).
-    /// </summary>
+    /// <summary>Pause treasure hunting during Ashkin / unsafe weather windows (South Horn).</summary>
     [Checkbox(Order = 13)]
     public bool SkipUnsafeTreasureWindows { get; set; } = true;
 
-    /// <summary>
-    ///     Illegal Mode: after CE/FATE, Return to camp, use Treasure Sight when available, then start a treasure hunt.
-    /// </summary>
+    /// <summary>Illegal Mode: after CE/FATE, Return, Treasure Sight, then hunt if available.</summary>
     [Checkbox(Order = 14)]
     public bool EnableAutomaticTreasureHuntDuringIllegalMode { get; set; } = false;
 
-    /// <summary>
-    ///     Opt in to anonymously send coffer opens for live hunt routes (authored map when catalog empty).
-    /// </summary>
+    /// <summary>Opt in to anonymously send coffer opens for live hunt routes.</summary>
     [Checkbox(Order = 15)]
     public bool EnableCofferObservationSubmission { get; set; } = false;
 }

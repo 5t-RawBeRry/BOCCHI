@@ -29,7 +29,6 @@ public class DrawCEs(IOverlayRenderer overlay, ICriticalEncounterRepository ces,
         }
 
 #if DEBUG
-        // Debug builds only (BOCCHI.Debug is Debug-config). Cleared at each graph rebuild.
         foreach(List<Vector3> points in GraphConfig.DebugPathLines)
         {
             for(int i = 0; i < points.Count - 1; i++)

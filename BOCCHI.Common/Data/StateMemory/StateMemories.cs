@@ -30,9 +30,6 @@ public sealed class AutomaticTreasureSurveyMemory
     public DateTime SurveyWaitDeadlineUtc { get; set; }
 }
 
-/// <summary>
-///     Inside registration — don't re-path unless we drift back toward the edge.
-/// </summary>
 public sealed class WaitingForCriticalEncounterMemory
 {
     /// <summary>Inside registration — don't re-path unless we drift back toward the edge.</summary>
@@ -141,7 +138,6 @@ public sealed class GoalPathStepMemory(IGoal goal, IPathCalculator calculator, b
 {
     private Task<Queue<IPathStep>>? pathStepTask = calculator.Calculate(goal);
 
-    /// <summary>Calc finished with no steps (already at destination). Keeps memory valid so Automator doesn't recreate an empty plan every tick.</summary>
     private bool emptyPlan;
 
     /// <summary>When true, finishing the plan (or an empty teleport-only plan) pauses nav for manual travel (#109).</summary>

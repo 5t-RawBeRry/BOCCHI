@@ -24,7 +24,6 @@ public static class CommandServiceExtensions
         services.AddSingleton<DebugCommand>();
         services.AddSingleton<IMainCommandDelegate, DebugCommandDelegate>();
 
-        // Legacy OCH prefixes — full /bocchi equivalents (/och config, etc.).
         services.AddSingleton<IOcelotCommand, OchAliasCommand>();
     }
 }
