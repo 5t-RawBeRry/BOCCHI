@@ -800,7 +800,8 @@ public class TreasureHunterService
             return;
         }
 
-        if (player.Position.Distance(destination) > NavigationConstants.MountMinDistance)
+        if (player.Position.Distance(destination) > NavigationConstants.MountMinDistance
+            && !zones.GetZone().IsInBasecamp())
         {
             MountWait.TryCast(automatorConfig.PreferredMountId);
         }

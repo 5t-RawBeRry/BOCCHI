@@ -19,9 +19,10 @@ public static class MountWait
         ICondition conditions,
         IObjectTable objects,
         Vector3 destination,
-        bool autoMountEnabled = true)
+        bool autoMountEnabled = true,
+        bool inBaseCamp = false)
     {
-        if (!autoMountEnabled)
+        if (!autoMountEnabled || inBaseCamp)
         {
             return true;
         }
@@ -64,15 +65,16 @@ public static class MountWait
         }
     }
 
-    /// <summary>Cast mount while pathing if far enough and not already mounted.</summary>
+    /// <summary>Cast mount while pathing if far enough, not in base camp, and not already mounted.</summary>
     public static void TryCastIfNeeded(
         ICondition conditions,
         IObjectTable objects,
         Vector3 destination,
         bool autoMountEnabled = true,
-        uint preferredMountId = 0)
+        uint preferredMountId = 0,
+        bool inBaseCamp = false)
     {
-        if (ShouldSkip(conditions, objects, destination, autoMountEnabled))
+        if (ShouldSkip(conditions, objects, destination, autoMountEnabled, inBaseCamp))
         {
             return;
         }

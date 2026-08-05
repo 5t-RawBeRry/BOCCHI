@@ -29,6 +29,7 @@ public class WaitingForCriticalEncounterHandler
     IVNavmeshIpc vnav,
     IChainManager manager,
     ICriticalEncounterRepository repo,
+    IZoneProvider zones,
     AutomatorConfig config
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.WaitingForCriticalEncounter)
 {
@@ -139,7 +140,7 @@ public class WaitingForCriticalEncounterHandler
             });
         }
 
-        AutoMount.MaybeRemount(config, conditions, objects, approach);
+        AutoMount.MaybeRemount(config, conditions, objects, approach, zones.GetZone().IsInBasecamp());
     }
 
     private void StopNavigation()

@@ -3,6 +3,7 @@ using BOCCHI.Automator.Services;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Paths;
 using BOCCHI.Common.Data.StateMemory;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.Services.Paths;
 using Dalamud.Game.ClientState.Conditions;
@@ -22,6 +23,7 @@ public class PathfindingHandler
     IObjectTable objects,
     IPathfinder pathfinder,
     ITargetManager targetManager,
+    IZoneProvider zones,
     AutomatorConfig config,
     ICondition conditions,
     AutoRotationController autoRotation,
@@ -90,7 +92,12 @@ public class PathfindingHandler
             // Remount mid-route if Treasure Sight (or anything else) left us on foot.
             if (path.GetNextPathStep()?.PathStepData is Pathfind(var destination, _))
             {
-                AutoMount.MaybeRemount(config, conditions, objects, destination);
+                AutoMount.MaybeRemount(
+                    config,
+                    conditions,
+                    objects,
+                    destination,
+                    zones.GetZone().IsInBasecamp());
             }
 
             if (currentPathTask.IsCompleted)

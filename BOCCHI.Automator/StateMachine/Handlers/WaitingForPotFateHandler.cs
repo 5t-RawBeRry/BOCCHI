@@ -116,7 +116,7 @@ public class WaitingForPotFateHandler
                 pathfinder.PathfindAndMoveTo(new(approach));
             }
 
-            AutoMount.MaybeRemount(config, conditions, objects, approach);
+            AutoMount.MaybeRemount(config, conditions, objects, approach, zones.GetZone().IsInBasecamp());
 
             return;
         }

@@ -166,7 +166,8 @@ public class ActivityNavigation
                 objects,
                 destination,
                 automatorConfig.ShouldAutoMount,
-                automatorConfig.PreferredMountId),
+                automatorConfig.PreferredMountId,
+                zones.GetZone().IsInBasecamp()),
         });
 
     /// <summary>

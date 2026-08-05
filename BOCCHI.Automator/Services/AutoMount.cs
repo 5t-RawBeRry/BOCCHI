@@ -14,9 +14,10 @@ public static class AutoMount
         AutomatorConfig config,
         ICondition conditions,
         IObjectTable objects,
-        Vector3 destination)
+        Vector3 destination,
+        bool inBaseCamp = false)
     {
-        if (!config.ShouldAutoMount)
+        if (!config.ShouldAutoMount || inBaseCamp)
         {
             return;
         }

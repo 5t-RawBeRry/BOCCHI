@@ -18,6 +18,7 @@ public class PathStepExecutor
     IChainManager manager,
     IObjectTable objects,
     ICondition conditions,
+    IZoneProvider zones,
     AutomatorConfig config
 ) : IPathStepExecutor
 {
@@ -50,7 +51,8 @@ public class PathStepExecutor
                     objects,
                     destination,
                     config.ShouldAutoMount,
-                    config.PreferredMountId),
+                    config.PreferredMountId,
+                    zones.GetZone().IsInBasecamp()),
             });
     }
 }

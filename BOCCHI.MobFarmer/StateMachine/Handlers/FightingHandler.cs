@@ -24,6 +24,7 @@ public class FightingHandler
     ICondition conditions,
     IObjectTable objects,
     IPathfinder pathfinder,
+    IZoneProvider zones,
     IPlayer player
 ) : FlowStateHandler<FarmerPhase>(FarmerPhase.Fighting)
 {
@@ -61,7 +62,8 @@ public class FightingHandler
                 objects,
                 farmer.StartingPoint,
                 automatorConfig.ShouldAutoMount,
-                automatorConfig.PreferredMountId);
+                automatorConfig.PreferredMountId,
+                zones.GetZone().IsInBasecamp());
 
             return player.Position.Distance2D(farmer.StartingPoint) <= 2f ? FarmerPhase.Waiting : null;
         }
