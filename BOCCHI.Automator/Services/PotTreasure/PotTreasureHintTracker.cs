@@ -13,8 +13,6 @@ public sealed class PotTreasureHintTracker(IChatGui chat) : IOnStart, IOnStop
 
     private int revision;
 
-    private PotTreasureHintEvent? initialHint;
-
     private PotTreasureHintEvent? lastEvent;
 
     private bool revealLatched;
@@ -26,28 +24,6 @@ public sealed class PotTreasureHintTracker(IChatGui chat) : IOnStart, IOnStop
             lock (gate)
             {
                 return revision;
-            }
-        }
-    }
-
-    public PotTreasureHintEvent? InitialHint
-    {
-        get
-        {
-            lock (gate)
-            {
-                return initialHint;
-            }
-        }
-    }
-
-    public PotTreasureHintEvent? LastEvent
-    {
-        get
-        {
-            lock (gate)
-            {
-                return lastEvent;
             }
         }
     }
@@ -77,7 +53,6 @@ public sealed class PotTreasureHintTracker(IChatGui chat) : IOnStart, IOnStop
         {
             armed = true;
             revision = 0;
-            initialHint = null;
             lastEvent = null;
             revealLatched = false;
         }
@@ -88,7 +63,6 @@ public sealed class PotTreasureHintTracker(IChatGui chat) : IOnStart, IOnStop
         lock (gate)
         {
             armed = false;
-            initialHint = null;
             lastEvent = null;
             revealLatched = false;
         }
@@ -126,11 +100,6 @@ public sealed class PotTreasureHintTracker(IChatGui chat) : IOnStart, IOnStop
             revision++;
             parsed.Revision = revision;
             lastEvent = parsed;
-
-            if (parsed.Kind == PotTreasureHintKind.Hint && initialHint == null)
-            {
-                initialHint = parsed;
-            }
 
             if (parsed.Kind == PotTreasureHintKind.CofferReveal)
             {

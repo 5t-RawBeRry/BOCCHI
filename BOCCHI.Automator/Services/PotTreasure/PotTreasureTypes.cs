@@ -45,8 +45,6 @@ public sealed class PotTreasureHintEvent
 
     public int Revision { get; set; }
 
-    public DateTimeOffset At { get; init; } = DateTimeOffset.UtcNow;
-
     public bool IsLocalHint =>
         Kind == PotTreasureHintKind.Hint
         && Distance is PotTreasureDistanceBucket.Immediate or PotTreasureDistanceBucket.Close;

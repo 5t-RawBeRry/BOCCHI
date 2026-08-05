@@ -68,6 +68,7 @@ public class ConfigMigratorV10ToV11 : IMigrator
         if (result["TreasureConfig"] is JObject treasure)
         {
             treasure.Remove("HuntCompleteSoundId");
+            treasure.Remove("HuntReturnCost");
         }
 
         // Fully relocated sections — ignore leftovers.

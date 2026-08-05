@@ -241,7 +241,6 @@ public class NorthHorn
         new(2073, 30, new(222.912f, 90.400f, 913.629f)) // CrownofKarnak_6
     ];
 
-    // Pot/carrot positions sourced from Eureka Linker (OccultChests.cs).
     public override Dictionary<int, List<PotChestData>> GetPotChestData() =>
         new()
         {

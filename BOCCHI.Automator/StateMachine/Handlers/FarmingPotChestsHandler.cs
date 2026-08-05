@@ -639,11 +639,6 @@ public class FarmingPotChestsHandler
                 continue;
             }
 
-            if (isTreasure && !isRevealBase && obj.ObjectKind != DalamudObjectKind.Treasure)
-            {
-                continue;
-            }
-
             Vector3 pos = NormalizeY(obj.Position);
             float dist = Vector3.Distance(from, pos);
             if (dist > RevealSearchRadius || dist >= bestDist)

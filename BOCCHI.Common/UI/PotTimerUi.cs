@@ -72,13 +72,7 @@ public static class PotTimerUi
                 continue;
             }
 
-            TimeSpan remaining = snap.PredictedNextSpawnAt - DateTimeOffset.UtcNow;
-            if (remaining < TimeSpan.Zero)
-            {
-                remaining = TimeSpan.Zero;
-            }
-
-            parts.Add($"{zone} {FormatClock(remaining)}");
+            parts.Add($"{zone} {FormatClock(Remaining(snap))}");
         }
 
         return parts.Count == 0 ? null : string.Join(" · ", parts);
@@ -105,15 +99,15 @@ public static class PotTimerUi
             return;
         }
 
-        TimeSpan remaining = snap.PredictedNextSpawnAt - DateTimeOffset.UtcNow;
-        if (remaining < TimeSpan.Zero)
-        {
-            remaining = TimeSpan.Zero;
-        }
-
         ui.LabelledValue(
             $"{zone} — {translator.T(".pot_timer.next")}",
-            $"{FateName(sheet, snap.PredictedNextPotFateId)} · {FormatClock(remaining)}");
+            $"{FateName(sheet, snap.PredictedNextPotFateId)} · {FormatClock(Remaining(snap))}");
+    }
+
+    private static TimeSpan Remaining(PotCycleSnapshot snap)
+    {
+        TimeSpan remaining = snap.PredictedNextSpawnAt - DateTimeOffset.UtcNow;
+        return remaining < TimeSpan.Zero ? TimeSpan.Zero : remaining;
     }
 
     private static string ZoneLabel(ushort territoryTypeId, ITranslator<MainWindow> translator) =>

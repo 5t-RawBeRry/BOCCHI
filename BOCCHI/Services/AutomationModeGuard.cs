@@ -83,7 +83,7 @@ public class AutomationModeGuard
         }
     }
 
-    public void NotifyStandaloneTreasureHuntEnded()
+    public void NotifyTreasureHuntEnded()
     {
         if (stopping)
         {
@@ -91,19 +91,6 @@ public class AutomationModeGuard
         }
 
         // Resume Illegal Mode only — Pots & Treasure manages its own suspension.
-        if (Automator.IsIllegalMode && Automator.SuspendedForTreasure)
-        {
-            Automator.SetSuspendedForTreasure(false);
-        }
-    }
-
-    public void NotifyIllegalModeFillerHuntEnded()
-    {
-        if (stopping)
-        {
-            return;
-        }
-
         if (Automator.IsIllegalMode && Automator.SuspendedForTreasure)
         {
             Automator.SetSuspendedForTreasure(false);

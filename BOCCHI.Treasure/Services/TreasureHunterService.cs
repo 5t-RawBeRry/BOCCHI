@@ -1180,13 +1180,9 @@ public class TreasureHunterService
         pathPlanner = null;
         usingCrowdsourcedRoute = false;
 
-        if (wasStandalone)
+        if (wasStandalone || wasIllegalFiller)
         {
-            modeGuard.NotifyStandaloneTreasureHuntEnded();
-        }
-        else if (wasIllegalFiller)
-        {
-            modeGuard.NotifyIllegalModeFillerHuntEnded();
+            modeGuard.NotifyTreasureHuntEnded();
         }
     }
 }

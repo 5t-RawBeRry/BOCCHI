@@ -8,8 +8,6 @@ namespace BOCCHI.Common.Data.Zones;
 
 public sealed record PotCycleSnapshot
 {
-    public DateTimeOffset LastUpdated { get; init; }
-
     public ushort TerritoryTypeId { get; init; }
 
     public bool HasKnownAnchor { get; init; }
@@ -123,7 +121,6 @@ public sealed class PotCycleTracker
         {
             return previous with
             {
-                LastUpdated = now,
                 TerritoryTypeId = territoryType,
                 CurrentActivePotFateId = 0,
             };
@@ -132,7 +129,7 @@ public sealed class PotCycleTracker
         int activeId = active.Id.Value;
         if (previous.TerritoryTypeId == territoryType && previous.CurrentActivePotFateId == activeId)
         {
-            return previous with { LastUpdated = now };
+            return previous;
         }
 
         ActivityData? opposite = potFates.FirstOrDefault(p => p.Id != activeId);
@@ -141,7 +138,6 @@ public sealed class PotCycleTracker
 
         return new PotCycleSnapshot
         {
-            LastUpdated = now,
             TerritoryTypeId = territoryType,
             HasKnownAnchor = true,
             CurrentActivePotFateId = activeId,

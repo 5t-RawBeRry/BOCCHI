@@ -38,7 +38,8 @@ public class ConfigMigrator(IDalamudPluginInterface plugin, IPluginLog logger)
             new ConfigMigratorV7ToV8(),
             new ConfigMigratorV8ToV9(),
             new ConfigMigratorV9ToV10(),
-            new ConfigMigratorV10ToV11()
+            new ConfigMigratorV10ToV11(),
+            new ConfigMigratorV11ToV12()
         ]);
 
         int version = config["Version"]?.Value<int>() ?? 1;

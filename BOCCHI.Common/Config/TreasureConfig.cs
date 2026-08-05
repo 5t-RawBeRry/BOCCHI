@@ -40,47 +40,44 @@ public class TreasureConfig : IAutoConfig
     [IntRange(1, 50, Order = 8)]
     public int TreasureSightEveryNLocations { get; set; } = 10;
 
-    [FloatRange(50f, 500f, Order = 9)]
-    public float HuntReturnCost { get; set; } = 300f;
-
-    [FloatRange(10f, 500f, Order = 10)]
+    [FloatRange(10f, 500f, Order = 9)]
     public float HuntTeleportCost { get; set; } = 50f;
 
-    [FloatRange(10f, 100f, Order = 11)]
+    [FloatRange(10f, 100f, Order = 10)]
     public float HuntDetectionRange { get; set; } = 75f;
 
-    [IntRange(1, 50, Order = 12)]
+    [IntRange(1, 50, Order = 11)]
     public int HuntMaxLevel { get; set; } = 40;
 
     /// <summary>Pause treasure hunting during Ashkin / unsafe weather windows (South Horn).</summary>
-    [Checkbox(Order = 13)]
+    [Checkbox(Order = 12)]
     public bool SkipUnsafeTreasureWindows { get; set; } = true;
 
     /// <summary>Illegal Mode: after CE/FATE, Return, Treasure Sight, then hunt if available.</summary>
-    [Checkbox(Order = 14)]
+    [Checkbox(Order = 13)]
     public bool EnableAutomaticTreasureHuntDuringIllegalMode { get; set; } = false;
 
     /// <summary>Opt in to anonymously send coffer opens for live hunt routes.</summary>
-    [Checkbox(Order = 15)]
+    [Checkbox(Order = 14)]
     public bool EnableCofferObservationSubmission { get; set; } = false;
 
     /// <summary>Use real Ninja Hide near high-knowledge hostiles while hunting coffers.</summary>
-    [Checkbox(Order = 16)]
+    [Checkbox(Order = 15)]
     public bool UseNinjaHideOnDangerousRoutes { get; set; } = false;
 
     /// <summary>Gearset number (1-based) that equips Ninja. 0 = already on Ninja only.</summary>
-    [IntRange(0, 100, Order = 17)]
+    [IntRange(0, 100, Order = 16)]
     public int NinjaGearsetNumber { get; set; } = 0;
 
     /// <summary>Hide when mob knowledge ≥ player knowledge + this offset.</summary>
-    [IntRange(-5, 10, Order = 18)]
+    [IntRange(-5, 10, Order = 17)]
     public int KnowledgeHideOffset { get; set; } = 0;
 
     /// <summary>Start Hide when a knowledge threat is within this distance (yalms).</summary>
-    [FloatRange(5f, 40f, Order = 19)]
+    [FloatRange(5f, 40f, Order = 18)]
     public float KnowledgeThreatEnterDistance { get; set; } = 10f;
 
     /// <summary>Clear Hide requirement when threats are beyond this distance (yalms).</summary>
-    [FloatRange(10f, 60f, Order = 20)]
+    [FloatRange(10f, 60f, Order = 19)]
     public float KnowledgeThreatExitDistance { get; set; } = 20f;
 }

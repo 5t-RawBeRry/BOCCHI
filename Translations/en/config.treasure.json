@@ -39,10 +39,6 @@
       "label": "Treasure Sight every N coffers",
       "tooltip": "After the first cast, cast Treasure Sight again every this many coffers. Raise it to dismount and swap jobs less often in busy areas."
     },
-    "hunt_return_cost": {
-      "label": "Prefer Return less / more",
-      "tooltip": "Higher = the route avoids casting Return more often. Lower = Return is used more freely."
-    },
     "hunt_teleport_cost": {
       "label": "Prefer aethernet less / more",
       "tooltip": "Higher = the route avoids aethernet teleports more often. Lower = teleports are used more freely."
