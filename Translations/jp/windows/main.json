@@ -150,6 +150,8 @@
     "resume_hunt": "再開",
     "stop_hunt": "ハント停止",
     "paused": "一時停止中",
+    "waiting_safe_window": "安全な天候待ち",
+    "waiting_safe_window_detail": "南の角のアシキン時間帯または危険な天候のため、トレジャーハントを一時停止しています。窓が終わると自動再開します（トレジャー設定の「危険な天候ウィンドウをスキップ」をオフにもできます）。",
     "elapsed": "経過時間",
     "progress": "進行状況",
     "last_checked": "最後に確認した宝箱",

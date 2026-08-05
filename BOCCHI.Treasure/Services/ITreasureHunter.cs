@@ -10,6 +10,12 @@ public interface ITreasureHunter
 
     bool Paused { get; }
 
+    /// <summary>
+    ///     Hunt is running but Update is idle because South Horn Ashkin / unsafe weather is active
+    ///     and <c>SkipUnsafeTreasureWindows</c> is on.
+    /// </summary>
+    bool WaitingForSafeWindow { get; }
+
     int StepIndex { get; }
 
     int StepCount { get; }

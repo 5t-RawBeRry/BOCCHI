@@ -150,6 +150,8 @@
     "resume_hunt": "재개",
     "stop_hunt": "헌트 중지",
     "paused": "일시 정지됨",
+    "waiting_safe_window": "안전한 날씨 대기",
+    "waiting_safe_window_detail": "사우스 혼의 애쉬킨 시간대 또는 위험한 날씨 때문에 트레저 헌트가 일시 정지됩니다. 창이 끝나면 자동으로 재개됩니다(트레저 설정의 위험 날씨 창 건너뛰기를 끌 수도 있습니다).",
     "elapsed": "경과",
     "progress": "진행",
     "last_checked": "마지막으로 확인한 상자",

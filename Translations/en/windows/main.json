@@ -150,6 +150,8 @@
     "resume_hunt": "Resume",
     "stop_hunt": "Stop Hunt",
     "paused": "Paused",
+    "waiting_safe_window": "Waiting for safe weather",
+    "waiting_safe_window_detail": "Treasure Hunt is paused for Ashkin or unsafe weather on South Horn. It resumes automatically when the window ends (or turn off Skip unsafe treasure windows in Treasure settings).",
     "elapsed": "Elapsed",
     "progress": "Progress",
     "last_checked": "Last coffer checked",

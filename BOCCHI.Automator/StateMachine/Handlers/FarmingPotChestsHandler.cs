@@ -1,4 +1,5 @@
 using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Services;
 using BOCCHI.Automator.Services.PotTreasure;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
@@ -32,6 +33,7 @@ public class FarmingPotChestsHandler
     IZoneProvider zones,
     PotTreasureHintTracker hints,
     MagicalElixirAssist elixir,
+    AutoRotationController autoRotation,
     ILogger<FarmingPotChestsHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.FarmingPotChests)
 {
@@ -70,6 +72,8 @@ public class FarmingPotChestsHandler
     public override void Enter()
     {
         base.Enter();
+        // BossMod AI from the pot FATE otherwise keeps AutoTarget / movement during chest pathing.
+        autoRotation.DisableForTravel();
         chainManager.CancelAll();
         pathfinder.Stop();
         activeChain = null;

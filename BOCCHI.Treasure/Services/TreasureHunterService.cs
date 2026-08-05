@@ -160,6 +160,14 @@ public class TreasureHunterService
             pathPlanner = null;
             StepIndex = 0;
             pendingStartSight = config.CastTreasureSightDuringHunt && CanCastTreasureSight();
+            if (steps.Count == 0)
+            {
+                log.Warning(
+                    "Treasure hunt planned an empty route ({ValidCount} valid node(s) after filters) — ending session",
+                    validNodes.Count);
+                CompleteHunt();
+            }
+
             return;
         }
 
@@ -173,9 +181,9 @@ public class TreasureHunterService
             return;
         }
 
-        if (steps.Count > 0 && StepIndex >= steps.Count)
+        if (steps.Count == 0 || StepIndex >= steps.Count)
         {
-            if (ShouldReturnAfterHunt())
+            if (steps.Count > 0 && ShouldReturnAfterHunt())
             {
                 steps.Add(HuntPathfinderStep.ReturnToBaseCamp());
                 return;
@@ -213,6 +221,13 @@ public class TreasureHunterService
     public bool Running { get; private set; }
 
     public bool Paused { get; private set; }
+
+    /// <inheritdoc />
+    public bool WaitingForSafeWindow =>
+        Running
+        && !Paused
+        && config.SkipUnsafeTreasureWindows
+        && IsUnsafeTreasureWindow();
 
     public int StepIndex { get; private set; }
 

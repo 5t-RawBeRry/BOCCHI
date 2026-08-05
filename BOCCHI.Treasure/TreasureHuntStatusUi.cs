@@ -16,6 +16,11 @@ public static class TreasureHuntStatusUi
     /// <summary>1-based step display shared by status chip and panels.</summary>
     public static string FormatProgress(ITreasureHunter hunter, ITranslator<MainWindow> translator)
     {
+        if (hunter.WaitingForSafeWindow)
+        {
+            return translator.T(".treasure.waiting_safe_window");
+        }
+
         if (hunter.StepCount <= 0)
         {
             return hunter.Paused ? translator.T(".treasure.paused") : string.Empty;
@@ -36,7 +41,18 @@ public static class TreasureHuntStatusUi
         ITranslator<MainWindow> translator,
         TreasureConfig? config = null)
     {
-        if (!hunter.Running || hunter.StepCount <= 0)
+        if (!hunter.Running)
+        {
+            return;
+        }
+
+        if (hunter.WaitingForSafeWindow)
+        {
+            ImGui.TextWrapped(translator.T(".treasure.waiting_safe_window_detail"));
+            return;
+        }
+
+        if (hunter.StepCount <= 0)
         {
             return;
         }

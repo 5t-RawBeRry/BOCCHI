@@ -150,6 +150,8 @@
     "resume_hunt": "继续",
     "stop_hunt": "停止寻宝",
     "paused": "已暂停",
+    "waiting_safe_window": "等待安全天气",
+    "waiting_safe_window_detail": "南角的灰灵时段或不安全天气期间，寻宝已暂停。窗口结束后会自动继续（也可在寻宝设置中关闭“跳过不安全的寻宝时段”）。",
     "elapsed": "已用时",
     "progress": "进度",
     "last_checked": "上一个查看的宝箱",
