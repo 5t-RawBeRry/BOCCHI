@@ -1,22 +1,22 @@
 {
   "label": "Treasure Hunter",
-  "tooltip": "Coffer overlays and Treasure Hunt routing.",
+  "tooltip": "Coffer lines on the map and Treasure Hunt routes.",
   "fields": {
     "draw_line_to_bronze_chests": {
-      "label": "Draw lines to bronze coffers",
-      "tooltip": "Render a brown line from your character to nearby bronze coffers, while out of combat."
+      "label": "Lines to bronze coffers",
+      "tooltip": "While out of combat, draw a brown line from you to nearby bronze coffers."
     },
     "draw_line_to_silver_chests": {
-      "label": "Draw lines to silver coffers",
-      "tooltip": "Render a silver line from your character to nearby silver coffers, while out of combat."
+      "label": "Lines to silver coffers",
+      "tooltip": "While out of combat, draw a silver line from you to nearby silver coffers."
     },
     "draw_line_to_carrots": {
-      "label": "Draw lines to carrots",
-      "tooltip": "Render a green line from your character to nearby carrots, while out of combat."
+      "label": "Lines to carrots",
+      "tooltip": "While out of combat, draw a green line from you to nearby carrots."
     },
     "show_percentage_active_treasure_count": {
-      "label": "Show active treasure as percentage",
-      "tooltip": "Show active treasure as percentage next to the total"
+      "label": "Show remaining coffers as %",
+      "tooltip": "Show how many coffers are left as a percentage next to the total."
     },
     "return_to_base_camp_after_hunt": {
       "label": "Return after hunt",
@@ -24,68 +24,68 @@
     },
     "play_sound_on_hunt_complete": {
       "label": "Play sound when hunt finishes",
-      "tooltip": "Play an MP3 when Treasure Hunt completes."
+      "tooltip": "Play an MP3 when the treasure hunt finishes."
     },
     "hunt_complete_sound": {
-      "label": "Hunt complete sound",
-      "tooltip": "MP3 from the plugin Sounds folder. Click an option to preview.",
+      "label": "Hunt finished sound",
+      "tooltip": "Pick an MP3 from the plugin Sounds folder. Click a name to preview it.",
       "open_folder": "Open sound folder — drop MP3s here to add your own."
     },
     "cast_treasure_sight_during_hunt": {
       "label": "Cast Treasure Sight during hunt",
-      "tooltip": "Cast Treasure Sight when the hunt starts (and every N coffers mid-route). Ends the hunt early when Sight reports no remaining coffers."
+      "tooltip": "Cast Treasure Sight when the hunt starts, and again every N coffers. Stops the hunt early if Sight says no coffers are left."
     },
     "treasure_sight_every_n_locations": {
       "label": "Treasure Sight every N coffers",
-      "tooltip": "After the opening cast, recast Treasure Sight every this many coffer stops. Raise this to dismount / swap Freelancer less often in contested areas."
+      "tooltip": "After the first cast, cast Treasure Sight again every this many coffers. Raise it to dismount and swap jobs less often in busy areas."
     },
     "hunt_return_cost": {
-      "label": "Return cost",
-      "tooltip": "Pathfinding cost weight for returning to base camp"
+      "label": "Prefer Return less / more",
+      "tooltip": "Higher = the route avoids casting Return more often. Lower = Return is used more freely."
     },
     "hunt_teleport_cost": {
-      "label": "Teleport cost",
-      "tooltip": "Pathfinding cost weight for aethernet teleports"
+      "label": "Prefer aethernet less / more",
+      "tooltip": "Higher = the route avoids aethernet teleports more often. Lower = teleports are used more freely."
     },
     "hunt_detection_range": {
-      "label": "Detection range",
-      "tooltip": "How close you must be to a chest node before interacting"
+      "label": "Open range",
+      "tooltip": "How close you must be (yalms) before trying to open a coffer."
     },
     "hunt_max_level": {
-      "label": "Max chest level",
-      "tooltip": "Maximum treasure node level to include in the hunt route"
+      "label": "Max coffer level",
+      "tooltip": "Skip coffers above this level on the hunt route."
     },
     "skip_unsafe_treasure_windows": {
-      "label": "Skip unsafe treasure windows",
-      "tooltip": "Pause Treasure Hunt during South Horn Ashkin / dangerous weather windows."
+      "label": "Skip dangerous weather / Ashkin",
+      "tooltip": "Pause Treasure Hunt on South Horn during Ashkin or other unsafe weather windows."
     },
     "enable_automatic_treasure_hunt_during_illegal_mode": {
       "label": "Auto treasure hunt in Illegal Mode",
-      "tooltip": "After a CE/FATE, Return to camp, use Treasure Sight when available, and start a treasure hunt. (Only works when Treasure Sight is learned)"
+      "tooltip": "After a CE or FATE: Return to camp, use Treasure Sight if you know it, then start a treasure hunt if coffers remain."
     },
     "enable_coffer_observation_submission": {
-      "label": "Opt in for live coffer routes",
-      "tooltip": "Anonymously send coffer open locations so we can build live Treasure Hunt routes. When enough spots are confirmed, hunts prefer those; otherwise the authored map is used."
+      "label": "Share coffer opens (live routes)",
+      "tooltip": "Anonymously send where you open coffers so live hunt routes can be built. When enough spots are confirmed, hunts prefer those; otherwise the built-in map is used."
     },
     "use_ninja_hide_on_dangerous_routes": {
-      "label": "Ninja Hide on dangerous routes",
-      "tooltip": "Experimental: when a high-knowledge hostile is nearby, swap to your Ninja gearset, cast Hide, and finish the coffer approach on foot. Recommended near max Knowledge."
+      "label": "Ninja Hide near strong enemies",
+      "tooltip": "Experimental: if a high-Knowledge enemy is nearby, swap to your Ninja gearset, use Hide, and walk the last stretch to the coffer. Useful near max Knowledge."
     },
     "ninja_gearset_number": {
       "label": "Ninja gearset number",
-      "tooltip": "1-based gearset that equips real Ninja (ClassJob 30). 0 = do not swap; you must already be on Ninja."
+      "tooltip": "Gearset number that equips Ninja (as shown in the gearset list, starting at 1). 0 = do not swap — you must already be on Ninja."
     },
     "knowledge_hide_offset": {
-      "label": "Knowledge Hide offset",
-      "tooltip": "Hide when a hostile's foray knowledge is at least your Knowledge + this offset (0 = same level or higher)."
+      "label": "Hide if enemy Knowledge is +",
+      "tooltip": "Use Hide when an enemy's Knowledge is at least yours plus this number. 0 = same Knowledge or higher."
     },
     "knowledge_threat_enter_distance": {
-      "label": "Threat enter distance",
-      "tooltip": "Start the Hide flow when a knowledge threat is within this many yalms."
+      "label": "Start Hide within (yalms)",
+      "tooltip": "Begin the Hide flow when a dangerous enemy is this close."
     },
     "knowledge_threat_exit_distance": {
-      "label": "Threat exit distance",
-      "tooltip": "Stop requiring Hide once threats are farther than this (hysteresis vs enter distance)."
+      "label": "Stop Hide beyond (yalms)",
+      "tooltip": "Once Hide is on, keep it until enemies are farther than this. Use a larger value than “Start Hide” so it does not flicker on and off."
     }
   }
 }

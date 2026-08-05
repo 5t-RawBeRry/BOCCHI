@@ -1,27 +1,21 @@
 {
   "automation": {
-    "label": "불법 모드",
-    "tooltip": "일반 옵션, 항아리 타이밍, 돌발, 비상 조우, 강화 효과입니다."
+    "label": "불법 모드"
   },
   "mob_farmer": {
-    "label": "몹 파머",
-    "tooltip": "몹 파밍 옵션입니다."
+    "label": "몹 파머"
   },
   "treasure": {
-    "label": "트레저 헌터",
-    "tooltip": "보물상자 오버레이와 트레저 헌트 경로입니다."
+    "label": "트레저 헌터"
   },
   "ux": {
-    "label": "UI",
-    "tooltip": "메인 창 언어, 표시할 섹션, FATE/CE 보상 아이콘입니다."
+    "label": "UI"
   },
   "trackers": {
-    "label": "추적기",
-    "tooltip": "경험치·화폐 추적기 옵션입니다."
+    "label": "추적기"
   },
   "forked_tower": {
-    "label": "포크드 타워",
-    "tooltip": "포크드 타워 알림과 오버레이입니다."
+    "label": "포크드 타워"
   },
   "dependencies": {
     "label": "의존성"

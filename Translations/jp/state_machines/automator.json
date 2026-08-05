@@ -1,9 +1,9 @@
 {
   "entry": {
-    "label": "開始"
+    "label": "開始中"
   },
   "idle": {
-    "label": "待機"
+    "label": "待機中"
   },
   "dead": {
     "label": "戦闘不能"
@@ -12,7 +12,7 @@
     "label": "戦闘中"
   },
   "casting_treasure_sight": {
-    "label": "トレジャーサイト使用中"
+    "label": "トレジャーサイト詠唱中"
   },
   "applying_buffs": {
     "label": "バフ付与中"
@@ -21,10 +21,10 @@
     "label": "修理中"
   },
   "choosing_activity": {
-    "label": "活動選択中"
+    "label": "次の活動を選んでいます"
   },
   "returning": {
-    "label": "帰還中"
+    "label": "キャンプに戻っています"
   },
   "pathfinding": {
     "label": "移動中"
@@ -39,9 +39,9 @@
     "label": "CE中"
   },
   "returning_to_job": {
-    "label": "ジョブ復帰中"
+    "label": "ジョブに戻しています"
   },
   "farming_pot_chests": {
-    "label": "壺宝箱ファーム中"
+    "label": "壺の宝箱を回収中"
   }
 }

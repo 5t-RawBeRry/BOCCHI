@@ -1,8 +1,8 @@
 {
   "title": "BOCCHI",
-  "unsupported_zone": "지원되는 초승달 섬 구역에 있지 않습니다.",
+  "unsupported_zone": "BOCCHI를 쓰려면 Occult Crescent(남쪽 뿔 또는 북쪽 뿔)로 이동하세요.",
   "support": {
-    "kofi_tooltip": "♥ Ko-fi (so you can keep touching grass)"
+    "kofi_tooltip": "♥ Ko-fi (밖에 나가 풀밭도 만질 수 있게)"
   },
   "sections": {
     "trackers": "추적기",
@@ -20,33 +20,33 @@
     "on": "켜짐",
     "off": "꺼짐",
     "idle": "대기",
-    "emergency_stop_tooltip": "긴급 정지 — 모든 자동화·경로 탐색·강화 효과를 멈춥니다",
+    "emergency_stop_tooltip": "긴급 정지 — 모든 자동화·이동·버프를 멈춥니다",
     "emergency_stop_done": "[BOCCHI] 긴급 정지",
     "goal": "목표",
     "current_step": "현재 단계",
-    "chests": "항아리 보물상자",
+    "chests": "항아리 상자",
     "automator_states": {
-      "entry": "시작",
+      "entry": "시작 중",
       "idle": "대기",
       "dead": "전투불능",
       "in_combat": "전투 중",
-      "casting_treasure_sight": "마기 보물 탐색 사용 중",
-      "applying_buffs": "강화 효과 적용 중",
+      "casting_treasure_sight": "마기 보물 탐색 시전 중",
+      "applying_buffs": "버프 적용 중",
       "repairing": "수리 중",
-      "choosing_activity": "활동 선택 중",
-      "returning": "귀환 중",
-      "pathfinding": "경로 탐색 중",
+      "choosing_activity": "다음 할 일 고르는 중",
+      "returning": "거점으로 돌아가는 중",
+      "pathfinding": "이동 중",
       "in_fate": "돌발 중",
       "waiting_for_critical_encounter": "비상 조우 대기 중",
       "in_critical_encounter": "비상 조우 중",
-      "returning_to_job": "원래 잡으로 복귀 중",
-      "farming_pot_chests": "항아리 보물상자 수집 중"
+      "returning_to_job": "원래 잡으로 바꾸는 중",
+      "farming_pot_chests": "항아리 상자 수집 중"
     },
     "farmer_phases": {
       "waiting": "대기",
-      "buffing": "강화 중",
-      "gathering": "모으는 중",
-      "stacking": "쌓는 중",
+      "buffing": "버프 중",
+      "gathering": "적 끌어모으는 중",
+      "stacking": "무리 모으는 중",
       "fighting": "전투 중"
     }
   },
@@ -67,25 +67,25 @@
     }
   },
   "buffs": {
-    "title": "강화 효과",
-    "apply_tooltip": "설정한 지식 크리스탈 강화 효과를 적용합니다",
-    "stop_tooltip": "강화 효과 적용을 중지합니다",
+    "title": "버프",
+    "apply_tooltip": "지식 크리스탈에서 설정한 버프를 적용합니다",
+    "stop_tooltip": "버프 적용을 멈춥니다",
     "applying": "적용 중…"
   },
   "automation": {
     "automator": {
       "title": "불법 모드",
-      "enable": "불법 모드 활성화",
-      "disable": "불법 모드 비활성화",
-      "toggle_illegal_mode": "불법 모드 전환",
-      "refresh_pathfinding": "경로 탐색 갱신",
-      "refresh_pathfinding_tooltip": "현재 경로를 취소하고 서 있는 위치에서 다시 계획합니다. 끼인 자리에서 빠져나오거나 수동으로 방향을 조정한 뒤 유용합니다.",
+      "enable": "불법 모드 시작",
+      "disable": "불법 모드 중지",
+      "toggle_illegal_mode": "불법 모드 시작 / 중지",
+      "refresh_pathfinding": "경로 다시 짜기",
+      "refresh_pathfinding_tooltip": "지금 경로를 버리고, 서 있는 곳에서 새로 짭니다. 끼였을 때나 수동으로 움직인 뒤에 유용합니다.",
       "details": "상세",
       "illegal_mode_on": "[BOCCHI] 불법 모드 켜짐",
       "illegal_mode_off": "[BOCCHI] 불법 모드 꺼짐",
-      "pathfinding_refreshed": "[BOCCHI] 경로 탐색 갱신됨",
-      "pathfinding_refreshed_no_goal": "[BOCCHI] 경로 탐색 갱신됨 (활성 목표 없음)",
-      "pot_chest_farm": "항아리 보물상자 파밍",
+      "pathfinding_refreshed": "[BOCCHI] 경로를 다시 짰습니다",
+      "pathfinding_refreshed_no_goal": "[BOCCHI] 경로를 지웠습니다 (지금 갈 곳이 없음)",
+      "pot_chest_farm": "항아리 상자 파밍",
       "chests_remaining": "남은 상자",
       "time_idle": "대기 시간"
     },
@@ -93,19 +93,19 @@
       "title": "몹 파머",
       "start": "몹 파머 시작",
       "stop": "몹 파머 중지",
-      "not_engaged": "비전투",
+      "not_engaged": "전투 안 함",
       "engaged": "전투 중",
-      "selected_mobs": "선택한 몬스터",
-      "configure_mobs": "/bocchi config → 몹 파머에서 대상 몬스터를 설정하세요."
+      "selected_mobs": "선택한 적",
+      "configure_mobs": "적은 /bocchi config → 몹 파머에서 고르세요."
     },
     "pots_treasure": {
       "start": "항아리 & 트레저 시작",
       "stop": "항아리 & 트레저 중지",
       "on": "[BOCCHI] 항아리 & 트레저 켜짐",
       "off": "[BOCCHI] 항아리 & 트레저 꺼짐",
-      "description": "항아리 돌발과 항아리 상자를 실행한 뒤, 다음 항아리 스폰 약 3분 전까지 트레저 헌트를 하고 사전 배치한 다음 반복합니다. 비상 조우나 일반 돌발은 하지 않습니다.",
+      "description": "항아리 돌발과 항아리 상자를 한 뒤, 다음 항아리 약 3분 전까지 트레저 헌트를 하고, 항아리 근처에서 기다린 다음 반복합니다. 비상 조우나 다른 돌발은 하지 않습니다.",
       "phase": "단계",
-      "requires_vnav": "[BOCCHI] 항아리 & 트레저에는 vnavmesh가 필요합니다.",
+      "requires_vnav": "[BOCCHI] 항아리 & 트레저에는 vnavmesh 플러그인이 필요합니다.",
       "phases": {
         "off": "꺼짐",
         "hunting": "트레저 헌트",
@@ -126,7 +126,7 @@
   "treasure": {
     "title": "트레저 헌터",
     "requires_vnav": "vnavmesh 플러그인이 필요합니다.",
-    "waiting_navmesh": "navmesh 대기 중...",
+    "waiting_navmesh": "맵이 준비될 때까지 기다리는 중…",
     "start_hunt": "헌트 시작",
     "pause_hunt": "일시 정지",
     "resume_hunt": "재개",
@@ -135,10 +135,10 @@
     "elapsed": "경과",
     "progress": "진행",
     "last_checked": "마지막으로 확인한 상자",
-    "resume_coffer": "재개 상자",
-    "flag_resume_tooltip": "헌트가 이어질 상자에 맵 플래그를 둡니다",
-    "managed_by_pots": "헌트는 항아리 & 트레저가 관리합니다 — 시작/중지는 해당 섹션을 사용하세요.",
-    "managed_by_illegal_mode": "헌트는 불법 모드(자동 조사)가 관리합니다.",
+    "resume_coffer": "재개할 상자",
+    "flag_resume_tooltip": "헌트를 이어갈 상자에 맵 플래그를 둡니다",
+    "managed_by_pots": "헌트는 항아리 & 트레저가 관리합니다 — 시작/중지는 그쪽에서 하세요.",
+    "managed_by_illegal_mode": "헌트는 불법 모드가 관리합니다 (활동 사이에 실행).",
     "distance_to_chest": "상자까지 거리",
     "nearby_title": "주변 보물상자",
     "none_nearby": "주변에 보물상자가 없습니다.",

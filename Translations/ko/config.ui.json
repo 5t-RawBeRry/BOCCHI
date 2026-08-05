@@ -1,34 +1,34 @@
 {
   "label": "UI",
-  "tooltip": "메인 창 언어, 표시할 섹션, FATE/CE 보상 아이콘입니다.",
+  "tooltip": "언어, 메인 창에 보일 내용, 보상 아이콘입니다.",
   "fields": {
     "language": {
       "label": "언어",
-      "tooltip": "BOCCHI 표시 언어를 선택합니다."
+      "tooltip": "BOCCHI 창과 메시지에 쓰는 언어입니다."
     },
     "show_experience_tracker": {
       "label": "경험치 추적기 표시",
-      "tooltip": "메인 창에 경험치 추적기 패널을 표시합니다."
+      "tooltip": "메인 창에 경험치 패널을 표시합니다."
     },
     "show_experience_tracker_graph": {
-      "label": "경험치 추적 그래프 표시",
+      "label": "경험치 그래프 표시",
       "tooltip": "추적기 아래에 경험치 그래프를 표시합니다."
     },
     "show_currency_tracker": {
       "label": "화폐 추적기 표시",
-      "tooltip": "메인 창에 화폐 추적기 패널을 표시합니다."
+      "tooltip": "메인 창에 화폐 패널을 표시합니다."
     },
     "show_currency_tracker_graph": {
-      "label": "화폐 추적 그래프 표시",
+      "label": "화폐 그래프 표시",
       "tooltip": "추적기 아래에 화폐 그래프를 표시합니다."
     },
     "show_world_section": {
-      "label": "월드 섹션 표시",
+      "label": "돌발·비상 조우 목록 표시",
       "tooltip": "메인 창에 진행 중인 돌발과 비상 조우를 표시합니다."
     },
     "show_buff_section": {
-      "label": "강화 효과 버튼 표시",
-      "tooltip": "메인 창 상단 상태 칩 옆에 강화 효과 버튼을 표시합니다."
+      "label": "버프 버튼 표시",
+      "tooltip": "메인 창 상단 상태 칩 옆에 버프 버튼을 표시합니다."
     },
     "show_automation_section": {
       "label": "불법 모드 섹션 표시",
@@ -48,7 +48,7 @@
     },
     "show_bocchi_chat_prefix": {
       "label": "BOCCHI 채팅 메시지 표시",
-      "tooltip": "플러그인 알림을 채팅에 출력합니다([BOCCHI] 태그 포함). 끄면 알림을 내지 않습니다."
+      "tooltip": "플러그인 메시지를 [BOCCHI] 태그와 함께 채팅에 냅니다. 끄면 숨깁니다(시작 MOTD는 그대로)."
     }
   }
 }

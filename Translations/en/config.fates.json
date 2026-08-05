@@ -1,11 +1,11 @@
 {
   "label": "FATEs",
-  "tooltip": "Which FATEs to allow.",
+  "tooltip": "Which FATEs Illegal Mode is allowed to do.",
   "fields": {
     "disabled_fate_ids": {
-      "label": "FATE availability",
-      "tooltip": "Uncheck a FATE to exclude it from selection.",
-      "empty": "No FATEs defined for the current zone."
+      "label": "Allowed FATEs",
+      "tooltip": "Uncheck a FATE to skip it.",
+      "empty": "No FATEs listed for this zone."
     }
   }
 }

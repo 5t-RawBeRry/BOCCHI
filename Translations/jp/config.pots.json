@@ -1,26 +1,26 @@
 {
   "label": "壺タイミング",
-  "tooltip": "壺への出発、短い壺の放棄、リロール宝箱です。",
+  "tooltip": "壺へ出るタイミング、短い壺の見送り、リロール宝箱です。",
   "fields": {
     "min_pot_fate_minutes_remaining": {
-      "label": "壺 FATE の残り時間下限（分）",
-      "tooltip": "これより残り時間が短い壺 FATE には行かない／滞在しません。0 で無効。"
+      "label": "残り（分）未満の壺はスキップ",
+      "tooltip": "残り時間がこれより短い壺 FATE には行かず、居続けません。0＝時間ではスキップしない。"
     },
     "pot_spawn_lead_minutes": {
-      "label": "壺スポーン先行（分）",
-      "tooltip": "予測スポーンの何分前に他の活動をやめて壺へ向かうか。"
+      "label": "壺の何分前に出るか",
+      "tooltip": "予測スポーンの何分前に他の作業をやめ、壺へ向かうかです。"
     },
     "fate_fallback_cutoff_minutes": {
-      "label": "この分数以内なら壺へ向かう",
-      "tooltip": "壺出発までこの分数以内なら通常 FATE を始めません。0 で無効。"
+      "label": "壺の（分）以内は FATE を始めない",
+      "tooltip": "壺出発までこの分数以内なら、通常の FATE を始めません。0＝制限なし。"
     },
     "ce_fallback_cutoff_minutes": {
-      "label": "壺出発前の CE カットオフ（分）",
-      "tooltip": "壺出発までこの分数以内なら CE を始めません。0 で無効。"
+      "label": "壺の（分）以内は CE を始めない",
+      "tooltip": "壺出発までこの分数以内なら、クリティカルエンカウントを始めません。0＝制限なし。"
     },
     "should_farm_reroll_pot_chests": {
-      "label": "リロール壺宝箱も含める",
-      "tooltip": "壺 FATE 後に共有リロール宝箱も回収します。"
+      "label": "リロール壺宝箱も回収",
+      "tooltip": "壺 FATE のあと、共有のリロール宝箱スポットも回ります。"
     }
   }
 }

@@ -1,27 +1,21 @@
 {
   "automation": {
-    "label": "不正モード",
-    "tooltip": "一般設定、壺タイミング、FATE、CE、バフです。"
+    "label": "不正モード"
   },
   "mob_farmer": {
-    "label": "モブファーム",
-    "tooltip": "モブファームの設定です。"
+    "label": "モブファーム"
   },
   "treasure": {
-    "label": "トレジャーハンター",
-    "tooltip": "宝箱オーバーレイとトレジャーハント経路です。"
+    "label": "トレジャーハンター"
   },
   "ux": {
-    "label": "UI",
-    "tooltip": "メインウィンドウの言語、表示セクション、FATE/CE報酬アイコンです。"
+    "label": "UI"
   },
   "trackers": {
-    "label": "トラッカー",
-    "tooltip": "経験値・通貨トラッカーの設定です。"
+    "label": "トラッカー"
   },
   "forked_tower": {
-    "label": "フォークタワー",
-    "tooltip": "フォークタワーの通知とオーバーレイです。"
+    "label": "フォークタワー"
   },
   "dependencies": {
     "label": "依存関係"

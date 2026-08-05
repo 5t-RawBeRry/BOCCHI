@@ -3,14 +3,14 @@
   "fields": {
     "status": {
       "label": "状態",
-      "tooltip": "依存関係の現在の状態。",
-      "intro": "各行はインストール／読み込み状態と、IPC で接続している場合はその状態を示します。パス移動とエーテルネットには必須プラグインが必要です。任意プラグインは BossMod AI や別のローテーション連携に使います。",
+      "tooltip": "補助プラグインがインストールされ、動いているかです。",
+      "intro": "移動とエーテルネットには必須プラグインのインストールと読み込みが必要です。任意のものは BossMod AI や他のローテーション補助を使えます。「連携OK」は BOCCHI がそのプラグインと話せている状態です。",
       "required": "必須",
       "optional": "任意",
       "ready": "準備完了",
-      "ipc_ok": "IPC OK",
-      "ipc_ok_mesh_pending": "IPC OK（ナビメッシュ未準備）",
-      "ipc_missing": "IPC なし",
+      "ipc_ok": "連携OK",
+      "ipc_ok_mesh_pending": "連携OK（マップ未準備）",
+      "ipc_missing": "未連携",
       "loaded": "読み込み済み",
       "installed_not_loaded": "インストール済み（未読み込み）",
       "not_installed": "未インストール"

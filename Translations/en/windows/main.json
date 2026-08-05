@@ -1,6 +1,6 @@
 {
   "title": "BOCCHI",
-  "unsupported_zone": "Not in a supported Occult Crescent Zone.",
+  "unsupported_zone": "Go to Occult Crescent (South or North Horn) to use BOCCHI.",
   "support": {
     "kofi_tooltip": "♥ Ko-fi (so you can keep touching grass)"
   },
@@ -20,71 +20,71 @@
     "on": "On",
     "off": "Off",
     "idle": "Idle",
-    "emergency_stop_tooltip": "Emergency Stop — halt all automation, pathfinding, and buffs",
+    "emergency_stop_tooltip": "Emergency Stop — stop all automation, movement, and buffs",
     "emergency_stop_done": "[BOCCHI] Emergency Stop",
     "goal": "Goal",
     "current_step": "Current step",
     "chests": "Pot chests",
     "automator_states": {
-      "entry": "Entry",
+      "entry": "Starting",
       "idle": "Idle",
       "dead": "Dead",
       "in_combat": "In combat",
       "casting_treasure_sight": "Casting Treasure Sight",
       "applying_buffs": "Applying buffs",
       "repairing": "Repairing",
-      "choosing_activity": "Choosing activity",
-      "returning": "Returning",
-      "pathfinding": "Pathfinding",
+      "choosing_activity": "Picking next activity",
+      "returning": "Returning to camp",
+      "pathfinding": "Traveling",
       "in_fate": "In FATE",
       "waiting_for_critical_encounter": "Waiting for CE",
       "in_critical_encounter": "In CE",
-      "returning_to_job": "Returning to job",
+      "returning_to_job": "Switching back to job",
       "farming_pot_chests": "Farming pot chests"
     },
     "farmer_phases": {
       "waiting": "Waiting",
       "buffing": "Buffing",
-      "gathering": "Gathering",
-      "stacking": "Stacking",
+      "gathering": "Pulling enemies",
+      "stacking": "Gathering pack",
       "fighting": "Fighting"
     }
   },
   "goals": {
-    "fate": "Fate: {0}",
+    "fate": "FATE: {0}",
     "critical_encounter": "Critical Encounter: {0}"
   },
   "trackers": {
     "experience": {
-      "current_job": "Current Job",
-      "no_job": "No jobs found",
+      "current_job": "Current job",
+      "no_job": "No job found",
       "level": "Level: {0} ({1})",
-      "per_hour": "Experience Per Hour"
+      "per_hour": "Experience per hour"
     },
     "currency": {
-      "gold_per_hour": "Gold Per Hour",
-      "silver_per_hour": "Silver Per Hour"
+      "gold_per_hour": "Gold per hour",
+      "silver_per_hour": "Silver per hour"
     }
   },
   "buffs": {
     "title": "Buffs",
-    "apply_tooltip": "Apply configured knowledge-crystal buffs",
+    "apply_tooltip": "Apply your configured buffs at a knowledge crystal",
     "stop_tooltip": "Stop applying buffs",
     "applying": "Applying…"
   },
   "automation": {
     "automator": {
       "title": "Illegal Mode",
-      "enable": "Enable Illegal Mode",
-      "disable": "Disable Illegal Mode",
-      "toggle_illegal_mode": "Toggle Illegal Mode",
-      "refresh_pathfinding": "Refresh Pathfinding",
-      "refresh_pathfinding_tooltip": "Drop the current route and replan from where you are standing. Useful after nudging out of a stuck spot or manually steering.",
+      "enable": "Start Illegal Mode",
+      "disable": "Stop Illegal Mode",
+      "toggle_illegal_mode": "Start / stop Illegal Mode",
+      "refresh_pathfinding": "Replan route",
+      "refresh_pathfinding_tooltip": "Drop the current route and plan a new one from where you are. Useful if you got stuck or walked somewhere manually.",
       "details": "Details",
       "illegal_mode_on": "[BOCCHI] Illegal Mode On",
       "illegal_mode_off": "[BOCCHI] Illegal Mode Off",
-      "pathfinding_refreshed": "[BOCCHI] Pathfinding refreshed",
-      "pathfinding_refreshed_no_goal": "[BOCCHI] Pathfinding refreshed (no active goal)",
+      "pathfinding_refreshed": "[BOCCHI] Route replanned",
+      "pathfinding_refreshed_no_goal": "[BOCCHI] Route cleared (nothing to go to right now)",
       "pot_chest_farm": "Pot chest farm",
       "chests_remaining": "Chests remaining",
       "time_idle": "Time idle"
@@ -93,19 +93,19 @@
       "title": "Mob Farmer",
       "start": "Start Mob Farmer",
       "stop": "Stop Mob Farmer",
-      "not_engaged": "Not engaged",
-      "engaged": "Engaged",
-      "selected_mobs": "Selected mobs",
-      "configure_mobs": "Configure target mobs in /bocchi config → Mob Farmer."
+      "not_engaged": "Not fighting",
+      "engaged": "Fighting",
+      "selected_mobs": "Selected enemies",
+      "configure_mobs": "Pick enemies in /bocchi config → Mob Farmer."
     },
     "pots_treasure": {
       "start": "Start Pots & Treasure",
       "stop": "Stop Pots & Treasure",
       "on": "[BOCCHI] Pots & Treasure On",
       "off": "[BOCCHI] Pots & Treasure Off",
-      "description": "Runs pot FATEs and pot chests, then Treasure Hunt until about 3 minutes before the next pot spawn, prepositions, and repeats. Does not do CEs or other FATEs.",
+      "description": "Does pot FATEs and pot chests, then treasure hunts until about 3 minutes before the next pot, waits near pots, and repeats. Does not do CEs or other FATEs.",
       "phase": "Phase",
-      "requires_vnav": "[BOCCHI] Pots & Treasure requires vnavmesh.",
+      "requires_vnav": "[BOCCHI] Pots & Treasure needs the vnavmesh plugin.",
       "phases": {
         "off": "Off",
         "hunting": "Treasure Hunt",
@@ -115,18 +115,18 @@
   },
   "world": {
     "fates": {
-      "title": "Fates",
+      "title": "FATEs",
       "none": "No active FATEs."
     },
     "critical_encounters": {
       "title": "Critical Encounters",
-      "none": "No active critical encounters."
+      "none": "No active Critical Encounters."
     }
   },
   "treasure": {
     "title": "Treasure Hunter",
-    "requires_vnav": "Requires vnavmesh plugin.",
-    "waiting_navmesh": "Waiting for navmesh...",
+    "requires_vnav": "Needs the vnavmesh plugin.",
+    "waiting_navmesh": "Waiting for the map to be ready…",
     "start_hunt": "Start Hunt",
     "pause_hunt": "Pause",
     "resume_hunt": "Resume",
@@ -134,16 +134,16 @@
     "paused": "Paused",
     "elapsed": "Elapsed",
     "progress": "Progress",
-    "last_checked": "Last checked coffer",
-    "resume_coffer": "Resume coffer",
-    "flag_resume_tooltip": "Place a map flag on the coffer where the hunt continues",
-    "managed_by_pots": "Hunt is managed by Pots & Treasure — use that section to start/stop.",
-    "managed_by_illegal_mode": "Hunt is managed by Illegal Mode (auto survey filler).",
+    "last_checked": "Last coffer checked",
+    "resume_coffer": "Resume from coffer",
+    "flag_resume_tooltip": "Put a map flag on the coffer where the hunt will continue",
+    "managed_by_pots": "Hunt is controlled by Pots & Treasure — start or stop it there.",
+    "managed_by_illegal_mode": "Hunt is controlled by Illegal Mode (runs between activities).",
     "distance_to_chest": "Distance to chest",
     "nearby_title": "Nearby treasures",
-    "none_nearby": "No nearby treasure.",
-    "active_bronze": "Active Bronze",
-    "active_silver": "Active Silver",
+    "none_nearby": "No treasures nearby.",
+    "active_bronze": "Active bronze",
+    "active_silver": "Active silver",
     "distance": "Distance: {0:F1}y",
     "position": "({0:F1}, {1:F1}, {2:F1})"
   }

@@ -1,26 +1,26 @@
 {
   "label": "Pot timing",
-  "tooltip": "When to leave for pots, abandon short pots, and whether to include reroll chests.",
+  "tooltip": "When to leave for pots, when to abandon short pots, and reroll chests.",
   "fields": {
     "min_pot_fate_minutes_remaining": {
-      "label": "Min pot FATE time remaining (minutes)",
-      "tooltip": "Do not path to (or stay on) a pot FATE with fewer minutes left than this. Set to 0 to disable."
+      "label": "Skip pots with under (minutes left)",
+      "tooltip": "Do not go to (or stay on) a pot FATE with fewer minutes left than this. 0 = never skip for time."
     },
     "pot_spawn_lead_minutes": {
-      "label": "Pot spawn lead (minutes)",
-      "tooltip": "Minutes before the predicted pot spawn to leave other activities and head to pots."
+      "label": "Leave for pots this many minutes early",
+      "tooltip": "Minutes before the predicted pot spawn to stop other work and head to pots."
     },
     "fate_fallback_cutoff_minutes": {
-      "label": "Leave for pots within (minutes)",
-      "tooltip": "Do not start a non-pot FATE when pot departure is within this many minutes. Set to 0 to disable."
+      "label": "Do not start FATEs within (minutes of pots)",
+      "tooltip": "Do not start a normal FATE when pot departure is this close. 0 = no cutoff."
     },
     "ce_fallback_cutoff_minutes": {
-      "label": "CE cutoff before pot departure (minutes)",
-      "tooltip": "Do not start a CE when pot departure is within this many minutes. Set to 0 to disable."
+      "label": "Do not start CEs within (minutes of pots)",
+      "tooltip": "Do not start a Critical Encounter when pot departure is this close. 0 = no cutoff."
     },
     "should_farm_reroll_pot_chests": {
-      "label": "Include reroll pot chests",
-      "tooltip": "Also farm the shared reroll chest positions after a pot FATE."
+      "label": "Also farm reroll pot chests",
+      "tooltip": "After a pot FATE, also visit the shared reroll chest spots."
     }
   }
 }

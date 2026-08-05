@@ -1,3 +1,3 @@
 {
-  "help": "Debug helpers. /bocchi debug ai-preset — create/overwrite the BOCCHI AI BossMod preset and print the stored JSON."
+  "help": "Debug helpers. /bocchi debug ai-preset — create or update the BOCCHI AI BossMod preset and print its saved JSON."
 }

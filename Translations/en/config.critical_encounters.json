@@ -1,11 +1,11 @@
 {
   "label": "Critical Encounters",
-  "tooltip": "Which Critical Encounters to allow.",
+  "tooltip": "Which Critical Encounters Illegal Mode is allowed to do.",
   "fields": {
     "disabled_critical_encounter_ids": {
-      "label": "Critical Encounter availability",
-      "tooltip": "Uncheck a Critical Encounter to exclude it from selection.",
-      "empty": "No Critical Encounters defined for the current zone."
+      "label": "Allowed Critical Encounters",
+      "tooltip": "Uncheck a Critical Encounter to skip it.",
+      "empty": "No Critical Encounters listed for this zone."
     }
   }
 }

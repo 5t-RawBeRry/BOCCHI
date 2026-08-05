@@ -1,18 +1,18 @@
 {
   "entry": {
-    "label": "입장"
+    "label": "시작 중"
   },
   "idle": {
     "label": "대기"
   },
   "dead": {
-    "label": "사망"
+    "label": "전투불능"
   },
   "in_combat": {
     "label": "전투 중"
   },
   "casting_treasure_sight": {
-    "label": "마기 보물 탐색 사용 중"
+    "label": "마기 보물 탐색 시전 중"
   },
   "applying_buffs": {
     "label": "버프 적용 중"
@@ -21,13 +21,13 @@
     "label": "수리 중"
   },
   "choosing_activity": {
-    "label": "활동 선택 중"
+    "label": "다음 할 일 고르는 중"
   },
   "returning": {
-    "label": "복귀 중"
+    "label": "거점으로 돌아가는 중"
   },
   "pathfinding": {
-    "label": "길 찾는 중"
+    "label": "이동 중"
   },
   "in_fate": {
     "label": "돌발 중"
@@ -36,12 +36,12 @@
     "label": "비상 조우 대기 중"
   },
   "in_critical_encounter": {
-    "label": "비상 조우 하는 중"
+    "label": "비상 조우 중"
   },
   "returning_to_job": {
-    "label": "원래 잡으로 되돌아가는 중"
+    "label": "원래 잡으로 바꾸는 중"
   },
   "farming_pot_chests": {
-    "label": "항아리 보물 상자 찾는 중"
+    "label": "항아리 상자 수집 중"
   }
 }

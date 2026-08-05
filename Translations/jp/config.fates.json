@@ -1,11 +1,11 @@
 {
   "label": "FATE",
-  "tooltip": "許可する FATE です。",
+  "tooltip": "不正モードがやってよい FATE です。",
   "fields": {
     "disabled_fate_ids": {
-      "label": "FATE の有効／無効",
-      "tooltip": "チェックを外すと選択対象から除外します。",
-      "empty": "現在のゾーンに定義された FATE はありません。"
+      "label": "許可する FATE",
+      "tooltip": "チェックを外すとその FATE をスキップします。",
+      "empty": "このゾーンに表示する FATE がありません。"
     }
   }
 }

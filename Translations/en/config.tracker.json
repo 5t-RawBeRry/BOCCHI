@@ -1,14 +1,14 @@
 {
   "label": "Tracker",
-  "tooltip": "Settings for experience and currency tracker graphs.",
+  "tooltip": "How long experience and currency graphs remember data.",
   "fields": {
     "tracked_duration": {
-      "label": "Tracked duration (minutes)",
-      "tooltip": "How many minutes of history the trackers keep."
+      "label": "History length (minutes)",
+      "tooltip": "How many minutes of past data the trackers keep."
     },
     "graph_bucket_size": {
-      "label": "Graph bucket size (seconds)",
-      "tooltip": "How many seconds each graph bucket represents."
+      "label": "Graph step size (seconds)",
+      "tooltip": "Each bar/point on the graph covers this many seconds."
     }
   }
 }

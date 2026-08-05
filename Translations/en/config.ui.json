@@ -1,54 +1,54 @@
 {
   "label": "UI",
-  "tooltip": "Main-window language, section visibility, and FATE/CE reward icons.",
+  "tooltip": "Language, what shows in the main window, and reward icons.",
   "fields": {
     "language": {
       "label": "Language",
-      "tooltip": "Choose the display language for BOCCHI."
+      "tooltip": "Language used for BOCCHI’s windows and messages."
     },
     "show_experience_tracker": {
       "label": "Show experience tracker",
-      "tooltip": "Display the experience tracker panel in the main window."
+      "tooltip": "Show the experience panel in the main window."
     },
     "show_experience_tracker_graph": {
-      "label": "Show experience tracker graph",
-      "tooltip": "Display the experience graph under the tracker."
+      "label": "Show experience graph",
+      "tooltip": "Show the experience graph under the tracker."
     },
     "show_currency_tracker": {
       "label": "Show currency tracker",
-      "tooltip": "Display the currency tracker panel in the main window."
+      "tooltip": "Show the currency panel in the main window."
     },
     "show_currency_tracker_graph": {
-      "label": "Show currency tracker graph",
-      "tooltip": "Display the currency graph under the tracker."
+      "label": "Show currency graph",
+      "tooltip": "Show the currency graph under the tracker."
     },
     "show_world_section": {
-      "label": "Show world section",
-      "tooltip": "Display active FATEs and critical encounters in the main window."
+      "label": "Show FATEs & CEs list",
+      "tooltip": "Show active FATEs and Critical Encounters in the main window."
     },
     "show_buff_section": {
-      "label": "Show buffs button",
-      "tooltip": "Show the Buffs action next to the status chips at the top of the main window."
+      "label": "Show Buffs button",
+      "tooltip": "Show the Buffs button next to the status chips at the top of the main window."
     },
     "show_automation_section": {
       "label": "Show Illegal Mode section",
-      "tooltip": "Display Illegal Mode controls in the main window."
+      "tooltip": "Show Illegal Mode controls in the main window."
     },
     "show_mob_farmer_section": {
       "label": "Show Mob Farmer section",
-      "tooltip": "Display Mob Farmer controls in the main window."
+      "tooltip": "Show Mob Farmer controls in the main window."
     },
     "show_pots_treasure_section": {
       "label": "Show Pots & Treasure section",
-      "tooltip": "Display Pots & Treasure controls in the main window."
+      "tooltip": "Show Pots & Treasure controls in the main window."
     },
     "show_treasure_section": {
       "label": "Show Treasure Hunter section",
-      "tooltip": "Display Treasure Hunter status and controls in the main window."
+      "tooltip": "Show Treasure Hunter status and controls in the main window."
     },
     "show_bocchi_chat_prefix": {
       "label": "Show BOCCHI chat messages",
-      "tooltip": "Print plugin notifications to chat (with a [BOCCHI] tag). Turn off to silence them."
+      "tooltip": "Print plugin messages to chat with a [BOCCHI] tag. Turn off to hide them (startup MOTD still shows)."
     }
   }
 }

@@ -1,10 +1,10 @@
 ﻿{
   "label": "Event drops",
-  "tooltip": "Reward icons shown under South Horn FATEs and Critical Encounters.",
+  "tooltip": "Reward icons under South Horn FATEs and Critical Encounters.",
   "fields": {
     "show_demiatma_drops": {
       "label": "Show demiatma drops",
-      "tooltip": "Show demiatma icons on South Horn FATEs and CEs. Green border = still need; red = already have 3."
+      "tooltip": "Show demiatma icons on South Horn FATEs and CEs. Green border = you still need it; red = you already have 3."
     },
     "show_note_drops": {
       "label": "Show field note drops",

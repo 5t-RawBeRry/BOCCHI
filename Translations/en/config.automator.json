@@ -1,34 +1,34 @@
 {
   "label": "General",
-  "tooltip": "Which activities to run, mount, AI, Return, and repair.",
+  "tooltip": "What Illegal Mode does: FATEs, CEs, pots, mount, AI, Return, and repair.",
   "fields": {
     "should_do_fates": {
       "label": "Do FATEs",
-      "tooltip": "Select and run FATE goals."
+      "tooltip": "Go to and complete FATEs."
     },
     "prefer_pot_fates": {
       "label": "Prefer pot FATEs",
-      "tooltip": "Boost scoring for pot FATEs when choosing a FATE. Also enables pot timing and preposition (see Pot timing)."
+      "tooltip": "Pick Magic Pot FATEs when choosing what to do. Also turns on pot timing and waiting near pots (see Pot timing)."
     },
     "should_farm_pot_chests": {
       "label": "Farm pot chests after pot FATEs",
-      "tooltip": "After a pot FATE: wait for Cache Me If You Can, use Magical Elixir, follow compass hints to the reveal coffer (South + North Horn). Falls back to visiting authored spots if buff/elixir/hints are unavailable. Reroll chests (blind) are on Pot timing."
+      "tooltip": "After a pot FATE, wait for Cache Me If You Can, drink Magical Elixir, and follow the compass hints to the chest (South and North Horn). If you have no buff, elixir, or hints, it visits the known chest spots instead. Extra reroll chests are under Pot timing."
     },
     "should_preposition_to_pots": {
-      "label": "Preposition to pots before spawn",
-      "tooltip": "Leave early and wait near the predicted pot. Timing comes from Pot timing."
+      "label": "Wait near pots before they spawn",
+      "tooltip": "Leave early and stand near where the next pot FATE should appear. Timing is under Pot timing."
     },
     "should_do_critical_encounters": {
       "label": "Do Critical Encounters",
-      "tooltip": "Select and run Critical Encounter goals."
+      "tooltip": "Go to and complete Critical Encounters."
     },
     "toggle_ai_provider": {
       "label": "Use BOCCHI AI",
-      "tooltip": "Enable the BOCCHI AI BossMod preset for FATE/CE combat (targeting and combat movement). While pathfinding it is turned off and turned back on when you arrive. Off = no BOCCHI AI."
+      "tooltip": "In FATE and CE combat, use the BOCCHI AI BossMod preset (targets and combat movement). It turns off while traveling and back on when you arrive. Off = no BOCCHI AI."
     },
     "should_auto_mount": {
-      "label": "Auto-mount while traveling",
-      "tooltip": "Mount before long pathfinds and remount if you dismount mid-route (e.g. after Treasure Sight) while heading to a FATE or CE."
+      "label": "Mount while traveling",
+      "tooltip": "Mount for long trips to a FATE or CE, and remount if you get off mid-way (for example after Treasure Sight)."
     },
     "preferred_mount_id": {
       "label": "Preferred mount",
@@ -37,35 +37,35 @@
     },
     "sprint_on_aetheryte_approach": {
       "label": "Sprint to aetherytes",
-      "tooltip": "Use Sprint when walking to an aetheryte (camp close-in, aethernet approach, hunt combat escape)."
+      "tooltip": "Use Sprint when walking up to an aetheryte (camp, aethernet shard, or escaping combat during a treasure hunt)."
     },
     "stay_mounted_while_waiting_for_ce": {
       "label": "Stay mounted while waiting for CEs",
-      "tooltip": "Do not auto-dismount after arriving at a preparing CE. You still dismount when the encounter starts."
+      "tooltip": "Do not get off your mount after you arrive at a CE that is still preparing. You still dismount when it starts."
     },
     "stop_after_return": {
-      "label": "Stop after return",
-      "tooltip": "Return (and teleport to the inbound aetheryte) toward the next FATE or CE, then pause for manual pathing. Toggle the mode to resume auto-nav."
+      "label": "Stop after Return",
+      "tooltip": "After Return (and teleport toward the next FATE or CE), stop and let you walk the rest. Toggle Illegal Mode to resume, or turn this off for full auto."
     },
     "phantom_jobs_leveling_mode": {
-      "label": "Phantom jobs leveling mode",
-      "tooltip": "When your current phantom job reaches max level, switch to the next unlocked job that is not maxed. Freelancer is skipped (it does not level from combat XP). Stays put if every unlocked XP job is maxed."
+      "label": "Level phantom jobs automatically",
+      "tooltip": "When your current phantom job is maxed, switch to the next unlocked one that is not maxed. Skips Freelancer (it does not level from combat). Stays put if every unlocked job is already maxed."
     },
     "should_cast_treasure_sight": {
       "label": "Cast Treasure Sight at camp",
-      "tooltip": "Periodically cast Treasure Sight while idle at base camp. Ignored when Auto treasure hunt in Illegal Mode is on (that mode surveys after each CE/FATE instead)."
+      "tooltip": "While idle at base camp, cast Treasure Sight on a timer. Ignored if Auto treasure hunt in Illegal Mode is on (that already surveys after each CE/FATE)."
     },
     "treasure_sight_recast_interval_seconds": {
-      "label": "Treasure Sight recast interval (seconds)",
-      "tooltip": "How often to recast Treasure Sight at camp when periodic Sight is enabled."
+      "label": "Treasure Sight every (seconds)",
+      "tooltip": "How often to cast Treasure Sight at camp when the option above is on."
     },
     "max_remote_idle_time_seconds": {
-      "label": "Max Return delay after FATE/CE (seconds)",
+      "label": "Max wait before Return (seconds)",
       "tooltip": "After a FATE or CE ends, wait a random time between 2 seconds and this value before casting Return."
     },
     "auto_repair_threshold": {
-      "label": "Auto-repair threshold (%)",
-      "tooltip": "Repair equipped gear when any piece falls to or below this condition (at basecamp)."
+      "label": "Repair gear below (%)",
+      "tooltip": "At base camp, repair any equipped piece at or below this durability."
     }
   }
 }

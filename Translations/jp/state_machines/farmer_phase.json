@@ -1,15 +1,15 @@
 {
   "waiting": {
-    "label": "待機"
+    "label": "待機中"
   },
   "buffing": {
     "label": "バフ中"
   },
   "gathering": {
-    "label": "収集中"
+    "label": "敵を引っ張っています"
   },
   "stacking": {
-    "label": "釣り中"
+    "label": "パックをまとめています"
   },
   "fighting": {
     "label": "戦闘中"

@@ -1,6 +1,6 @@
 {
   "entry": {
-    "label": "Entry"
+    "label": "Starting"
   },
   "idle": {
     "label": "Idle"
@@ -21,13 +21,13 @@
     "label": "Repairing"
   },
   "choosing_activity": {
-    "label": "Choosing activity"
+    "label": "Picking next activity"
   },
   "returning": {
-    "label": "Returning"
+    "label": "Returning to camp"
   },
   "pathfinding": {
-    "label": "Pathfinding"
+    "label": "Traveling"
   },
   "in_fate": {
     "label": "In FATE"
@@ -39,7 +39,7 @@
     "label": "In CE"
   },
   "returning_to_job": {
-    "label": "Returning to job"
+    "label": "Switching back to job"
   },
   "farming_pot_chests": {
     "label": "Farming pot chests"

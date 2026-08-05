@@ -1,70 +1,70 @@
 {
   "label": "Mob Farmer",
-  "tooltip": "Mob selection and farming behavior.",
+  "tooltip": "Choose which enemies to farm and how pulls work.",
   "fields": {
     "should_handle_targeting": {
-      "label": "Handle targeting",
-      "tooltip": "BOCCHI picks and switches targets while fighting packs."
+      "label": "Auto-target enemies",
+      "tooltip": "While fighting, BOCCHI picks and switches targets for you."
     },
     "force_target_central_enemy": {
-      "label": "Target pack center",
-      "tooltip": "Prefer the enemy nearest the pack center instead of the closest one. Used with Handle targeting."
+      "label": "Prefer the middle of the pack",
+      "tooltip": "Target the enemy nearest the pack center instead of the closest one. Needs Auto-target enemies."
     },
     "consider_special_mobs": {
-      "label": "Consider special mobs",
-      "tooltip": "Consider nearby special mobs to pull and in counts. These are mobs that spawn during specific times and weather."
+      "label": "Include special enemies",
+      "tooltip": "Also pull and count special enemies that only appear in certain weather or times of day."
     },
     "count_special_mobs_toward_minimum": {
-      "label": "Count special mobs toward minimum",
-      "tooltip": "When off, specials can still be pulled but do not count toward the minimum-to-start / minimum-to-fight thresholds."
+      "label": "Count specials toward minimums",
+      "tooltip": "When off, specials can still be pulled, but they do not count toward the start / fight minimums below."
     },
     "only_start_out_of_combat": {
-      "label": "Only start out of combat",
-      "tooltip": "Wait until the InCombat flag clears before starting a new Buffing → Gathering loop. Aggro already on you still enters Fighting."
+      "label": "Wait until combat fully ends",
+      "tooltip": "Do not start a new pull until you are fully out of combat. If something is already attacking you, fighting still starts."
     },
     "max_mob_level": {
-      "label": "Max mob level",
-      "tooltip": "Max mob level to pull, helpful for use with special mobs or mobs with varied levels"
+      "label": "Max enemy level",
+      "tooltip": "Ignore enemies above this level. Handy when specials or mixed-level packs are around."
     },
     "max_euclidean_distance": {
-      "label": "Max euclidean distance",
-      "tooltip": "Max euclidean distance to a mob before ignoring it, useful to stop yourself getting chained across the map when considering special mobs."
+      "label": "Max pull range",
+      "tooltip": "Ignore enemies farther than this (yalms). Stops a far-away special from dragging you across the map."
     },
     "min_euclidean_distance_to_return_home": {
-      "label": "Min distance to return to home",
-      "tooltip": "After combat, if you are further away from your starting point than this, you will walk back."
+      "label": "Go home if farther than",
+      "tooltip": "After a fight, walk back to your start point only if you are farther away than this (yalms)."
     },
     "return_to_start_in_waiting_phase": {
-      "label": "Return to your starting point after combat",
-      "tooltip": "Starting point is determined by where you are stood when you press Start. Paths home mounted when auto-mount is enabled."
+      "label": "Return to start after combat",
+      "tooltip": "Your start point is where you stood when you pressed Start. Uses a mount on the way back if auto-mount is on."
     },
     "render_debug_lines": {
-      "label": "Render debug lines",
-      "tooltip": "While Mob Farmer is running, render red lines to valid mobs out of combat and green lines to valid mobs in combat."
+      "label": "Show debug lines",
+      "tooltip": "While farming: red lines to valid enemies out of combat, green lines while fighting."
     },
     "apply_battle_bell": {
-      "label": "Apply Battle Bell",
-      "tooltip": "Switch to Geomancer and cast Battle Bell before each pull. Skips if the buff is already up or the cooldown is longer than the wait below."
+      "label": "Use Battle Bell",
+      "tooltip": "Switch to Geomancer and cast Battle Bell before each pull. Skips if the buff is already up, or the cooldown is longer than the wait below."
     },
     "maximum_battle_bell_wait_time": {
-      "label": "Maximum time to wait for Battle Bell",
-      "tooltip": "If Battle Bell's remaining cooldown is longer than this, skip buffing and pull anyway."
+      "label": "Max wait for Battle Bell",
+      "tooltip": "If Battle Bell needs longer than this to come off cooldown, skip it and pull anyway."
     },
     "minimum_mobs_to_start_loop": {
-      "label": "Minimum mobs to start",
-      "tooltip": "How many valid mobs need to be nearby to start the loop"
+      "label": "Minimum enemies to start",
+      "tooltip": "How many valid enemies must be nearby before a new pull begins."
     },
     "minimum_mobs_to_start_fight": {
-      "label": "Minimum mobs to fight",
-      "tooltip": "How many mobs to gather before stopping to fight them. If there are no more out of combat mobs around you, it will start combat regardless."
+      "label": "Minimum enemies before fighting",
+      "tooltip": "How many enemies to gather before stopping to fight. If nothing else is left to pull nearby, fighting starts early."
     },
     "stacking_timeout_seconds": {
-      "label": "Stacking timeout (seconds)",
-      "tooltip": "Maximum time to spend walking to stack mobs before starting combat anyway."
+      "label": "Gather timeout (seconds)",
+      "tooltip": "Max time spent running to gather enemies before fighting starts anyway."
     },
     "mobs": {
-      "label": "Target mobs",
-      "tooltip": "Mobs the farmer will pull and count when stacking.",
+      "label": "Enemy list",
+      "tooltip": "Which enemies the farmer will pull and count.",
       "search_hint": "Search name or ID...",
       "selected": "Selected",
       "zone_filter": "Zone",
