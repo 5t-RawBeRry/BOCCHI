@@ -35,6 +35,20 @@ public class PotsTreasureService
     ILogger<PotsTreasureService> logger
 ) : IPotsTreasureMode, IOnUpdate, IOnStop
 {
+    private static readonly TimeSpan TreasureRestartDelay = TimeSpan.FromMinutes(3);
+
+    private static readonly TimeSpan ManualTreasureOverride = TimeSpan.FromMinutes(5);
+
+    private const int PotsTreasureHuntMaxLevel = 50;
+
+    private readonly HashSet<uint> visitedTreasureNodes = [];
+
+    private DateTimeOffset nextTreasureHuntAt = DateTimeOffset.MinValue;
+
+    private DateTimeOffset forceTreasureUntil = DateTimeOffset.MinValue;
+
+    private bool huntWasRunning;
+
     public bool Running => context.IsPotsAndTreasure;
 
     public PotsTreasurePhase Phase { get; private set; } = PotsTreasurePhase.Off;
@@ -47,6 +61,7 @@ public class PotsTreasureService
             automator.TogglePotsAndTreasure();
         }
 
+        ResetTreasureLoop();
         Phase = PotsTreasurePhase.Off;
     }
 
@@ -56,6 +71,7 @@ public class PotsTreasureService
         {
             StopHuntSession();
             automator.TogglePotsAndTreasure();
+            ResetTreasureLoop();
             Phase = PotsTreasurePhase.Off;
             return;
         }
@@ -76,8 +92,22 @@ public class PotsTreasureService
 
         automator.TogglePotsAndTreasure();
         hunter.ManagedByPotsTreasure = true;
+        ResetTreasureLoop();
         Phase = PotsTreasurePhase.DoingPots;
         logger.Info("Pots & Treasure mode started");
+    }
+
+    public void ResumeTreasureHunt()
+    {
+        if (!Running)
+        {
+            return;
+        }
+
+        forceTreasureUntil = DateTimeOffset.UtcNow + ManualTreasureOverride;
+        nextTreasureHuntAt = DateTimeOffset.MinValue;
+        EnterHuntPhase();
+        logger.Info("Pots & Treasure: manually resumed treasure hunt");
     }
 
     public void Update()
@@ -87,6 +117,7 @@ public class PotsTreasureService
             if (Phase != PotsTreasurePhase.Off || hunter.ManagedByPotsTreasure)
             {
                 StopHuntSession();
+                ResetTreasureLoop();
                 Phase = PotsTreasurePhase.Off;
             }
 
@@ -94,6 +125,7 @@ public class PotsTreasureService
         }
 
         hunter.ManagedByPotsTreasure = true;
+        CaptureFinishedTreasureHunt();
 
         if (!zones.GetZone().IsOccultCrescentZone())
         {
@@ -135,8 +167,14 @@ public class PotsTreasureService
 
         if (!hunter.Running)
         {
-            hunter.ManagedByPotsTreasure = true;
+            if (DateTimeOffset.UtcNow < nextTreasureHuntAt)
+            {
+                return;
+            }
+
+            hunter.ConfigureManagedRun(visitedTreasureNodes, PotsTreasureHuntMaxLevel);
             hunter.StartManaged();
+            huntWasRunning = hunter.Running;
             logger.Info("Pots & Treasure: started treasure hunt filler");
             return;
         }
@@ -144,6 +182,7 @@ public class PotsTreasureService
         if (hunter.Paused)
         {
             hunter.Resume();
+            huntWasRunning = true;
             logger.Info("Pots & Treasure: resumed treasure hunt");
         }
     }
@@ -160,6 +199,11 @@ public class PotsTreasureService
 
     private bool NeedsPotWork()
     {
+        if (DateTimeOffset.UtcNow < forceTreasureUntil)
+        {
+            return false;
+        }
+
         if (memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _))
         {
             return true;
@@ -200,5 +244,47 @@ public class PotsTreasureService
             TimeSpan.Zero,
             PotsTreasureDefaults.PrepositionLeadMinutes,
             potFarmingEnabled: true);
+    }
+
+    private void CaptureFinishedTreasureHunt()
+    {
+        if (!huntWasRunning || hunter.Running)
+        {
+            huntWasRunning = hunter.Running;
+            return;
+        }
+
+        IReadOnlySet<uint> checkedNodes = hunter.LastCompletedRunNodeIds;
+        if (checkedNodes.Count > 0)
+        {
+            foreach (uint nodeId in checkedNodes)
+            {
+                visitedTreasureNodes.Add(nodeId);
+            }
+
+            nextTreasureHuntAt = DateTimeOffset.UtcNow + TreasureRestartDelay;
+            logger.Info(
+                "Pots & Treasure: treasure hunt completed {CheckedCount} nodes; {VisitedCount} visited this session. Restart after {Delay:mm\\:ss}.",
+                checkedNodes.Count,
+                visitedTreasureNodes.Count,
+                TreasureRestartDelay);
+        }
+        else
+        {
+            nextTreasureHuntAt = DateTimeOffset.UtcNow + TreasureRestartDelay;
+            logger.Info(
+                "Pots & Treasure: treasure hunt stopped with no completed nodes; restart after {Delay:mm\\:ss}.",
+                TreasureRestartDelay);
+        }
+
+        huntWasRunning = false;
+    }
+
+    private void ResetTreasureLoop()
+    {
+        visitedTreasureNodes.Clear();
+        nextTreasureHuntAt = DateTimeOffset.MinValue;
+        forceTreasureUntil = DateTimeOffset.MinValue;
+        huntWasRunning = false;
     }
 }

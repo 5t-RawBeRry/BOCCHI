@@ -21,6 +21,9 @@ public interface ITreasureHunter
     /// <summary>Layout node ID of the last coffer step that was completed this session.</summary>
     uint? LastCheckedNodeId { get; }
 
+    /// <summary>Layout node IDs checked by the last completed Pots &amp; Treasure hunt run.</summary>
+    IReadOnlySet<uint> LastCompletedRunNodeIds { get; }
+
     /// <summary>True while Pots &amp; Treasure owns this hunt session (hide standalone Start Hunt).</summary>
     bool ManagedByPotsTreasure { get; set; }
 
@@ -38,6 +41,10 @@ public interface ITreasureHunter
     ///     Skips mode exclusivity so the parent mode is not torn down.
     /// </summary>
     void StartManaged();
+
+    void ConfigureManagedRun(IReadOnlySet<uint> excludedNodeIds, int? maxLevelOverride = null);
+
+    bool RecalculateRoute();
 
     void Pause();
 
