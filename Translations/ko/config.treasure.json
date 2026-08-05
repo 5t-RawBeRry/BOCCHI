@@ -66,6 +66,26 @@
     "enable_coffer_observation_submission": {
       "label": "실시간 상자 경로에 참여",
       "tooltip": "상자 개봉 위치를 익명으로 보내 실시간 보물 헌트 경로를 만드는 데 사용합니다. 충분한 지점이 확인되면 헌트에 우선 쓰고, 없으면 기존 맵을 씁니다."
+    },
+    "use_ninja_hide_on_dangerous_routes": {
+      "label": "위험 경로에서 닌자 은신",
+      "tooltip": "실험적: 높은 지식 적대 대상이 가까우면 닌자 기어셋으로 바꾼 뒤 Hide로 은신하고 도보로 상자에 접근합니다(AOCC 스타일). 지식이 높을 때 권장."
+    },
+    "ninja_gearset_number": {
+      "label": "닌자 기어셋 번호",
+      "tooltip": "본직 닌자(ClassJob 30) 기어셋(1부터). 0 = 전환 없음(이미 닌자여야 함)."
+    },
+    "knowledge_hide_offset": {
+      "label": "지식 Hide 오프셋",
+      "tooltip": "적의 지식이 내 지식 + 이 값 이상일 때 Hide(0 = 같거나 더 높음)."
+    },
+    "knowledge_threat_enter_distance": {
+      "label": "위협 진입 거리",
+      "tooltip": "지식 위협이 이 얄름 이내일 때 Hide를 시작합니다."
+    },
+    "knowledge_threat_exit_distance": {
+      "label": "위협 해제 거리",
+      "tooltip": "위협이 이보다 멀면 Hide 불필요(진입 거리와 히스테리시스)."
     }
   }
 }

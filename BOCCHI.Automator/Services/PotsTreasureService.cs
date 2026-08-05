@@ -62,7 +62,7 @@ public class PotsTreasureService
 
         if (!hunter.IsVnavAvailable)
         {
-            chat.PrintError(BocchiChat.Format(translator.T(".automation.pots_treasure.requires_vnav"), uiConfig));
+            BocchiChat.PrintError(chat, uiConfig, translator.T(".automation.pots_treasure.requires_vnav"));
             return;
         }
 

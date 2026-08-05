@@ -47,8 +47,8 @@
       "tooltip": "Display Treasure Hunter status and controls in the main window."
     },
     "show_bocchi_chat_prefix": {
-      "label": "Show [BOCCHI] chat prefix",
-      "tooltip": "Prefix plugin chat messages with [BOCCHI]. Turn off for cleaner chat."
+      "label": "Show BOCCHI chat messages",
+      "tooltip": "Print plugin notifications to chat (with a [BOCCHI] tag). Turn off to silence them."
     }
   }
 }

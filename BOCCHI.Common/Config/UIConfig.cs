@@ -61,7 +61,7 @@ public class UIConfig : IAutoConfig
 
     [Checkbox] public bool ShowTreasureSection { get; set; } = true;
 
-    /// <summary>Prefix chat notifications with [BOCCHI].</summary>
+    /// <summary>Print plugin chat notifications (always with [BOCCHI] when enabled).</summary>
     [Checkbox]
     public bool ShowBocchiChatPrefix { get; set; } = true;
 }

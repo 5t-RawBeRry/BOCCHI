@@ -54,7 +54,8 @@ public class TreasureHunterService
     IClientState client,
     IAutomationModeGuard modeGuard,
     IMp3SoundPlayer sounds,
-    CofferObservationCatalogService cofferCatalog
+    CofferObservationCatalogService cofferCatalog,
+    NinjaHideAssist ninjaHide
 ) : ITreasureHunter, IOnUpdate, IOnStop
 {
     private const float ChestSearchRadius = 25f;
@@ -86,6 +87,9 @@ public class TreasureHunterService
     private bool waitingForSightCounts;
     private DateTime sightCastUtc = DateTime.MinValue;
     private int locationsSinceLastSight;
+
+    /// <summary>Hysteresis: Hide required until threats leave exit distance.</summary>
+    private bool ninjaHideRequired;
 
     public void OnStop() => Teardown();
 
@@ -504,6 +508,7 @@ public class TreasureHunterService
         }
 
         float dist2d = player.Position.Distance2D(destination);
+        StepDistance = dist2d;
 
         if (!vnav.IsRunning() && dist2d > OpenTreasureCofferChain.PreferredOpenDistance)
         {
@@ -512,7 +517,11 @@ public class TreasureHunterService
 
         MaybeMount(destination);
 
-        StepDistance = dist2d;
+        if (!ApplyNinjaHideGate())
+        {
+            return false;
+        }
+
         if (StepDistance > config.HuntDetectionRange)
         {
             return false;
@@ -692,6 +701,11 @@ public class TreasureHunterService
 
         MaybeMount(destination);
 
+        if (!ApplyNinjaHideGate())
+        {
+            return false;
+        }
+
         return false;
     }
 
@@ -723,6 +737,11 @@ public class TreasureHunterService
 
     private void MaybeMount(Vector3 destination)
     {
+        if (ninjaHideRequired || ninjaHide.IsStealthed)
+        {
+            return;
+        }
+
         if (!automatorConfig.ShouldAutoMount)
         {
             return;
@@ -736,6 +755,77 @@ public class TreasureHunterService
         if (player.Position.Distance(destination) > NavigationConstants.MountMinDistance)
         {
             MountWait.TryCast(automatorConfig.PreferredMountId);
+        }
+    }
+
+    /// <summary>
+    ///     When enabled and a knowledge threat is in range: gearset → dismount → Hide before continuing on foot.
+    ///     Returns false while still preparing (caller should wait).
+    /// </summary>
+    private bool ApplyNinjaHideGate()
+    {
+        if (!config.UseNinjaHideOnDangerousRoutes)
+        {
+            ninjaHideRequired = false;
+            return true;
+        }
+
+        UpdateNinjaHideRequired();
+
+        if (!ninjaHideRequired)
+        {
+            return true;
+        }
+
+        if (ninjaHide.EnsureReady(config.NinjaGearsetNumber))
+        {
+            return true;
+        }
+
+        // Stand still to cast Hide / swap gear; keep pathing while still mounted toward the threat.
+        if (!ninjaHide.IsMounted)
+        {
+            vnav.Stop();
+        }
+
+        return false;
+    }
+
+    private void UpdateNinjaHideRequired()
+    {
+        if (KnowledgeThreat.TryFindIsleblazer(
+                objects,
+                player.Position,
+                KnowledgeThreat.IsleblazerUnhideDistance,
+                out _))
+        {
+            ninjaHideRequired = false;
+            return;
+        }
+
+        if (KnowledgeThreat.TryGetPlayerForayLevel(objects) is not int foray)
+        {
+            ninjaHideRequired = false;
+            return;
+        }
+
+        int hideAt = KnowledgeThreat.HideAtOrAbove(foray, config.KnowledgeHideOffset);
+        float enter = config.KnowledgeThreatEnterDistance;
+        float exit = Math.Max(config.KnowledgeThreatExitDistance, enter);
+
+        if (ninjaHideRequired)
+        {
+            if (!KnowledgeThreat.TryFindThreat(objects, player.Position, hideAt, exit, out _, out _))
+            {
+                ninjaHideRequired = false;
+            }
+
+            return;
+        }
+
+        if (KnowledgeThreat.TryFindThreat(objects, player.Position, hideAt, enter, out _, out _))
+        {
+            ninjaHideRequired = true;
         }
     }
 
@@ -973,6 +1063,7 @@ public class TreasureHunterService
         waitingForSightCounts = false;
         sightCastUtc = DateTime.MinValue;
         locationsSinceLastSight = 0;
+        ninjaHideRequired = false;
 
         SoftStopMovement();
 

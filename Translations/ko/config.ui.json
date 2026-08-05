@@ -47,8 +47,8 @@
       "tooltip": "메인 창에 트레저 헌터 상태와 조작을 표시합니다."
     },
     "show_bocchi_chat_prefix": {
-      "label": "[BOCCHI] 채팅 접두사 표시",
-      "tooltip": "플러그인 채팅 메시지에 [BOCCHI]를 붙입니다. 끄면 더 깔끔합니다."
+      "label": "BOCCHI 채팅 메시지 표시",
+      "tooltip": "플러그인 알림을 채팅에 출력합니다([BOCCHI] 태그 포함). 끄면 알림을 내지 않습니다."
     }
   }
 }

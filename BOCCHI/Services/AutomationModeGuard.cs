@@ -148,7 +148,7 @@ public class AutomationModeGuard
             pathfinder.Stop();
             vnav.Stop();
             chains.CancelAll();
-            chat.Print(BocchiChat.Format(translator.T(".status.emergency_stop_done"), uiConfig));
+            BocchiChat.Print(chat, uiConfig, translator.T(".status.emergency_stop_done"));
         }
         finally
         {

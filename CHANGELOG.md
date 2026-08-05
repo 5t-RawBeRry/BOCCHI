@@ -8,8 +8,11 @@
 - BOCCHI AI: prioritize everything (not FATE-only) so Critical Encounter bosses get targeted
 - Pathing: start vnav movement first, then cast mount while running (no mount-before-walk wait)
 - Illegal Mode: while waiting inside a CE blue box, hold position instead of re-pathing to the walk-in spot
-- Illegal Mode: optional auto treasure hunt — after CE/FATE, Return, Treasure Sight (when learned), then hunt if coffers remain
-- Treasure: coffer observation network — opt-in submit + hunt prefers accepted crowdsourced spots (authored map fallback when empty)
-- UI: option to show/hide the [BOCCHI] chat prefix
+- UI: option to show/hide BOCCHI chat messages (off silences notifications; MOTD still prints)
 - UI: FATE/CE lists no longer reserve a large empty box when only a few are up
 - World: restore South Horn FATE/CE reward icons (demiatma / notes / soul shards; demiatma ownership tint)
+
+### Features
+- Treasure: Auto treasure hunt in Illegal Mode — after CE/FATE, Return, Treasure Sight (when learned), then hunt if coffers remain
+- Treasure: Opt in for live coffer routes — anonymously submit opens; hunts prefer accepted live spots (authored map fallback when empty)
+- Treasure: Ninja Hide on dangerous routes — optional gearset swap + Hide near high-knowledge hostiles, finish coffer approach on foot

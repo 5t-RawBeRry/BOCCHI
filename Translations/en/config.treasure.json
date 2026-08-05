@@ -66,6 +66,26 @@
     "enable_coffer_observation_submission": {
       "label": "Opt in for live coffer routes",
       "tooltip": "Anonymously send coffer open locations so we can build live Treasure Hunt routes. When enough spots are confirmed, hunts prefer those; otherwise the authored map is used."
+    },
+    "use_ninja_hide_on_dangerous_routes": {
+      "label": "Ninja Hide on dangerous routes",
+      "tooltip": "Experimental: when a high-knowledge hostile is nearby, swap to your Ninja gearset, cast Hide, and finish the coffer approach on foot (AOCC-style). Recommended near max Knowledge."
+    },
+    "ninja_gearset_number": {
+      "label": "Ninja gearset number",
+      "tooltip": "1-based gearset that equips real Ninja (ClassJob 30). 0 = do not swap; you must already be on Ninja."
+    },
+    "knowledge_hide_offset": {
+      "label": "Knowledge Hide offset",
+      "tooltip": "Hide when a hostile's foray knowledge is at least your Knowledge + this offset (0 = same level or higher)."
+    },
+    "knowledge_threat_enter_distance": {
+      "label": "Threat enter distance",
+      "tooltip": "Start the Hide flow when a knowledge threat is within this many yalms."
+    },
+    "knowledge_threat_exit_distance": {
+      "label": "Threat exit distance",
+      "tooltip": "Stop requiring Hide once threats are farther than this (hysteresis vs enter distance)."
     }
   }
 }

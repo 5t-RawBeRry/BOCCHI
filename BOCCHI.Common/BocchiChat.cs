@@ -1,19 +1,36 @@
 using BOCCHI.Common.Config;
+using Dalamud.Plugin.Services;
 
 namespace BOCCHI.Common;
 
-/// <summary>Formats chat messages with an optional [BOCCHI] prefix.</summary>
+/// <summary>Plugin chat notifications: always tagged [BOCCHI] when shown; optional silence.</summary>
 public static class BocchiChat
 {
     public const string Tag = "[BOCCHI]";
 
-    public static string Format(string message, UIConfig ui) => Format(message, ui.ShowBocchiChatPrefix);
+    public static bool ShouldPrint(UIConfig ui) => ui.ShowBocchiChatPrefix;
 
-    public static string Format(string message, bool showPrefix)
+    public static void Print(IChatGui chat, UIConfig ui, string message)
     {
-        string body = Strip(message);
-        return showPrefix ? $"{Tag} {body}" : body;
+        if (!ShouldPrint(ui))
+        {
+            return;
+        }
+
+        chat.Print(Format(message));
     }
+
+    public static void PrintError(IChatGui chat, UIConfig ui, string message)
+    {
+        if (!ShouldPrint(ui))
+        {
+            return;
+        }
+
+        chat.PrintError(Format(message));
+    }
+
+    public static string Format(string message) => $"{Tag} {Strip(message)}";
 
     public static string Strip(string message)
     {

@@ -98,7 +98,7 @@ public class Automator
         }
 
         context.SetRunMode(turningOn ? AutomatorRunMode.IllegalMode : AutomatorRunMode.Off);
-        chat.Print(BocchiChat.Format(translator.T(Enabled ? ".automation.automator.illegal_mode_on" : ".automation.automator.illegal_mode_off"), uiConfig));
+        BocchiChat.Print(chat, uiConfig, translator.T(Enabled ? ".automation.automator.illegal_mode_on" : ".automation.automator.illegal_mode_off"));
         ApplyRunModeSideEffects(turningOn);
     }
 
@@ -111,9 +111,9 @@ public class Automator
         }
 
         context.SetRunMode(turningOn ? AutomatorRunMode.PotsAndTreasure : AutomatorRunMode.Off);
-        chat.Print(BocchiChat.Format(translator.T(turningOn
+        BocchiChat.Print(chat, uiConfig, translator.T(turningOn
             ? ".automation.pots_treasure.on"
-            : ".automation.pots_treasure.off"), uiConfig));
+            : ".automation.pots_treasure.off"));
         ApplyRunModeSideEffects(turningOn);
     }
 
@@ -150,11 +150,11 @@ public class Automator
         // GoalMemory kept — Update() will rebuild GoalPathStepMemory from here.
         if (!memory.TryRemember<GoalMemory>(out GoalMemory _))
         {
-            chat.Print(BocchiChat.Format(translator.T(".automation.automator.pathfinding_refreshed_no_goal"), uiConfig));
+            BocchiChat.Print(chat, uiConfig, translator.T(".automation.automator.pathfinding_refreshed_no_goal"));
             return;
         }
 
-        chat.Print(BocchiChat.Format(translator.T(".automation.automator.pathfinding_refreshed"), uiConfig));
+        BocchiChat.Print(chat, uiConfig, translator.T(".automation.automator.pathfinding_refreshed"));
     }
 
     public void Render()

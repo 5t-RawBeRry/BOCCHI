@@ -66,6 +66,26 @@
     "enable_coffer_observation_submission": {
       "label": "ライブ宝箱ルートに参加する",
       "tooltip": "開封位置を匿名送信し、ライブのトレジャーハントルート作成に使います。十分な地点が承認されるとハントで優先され、なければ既存マップを使います。"
+    },
+    "use_ninja_hide_on_dangerous_routes": {
+      "label": "危険ルートで忍者の隠れる",
+      "tooltip": "実験的: 高知識の敵が近いとき、忍者ギアセットに切り替え、隠れるを使って徒歩で宝箱に近づきます（AOCC風）。知識が高いとき向け。"
+    },
+    "ninja_gearset_number": {
+      "label": "忍者ギアセット番号",
+      "tooltip": "本職忍者（ClassJob 30）のギアセット（1始まり）。0 = 切り替えなし（すでに忍者であること）。"
+    },
+    "knowledge_hide_offset": {
+      "label": "知識ハイドオフセット",
+      "tooltip": "敵の知識が自分の知識＋この値以上のとき隠れる（0 = 同じかそれ以上）。"
+    },
+    "knowledge_threat_enter_distance": {
+      "label": "脅威開始距離",
+      "tooltip": "このヤルム以内に知識脅威がいるときハイドを開始。"
+    },
+    "knowledge_threat_exit_distance": {
+      "label": "脅威解除距離",
+      "tooltip": "脅威がこれより遠いとハイド不要（開始距離とのヒステリシス）。"
     }
   }
 }

@@ -63,4 +63,24 @@ public class TreasureConfig : IAutoConfig
     /// <summary>Opt in to anonymously send coffer opens for live hunt routes.</summary>
     [Checkbox(Order = 15)]
     public bool EnableCofferObservationSubmission { get; set; } = false;
+
+    /// <summary>Use real Ninja Hide near high-knowledge hostiles while hunting coffers (AOCC-style).</summary>
+    [Checkbox(Order = 16)]
+    public bool UseNinjaHideOnDangerousRoutes { get; set; } = false;
+
+    /// <summary>Gearset number (1-based) that equips Ninja. 0 = already on Ninja only.</summary>
+    [IntRange(0, 100, Order = 17)]
+    public int NinjaGearsetNumber { get; set; } = 0;
+
+    /// <summary>Hide when mob knowledge ≥ player knowledge + this offset.</summary>
+    [IntRange(-5, 10, Order = 18)]
+    public int KnowledgeHideOffset { get; set; } = 0;
+
+    /// <summary>Start Hide when a knowledge threat is within this distance (yalms).</summary>
+    [FloatRange(5f, 40f, Order = 19)]
+    public float KnowledgeThreatEnterDistance { get; set; } = 10f;
+
+    /// <summary>Clear Hide requirement when threats are beyond this distance (yalms).</summary>
+    [FloatRange(10f, 60f, Order = 20)]
+    public float KnowledgeThreatExitDistance { get; set; } = 20f;
 }

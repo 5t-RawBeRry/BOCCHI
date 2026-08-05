@@ -46,26 +46,28 @@ public class DebugCommand
     private void MakeAiPreset()
     {
         var job = player.GetClassJob();
-        chat.Print(BocchiChat.Format(
+        BocchiChat.Print(
+            chat,
+            uiConfig,
             $"Base job={job?.Abbreviation.ToString() ?? "?"} Role={job?.Role.ToString() ?? "?"} "
-            + $"IsMelee={player.IsMelee()} IsMeleeDps={player.IsMeleeDps()}",
-            uiConfig));
+            + $"IsMelee={player.IsMelee()} IsMeleeDps={player.IsMeleeDps()}");
 
         if (!bossModRotation.TryEnsureBocchiAiPreset(out string? storedJson))
         {
-            chat.PrintError(BocchiChat.Format("Failed to create BOCCHI AI preset (is BossMod / BMR loaded?)", uiConfig));
+            BocchiChat.PrintError(chat, uiConfig, "Failed to create BOCCHI AI preset (is BossMod / BMR loaded?)");
             return;
         }
 
-        chat.Print(BocchiChat.Format($"Created/updated preset '{BossModRotationService.AiPresetName}'.", uiConfig));
+        BocchiChat.Print(chat, uiConfig, $"Created/updated preset '{BossModRotationService.AiPresetName}'.");
         if (string.IsNullOrWhiteSpace(storedJson))
         {
-            chat.PrintError(BocchiChat.Format(
-                "Preset Create succeeded but Get returned empty — check BossMod Presets IPC.",
-                uiConfig));
+            BocchiChat.PrintError(
+                chat,
+                uiConfig,
+                "Preset Create succeeded but Get returned empty — check BossMod Presets IPC.");
             return;
         }
 
-        chat.Print(BocchiChat.Format($"Stored JSON:\n{storedJson}", uiConfig));
+        BocchiChat.Print(chat, uiConfig, $"Stored JSON:\n{storedJson}");
     }
 }

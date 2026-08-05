@@ -71,9 +71,10 @@ public class AutoRotationController(
     private void PrintNotReady()
     {
         var job = player.GetClassJob();
-        chat.PrintError(BocchiChat.Format(
+        BocchiChat.PrintError(
+            chat,
+            uiConfig,
             $"BOCCHI AI not ready (is BossMod / BMR loaded?). "
-            + $"job={job?.Abbreviation.ToString() ?? "?"} melee={player.IsMelee()}",
-            uiConfig));
+            + $"job={job?.Abbreviation.ToString() ?? "?"} melee={player.IsMelee()}");
     }
 }
