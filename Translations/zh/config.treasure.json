@@ -1,22 +1,22 @@
 {
   "label": "寻宝",
-  "tooltip": "宝箱标记与寻宝路线规划。",
+  "tooltip": "地图上的宝箱连线与寻宝路线。",
   "fields": {
     "draw_line_to_bronze_chests": {
-      "label": "绘制到青铜宝箱的连线",
-      "tooltip": "脱离战斗时，从角色向附近的青铜宝箱绘制一条褐色连线。"
+      "label": "连线到青铜宝箱",
+      "tooltip": "脱离战斗时，从你向附近的青铜宝箱绘制褐色连线。"
     },
     "draw_line_to_silver_chests": {
-      "label": "绘制到白银宝箱的连线",
-      "tooltip": "脱离战斗时，从角色向附近的白银宝箱绘制一条银色连线。"
+      "label": "连线到白银宝箱",
+      "tooltip": "脱离战斗时，从你向附近的白银宝箱绘制银色连线。"
     },
     "draw_line_to_carrots": {
-      "label": "绘制到胡萝卜的连线",
-      "tooltip": "脱离战斗时，从角色向附近的胡萝卜绘制一条绿色连线。"
+      "label": "连线到胡萝卜",
+      "tooltip": "脱离战斗时，从你向附近的胡萝卜绘制绿色连线。"
     },
     "show_percentage_active_treasure_count": {
-      "label": "以百分比显示可采宝箱",
-      "tooltip": "在总数旁边以百分比显示当前可采的宝箱数量。"
+      "label": "以百分比显示剩余宝箱",
+      "tooltip": "在总数旁边以百分比显示还剩多少宝箱。"
     },
     "return_to_base_camp_after_hunt": {
       "label": "寻宝结束后返回",
@@ -28,36 +28,64 @@
     },
     "hunt_complete_sound": {
       "label": "寻宝结束提示音",
-      "tooltip": "取自插件 Sounds 文件夹中的 MP3。点击选项可试听。",
+      "tooltip": "从插件 Sounds 文件夹中选择 MP3。点击名称可试听。",
       "open_folder": "打开音效文件夹 —— 把 MP3 放进去即可添加自定义提示音。"
     },
     "cast_treasure_sight_during_hunt": {
       "label": "寻宝途中使用魔寻宝",
-      "tooltip": "寻宝开始时使用魔寻宝，并在途中每隔若干个宝箱重新使用。当魔寻宝显示已无剩余宝箱时，提前结束本次寻宝。"
+      "tooltip": "寻宝开始时使用魔寻宝，并每隔 N 个宝箱再使用一次。若魔寻宝显示已无剩余宝箱，则提前结束寻宝。"
     },
     "treasure_sight_every_n_locations": {
-      "label": "每隔几个宝箱使用一次魔寻宝",
-      "tooltip": "首次使用之后，每经过这么多个宝箱点位就重新使用一次魔寻宝。在人多的区域调高该值，可以减少下坐骑与切换辅助自由人的次数。"
+      "label": "每隔 N 个宝箱使用魔寻宝",
+      "tooltip": "首次使用后，每经过这么多个宝箱再使用一次魔寻宝。调高可减少在人多区域下坐骑与切换职业的次数。"
     },
     "hunt_return_cost": {
-      "label": "返回代价",
-      "tooltip": "寻路时“返回调查队营地”的代价权重。"
+      "label": "少用／多用返回",
+      "tooltip": "越高＝路线越少使用返回。越低＝更自由地使用返回。"
     },
     "hunt_teleport_cost": {
-      "label": "传送代价",
-      "tooltip": "寻路时“以太网传送”的代价权重。"
+      "label": "少用／多用以太网",
+      "tooltip": "越高＝路线越少使用以太网传送。越低＝更自由地使用传送。"
     },
     "hunt_detection_range": {
-      "label": "识别范围",
-      "tooltip": "距离宝箱点位多近才会进行交互。"
+      "label": "开启距离",
+      "tooltip": "需要多近（米）才会尝试开启宝箱。"
     },
     "hunt_max_level": {
       "label": "宝箱最高等级",
-      "tooltip": "纳入寻宝路线的宝箱点位最高等级。"
+      "tooltip": "跳过寻宝路线上高于该等级的宝箱。"
     },
     "skip_unsafe_treasure_windows": {
-      "label": "跳过危险时段",
-      "tooltip": "在新月岛南部的妖灵时段或恶劣天气期间暂停寻宝。"
+      "label": "跳过危险天气／妖灵",
+      "tooltip": "在新月岛南部的妖灵或其他危险天气时段暂停寻宝。"
+    },
+    "enable_automatic_treasure_hunt_during_illegal_mode": {
+      "label": "违规模式中自动寻宝",
+      "tooltip": "紧急遭遇战或危命任务结束后：返回营地，若会魔寻宝则使用，若仍有宝箱则开始寻宝。"
+    },
+    "enable_coffer_observation_submission": {
+      "label": "分享开箱位置（实时路线）",
+      "tooltip": "匿名发送你开启宝箱的位置，用于生成实时寻宝路线。确认点足够后优先使用；否则使用内置地图。"
+    },
+    "use_ninja_hide_on_dangerous_routes": {
+      "label": "强敌附近使用忍者隐遁",
+      "tooltip": "实验性：附近有高知见敌人时，切换到忍者套装，使用隐遁，再步行接近宝箱的最后一段。知见较高时很有用。"
+    },
+    "ninja_gearset_number": {
+      "label": "忍者套装编号",
+      "tooltip": "装备忍者的套装编号（套装列表中从 1 开始显示）。0＝不切换 —— 你必须已经是忍者。"
+    },
+    "knowledge_hide_offset": {
+      "label": "敌人知见高出＋时隐遁",
+      "tooltip": "当敌人的知见至少为你的知见加上该数值时使用隐遁。0＝相同或更高即使用。"
+    },
+    "knowledge_threat_enter_distance": {
+      "label": "该距离内开始隐遁（米）",
+      "tooltip": "危险敌人接近到该距离时开始隐遁流程。"
+    },
+    "knowledge_threat_exit_distance": {
+      "label": "超过该距离停止隐遁（米）",
+      "tooltip": "隐遁生效后，直到敌人远于该距离才解除。请设为大于“开始隐遁”的值，以免反复开关。"
     }
   }
 }

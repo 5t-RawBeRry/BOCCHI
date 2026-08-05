@@ -1,26 +1,23 @@
 {
   "automation": {
-    "label": "违规模式",
-    "tooltip": "常规选项、魔法罐计时、危命任务、紧急遭遇战与增益。"
+    "label": "违规模式"
   },
   "mob_farmer": {
-    "label": "刷怪",
-    "tooltip": "刷怪相关选项。"
+    "label": "刷怪"
   },
   "treasure": {
-    "label": "寻宝",
-    "tooltip": "宝箱标记与寻宝路线规划。"
+    "label": "寻宝"
   },
   "ux": {
-    "label": "界面",
-    "tooltip": "主窗口的语言，以及显示哪些板块。"
+    "label": "界面"
   },
   "trackers": {
-    "label": "统计",
-    "tooltip": "经验值与货币统计选项。"
+    "label": "统计"
   },
   "forked_tower": {
-    "label": "两歧塔",
-    "tooltip": "两歧塔的提示与标记。"
+    "label": "两歧塔"
+  },
+  "dependencies": {
+    "label": "依赖"
   }
 }

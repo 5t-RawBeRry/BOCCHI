@@ -1,50 +1,54 @@
 {
   "label": "界面",
-  "tooltip": "主窗口的语言，以及显示哪些板块。",
+  "tooltip": "语言、主窗口显示内容，以及奖励图标。",
   "fields": {
     "language": {
       "label": "语言",
-      "tooltip": "选择 BOCCHI 的显示语言。"
+      "tooltip": "BOCCHI 窗口与消息使用的语言。"
     },
     "show_experience_tracker": {
       "label": "显示经验值统计",
-      "tooltip": "在主窗口中显示经验值统计面板。"
+      "tooltip": "在主窗口中显示经验值面板。"
     },
     "show_experience_tracker_graph": {
-      "label": "显示经验值统计图表",
-      "tooltip": "在统计面板下方显示经验值曲线。"
+      "label": "显示经验值图表",
+      "tooltip": "在统计面板下方显示经验值图表。"
     },
     "show_currency_tracker": {
       "label": "显示货币统计",
-      "tooltip": "在主窗口中显示货币统计面板。"
+      "tooltip": "在主窗口中显示货币面板。"
     },
     "show_currency_tracker_graph": {
-      "label": "显示货币统计图表",
-      "tooltip": "在统计面板下方显示货币曲线。"
+      "label": "显示货币图表",
+      "tooltip": "在统计面板下方显示货币图表。"
     },
     "show_world_section": {
-      "label": "显示区域板块",
+      "label": "显示危命任务与紧急遭遇战列表",
       "tooltip": "在主窗口中显示进行中的危命任务与紧急遭遇战。"
     },
     "show_buff_section": {
       "label": "显示增益按钮",
-      "tooltip": "在主窗口顶部的状态标签旁显示“增益”操作。"
+      "tooltip": "在主窗口顶部状态标签旁显示增益按钮。"
     },
     "show_automation_section": {
       "label": "显示违规模式板块",
-      "tooltip": "在主窗口中显示违规模式的控制项。"
+      "tooltip": "在主窗口中显示违规模式控制项。"
     },
     "show_mob_farmer_section": {
       "label": "显示刷怪板块",
-      "tooltip": "在主窗口中显示刷怪的控制项。"
+      "tooltip": "在主窗口中显示刷怪控制项。"
     },
     "show_pots_treasure_section": {
       "label": "显示魔法罐与寻宝板块",
-      "tooltip": "在主窗口中显示魔法罐与寻宝的控制项。"
+      "tooltip": "在主窗口中显示魔法罐与寻宝控制项。"
     },
     "show_treasure_section": {
       "label": "显示寻宝板块",
-      "tooltip": "在主窗口中显示寻宝的状态与控制项。"
+      "tooltip": "在主窗口中显示寻宝状态与控制项。"
+    },
+    "show_bocchi_chat_prefix": {
+      "label": "显示 BOCCHI 聊天消息",
+      "tooltip": "在聊天中以 [BOCCHI] 标签打印插件消息。关闭可隐藏（启动时的 MOTD 仍会显示）。"
     }
   }
 }

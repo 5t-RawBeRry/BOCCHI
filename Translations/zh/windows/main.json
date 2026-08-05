@@ -1,6 +1,6 @@
 {
   "title": "BOCCHI",
-  "unsupported_zone": "当前不在受支持的新月岛区域。",
+  "unsupported_zone": "请前往新月岛（新月岛南部或北部）以使用 BOCCHI。",
   "support": {
     "kofi_tooltip": "♥ Ko-fi（这样你就能继续出门晒太阳了）"
   },
@@ -9,7 +9,7 @@
     "automation": "违规模式",
     "potstreasure": "魔法罐与寻宝",
     "mobfarmer": "刷怪",
-    "world": "区域",
+    "world": "世界",
     "treasure": "寻宝"
   },
   "status": {
@@ -20,22 +20,22 @@
     "on": "开",
     "off": "关",
     "idle": "待机",
-    "emergency_stop_tooltip": "紧急停止 —— 立即中断全部自动化、寻路与增益",
+    "emergency_stop_tooltip": "紧急停止 —— 停止全部自动化、移动与增益",
     "emergency_stop_done": "[BOCCHI] 紧急停止",
     "goal": "目标",
     "current_step": "当前步骤",
     "chests": "魔法罐宝箱",
     "automator_states": {
-      "entry": "启动",
+      "entry": "启动中",
       "idle": "待机",
       "dead": "已阵亡",
       "in_combat": "战斗中",
       "casting_treasure_sight": "正在使用魔寻宝",
       "applying_buffs": "正在附加增益",
       "repairing": "正在修理",
-      "choosing_activity": "正在挑选活动",
-      "returning": "正在返回",
-      "pathfinding": "正在寻路",
+      "choosing_activity": "正在挑选下一步",
+      "returning": "正在返回营地",
+      "pathfinding": "赶路中",
       "in_fate": "危命任务中",
       "waiting_for_critical_encounter": "等待紧急遭遇战",
       "in_critical_encounter": "紧急遭遇战中",
@@ -45,7 +45,7 @@
     "farmer_phases": {
       "waiting": "等待中",
       "buffing": "上增益",
-      "gathering": "聚集中",
+      "gathering": "拉怪中",
       "stacking": "聚怪中",
       "fighting": "战斗中"
     }
@@ -68,23 +68,23 @@
   },
   "buffs": {
     "title": "增益",
-    "apply_tooltip": "附加已设置的知识水晶增益",
+    "apply_tooltip": "在知识水晶处附加已设置的增益",
     "stop_tooltip": "停止附加增益",
     "applying": "正在附加……"
   },
   "automation": {
     "automator": {
       "title": "违规模式",
-      "enable": "启用违规模式",
-      "disable": "关闭违规模式",
-      "toggle_illegal_mode": "切换违规模式",
-      "refresh_pathfinding": "重新寻路",
-      "refresh_pathfinding_tooltip": "放弃当前路线，从你所在的位置重新规划。在挪出卡住的位置或手动移动之后很有用。",
+      "enable": "开始违规模式",
+      "disable": "停止违规模式",
+      "toggle_illegal_mode": "开始／停止违规模式",
+      "refresh_pathfinding": "重新规划路线",
+      "refresh_pathfinding_tooltip": "放弃当前路线，从你所在位置重新规划。卡住或手动挪过位置后很有用。",
       "details": "详情",
       "illegal_mode_on": "[BOCCHI] 违规模式已开启",
       "illegal_mode_off": "[BOCCHI] 违规模式已关闭",
-      "pathfinding_refreshed": "[BOCCHI] 已重新寻路",
-      "pathfinding_refreshed_no_goal": "[BOCCHI] 已重新寻路（当前没有目标）",
+      "pathfinding_refreshed": "[BOCCHI] 已重新规划路线",
+      "pathfinding_refreshed_no_goal": "[BOCCHI] 已清除路线（当前没有可前往的目标）",
       "pot_chest_farm": "魔法罐宝箱收取",
       "chests_remaining": "剩余宝箱",
       "time_idle": "待机时长"
@@ -93,19 +93,19 @@
       "title": "刷怪",
       "start": "开始刷怪",
       "stop": "停止刷怪",
-      "not_engaged": "未接战",
-      "engaged": "已接战",
-      "selected_mobs": "已选怪物",
-      "configure_mobs": "请在 /bocchi config → 刷怪 中设置目标怪物。"
+      "not_engaged": "未在战斗",
+      "engaged": "战斗中",
+      "selected_mobs": "已选敌人",
+      "configure_mobs": "请在 /bocchi config → 刷怪 中选择敌人。"
     },
     "pots_treasure": {
       "start": "开始魔法罐与寻宝",
       "stop": "停止魔法罐与寻宝",
       "on": "[BOCCHI] 魔法罐与寻宝已开启",
       "off": "[BOCCHI] 魔法罐与寻宝已关闭",
-      "description": "先做魔法罐危命任务并收取宝箱，随后进行寻宝，直到距离下一次魔法罐刷新约 3 分钟时提前就位，如此循环。不会执行紧急遭遇战或其他危命任务。",
+      "description": "先做魔法罐危命任务并收取宝箱，随后寻宝，直到距下一次魔法罐约 3 分钟时在附近等待，如此循环。不执行紧急遭遇战或其他危命任务。",
       "phase": "阶段",
-      "requires_vnav": "[BOCCHI] 魔法罐与寻宝需要 vnavmesh。",
+      "requires_vnav": "[BOCCHI] 魔法罐与寻宝需要 vnavmesh 插件。",
       "phases": {
         "off": "关",
         "hunting": "寻宝",
@@ -126,7 +126,7 @@
   "treasure": {
     "title": "寻宝",
     "requires_vnav": "需要 vnavmesh 插件。",
-    "waiting_navmesh": "正在等待导航网格……",
+    "waiting_navmesh": "正在等待地图就绪……",
     "start_hunt": "开始寻宝",
     "pause_hunt": "暂停",
     "resume_hunt": "继续",
@@ -135,9 +135,10 @@
     "elapsed": "已用时",
     "progress": "进度",
     "last_checked": "上一个查看的宝箱",
-    "resume_coffer": "续接宝箱",
-    "flag_resume_tooltip": "在寻宝续接的宝箱位置放置地图标记",
-    "managed_by_pots": "寻宝当前由“魔法罐与寻宝”接管 —— 请在该板块中开始或停止。",
+    "resume_coffer": "从该宝箱续接",
+    "flag_resume_tooltip": "在寻宝将继续的宝箱处放置地图标记",
+    "managed_by_pots": "寻宝当前由“魔法罐与寻宝”控制 —— 请在该处开始或停止。",
+    "managed_by_illegal_mode": "寻宝当前由违规模式控制（在活动之间运行）。",
     "distance_to_chest": "距宝箱距离",
     "nearby_title": "附近的宝箱",
     "none_nearby": "附近没有宝箱。",
