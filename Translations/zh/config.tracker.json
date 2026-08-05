@@ -1,0 +1,14 @@
+{
+  "label": "统计",
+  "tooltip": "经验值与货币统计图表的设置。",
+  "fields": {
+    "tracked_duration": {
+      "label": "统计时长（分钟）",
+      "tooltip": "统计功能保留多少分钟的历史记录。"
+    },
+    "graph_bucket_size": {
+      "label": "图表采样间隔（秒）",
+      "tooltip": "图表中每个采样点代表多少秒。"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "start": "开始",
+  "stop": "停止",
+  "enabled": "已启用",
+  "disabled": "已禁用",
+  "toggle": "切换",
+  "toggle_config_window": "开关设置窗口",
+  "emergency_stop": "紧急停止",
+  "toggle_illegal_mode": "切换违规模式",
+  "yes": "是",
+  "no": "否",
+  "state": "状态",
+  "substate": "子状态"
+}

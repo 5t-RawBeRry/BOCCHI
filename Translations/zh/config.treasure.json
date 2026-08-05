@@ -1,0 +1,63 @@
+{
+  "label": "寻宝",
+  "tooltip": "宝箱标记与寻宝路线规划。",
+  "fields": {
+    "draw_line_to_bronze_chests": {
+      "label": "绘制到青铜宝箱的连线",
+      "tooltip": "脱离战斗时，从角色向附近的青铜宝箱绘制一条褐色连线。"
+    },
+    "draw_line_to_silver_chests": {
+      "label": "绘制到白银宝箱的连线",
+      "tooltip": "脱离战斗时，从角色向附近的白银宝箱绘制一条银色连线。"
+    },
+    "draw_line_to_carrots": {
+      "label": "绘制到胡萝卜的连线",
+      "tooltip": "脱离战斗时，从角色向附近的胡萝卜绘制一条绿色连线。"
+    },
+    "show_percentage_active_treasure_count": {
+      "label": "以百分比显示可采宝箱",
+      "tooltip": "在总数旁边以百分比显示当前可采的宝箱数量。"
+    },
+    "return_to_base_camp_after_hunt": {
+      "label": "寻宝结束后返回",
+      "tooltip": "开完路线上最后一个宝箱后，使用返回回到调查队营地。"
+    },
+    "play_sound_on_hunt_complete": {
+      "label": "寻宝结束时播放提示音",
+      "tooltip": "寻宝完成时播放一段 MP3。"
+    },
+    "hunt_complete_sound": {
+      "label": "寻宝结束提示音",
+      "tooltip": "取自插件 Sounds 文件夹中的 MP3。点击选项可试听。",
+      "open_folder": "打开音效文件夹 —— 把 MP3 放进去即可添加自定义提示音。"
+    },
+    "cast_treasure_sight_during_hunt": {
+      "label": "寻宝途中使用魔寻宝",
+      "tooltip": "寻宝开始时使用魔寻宝，并在途中每隔若干个宝箱重新使用。当魔寻宝显示已无剩余宝箱时，提前结束本次寻宝。"
+    },
+    "treasure_sight_every_n_locations": {
+      "label": "每隔几个宝箱使用一次魔寻宝",
+      "tooltip": "首次使用之后，每经过这么多个宝箱点位就重新使用一次魔寻宝。在人多的区域调高该值，可以减少下坐骑与切换辅助自由人的次数。"
+    },
+    "hunt_return_cost": {
+      "label": "返回代价",
+      "tooltip": "寻路时“返回调查队营地”的代价权重。"
+    },
+    "hunt_teleport_cost": {
+      "label": "传送代价",
+      "tooltip": "寻路时“以太网传送”的代价权重。"
+    },
+    "hunt_detection_range": {
+      "label": "识别范围",
+      "tooltip": "距离宝箱点位多近才会进行交互。"
+    },
+    "hunt_max_level": {
+      "label": "宝箱最高等级",
+      "tooltip": "纳入寻宝路线的宝箱点位最高等级。"
+    },
+    "skip_unsafe_treasure_windows": {
+      "label": "跳过危险时段",
+      "tooltip": "在新月岛南部的妖灵时段或恶劣天气期间暂停寻宝。"
+    }
+  }
+}

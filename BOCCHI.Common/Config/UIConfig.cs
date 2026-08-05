@@ -8,7 +8,8 @@ public enum UILanguage
 {
     English,
     Japanese,
-    Korean
+    Korean,
+    ChineseSimplified
 }
 
 public static class UILanguageExtensions
@@ -19,6 +20,7 @@ public static class UILanguageExtensions
         {
             UILanguage.Japanese => "jp",
             UILanguage.Korean => "ko",
+            UILanguage.ChineseSimplified => "zh",
             _ => "en"
         };
     }
@@ -30,6 +32,7 @@ public class UILanguageDisplay : IEnumDisplay<UILanguage>
     {
         UILanguage.Japanese => "日本語",
         UILanguage.Korean => "한국어",
+        UILanguage.ChineseSimplified => "简体中文",
         _ => "English"
     };
 }

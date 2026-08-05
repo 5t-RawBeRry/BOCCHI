@@ -1,0 +1,18 @@
+{
+  "label": "两歧塔",
+  "tooltip": "新月岛南部两歧塔的辅助功能。新月岛北部的支持将在之后加入。",
+  "fields": {
+    "draw_potential_trap_positions": {
+      "label": "绘制可能的陷阱位置",
+      "tooltip": "位于新月岛南部两歧塔内时，在已收录的陷阱生成点上绘制圆圈。"
+    },
+    "show_registration_countdown": {
+      "label": "显示报名倒计时",
+      "tooltip": "在紧急遭遇战列表中显示两歧塔的报名与准备倒计时（新月岛南部）。"
+    },
+    "trap_draw_range": {
+      "label": "陷阱绘制范围",
+      "tooltip": "只绘制该距离（码）以内的陷阱标记。"
+    }
+  }
+}
