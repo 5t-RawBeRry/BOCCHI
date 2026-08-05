@@ -70,6 +70,19 @@ public class PotsTreasureRenderer
             translator.T(".automation.pots_treasure.phase"),
             translator.T($".automation.pots_treasure.phases.{PotsTreasure.Phase.ToString().ToSnakeCase()}"));
 
+        if (PotsTreasure.Phase == PotsTreasurePhase.Hunting && !hunter.Running)
+        {
+            if (ImGui.Button(translator.T(".automation.pots_treasure.resume_treasure_hunt")))
+            {
+                PotsTreasure.ResumeTreasureHunt();
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip(translator.T(".automation.pots_treasure.resume_treasure_hunt_tooltip"));
+            }
+        }
+
         // Compact hunt status while this mode owns the treasure hunter.
         if (hunter.ManagedByPotsTreasure && (hunter.Running || hunter.Elapsed > TimeSpan.Zero))
         {

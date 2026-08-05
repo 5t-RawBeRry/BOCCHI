@@ -7,14 +7,14 @@
   "sections": {
     "trackers": "トラッカー",
     "automation": "不正モード",
-    "potstreasure": "壺＆トレジャー",
+    "potstreasure": "ポット＆トレジャー",
     "mobfarmer": "モブファーム",
     "world": "ワールド",
     "treasure": "トレジャーハンター"
   },
   "status": {
     "automator": "不正モード",
-    "pots_treasure": "壺＆トレジャー",
+    "pots_treasure": "ポット＆トレジャー",
     "mob_farmer": "モブファーム",
     "treasure_hunt": "トレジャーハント",
     "on": "オン",
@@ -24,7 +24,7 @@
     "emergency_stop_done": "[BOCCHI] 緊急停止",
     "goal": "目標",
     "current_step": "いまの手順",
-    "chests": "壺の宝箱",
+    "chests": "マジックポット宝箱",
     "automator_states": {
       "entry": "開始中",
       "idle": "待機中",
@@ -40,7 +40,7 @@
       "waiting_for_critical_encounter": "CE待機中",
       "in_critical_encounter": "CE中",
       "returning_to_job": "ジョブに戻しています",
-      "farming_pot_chests": "壺の宝箱を回収中"
+      "farming_pot_chests": "マジックポット宝箱を回収中"
     },
     "farmer_phases": {
       "waiting": "待機中",
@@ -51,9 +51,9 @@
     }
   },
   "pot_timer": {
-    "active": "壺 FATE 進行中",
-    "next": "次の壺",
-    "unknown": "次の壺：不明 — 壺 FATE を一度見るとタイマーが始まります。",
+    "active": "マジックポットFATE進行中",
+    "next": "次のマジックポット",
+    "unknown": "次のマジックポット：不明 — マジックポットFATEを一度見るとタイマーが始まります。",
     "chip_active": "進行中",
     "south_horn": "南征編",
     "north_horn": "北征編",
@@ -95,7 +95,7 @@
       "illegal_mode_off": "[BOCCHI] 不正モード オフ",
       "pathfinding_refreshed": "[BOCCHI] ルートを作り直しました",
       "pathfinding_refreshed_no_goal": "[BOCCHI] ルートを解除しました（いま行く先がありません）",
-      "pot_chest_farm": "壺の宝箱ファーム",
+      "pot_chest_farm": "マジックポット宝箱回収",
       "chests_remaining": "残り宝箱数",
       "time_idle": "待機時間"
     },
@@ -109,21 +109,27 @@
       "configure_mobs": "敵は /bocchi config → モブファーム で選んでください。"
     },
     "pots_treasure": {
-      "start": "壺＆トレジャーを開始",
-      "stop": "壺＆トレジャーを停止",
-      "on": "[BOCCHI] 壺＆トレジャー オン",
-      "off": "[BOCCHI] 壺＆トレジャー オフ",
-      "description": "壺 FATE と壺の宝箱をやり、次の壺の約3分前までトレジャーハントし、壺付近で待って繰り返します。CE やほかの FATE はやりません。",
+      "start": "ポット＆トレジャーを開始",
+      "stop": "ポット＆トレジャーを停止",
+      "on": "[BOCCHI] ポット＆トレジャー オン",
+      "off": "[BOCCHI] ポット＆トレジャー オフ",
+      "description": "マジックポットFATEとマジックポット宝箱を実行し、次のマジックポット出現約3分前までトレジャーハントし、事前配置して繰り返します。CEや通常FATEは行いません。",
       "phase": "フェーズ",
-      "requires_vnav": "[BOCCHI] 壺＆トレジャーには vnavmesh プラグインが必要です。",
-      "active_fates": "進行中の壺 FATE",
-      "no_active_fate": "いま壺 FATE はありません。",
+      "requires_vnav": "[BOCCHI] ポット＆トレジャーには vnavmesh プラグインが必要です。",
+      "resume_treasure_hunt": "トレジャーハントを再開",
+      "resume_treasure_hunt_tooltip": "待機をスキップして、次のトレジャーハント巡回を開始します。",
+      "active_fates": "進行中のマジックポットFATE",
+      "no_active_fate": "現在マジックポットFATEはありません。",
       "phases": {
         "off": "オフ",
         "hunting": "トレジャーハント",
-        "doing_pots": "壺"
+        "doing_pots": "マジックポット"
       }
     }
+  },
+  "event_drops": {
+    "demiatma_needed": "必要（残り{count}）",
+    "demiatma_not_needed": "不要（{count}個所持）"
   },
   "world": {
     "fates": {
@@ -149,7 +155,8 @@
     "last_checked": "最後に確認した宝箱",
     "resume_coffer": "再開する宝箱",
     "flag_resume_tooltip": "ハントを続ける宝箱にマップフラグを立てます",
-    "managed_by_pots": "ハントは壺＆トレジャーが管理しています — 開始／停止はそちらから行ってください。",
+    "recalculate_route_tooltip": "現在地からトレジャーハントのルートを再計算します",
+    "managed_by_pots": "ハントはポット＆トレジャーが管理しています — 開始／停止はそちらから行ってください。",
     "managed_by_illegal_mode": "ハントは不正モードが管理しています（活動の合間に実行）。",
     "distance_to_chest": "宝箱までの距離",
     "nearby_title": "近くの宝箱",

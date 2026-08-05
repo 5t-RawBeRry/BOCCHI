@@ -6,12 +6,18 @@ using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel.Sheets;
+using Ocelot.Services.Translation;
+using Ocelot.Windows;
 using System.Numerics;
 
 namespace BOCCHI.Common.UI;
 
 /// <summary>Renders South Horn demiatma / note / soul-shard icons under FATE/CE rows.</summary>
-public class EventDropIconRenderer(IDataManager data, ITextureProvider textures, EventDropConfig config)
+public class EventDropIconRenderer(
+    IDataManager data,
+    ITextureProvider textures,
+    EventDropConfig config,
+    ITranslator<MainWindow> translator)
 {
     public const float IconBoxSize = 50f;
 
@@ -77,7 +83,9 @@ public class EventDropIconRenderer(IDataManager data, ITextureProvider textures,
 
         if (ImGui.IsItemHovered())
         {
-            string label = needed > 0 ? $"Needed ({needed})" : $"Not Needed ({count})";
+            string label = needed > 0
+                ? translator.T(".event_drops.demiatma_needed", ("count", needed))
+                : translator.T(".event_drops.demiatma_not_needed", ("count", count));
             ImGui.SetTooltip($"{item.Name}: {label}");
         }
     }

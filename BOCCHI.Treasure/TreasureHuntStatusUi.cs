@@ -64,6 +64,20 @@ public static class TreasureHuntStatusUi
             {
                 ImGui.SetTooltip(translator.T(".treasure.flag_resume_tooltip"));
             }
+
+            ImGui.SameLine(0f, 8f);
+            using (ImRaii.PushFont(UiBuilder.IconFont))
+            {
+                if (ImGui.SmallButton($"{FontAwesomeIcon.LocationArrow.ToIconString()}##recalculate_hunt_route"))
+                {
+                    hunter.RecalculateRoute();
+                }
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip(translator.T(".treasure.recalculate_route_tooltip"));
+            }
         }
 
         HuntPathfinderStep? current = hunter.GetCurrentStep();

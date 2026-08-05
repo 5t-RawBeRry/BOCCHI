@@ -116,6 +116,8 @@
       "description": "先做魔法罐危命任务并收取宝箱，随后寻宝，直到距下一次魔法罐约 3 分钟时在附近等待，如此循环。不执行紧急遭遇战或其他危命任务。",
       "phase": "阶段",
       "requires_vnav": "[BOCCHI] 魔法罐与寻宝需要 vnavmesh 插件。",
+      "resume_treasure_hunt": "继续寻宝",
+      "resume_treasure_hunt_tooltip": "跳过等待并开始下一轮寻宝。",
       "active_fates": "进行中的魔法罐危命",
       "no_active_fate": "当前没有魔法罐危命任务。",
       "phases": {
@@ -124,6 +126,10 @@
         "doing_pots": "魔法罐"
       }
     }
+  },
+  "event_drops": {
+    "demiatma_needed": "需要（还差{count}）",
+    "demiatma_not_needed": "不需要（持有{count}个）"
   },
   "world": {
     "fates": {
@@ -149,6 +155,7 @@
     "last_checked": "上一个查看的宝箱",
     "resume_coffer": "从该宝箱续接",
     "flag_resume_tooltip": "在寻宝将继续的宝箱处放置地图标记",
+    "recalculate_route_tooltip": "从当前位置重新规划寻宝路线",
     "managed_by_pots": "寻宝当前由“魔法罐与寻宝”控制 —— 请在该处开始或停止。",
     "managed_by_illegal_mode": "寻宝当前由违规模式控制（在活动之间运行）。",
     "distance_to_chest": "距宝箱距离",

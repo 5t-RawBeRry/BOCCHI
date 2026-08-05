@@ -74,8 +74,17 @@ public class TreasureHunterService
     /// <summary>How long to wait for WideText after casting Treasure Sight.</summary>
     private static readonly TimeSpan SightCountWait = TimeSpan.FromSeconds(8);
 
+    /// <summary>How long to tolerate no player movement while walking to a coffer before skipping that node.</summary>
+    private static readonly TimeSpan StuckNodeTimeout = TimeSpan.FromSeconds(30);
+
+    private const float StuckMovementThreshold = 2f;
+
+    private const float StuckDetectionMinDistance = 8f;
+
     private readonly List<TreasureLayoutDatum> layoutTreasure = [];
     private readonly List<HuntPathfinderStep> steps = [];
+    private readonly HashSet<uint> checkedNodeIds = [];
+    private readonly HashSet<uint> lastCompletedRunNodeIds = [];
 
     private readonly Stopwatch stopwatch = new();
     private Task<ChainResult>? activeChain;
@@ -87,6 +96,11 @@ public class TreasureHunterService
     private bool waitingForSightCounts;
     private DateTime sightCastUtc = DateTime.MinValue;
     private int locationsSinceLastSight;
+    private HashSet<uint> excludedNodeIdsForNextRun = [];
+    private int? maxLevelOverrideForNextRun;
+    private uint? stuckWatchNodeId;
+    private Vector3 stuckWatchLastPosition;
+    private DateTime stuckWatchLastMovedUtc = DateTime.MinValue;
 
     /// <summary>Hysteresis: Hide required until threats leave exit distance.</summary>
     private bool ninjaHideRequired;
@@ -140,9 +154,7 @@ public class TreasureHunterService
             }
 
             planningRoute = false;
-            List<uint> validNodes = GetValidNodes(config.HuntMaxLevel)
-                .Where(id => !IsLayoutCofferOpened(id))
-                .ToList();
+            List<uint> validNodes = GetValidNodesForNextPlan();
             steps.Clear();
             steps.AddRange(pathPlanner.FindPath(player.Position, validNodes).GetAwaiter().GetResult());
             pathPlanner = null;
@@ -181,6 +193,7 @@ public class TreasureHunterService
             if (completed.Type == HuntPathfinderStepType.WalkToNode)
             {
                 LastCheckedNodeId = completed.NodeId;
+                checkedNodeIds.Add(completed.NodeId);
                 locationsSinceLastSight++;
             }
 
@@ -210,6 +223,8 @@ public class TreasureHunterService
     public TimeSpan Elapsed => stopwatch.Elapsed;
 
     public uint? LastCheckedNodeId { get; private set; }
+
+    public IReadOnlySet<uint> LastCompletedRunNodeIds => lastCompletedRunNodeIds;
 
     public bool ManagedByPotsTreasure { get; set; }
 
@@ -243,6 +258,42 @@ public class TreasureHunterService
         BeginHuntSession();
     }
 
+    public void ConfigureManagedRun(IReadOnlySet<uint> excludedNodeIds, int? maxLevelOverride = null)
+    {
+        ManagedByPotsTreasure = true;
+        excludedNodeIdsForNextRun = excludedNodeIds.ToHashSet();
+        maxLevelOverrideForNextRun = maxLevelOverride;
+    }
+
+    public bool RecalculateRoute()
+    {
+        if (!Running || Paused || !IsVnavReady)
+        {
+            return false;
+        }
+
+        TreasureHuntPathfinder? planner = CreatePathPlanner();
+        if (planner == null || planner.State != HuntPathfinderState.FileLoaded)
+        {
+            log.Warning("Failed to initialize treasure hunt path data for route recalculation");
+            return false;
+        }
+
+        SoftStopMovement();
+        steps.Clear();
+        StepIndex = 0;
+        StepDistance = 0f;
+        pendingStartSight = false;
+        waitingForSightCounts = false;
+        sightCastUtc = DateTime.MinValue;
+        locationsSinceLastSight = 0;
+        pathPlanner = planner;
+        planningRoute = true;
+
+        log.Info("Treasure hunt route recalculation requested; {CheckedCount} checked nodes excluded", checkedNodeIds.Count);
+        return true;
+    }
+
     private void BeginHuntSession()
     {
         stopwatch.Restart();
@@ -257,6 +308,15 @@ public class TreasureHunterService
         locationsSinceLastSight = 0;
         usingCrowdsourcedRoute = false;
         ninjaHideRequired = false;
+        checkedNodeIds.Clear();
+        ResetStuckWatch();
+        if (!ManagedByPotsTreasure)
+        {
+            lastCompletedRunNodeIds.Clear();
+            excludedNodeIdsForNextRun.Clear();
+            maxLevelOverrideForNextRun = null;
+        }
+
         cofferCatalog.EnsureFreshForHunt();
         pathPlanner = CreatePathPlanner();
         if (pathPlanner == null || pathPlanner.State != HuntPathfinderState.FileLoaded)
@@ -362,6 +422,58 @@ public class TreasureHunterService
         pathfinder.Stop();
         vnav.Stop();
         activeChain = null;
+        ResetStuckWatch();
+    }
+
+    private bool TryRecoverFromStuckWalk(HuntPathfinderStep step, float distance)
+    {
+        if (distance <= StuckDetectionMinDistance)
+        {
+            ResetStuckWatch();
+            return false;
+        }
+
+        DateTime now = DateTime.UtcNow;
+        Vector3 currentPosition = player.Position;
+        if (stuckWatchNodeId != step.NodeId)
+        {
+            StartStuckWatch(step.NodeId, currentPosition, now);
+            return false;
+        }
+
+        if (currentPosition.Distance2D(stuckWatchLastPosition) >= StuckMovementThreshold)
+        {
+            stuckWatchLastPosition = currentPosition;
+            stuckWatchLastMovedUtc = now;
+            return false;
+        }
+
+        if (now - stuckWatchLastMovedUtc < StuckNodeTimeout)
+        {
+            return false;
+        }
+
+        log.Warning(
+            "Treasure hunt appears stuck reaching coffer {NodeId}; excluding it and recalculating the route",
+            step.NodeId);
+        checkedNodeIds.Add(step.NodeId);
+        LastCheckedNodeId = step.NodeId;
+        ResetStuckWatch();
+        return RecalculateRoute();
+    }
+
+    private void StartStuckWatch(uint nodeId, Vector3 position, DateTime now)
+    {
+        stuckWatchNodeId = nodeId;
+        stuckWatchLastPosition = position;
+        stuckWatchLastMovedUtc = now;
+    }
+
+    private void ResetStuckWatch()
+    {
+        stuckWatchNodeId = null;
+        stuckWatchLastPosition = default;
+        stuckWatchLastMovedUtc = DateTime.MinValue;
     }
 
     private bool CanCastTreasureSight() => SupportJobTreasureSight.CanCast(supportJobs);
@@ -570,6 +682,11 @@ public class TreasureHunterService
             return false;
         }
 
+        if (TryRecoverFromStuckWalk(step, StepDistance))
+        {
+            return false;
+        }
+
         if (StepDistance > config.HuntDetectionRange)
         {
             return false;
@@ -578,6 +695,7 @@ public class TreasureHunterService
         if (present != null && OpenTreasureCofferChain.IsOpenedOrLooted(present))
         {
             vnav.Stop();
+            ResetStuckWatch();
             return true;
         }
 
@@ -587,6 +705,7 @@ public class TreasureHunterService
             if (StepDistance <= EmptySkipRadius && !vnav.IsRunning())
             {
                 vnav.Stop();
+                ResetStuckWatch();
                 return true;
             }
 
@@ -605,6 +724,7 @@ public class TreasureHunterService
         }
 
         vnav.Stop();
+        ResetStuckWatch();
         activeChain = chainManager.Manage(
             chains.Create($"TreasureHunt::Open({step.NodeId})")
                 .Then<OpenTreasureCofferChain, Vector3>(present.Position)
@@ -938,6 +1058,28 @@ public class TreasureHunterService
             .ToList();
     }
 
+    private List<uint> GetValidNodesForNextPlan()
+    {
+        int maxLevel = maxLevelOverrideForNextRun ?? config.HuntMaxLevel;
+        List<uint> validNodes = GetValidNodes(maxLevel)
+            .Where(id => !excludedNodeIdsForNextRun.Contains(id))
+            .Where(id => !checkedNodeIds.Contains(id))
+            .Where(id => !IsLayoutCofferOpened(id))
+            .ToList();
+
+        if (validNodes.Count > 0 || excludedNodeIdsForNextRun.Count == 0)
+        {
+            return validNodes;
+        }
+
+        log.Info("Pots & Treasure visited every known treasure node; starting a fresh treasure route.");
+        excludedNodeIdsForNextRun.Clear();
+        return GetValidNodes(maxLevel)
+            .Where(id => !checkedNodeIds.Contains(id))
+            .Where(id => !IsLayoutCofferOpened(id))
+            .ToList();
+    }
+
     /// <summary>True when a live opened/looted coffer sits on this layout node (skip when resuming).</summary>
     private bool IsLayoutCofferOpened(uint nodeId)
     {
@@ -1138,8 +1280,23 @@ public class TreasureHunterService
 
     private void CompleteHunt()
     {
+        CaptureCompletedRun();
         PlayHuntCompleteSound();
         Teardown();
+    }
+
+    private void CaptureCompletedRun()
+    {
+        if (!ManagedByPotsTreasure)
+        {
+            return;
+        }
+
+        lastCompletedRunNodeIds.Clear();
+        foreach (uint nodeId in checkedNodeIds)
+        {
+            lastCompletedRunNodeIds.Add(nodeId);
+        }
     }
 
     private void PlayHuntCompleteSound()
@@ -1154,7 +1311,8 @@ public class TreasureHunterService
 
     private void Teardown()
     {
-        bool wasStandalone = Running && !ManagedByPotsTreasure && !ManagedByIllegalModeFiller;
+        bool wasManagedByPotsTreasure = ManagedByPotsTreasure;
+        bool wasStandalone = Running && !wasManagedByPotsTreasure && !ManagedByIllegalModeFiller;
         bool wasIllegalFiller = ManagedByIllegalModeFiller;
 
         Running = false;
@@ -1177,6 +1335,14 @@ public class TreasureHunterService
         LastCheckedNodeId = null;
         ManagedByPotsTreasure = false;
         ManagedByIllegalModeFiller = false;
+        checkedNodeIds.Clear();
+        excludedNodeIdsForNextRun.Clear();
+        maxLevelOverrideForNextRun = null;
+        if (!wasManagedByPotsTreasure)
+        {
+            lastCompletedRunNodeIds.Clear();
+        }
+
         layoutTreasure.Clear();
         pathPlanner = null;
         usingCrowdsourcedRoute = false;

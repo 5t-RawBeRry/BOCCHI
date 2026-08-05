@@ -14,4 +14,6 @@ public interface IPotsTreasureMode : Ocelot.Lifecycle.IOnUpdate
     PotsTreasurePhase Phase { get; }
 
     void Toggle();
+
+    void ResumeTreasureHunt();
 }
