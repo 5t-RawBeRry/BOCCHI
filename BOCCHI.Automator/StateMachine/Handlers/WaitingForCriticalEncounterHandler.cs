@@ -107,9 +107,11 @@ public class WaitingForCriticalEncounterHandler
         }
 
         float dist = player.Position.Distance2D(ce.Position);
+        float holdRadius = CriticalEncounterWaitProfiles.HoldRadius(combatRadius, ce.Id.Value);
 
-        // Inside combat (red) — registered; hold. Yellow is debug-only (#140).
-        if (dist <= combatRadius)
+        // Inside hold radius (default = full red; some CEs use a tighter profile) — registered.
+        // Yellow is debug-only (#140).
+        if (dist <= holdRadius)
         {
             wait.HoldingPosition = true;
             StopNavigation();
@@ -127,11 +129,12 @@ public class WaitingForCriticalEncounterHandler
 
         wait.HoldingPosition = false;
 
-        // Outside red — walk into the combat circle.
+        // Outside hold — walk into the combat / registration circle.
         Vector3 approach = NavigationApproach.GetCriticalEncounterApproachPosition(
             ce.Position,
             player.Position,
-            combatRadius);
+            combatRadius,
+            ce.Id.Value);
 
         if (pathfinder.IsIdle())
         {

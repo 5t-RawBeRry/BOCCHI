@@ -4,6 +4,42 @@ using System.Numerics;
 
 namespace BOCCHI.Common.Data.Zones;
 
+/// <summary>
+///     Per-CE wait/approach ratios as fractions of combat (red) radius.
+///     Default stays at the global red-ring wait; tighten only for reported CEs where the
+///     blue registration box sits inside authored red (e.g. A Beast Unleashed).
+/// </summary>
+public readonly record struct CriticalEncounterWaitProfile(
+    float HoldMaxRatio,
+    float ApproachMinRatio,
+    float ApproachMaxRatio);
+
+public static class CriticalEncounterWaitProfiles
+{
+    public static readonly CriticalEncounterWaitProfile Default = new(
+        HoldMaxRatio: 1.0f,
+        ApproachMinRatio: NavigationConstants.CriticalEncounterApproachMinRatio,
+        ApproachMaxRatio: NavigationConstants.CriticalEncounterApproachMaxRatio);
+
+    /// <summary>
+    ///     Authored combat radius reaches past the live blue registration for this CE —
+    ///     holding at full red left bots outside participation (old 4.0.2.5 / Discord).
+    /// </summary>
+    private static readonly Dictionary<int, CriticalEncounterWaitProfile> ByEncounterId = new()
+    {
+        // A Beast Unleashed (North Horn)
+        [56] = new(HoldMaxRatio: 0.70f, ApproachMinRatio: 0.35f, ApproachMaxRatio: 0.55f),
+    };
+
+    public static CriticalEncounterWaitProfile For(int encounterId) =>
+        ByEncounterId.TryGetValue(encounterId, out CriticalEncounterWaitProfile profile)
+            ? profile
+            : Default;
+
+    public static float HoldRadius(float combatRadius, int encounterId) =>
+        MathF.Max(1f, combatRadius) * For(encounterId).HoldMaxRatio;
+}
+
 public static class NavigationConstants
 {
     public const float MaxDirectWalkDistance = 80f;
@@ -75,11 +111,17 @@ public static class NavigationApproach
     ///     Waiting in the yellow–red band (outside red) looks fine on debug overlays but
     ///     does not count as participating on live (#140).
     /// </summary>
-    public static Vector3 GetCriticalEncounterApproachPosition(Vector3 center, Vector3 from, float combatRadius)
+    /// <param name="encounterId">Optional CE id for per-encounter wait profiles.</param>
+    public static Vector3 GetCriticalEncounterApproachPosition(
+        Vector3 center,
+        Vector3 from,
+        float combatRadius,
+        int encounterId = 0)
     {
+        CriticalEncounterWaitProfile profile = CriticalEncounterWaitProfiles.For(encounterId);
         float red = MathF.Max(1f, combatRadius);
-        float min = red * NavigationConstants.CriticalEncounterApproachMinRatio;
-        float max = red * NavigationConstants.CriticalEncounterApproachMaxRatio;
+        float min = red * profile.ApproachMinRatio;
+        float max = red * profile.ApproachMaxRatio;
         if (max < min)
         {
             max = min;
@@ -94,7 +136,7 @@ public static class NavigationApproach
         if (goal.Type == NodeType.CriticalEncounter
             && goal.Metadata is ActivityNodeMetadata { CombatRadius: > 0 } meta)
         {
-            return GetCriticalEncounterApproachPosition(goal.Position, from, meta.CombatRadius);
+            return GetCriticalEncounterApproachPosition(goal.Position, from, meta.CombatRadius, meta.Id);
         }
 
         return GetEventPosition(goal.Position, from);

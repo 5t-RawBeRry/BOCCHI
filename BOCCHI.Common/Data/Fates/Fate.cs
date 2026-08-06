@@ -27,6 +27,9 @@ public class Fate(FateId id, IFate context, IDataRepository<FateData> fateDataRe
 
     public byte Progress { get; private set; } = context.Progress;
 
+    /// <summary>Unix epoch seconds when this FATE started (Dalamud <see cref="IFate.StartTimeEpoch"/>).</summary>
+    public int StartTimeEpoch { get; private set; } = context.StartTimeEpoch;
+
     /// <summary>Seconds left on the FATE timer (Dalamud <see cref="IFate.TimeRemaining"/>).</summary>
     public long TimeRemainingSeconds { get; private set; } = context.TimeRemaining;
 
@@ -35,6 +38,7 @@ public class Fate(FateId id, IFate context, IDataRepository<FateData> fateDataRe
         Position = context.Position;
         State = context.State;
         Progress = context.Progress;
+        StartTimeEpoch = context.StartTimeEpoch;
         TimeRemainingSeconds = context.TimeRemaining;
 
         ProgressTracker.Observe(Progress);

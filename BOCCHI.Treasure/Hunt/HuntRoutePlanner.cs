@@ -10,7 +10,10 @@ public interface IHuntRoutePlanner
 {
     HuntPathfinderState State { get; }
 
-    Task<List<HuntPathfinderStep>> FindPath(Vector3 start, List<uint> nodes);
+    /// <param name="preferStartNode">
+    ///     When set and still remaining, start the tour there (e.g. a live coffer next to the player).
+    /// </param>
+    Task<List<HuntPathfinderStep>> FindPath(Vector3 start, List<uint> nodes, uint? preferStartNode = null);
 }
 
 public abstract class HuntRoutePlanner
@@ -28,9 +31,10 @@ public abstract class HuntRoutePlanner
     public HuntPathfinderState State { get; private set; } = HuntPathfinderState.None;
 
     /// <summary>
-    ///     Resume the fixed zone route from the nearest remaining coffer to <paramref name="start"/>.
+    ///     Resume the fixed zone route from the nearest remaining coffer to <paramref name="start"/>,
+    ///     wrapping so nodes earlier in the canonical tour are still visited.
     /// </summary>
-    public Task<List<HuntPathfinderStep>> FindPath(Vector3 start, List<uint> nodes)
+    public Task<List<HuntPathfinderStep>> FindPath(Vector3 start, List<uint> nodes, uint? preferStartNode = null)
     {
         if (State != HuntPathfinderState.FileLoaded && State != HuntPathfinderState.PathfindingDone)
         {
@@ -51,16 +55,19 @@ public abstract class HuntRoutePlanner
             return Task.FromResult(new List<HuntPathfinderStep>());
         }
 
-        uint startNode = remaining
-            .OrderBy(id => Vector3.DistanceSquared(start, GetNodePosition(id)))
-            .First();
+        uint startNode = preferStartNode is uint preferred && remaining.Contains(preferred)
+            ? preferred
+            : remaining
+                .OrderBy(id => Vector3.DistanceSquared(start, GetNodePosition(id)))
+                .First();
         int startIndex = remaining.IndexOf(startNode);
-        List<uint> suffix = remaining.Skip(startIndex).ToList();
+        // Wrap: suffix then prefix — suffix-only permanently skipped earlier coffers (Discord Moldering bronze).
+        List<uint> tour = remaining.Skip(startIndex).Concat(remaining.Take(startIndex)).ToList();
 
-        List<HuntPathfinderStep> steps = [HuntPathfinderStep.WalkToDestination(suffix[0])];
-        for (int i = 0; i < suffix.Count - 1; i++)
+        List<HuntPathfinderStep> steps = [HuntPathfinderStep.WalkToDestination(tour[0])];
+        for (int i = 0; i < tour.Count - 1; i++)
         {
-            (float _, List<HuntPathfinderStep> segment) = GetBestSteps(suffix[i], suffix[i + 1]);
+            (float _, List<HuntPathfinderStep> segment) = GetBestSteps(tour[i], tour[i + 1]);
             steps.AddRange(segment);
         }
 

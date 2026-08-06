@@ -60,6 +60,12 @@ public class TreasureHunterService
 {
     private const float ChestSearchRadius = 25f;
 
+    /// <summary>
+    /// Wider layout↔live match when spawns drift from layout (e.g. Moldering 2048 ~40y).
+    /// Only accepted when this layout is the nearest node to the live coffer.
+    /// </summary>
+    private const float ChestDriftSearchRadius = 50f;
+
     /// <summary>Match layout coffers to crowdsourced centroids (API cluster radius is 1.5).</summary>
     private const float CrowdsourcedMatchRadius = 3.5f;
 
@@ -74,12 +80,18 @@ public class TreasureHunterService
     /// <summary>How long to wait for WideText after casting Treasure Sight.</summary>
     private static readonly TimeSpan SightCountWait = TimeSpan.FromSeconds(8);
 
-    /// <summary>How long to tolerate no player movement while walking to a coffer before skipping that node.</summary>
+    /// <summary>How long to tolerate no progress toward a coffer before skipping that node.</summary>
     private static readonly TimeSpan StuckNodeTimeout = TimeSpan.FromSeconds(30);
 
-    private const float StuckMovementThreshold = 2f;
+    /// <summary>Minimum distance improvement toward the destination that counts as progress.</summary>
+    private const float StuckProgressThreshold = 1.5f;
 
     private const float StuckDetectionMinDistance = 8f;
+
+    /// <summary>Reprioritize when a live remaining coffer is this close and much nearer than the current target.</summary>
+    private const float NearbyLiveReprioritizeRange = 60f;
+
+    private const float NearbyLiveReprioritizeMinCurrentDistance = 80f;
 
     private readonly List<TreasureLayoutDatum> layoutTreasure = [];
     private readonly List<HuntPathfinderStep> steps = [];
@@ -99,8 +111,8 @@ public class TreasureHunterService
     private HashSet<uint> excludedNodeIdsForNextRun = [];
     private int? maxLevelOverrideForNextRun;
     private uint? stuckWatchNodeId;
-    private Vector3 stuckWatchLastPosition;
-    private DateTime stuckWatchLastMovedUtc = DateTime.MinValue;
+    private float stuckWatchBestDistance = float.MaxValue;
+    private DateTime stuckWatchLastProgressUtc = DateTime.MinValue;
 
     /// <summary>Hysteresis: Hide required until threats leave exit distance.</summary>
     private bool ninjaHideRequired;
@@ -156,7 +168,8 @@ public class TreasureHunterService
             planningRoute = false;
             List<uint> validNodes = GetValidNodesForNextPlan();
             steps.Clear();
-            steps.AddRange(pathPlanner.FindPath(player.Position, validNodes).GetAwaiter().GetResult());
+            uint? preferStart = FindPreferredLiveNearbyNode(validNodes);
+            steps.AddRange(pathPlanner.FindPath(player.Position, validNodes, preferStart).GetAwaiter().GetResult());
             pathPlanner = null;
             StepIndex = 0;
             pendingStartSight = config.CastTreasureSightDuringHunt && CanCastTreasureSight();
@@ -177,6 +190,11 @@ public class TreasureHunterService
         }
 
         if (TryBeginTreasureSight())
+        {
+            return;
+        }
+
+        if (TryReprioritizeNearbyLiveCoffer())
         {
             return;
         }
@@ -449,21 +467,21 @@ public class TreasureHunterService
         }
 
         DateTime now = DateTime.UtcNow;
-        Vector3 currentPosition = player.Position;
         if (stuckWatchNodeId != step.NodeId)
         {
-            StartStuckWatch(step.NodeId, currentPosition, now);
+            StartStuckWatch(step.NodeId, distance, now);
             return false;
         }
 
-        if (currentPosition.Distance2D(stuckWatchLastPosition) >= StuckMovementThreshold)
+        // Progress toward the destination (not absolute movement) — circling a rock no longer resets forever.
+        if (distance < stuckWatchBestDistance - StuckProgressThreshold)
         {
-            stuckWatchLastPosition = currentPosition;
-            stuckWatchLastMovedUtc = now;
+            stuckWatchBestDistance = distance;
+            stuckWatchLastProgressUtc = now;
             return false;
         }
 
-        if (now - stuckWatchLastMovedUtc < StuckNodeTimeout)
+        if (now - stuckWatchLastProgressUtc < StuckNodeTimeout)
         {
             return false;
         }
@@ -477,18 +495,142 @@ public class TreasureHunterService
         return RecalculateRoute();
     }
 
-    private void StartStuckWatch(uint nodeId, Vector3 position, DateTime now)
+    private void StartStuckWatch(uint nodeId, float distance, DateTime now)
     {
         stuckWatchNodeId = nodeId;
-        stuckWatchLastPosition = position;
-        stuckWatchLastMovedUtc = now;
+        stuckWatchBestDistance = distance;
+        stuckWatchLastProgressUtc = now;
     }
 
     private void ResetStuckWatch()
     {
         stuckWatchNodeId = null;
-        stuckWatchLastPosition = default;
-        stuckWatchLastMovedUtc = DateTime.MinValue;
+        stuckWatchBestDistance = float.MaxValue;
+        stuckWatchLastProgressUtc = DateTime.MinValue;
+    }
+
+    /// <summary>
+    /// Prefer a remaining layout node that already has a live coffer near the player
+    /// (Nearby list is independent of the TSP — without this, bronzes next to you get walked past).
+    /// </summary>
+    private uint? FindPreferredLiveNearbyNode(IReadOnlyList<uint> validNodes)
+    {
+        uint? bestId = null;
+        float bestDist = float.MaxValue;
+
+        foreach (uint nodeId in validNodes)
+        {
+            TreasureLayoutDatum layout = layoutTreasure.FirstOrDefault(t => t.Id == nodeId);
+            if (layout.Id != nodeId)
+            {
+                continue;
+            }
+
+            IGameObject? present = FindTreasureForLayout(layout.Position, nodeId);
+            if (present == null || OpenTreasureCofferChain.IsOpenedOrLooted(present))
+            {
+                continue;
+            }
+
+            float distToPlayer = player.Position.Distance2D(present.Position);
+            if (distToPlayer > NearbyLiveReprioritizeRange)
+            {
+                continue;
+            }
+
+            if (distToPlayer < bestDist)
+            {
+                bestDist = distToPlayer;
+                bestId = nodeId;
+            }
+        }
+
+        if (bestId is uint id)
+        {
+            log.Info(
+                "Treasure hunt preferring live nearby coffer {NodeId} at {Distance:F1}y",
+                id,
+                bestDist);
+        }
+
+        return bestId;
+    }
+
+    /// <summary>
+    /// Mid-route: if a live remaining coffer sits near the player while the current target is far,
+    /// recalculate so FindPath can start on that coffer.
+    /// </summary>
+    private bool TryReprioritizeNearbyLiveCoffer()
+    {
+        if (planningRoute || pathPlanner != null || activeChain != null)
+        {
+            return false;
+        }
+
+        HuntPathfinderStep? current = GetCurrentStep();
+        if (current is not { Type: HuntPathfinderStepType.WalkToNode })
+        {
+            return false;
+        }
+
+        float currentDist = StepDistance;
+        if (currentDist < NearbyLiveReprioritizeMinCurrentDistance)
+        {
+            return false;
+        }
+
+        List<uint> remaining = GetRemainingWalkNodeIds();
+        remaining.Remove(current.NodeId);
+        uint? prefer = FindPreferredLiveNearbyNode(remaining);
+        if (prefer is not uint nearbyId)
+        {
+            return false;
+        }
+
+        TreasureLayoutDatum layout = layoutTreasure.FirstOrDefault(t => t.Id == nearbyId);
+        if (layout.Id != nearbyId)
+        {
+            return false;
+        }
+
+        IGameObject? present = FindTreasureForLayout(layout.Position, nearbyId);
+        if (present == null)
+        {
+            return false;
+        }
+
+        float nearbyDist = player.Position.Distance2D(present.Position);
+        if (nearbyDist >= currentDist * 0.5f)
+        {
+            return false;
+        }
+
+        if (!EzThrottler.Throttle("TreasureHuntReprioritize", 8000))
+        {
+            return false;
+        }
+
+        log.Info(
+            "Treasure hunt diverting to live coffer {NearbyId} at {NearbyDist:F1}y (was heading to {CurrentId} at {CurrentDist:F1}y)",
+            nearbyId,
+            nearbyDist,
+            current.NodeId,
+            currentDist);
+        return RecalculateRoute();
+    }
+
+    private List<uint> GetRemainingWalkNodeIds()
+    {
+        List<uint> ids = [];
+        for (int i = StepIndex; i < steps.Count; i++)
+        {
+            if (steps[i].Type == HuntPathfinderStepType.WalkToNode)
+            {
+                ids.Add(steps[i].NodeId);
+            }
+        }
+
+        return ids;
     }
 
     private bool CanCastTreasureSight() => SupportJobTreasureSight.CanCast(supportJobs);
@@ -672,14 +814,18 @@ public class TreasureHunterService
         Vector3 layoutDestination = layoutTreasure.First(t => t.Id == step.NodeId).Position;
 
         // Presence: don't require IsTargetable (often false until inside interact range).
-        IGameObject? present = FindTreasureNear(layoutDestination, ChestSearchRadius);
+        IGameObject? present = FindTreasureForLayout(layoutDestination, step.NodeId);
 
-        // Use layout while far; live position only when close (avoids repath jitter).
+        // Stick to layout while far when spawn matches; switch to live when close or when layout drifted.
         Vector3 destination = layoutDestination;
-        float distToLayout = player.Position.Distance2D(layoutDestination);
-        if (present != null && distToLayout <= OpenTreasureCofferChain.MaxInteractRange * 2f)
+        if (present != null)
         {
-            destination = present.Position;
+            float layoutToLive = layoutDestination.Distance2D(present.Position);
+            float distToLayout = player.Position.Distance2D(layoutDestination);
+            if (layoutToLive > 5f || distToLayout <= OpenTreasureCofferChain.MaxInteractRange * 2f)
+            {
+                destination = present.Position;
+            }
         }
 
         float dist2d = player.Position.Distance2D(destination);
@@ -1024,6 +1170,29 @@ public class TreasureHunterService
             .FirstOrDefault();
     }
 
+    /// <summary>
+    /// Live coffer for a layout node, including drifted spawns — only if this layout is nearest to that object.
+    /// </summary>
+    private IGameObject? FindTreasureForLayout(Vector3 layoutDestination, uint nodeId)
+    {
+        IGameObject? close = FindTreasureNear(layoutDestination, ChestSearchRadius);
+        if (close != null)
+        {
+            return close;
+        }
+
+        IGameObject? drifted = FindTreasureNear(layoutDestination, ChestDriftSearchRadius);
+        if (drifted == null)
+        {
+            return null;
+        }
+
+        TreasureLayoutDatum nearest = layoutTreasure
+            .OrderBy(t => t.Position.Distance2D(drifted.Position))
+            .FirstOrDefault();
+        return nearest.Id == nodeId ? drifted : null;
+    }
+
     private bool IsUnsafeTreasureWindow()
     {
         TreasureRoutePolicy policy = zones.GetZone().GetTreasureRoutePolicy();
@@ -1105,7 +1274,7 @@ public class TreasureHunterService
             return false;
         }
 
-        IGameObject? present = FindTreasureNear(layout.Position, ChestSearchRadius);
+        IGameObject? present = FindTreasureForLayout(layout.Position, nodeId);
         return present != null && OpenTreasureCofferChain.IsOpenedOrLooted(present);
     }
 

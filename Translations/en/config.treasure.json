@@ -63,6 +63,10 @@
       "label": "Share coffer opens (live routes)",
       "tooltip": "Anonymously send where you open coffers so live hunt routes can be built. When enough spots are confirmed, hunts prefer those; otherwise the built-in map is used."
     },
+    "enable_pot_cycle_sync": {
+      "label": "Share pot timers with other BOCCHI users (anonymous)",
+      "tooltip": "When you see a Magic Pot FATE, anonymously share its spawn time so other BOCCHI users on the same instance can predict the next pot without waiting to see one themselves."
+    },
     "use_ninja_hide_on_dangerous_routes": {
       "label": "Ninja Hide near strong enemies",
       "tooltip": "Experimental: if a high-Knowledge enemy is nearby, swap to your Ninja gearset, use Hide, and walk the last stretch to the coffer. Useful near max Knowledge."

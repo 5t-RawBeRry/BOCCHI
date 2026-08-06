@@ -20,12 +20,28 @@ interface CofferObservationRequest {
   observedAtUtc: string;
 }
 
+interface PotCycleRequest {
+  instanceKey: string;
+  territoryId: number;
+  datacenterId: number;
+  potFateId: number;
+  spawnAtUnix: number;
+  installationHash: string;
+  pluginVersion: string;
+  observedAtUtc: string;
+}
+
 const MAX_REQUEST_BYTES = 8 * 1024;
 const MAX_STRING_LENGTH = 128;
 const UTC_TIMESTAMP_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,7})?(?:Z|\+00:00)$/;
+const INSTANCE_KEY_PATTERN = /^[0-9A-Fa-f]{64}$/;
 const CANDIDATE_STATUSES = new Set(["pending", "review", "accepted", "rejected"]);
 /** South Horn (1252) and North Horn (1346). */
 const OCCULT_CRESCENT_TERRITORY_IDS = new Set([1252, 1346]);
+/** Persistent / Pleading pots (SH) and Daylight / Pot of Bother (NH). */
+const OCCULT_POT_FATE_IDS = new Set([1976, 1977, 2072, 2073]);
+/** Only return pot anchors newer than this (seconds). */
+const POT_CYCLE_MAX_AGE_SECONDS = 45 * 60;
 
 function jsonResponse(body: unknown, status = 200, extraHeaders: Record<string, string> = {}): Response {
   return Response.json(body, {
@@ -496,6 +512,173 @@ async function parseJsonBody(request: Request): Promise<unknown> {
   }
 }
 
+function validatePotCycle(value: unknown): string | null {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return "Body must be a JSON object.";
+  }
+
+  const pot = value as Partial<PotCycleRequest>;
+  if (!isAcceptableString(pot.instanceKey, true, 64) || !INSTANCE_KEY_PATTERN.test(pot.instanceKey!)) {
+    return "instanceKey must be a 64-character hex SHA-256 digest.";
+  }
+
+  if (!isIntegerInRange(pot.territoryId, 1, 100_000)) {
+    return "Invalid territoryId.";
+  }
+
+  if (!OCCULT_CRESCENT_TERRITORY_IDS.has(pot.territoryId!)) {
+    return "territoryId must be an Occult Crescent zone.";
+  }
+
+  if (!isIntegerInRange(pot.datacenterId, 1, 100_000)) {
+    return "Invalid datacenterId.";
+  }
+
+  if (!isIntegerInRange(pot.potFateId, 1, 100_000) || !OCCULT_POT_FATE_IDS.has(pot.potFateId!)) {
+    return "potFateId must be a known Occult Crescent pot FATE.";
+  }
+
+  if (!isIntegerInRange(pot.spawnAtUnix, 1_000_000_000, 4_000_000_000)) {
+    return "Invalid spawnAtUnix.";
+  }
+
+  const nowUnix = Math.floor(Date.now() / 1000);
+  if (pot.spawnAtUnix! > nowUnix + 10 * 60) {
+    return "spawnAtUnix is too far in the future.";
+  }
+
+  if (pot.spawnAtUnix! < nowUnix - POT_CYCLE_MAX_AGE_SECONDS) {
+    return "spawnAtUnix is too old.";
+  }
+
+  if (!isAcceptableString(pot.installationHash, true, 128)) {
+    return "installationHash is required.";
+  }
+
+  if (!isAcceptableString(pot.pluginVersion, true, 64)) {
+    return "pluginVersion is required.";
+  }
+
+  if (!isAcceptableString(pot.observedAtUtc, true, 64)) {
+    return "observedAtUtc is required.";
+  }
+
+  if (!UTC_TIMESTAMP_PATTERN.test(pot.observedAtUtc!)) {
+    return "observedAtUtc must be an ISO-8601 UTC timestamp.";
+  }
+
+  const observedAt = Date.parse(pot.observedAtUtc!);
+  const now = Date.now();
+  if (!Number.isFinite(observedAt)) {
+    return "observedAtUtc is invalid.";
+  }
+
+  if (observedAt > now + 10 * 60 * 1000) {
+    return "Observation is too far in the future.";
+  }
+
+  if (observedAt < now - 7 * 24 * 60 * 60 * 1000) {
+    return "Observation is too old.";
+  }
+
+  return null;
+}
+
+async function submitPotCycle(request: Request, env: Env): Promise<Response> {
+  const body = await parseJsonBody(request);
+  const validationError = validatePotCycle(body);
+  if (validationError !== null) {
+    return jsonResponse({ accepted: false, error: validationError }, 400);
+  }
+
+  const pot = body as PotCycleRequest;
+  const observedAtUtc = new Date(pot.observedAtUtc).toISOString();
+  const instanceKey = pot.instanceKey.trim().toUpperCase();
+
+  const result = await env.DB.prepare(`
+    INSERT INTO pot_cycles (
+      instance_key, territory_id, datacenter_id, pot_fate_id, spawn_at_unix,
+      installation_hash, plugin_version, observed_at_utc
+    )
+    SELECT ?, ?, ?, ?, ?, ?, ?, ?
+    WHERE NOT EXISTS (
+      SELECT 1
+      FROM pot_cycles
+      WHERE installation_hash = ?
+        AND instance_key = ?
+        AND pot_fate_id = ?
+        AND spawn_at_unix = ?
+        AND created_at_utc >= datetime('now', '-10 minutes')
+    )
+  `).bind(
+    instanceKey,
+    pot.territoryId,
+    pot.datacenterId,
+    pot.potFateId,
+    pot.spawnAtUnix,
+    pot.installationHash.trim(),
+    pot.pluginVersion.trim(),
+    observedAtUtc,
+    pot.installationHash.trim(),
+    instanceKey,
+    pot.potFateId,
+    pot.spawnAtUnix,
+  ).run();
+
+  if (!result.success) {
+    return jsonResponse({ accepted: false, error: "Database insert failed." }, 500);
+  }
+
+  if (result.meta.changes === 0) {
+    return jsonResponse({ accepted: true, duplicate: true });
+  }
+
+  return jsonResponse({
+    accepted: true,
+    duplicate: false,
+    potCycleId: result.meta.last_row_id,
+  }, 201);
+}
+
+async function getPotCycle(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const instanceKey = url.searchParams.get("instanceKey")?.trim() ?? "";
+  if (!INSTANCE_KEY_PATTERN.test(instanceKey)) {
+    return jsonResponse({ found: false, error: "instanceKey must be a 64-character hex SHA-256 digest." }, 400);
+  }
+
+  const minSpawnUnix = Math.floor(Date.now() / 1000) - POT_CYCLE_MAX_AGE_SECONDS;
+  const row = await env.DB.prepare(`
+    SELECT instance_key, territory_id, datacenter_id, pot_fate_id, spawn_at_unix, observed_at_utc
+    FROM pot_cycles
+    WHERE instance_key = ?
+      AND spawn_at_unix >= ?
+    ORDER BY spawn_at_unix DESC, id DESC
+    LIMIT 1
+  `).bind(instanceKey.toUpperCase(), minSpawnUnix).first<{
+    instance_key: string;
+    territory_id: number;
+    datacenter_id: number;
+    pot_fate_id: number;
+    spawn_at_unix: number;
+    observed_at_utc: string;
+  }>();
+
+  if (row === null) {
+    return jsonResponse({ found: false });
+  }
+
+  return jsonResponse({
+    found: true,
+    instanceKey: row.instance_key,
+    territoryId: row.territory_id,
+    datacenterId: row.datacenter_id,
+    potFateId: row.pot_fate_id,
+    spawnAtUnix: row.spawn_at_unix,
+    observedAtUtc: row.observed_at_utc,
+  });
+}
+
 async function submitObservation(request: Request, env: Env): Promise<Response> {
   const body = await parseJsonBody(request);
   const validationError = validateObservation(body);
@@ -639,6 +822,37 @@ export default {
 
         console.error(error);
         return jsonResponse({ accepted: false, error: "Unexpected server error." }, 500);
+      }
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/v1/pot-cycles") {
+      try {
+        const rateLimitResponse = await enforceObservationRateLimit(request, env);
+        if (rateLimitResponse !== null) {
+          return rateLimitResponse;
+        }
+
+        return await submitPotCycle(request, env);
+      } catch (error) {
+        if (error instanceof Response) {
+          return error;
+        }
+
+        console.error(error);
+        return jsonResponse({ accepted: false, error: "Unexpected server error." }, 500);
+      }
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/v1/pot-cycles") {
+      try {
+        return await getPotCycle(request, env);
+      } catch (error) {
+        if (error instanceof Response) {
+          return error;
+        }
+
+        console.error(error);
+        return jsonResponse({ found: false, error: "Unexpected server error." }, 500);
       }
     }
 
