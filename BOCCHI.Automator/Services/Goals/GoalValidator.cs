@@ -53,8 +53,8 @@ public class GoalValidator
             return false;
         }
 
-        // Keep while Register/Warmup. During Battle only if we're already inside this CE —
-        // can't join from outside, so drop the goal and pick something else.
+        // Keep while Register/Warmup. During Battle only if this character is participating
+        // (player EventId) — zone CurrentEventId alone is not enough; outside players cannot join.
         return ce.IsPreparing()
                || (ce.IsActive() && criticalEncounterContext.GetCriticalEncounterId() == id);
     }

@@ -6,19 +6,44 @@ using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using ECommons.GameFunctions;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
-using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using Ocelot.Extensions;
 
 namespace BOCCHI.CriticalEncounters.Services;
 
-public class CriticalEncounterContext(IObjectTable objects) : ICriticalEncounterContext
+public class CriticalEncounterContext
+(
+    IObjectTable objects,
+    ICriticalEncounterRepository repository
+) : ICriticalEncounterContext
 {
     public bool IsInCriticalEncounter() => GetCriticalEncounterId() != null;
 
+    /// <summary>
+    ///     Participating in a CE that is in Battle. Uses the player's event id (not the zone
+    ///     <c>CurrentEventId</c>), and ignores Register/Warmup so base camp does not show "In CE".
+    /// </summary>
     public unsafe CriticalEncounterId? GetCriticalEncounterId()
     {
-        DynamicEventContainer* dec = DynamicEventContainer.GetInstance();
-        return dec != null && dec->CurrentEventId != 0 ? new CriticalEncounterId(dec->CurrentEventId) : null;
+        IPlayerCharacter? player = objects.LocalPlayer;
+        if (player == null)
+        {
+            return null;
+        }
+
+        ushort entryId = player.BattleChara()->EventId.EntryId;
+        if (entryId == 0)
+        {
+            return null;
+        }
+
+        CriticalEncounterId id = new(entryId);
+        CriticalEncounter? ce = repository.SnapshotWithoutForkedTower().FirstOrDefault(c => c.Id == id);
+        if (ce == null || !ce.IsActive())
+        {
+            return null;
+        }
+
+        return id;
     }
 
     public unsafe IEnumerable<IBattleNpc> GetTargets()
@@ -35,7 +60,7 @@ public class CriticalEncounterContext(IObjectTable objects) : ICriticalEncounter
             return [];
         }
 
-        ushort ceId = player.BattleChara()->EventId.EntryId;
+        ushort ceId = id.Value.Value;
 
         return objects.OfType<IBattleNpc>()
             .Where(obj => obj is { IsDead: false, IsTargetable: true })
