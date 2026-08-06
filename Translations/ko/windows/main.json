@@ -80,6 +80,8 @@
   },
   "buffs": {
     "title": "버프",
+    "apply_button": "버프 적용",
+    "stop_button": "버프 중지",
     "apply_tooltip": "지식 크리스탈에서 설정한 버프를 적용합니다",
     "stop_tooltip": "버프 적용을 멈춥니다",
     "applying": "적용 중…"

@@ -13,13 +13,14 @@ using Ocelot.Actions;
 using Ocelot.Chain;
 using Ocelot.Extensions;
 using Ocelot.Ipc.VNavmesh;
-using Ocelot.Pathfinding.Extensions;
 using Ocelot.Services.Pathfinding;
 using Ocelot.States.Score;
-using System.Numerics;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
+/// <summary>
+///     Hold near a preparing CE until Battle. Travel delivers via PathCalculator; this state never vnavs.
+/// </summary>
 public class WaitingForCriticalEncounterHandler
 (
     IAutomatorMemory memory,
@@ -29,7 +30,6 @@ public class WaitingForCriticalEncounterHandler
     IVNavmeshIpc vnav,
     IChainManager manager,
     ICriticalEncounterRepository repo,
-    IZoneProvider zones,
     AutomatorConfig config
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.WaitingForCriticalEncounter)
 {
@@ -40,32 +40,18 @@ public class WaitingForCriticalEncounterHandler
             return StatePriority.Never;
         }
 
-        if (!memory.TryRemember<GoalMemory>(out GoalMemory goal) || goal.Goal.GoalType is not CriticalEncounterGoal ceGoal)
+        if (!TryGetPreparingGoal(out CriticalEncounter ce))
         {
             return StatePriority.Never;
         }
 
-        CriticalEncounter? ce = repo.SnapshotWithoutForkedTower().FirstOrDefault(ce => ce.Id == ceGoal.id);
-        if (ce == null || !ce.IsPreparing())
+        float waitRadius = MathF.Max(1f, ce.Radius);
+        if (player.Position.Distance2D(ce.Position) >= waitRadius)
         {
             return StatePriority.Never;
         }
 
-        // ce.Radius is padded (green); red = authored combat / registration.
-        float combatRadius = NavigationConstants.CriticalEncounterRedRadius(ce.Radius);
-        if (combatRadius <= 0f)
-        {
-            return StatePriority.Never;
-        }
-
-        float percent = player.Position.Distance2D(ce.Position) / combatRadius;
-
-        if (percent >= 1.5f)
-        {
-            return StatePriority.Never;
-        }
-
-        // Beat Pathfinding (High) while walking the last stretch into registration (#132).
+        // Beat Pathfinding (High) once near the CE (#132).
         return StatePriority.VeryHigh;
     }
 
@@ -79,73 +65,45 @@ public class WaitingForCriticalEncounterHandler
 
     public override void Handle()
     {
-        if (objects.LocalPlayer is not { } player)
+        if (!memory.TryRemember<WaitingForCriticalEncounterMemory>(out _))
         {
             return;
         }
 
-        if (!memory.TryRemember<GoalMemory>(out GoalMemory goal) || goal.Goal.GoalType is not CriticalEncounterGoal ceGoal)
+        if (!TryGetPreparingGoal(out _))
         {
             return;
         }
 
-        CriticalEncounter? ce = repo.SnapshotWithoutForkedTower().FirstOrDefault(ce => ce.Id == ceGoal.id);
-        if (ce == null || !ce.IsPreparing())
+        StopNavigation();
+
+        if (!config.StayMountedWhileWaitingForCe
+            && conditions[ConditionFlag.Mounted]
+            && EzThrottler.Throttle("WaitingForCriticalEncounter::Unmount")
+            && Actions.Unmount.CanCast())
         {
-            return;
+            Actions.Unmount.Cast();
+        }
+    }
+
+    private bool TryGetPreparingGoal(out CriticalEncounter ce)
+    {
+        ce = null!;
+
+        if (!memory.TryRemember<GoalMemory>(out GoalMemory goal)
+            || goal.Goal.GoalType is not CriticalEncounterGoal ceGoal)
+        {
+            return false;
         }
 
-        float combatRadius = NavigationConstants.CriticalEncounterRedRadius(ce.Radius);
-        if (combatRadius <= 0f)
+        CriticalEncounter? found = repo.SnapshotWithoutForkedTower().FirstOrDefault(c => c.Id == ceGoal.id);
+        if (found is not { } preparing || !preparing.IsPreparing())
         {
-            return;
+            return false;
         }
 
-        if (!memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory wait))
-        {
-            return;
-        }
-
-        float dist = player.Position.Distance2D(ce.Position);
-        float holdRadius = CriticalEncounterWaitProfiles.HoldRadius(combatRadius, ce.Id.Value);
-
-        // Inside hold radius (default = full red; some CEs use a tighter profile) — registered.
-        // Yellow is debug-only (#140).
-        if (dist <= holdRadius)
-        {
-            wait.HoldingPosition = true;
-            StopNavigation();
-
-            if (!config.StayMountedWhileWaitingForCe
-                && conditions[ConditionFlag.Mounted]
-                && EzThrottler.Throttle("WaitingForCriticalEncounter::Unmount")
-                && Actions.Unmount.CanCast())
-            {
-                Actions.Unmount.Cast();
-            }
-
-            return;
-        }
-
-        wait.HoldingPosition = false;
-
-        // Outside hold — walk into the combat / registration circle.
-        Vector3 approach = NavigationApproach.GetCriticalEncounterApproachPosition(
-            ce.Position,
-            player.Position,
-            combatRadius,
-            ce.Id.Value);
-
-        if (pathfinder.IsIdle())
-        {
-            pathfinder.PathfindAndMoveTo(new PathfinderConfig(approach)
-            {
-                DistanceThreshold = 1.5f,
-                ShouldSnapToFloor = true,
-            });
-        }
-
-        AutoMount.MaybeRemount(config, conditions, objects, approach, zones.GetZone().IsInBasecamp());
+        ce = preparing;
+        return true;
     }
 
     private void StopNavigation()

@@ -80,6 +80,8 @@
   },
   "buffs": {
     "title": "バフ",
+    "apply_button": "バフを付与",
+    "stop_button": "バフ付与を停止",
     "apply_tooltip": "ナレッジクリスタルで、設定したバフを付与します",
     "stop_tooltip": "バフ付与を止めます",
     "applying": "付与中…"

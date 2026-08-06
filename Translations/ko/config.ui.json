@@ -27,8 +27,8 @@
       "tooltip": "메인 창에 진행 중인 돌발과 비상 조우를 표시합니다."
     },
     "show_buff_section": {
-      "label": "버프 버튼 표시",
-      "tooltip": "메인 창 상단 상태 칩 옆에 버프 버튼을 표시합니다."
+      "label": "버프 적용 버튼 표시",
+      "tooltip": "메인 창 상태 칩 아래에 버프 적용/중지 버튼을 표시합니다."
     },
     "show_automation_section": {
       "label": "불법 모드 섹션 표시",

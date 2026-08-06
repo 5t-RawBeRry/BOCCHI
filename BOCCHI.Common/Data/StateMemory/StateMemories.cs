@@ -1,3 +1,4 @@
+using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.Paths;
@@ -34,11 +35,7 @@ public sealed class AutomaticTreasureSurveyMemory
     public DateTime SurveyWaitDeadlineUtc { get; set; }
 }
 
-public sealed class WaitingForCriticalEncounterMemory
-{
-    /// <summary>Inside registration — don't re-path unless we drift back toward the edge.</summary>
-    public bool HoldingPosition { get; set; }
-}
+public sealed class WaitingForCriticalEncounterMemory;
 
 /// <summary>
 ///     In FATE/CE combat — block travel replan until the activity goal is dropped.

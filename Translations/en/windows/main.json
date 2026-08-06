@@ -80,6 +80,8 @@
   },
   "buffs": {
     "title": "Buffs",
+    "apply_button": "Apply Buffs",
+    "stop_button": "Stop Buffs",
     "apply_tooltip": "Apply your configured buffs at a knowledge crystal",
     "stop_tooltip": "Stop applying buffs",
     "applying": "Applying…"

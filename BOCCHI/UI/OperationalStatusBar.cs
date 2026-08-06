@@ -128,9 +128,9 @@ public class OperationalStatusBar
             ui.Text(potChip, branding.DalamudGrey);
         }
 
+        // Own row — not a mode chip; knowledge-crystal buff apply/stop.
         if (uiConfig.ShowBuffSection)
         {
-            ImGui.SameLine(0f, 16f);
             DrawBuffAction();
         }
 
@@ -157,31 +157,38 @@ public class OperationalStatusBar
 
     private void DrawBuffAction()
     {
-        ui.Text(translator.T(".buffs.title"), branding.DalamudYellow);
-        ImGui.SameLine(0f, 6f);
-
         bool canStart = buffRunner.CanStart;
-        using (ImRaii.Disabled(!canStart && !buffRunner.IsRunning))
+        bool running = buffRunner.IsRunning;
+        string label = running
+            ? translator.T(".buffs.stop_button")
+            : translator.T(".buffs.apply_button");
+
+        using (ImRaii.Disabled(!canStart && !running))
         {
+            // Flask reads as buffs/potions; Magic looked like a random pill next to status chips.
             using (ImRaii.PushFont(UiBuilder.IconFont))
             {
-                if (ImGui.SmallButton($"{FontAwesomeIcon.Magic.ToIconString()}##apply_buffs"))
+                ImGui.AlignTextToFramePadding();
+                ImGui.TextUnformatted(FontAwesomeIcon.Flask.ToIconString());
+            }
+
+            ImGui.SameLine(0f, 6f);
+            if (ImGui.SmallButton($"{label}##buffs_action"))
+            {
+                if (running)
                 {
-                    if (buffRunner.IsRunning)
-                    {
-                        buffRunner.Stop();
-                    }
-                    else
-                    {
-                        buffRunner.Start();
-                    }
+                    buffRunner.Stop();
+                }
+                else
+                {
+                    buffRunner.Start();
                 }
             }
         }
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            if (buffRunner.IsRunning)
+            if (running)
             {
                 ImGui.SetTooltip(translator.T(".buffs.stop_tooltip"));
             }
@@ -195,9 +202,9 @@ public class OperationalStatusBar
             }
         }
 
-        if (buffRunner.IsRunning)
+        if (running)
         {
-            ImGui.SameLine(0f, 6f);
+            ImGui.SameLine(0f, 8f);
             ui.Text(translator.T(".buffs.applying"), branding.DalamudGrey);
         }
     }

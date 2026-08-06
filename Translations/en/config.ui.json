@@ -27,8 +27,8 @@
       "tooltip": "Show active FATEs and Critical Encounters in the main window."
     },
     "show_buff_section": {
-      "label": "Show Buffs button",
-      "tooltip": "Show the Buffs button next to the status chips at the top of the main window."
+      "label": "Show Apply Buffs button",
+      "tooltip": "Show the Apply Buffs / Stop Buffs control under the status chips in the main window."
     },
     "show_automation_section": {
       "label": "Show Illegal Mode section",

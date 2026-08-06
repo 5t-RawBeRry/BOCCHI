@@ -93,10 +93,10 @@ public class PathCalculator
         float distanceToGoal = player.Position.Distance2D(arrivalCheck);
         if (ceCombatRadius > 0f)
         {
-            float innerArrival = ceCombatRadius * NavigationConstants.CriticalEncounterRegistrationMaxRatio;
-            if (distanceToGoal <= innerArrival)
+            float waitRadius = NavigationConstants.CriticalEncounterWaitRadius(ceCombatRadius);
+            if (distanceToGoal <= waitRadius)
             {
-                logger.Debug("Inside CE registration circle.");
+                logger.Debug("Inside CE wait area.");
                 return [];
             }
         }
@@ -116,7 +116,7 @@ public class PathCalculator
             ? player.Position.Distance2D(camp.Position)
             : float.MaxValue;
         bool nearCriticalEncounter = ceCombatRadius > 0f
-                                     && distanceToGoal <= ceCombatRadius * 1.5f;
+                                     && distanceToGoal <= NavigationConstants.CriticalEncounterWaitRadius(ceCombatRadius);
         if (!nearCriticalEncounter
             && distanceToGoal > NavigationConstants.MaxDirectWalkDistance
             && distanceToGoal >= distToCamp * 0.5f)

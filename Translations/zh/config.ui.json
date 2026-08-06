@@ -27,8 +27,8 @@
       "tooltip": "在主窗口中显示进行中的危命任务与紧急遭遇战。"
     },
     "show_buff_section": {
-      "label": "显示增益按钮",
-      "tooltip": "在主窗口顶部状态标签旁显示增益按钮。"
+      "label": "显示附加增益按钮",
+      "tooltip": "在主窗口状态标签下方显示附加增益／停止按钮。"
     },
     "show_automation_section": {
       "label": "显示违规模式板块",
