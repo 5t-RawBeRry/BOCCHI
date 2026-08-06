@@ -44,7 +44,10 @@ public class AutomatorConfig : IAutoConfig
     [Checkbox(Order = 9)]
     public bool StayMountedWhileWaitingForCe { get; set; } = false;
 
-    /// <summary>After Return/inbound aetheryte toward a FATE/CE, stop and leave the walk to the player.</summary>
+    /// <summary>
+    ///     After FATE/CE: Return, teleport to the nearest aetheryte for the next activity, mount,
+    ///     then stop — no auto-walk (#139 / replaces #109 full-path requirement).
+    /// </summary>
     [Checkbox(Order = 10)]
     public bool StopAfterReturn { get; set; } = false;
 
@@ -67,8 +70,15 @@ public class AutomatorConfig : IAutoConfig
     public int MaxRemoteIdleTimeSeconds { get; set; } = 10;
 
     /// <summary>
+    ///     Upper bound (seconds) for a random 0..max idle at camp before teleporting to a FATE/CE (#138).
+    ///     0 = leave immediately.
+    /// </summary>
+    [IntRange(0, 60, Order = 15)]
+    public int MaxBaseTeleportDelaySeconds { get; set; } = 0;
+
+    /// <summary>
     ///     Repair equipped gear when any piece falls to or below this condition (%).
     /// </summary>
-    [IntRange(1, 99, Order = 15)]
+    [IntRange(1, 99, Order = 16)]
     public int AutoRepairThreshold { get; set; } = 30;
 }

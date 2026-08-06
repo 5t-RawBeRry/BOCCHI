@@ -48,6 +48,7 @@ public class BuffRunner
         stateMachine = factory();
         memory.TryAdd<ApplyingBuffsMemory>();
         memory.TryAdd<ManualBuffRunMemory>();
+        memory.Forget<InquiringMindAttemptedMemory>();
 
         if (jobs.TryGetCurrent(out SupportJob job))
         {
@@ -68,6 +69,7 @@ public class BuffRunner
         pathfinder.Stop();
         memory.Forget<ApplyingBuffsMemory>();
         memory.Forget<ManualBuffRunMemory>();
+        memory.Forget<InquiringMindAttemptedMemory>();
         RestoreJobIfNeeded();
         CompleteIfJobRestored();
         logger.Info("Manual buff run stopped");
@@ -90,6 +92,7 @@ public class BuffRunner
                 pathfinder.Stop();
                 memory.Forget<ApplyingBuffsMemory>();
                 memory.Forget<ManualBuffRunMemory>();
+                memory.Forget<InquiringMindAttemptedMemory>();
                 RestoreJobIfNeeded();
                 CompleteIfJobRestored();
                 return;
@@ -103,6 +106,7 @@ public class BuffRunner
 
         stateMachine = null;
         memory.Forget<ManualBuffRunMemory>();
+        memory.Forget<InquiringMindAttemptedMemory>();
         RestoreJobIfNeeded();
         CompleteIfJobRestored();
     }

@@ -44,8 +44,8 @@
       "tooltip": "Do not get off your mount after you arrive at a CE that is still preparing. You still dismount when it starts."
     },
     "stop_after_return": {
-      "label": "Stop after Return",
-      "tooltip": "After Return (and teleport toward the next FATE or CE), stop and let you walk the rest. Toggle Illegal Mode to resume, or turn this off for full auto."
+      "label": "Stop after return and teleport",
+      "tooltip": "After a FATE or CE, return to camp, teleport toward the next one, mount, then stop. You walk the rest yourself. Toggle Illegal Mode to resume, or turn this off for full auto."
     },
     "phantom_jobs_leveling_mode": {
       "label": "Level phantom jobs automatically",
@@ -62,6 +62,10 @@
     "max_remote_idle_time_seconds": {
       "label": "Max wait before Return (seconds)",
       "tooltip": "After a FATE or CE ends, wait a random time between 2 seconds and this value before casting Return."
+    },
+    "max_base_teleport_delay_seconds": {
+      "label": "Max wait before leaving camp (seconds)",
+      "tooltip": "At camp, wait a random time between 0 seconds and this value before teleporting to a FATE or CE. Helps when people would otherwise leave at the same time. 0 means leave right away."
     },
     "auto_repair_threshold": {
       "label": "Repair gear below (%)",

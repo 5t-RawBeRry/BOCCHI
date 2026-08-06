@@ -12,6 +12,9 @@ public sealed class ApplyingBuffsMemory;
 
 public sealed class ManualBuffRunMemory;
 
+/// <summary>Inquiring Mind already ran this buff cycle — do not cast it again.</summary>
+public sealed class InquiringMindAttemptedMemory;
+
 public sealed class CastingTreasureSightMemory;
 
 /// <summary>
@@ -38,6 +41,12 @@ public sealed class WaitingForCriticalEncounterMemory
 }
 
 /// <summary>
+///     In FATE/CE combat — block travel replan until the activity goal is dropped.
+///     Avoids edge stutter when FATE sync flickers and Pathfinding fights BOCCHI AI.
+/// </summary>
+public sealed class SuspendTravelForActivityMemory;
+
+/// <summary>
 ///     Arrived at predicted pot stand-off; hold until the FATE spawns (#112).
 /// </summary>
 public sealed class WaitingForPotFateMemory;
@@ -46,6 +55,22 @@ public sealed class WaitingForPotFateMemory;
 ///     User / soft-cancel stopped navigation. Blocks auto-replan until Illegal Mode is toggled.
 /// </summary>
 public sealed class NavigationInterruptedMemory;
+
+/// <summary>Random idle at camp before the outbound teleport to a FATE/CE (#138).</summary>
+public sealed class BaseTeleportDelayMemory(TimeSpan delay)
+{
+    private readonly DateTime startedUtc = DateTime.UtcNow;
+
+    public TimeSpan Delay { get; } = delay;
+
+    public bool IsReady() => DateTime.UtcNow - startedUtc >= Delay;
+
+    public TimeSpan Remaining()
+    {
+        TimeSpan left = Delay - (DateTime.UtcNow - startedUtc);
+        return left > TimeSpan.Zero ? left : TimeSpan.Zero;
+    }
+}
 
 /// <summary>
 ///     One initial combat approach per FATE/CE. Re-arms when the activity id changes.
@@ -254,7 +279,7 @@ public sealed class GoalPathStepMemory(IGoal goal, IPathCalculator calculator, b
 
     private bool emptyPlan;
 
-    /// <summary>When true, finishing the plan (or an empty teleport-only plan) pauses nav for manual travel (#109).</summary>
+    /// <summary>When true, finishing the plan (or an empty teleport-only plan) pauses nav for manual travel (#139).</summary>
     public bool PauseWhenPlanCompletes { get; } = pauseWhenPlanCompletes;
 
     public Queue<IPathStep> PathSteps { get; private set; } = [];

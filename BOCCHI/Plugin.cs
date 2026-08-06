@@ -141,8 +141,8 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         if (cfg.AutomatorConfig.StopAfterReturn)
         {
             logger.Info(
-                "Illegal Mode: Stop after return is ON — after Return/aetheryte BOCCHI pauses for manual pathing "
-                + "(Illegal Mode → Stop after return). Toggle Illegal Mode to resume, or turn the option off.");
+                "Illegal Mode: Stop after return and teleport is ON — after Return/aetheryte BOCCHI mounts and pauses so you can walk the rest "
+                + "(Illegal Mode → Stop after return and teleport). Toggle Illegal Mode to resume, or turn the option off.");
         }
 
         services.AddSingleton(cfg);

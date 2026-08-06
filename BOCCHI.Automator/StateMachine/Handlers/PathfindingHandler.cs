@@ -8,6 +8,7 @@ using BOCCHI.Common.Services;
 using BOCCHI.Common.Services.Paths;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
+using ECommons.Throttlers;
 using Ocelot.Chain;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
@@ -30,7 +31,13 @@ public class PathfindingHandler
     ILogger<PathfindingHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Pathfinding)
 {
+    private static readonly TimeSpan MountBeforePauseTimeout = TimeSpan.FromSeconds(8);
+
     private Task<ChainResult>? currentPathTask;
+
+    private string? pendingPauseReason;
+
+    private DateTime mountBeforePauseDeadline = DateTime.MinValue;
 
     public override void Enter()
     {
@@ -62,12 +69,22 @@ public class PathfindingHandler
             return StatePriority.Never;
         }
 
+        if (memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _))
+        {
+            return StatePriority.Never;
+        }
+
         return memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _) ? StatePriority.High : StatePriority.Never;
     }
 
     public override void Handle()
     {
         if (objects.LocalPlayer is not { } player)
+        {
+            return;
+        }
+
+        if (pendingPauseReason != null && FinishMountBeforePause())
         {
             return;
         }
@@ -80,10 +97,10 @@ public class PathfindingHandler
 
         path.Update();
 
-        // Teleport-only mode: calc produced no Return/Teleport steps → pause for manual (#109).
+        // Teleport-only mode: calc produced no Return/Teleport steps → pause for manual (#139).
         if (path.PauseWhenPlanCompletes && path.IsEmptyPlan && currentPathTask == null)
         {
-            PauseForManualPathing(StopAfterReturnMessage("no travel steps left"));
+            BeginMountThenPause(TeleportOnlyMessage("no travel steps left"));
             return;
         }
 
@@ -116,7 +133,8 @@ public class PathfindingHandler
                             && completedKind is PathStepKind.Teleport or PathStepKind.Return)
                         {
                             currentPathTask = null;
-                            PauseForManualPathing(StopAfterReturnMessage("arrived at aetheryte"));
+                            memory.Forget<BaseTeleportDelayMemory>();
+                            BeginMountThenPause(TeleportOnlyMessage("arrived at aetheryte"));
                             return;
                         }
                     }
@@ -159,13 +177,21 @@ public class PathfindingHandler
 
                 if (path.PauseWhenPlanCompletes && path.GetNextPathStep() == null)
                 {
-                    PauseForManualPathing(StopAfterReturnMessage("returned to camp"));
+                    BeginMountThenPause(TeleportOnlyMessage("returned to camp"));
                 }
 
                 return;
             }
 
+            if (step.PathStepData is Teleport
+                && zones.GetZone().IsInBasecamp()
+                && !WaitForBaseTeleportDelay())
+            {
+                return;
+            }
+
             logger.Info("Starting next task step...");
+            memory.Forget<BaseTeleportDelayMemory>();
             currentPathTask = pathStepExecutor.Execute(step);
             return;
         }
@@ -177,9 +203,76 @@ public class PathfindingHandler
         }
     }
 
-    private static string StopAfterReturnMessage(string where) =>
-        $"Stop after return: {where} — paused for manual pathing "
-        + "(Illegal Mode → Stop after return; toggle Illegal Mode to resume)";
+    /// <returns>False while still waiting; true when ready to teleport.</returns>
+    private bool WaitForBaseTeleportDelay()
+    {
+        if (config.MaxBaseTeleportDelaySeconds <= 0)
+        {
+            return true;
+        }
+
+        if (!memory.TryRemember<BaseTeleportDelayMemory>(out BaseTeleportDelayMemory delay))
+        {
+            delay = new BaseTeleportDelayMemory(BaseTeleportDelay.Roll(config));
+            if (delay.Delay <= TimeSpan.Zero)
+            {
+                return true;
+            }
+
+            memory.TryAdd(delay);
+            logger.Info("Waiting {Seconds:F1}s at camp before teleport (#138)", delay.Delay.TotalSeconds);
+            return false;
+        }
+
+        return delay.IsReady();
+    }
+
+    private void BeginMountThenPause(string reason)
+    {
+        if (!config.ShouldAutoMount || conditions[ConditionFlag.Mounted])
+        {
+            PauseForManualPathing(reason);
+            return;
+        }
+
+        pendingPauseReason = reason;
+        mountBeforePauseDeadline = DateTime.UtcNow + MountBeforePauseTimeout;
+        if (!conditions[ConditionFlag.Mounting])
+        {
+            MountWait.TryCast(config.PreferredMountId);
+        }
+    }
+
+    /// <returns>True when this frame handled the mount-before-pause wait.</returns>
+    private bool FinishMountBeforePause()
+    {
+        if (pendingPauseReason == null)
+        {
+            return false;
+        }
+
+        if (conditions[ConditionFlag.Mounted]
+            || !config.ShouldAutoMount
+            || DateTime.UtcNow >= mountBeforePauseDeadline)
+        {
+            string reason = pendingPauseReason;
+            pendingPauseReason = null;
+            PauseForManualPathing(reason);
+            return true;
+        }
+
+        if (!conditions[ConditionFlag.Mounting]
+            && EzThrottler.Throttle("Pathfinding::MountBeforePause", 750))
+        {
+            MountWait.TryCast(config.PreferredMountId);
+        }
+
+        return true;
+    }
+
+    private static string TeleportOnlyMessage(string where) =>
+        $"Stop after return and teleport: {where} — paused so you can walk the rest "
+        + "(Illegal Mode → Stop after return and teleport; toggle Illegal Mode to resume)";
 
     private void PauseForManualPathing(string reason)
     {
@@ -188,6 +281,7 @@ public class PathfindingHandler
         ResetPathfinding();
         memory.Forget<GoalPathStepMemory>();
         memory.Forget<GoalMemory>();
+        memory.Forget<BaseTeleportDelayMemory>();
         memory.TryAdd<NavigationInterruptedMemory>();
     }
 
@@ -196,6 +290,7 @@ public class PathfindingHandler
         manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
 
         currentPathTask = null;
+        pendingPauseReason = null;
         pathfinder.Stop();
     }
 }

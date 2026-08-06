@@ -1,5 +1,6 @@
 using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services;
+using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
@@ -24,7 +25,9 @@ public class InFateHandler
     ICondition conditions,
     IPathfinder pathfinder,
     AutoRotationController autoRotation,
-    IPlayer playerState
+    IPlayer playerState,
+    AutomatorConfig config,
+    ITargetManager targetManager
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InFate)
 {
     private const float DismountDistance = 20f;
@@ -42,7 +45,11 @@ public class InFateHandler
     public override void Enter()
     {
         base.Enter();
-        autoRotation.EnableForActivity();
+        // Latch until the FATE goal ends — prevents travel replan / edge stutter with BOCCHI AI.
+        memory.TryAdd(new SuspendTravelForActivityMemory());
+        memory.Forget<GoalPathStepMemory>();
+        pathfinder.Stop();
+        autoRotation.EnableForFate();
     }
 
     public override void Handle()
@@ -52,13 +59,14 @@ public class InFateHandler
             return;
         }
 
-        List<IBattleNpc> targets = context.GetTargets().ToList();
+        List<IBattleNpc> fateTargets = context.GetTargets().ToList();
         InitialCombatApproachMemory<FateId> approach = GetApproachMemory(context.GetFateId());
 
-        // Stay mounted until within range of a FATE target.
+        // Stay mounted until within range of a FATE target (or already in combat).
         if (conditions[ConditionFlag.Mounted]
-            && targets.FirstOrDefault() is { } nearest
-            && player.Position.Distance2D(nearest.Position) - nearest.HitboxRadius <= DismountDistance
+            && (conditions[ConditionFlag.InCombat]
+                || (fateTargets.FirstOrDefault() is { } nearest
+                    && player.Position.Distance2D(nearest.Position) - nearest.HitboxRadius <= DismountDistance))
             && EzThrottler.Throttle("InFate::Unmount")
             && Actions.Unmount.CanCast())
         {
@@ -69,13 +77,14 @@ public class InFateHandler
         if (CombatActivityHandler.HandleTargets(
                 player,
                 playerState,
-                targets,
+                fateTargets,
                 conditions,
                 pathfinder,
                 "InFate",
                 approach.IsPending,
-                true,
-                deferCombatToBossModAi: true))
+                stopPathfinderInCombat: true,
+                deferCombatToBossModAi: config.ToggleAiProvider,
+                targetManager: targetManager))
         {
             approach.Complete();
         }

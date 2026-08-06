@@ -160,8 +160,8 @@ public class FarmingPotChestsHandler
 
         if (DateTimeOffset.UtcNow - farm.PhaseStartedUtc >= BuffWaitTimeout)
         {
-            logger.Info("Pot treasure: no Cache Me If You Can buff — falling back to blind sweep");
-            FallBackToBlind(farm);
+            logger.Info("Pot treasure: no Cache Me If You Can buff — ending farm (not blind-sweeping empty spots)");
+            FinishFarm();
         }
     }
 

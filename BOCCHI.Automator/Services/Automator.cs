@@ -84,6 +84,7 @@ public class Automator
         memory.Forget<GoalPathStepMemory>();
         memory.Forget<WaitingForCriticalEncounterMemory>();
         memory.Forget<WaitingForPotFateMemory>();
+        memory.Forget<SuspendTravelForActivityMemory>();
         manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
         pathfinder.Stop();
         vnav.Stop();
@@ -156,6 +157,8 @@ public class Automator
         memory.Forget<GoalPathStepMemory>();
         memory.Forget<WaitingForCriticalEncounterMemory>();
         memory.Forget<WaitingForPotFateMemory>();
+        memory.Forget<SuspendTravelForActivityMemory>();
+        memory.Forget<PotChestFarmMemory>();
         manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
         pathfinder.Stop();
         vnav.Stop();
@@ -229,6 +232,7 @@ public class Automator
                 memory.Forget<GoalPathStepMemory>();
                 memory.Forget<WaitingForCriticalEncounterMemory>();
                 memory.Forget<WaitingForPotFateMemory>();
+                memory.Forget<SuspendTravelForActivityMemory>();
                 manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
                 pathfinder.Stop();
                 vnav.Stop();
@@ -236,6 +240,7 @@ public class Automator
             else if (!memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _)
                      && !memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory _)
                      && !memory.TryRemember<WaitingForPotFateMemory>(out WaitingForPotFateMemory _)
+                     && !memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _)
                      && !memory.TryRemember<ApplyingBuffsMemory>(out ApplyingBuffsMemory _))
             {
                 memory.TryAdd(new GoalPathStepMemory(goal.Goal, calculator, automatorConfig.StopAfterReturn));
@@ -287,6 +292,16 @@ public class Automator
         IZone zone = zones.GetZone();
         if (!zone.IsPotFate(fateId.Value))
         {
+            return;
+        }
+
+        // Preposition / abandoned pot goals never grant "Cache Me If You Can".
+        // Starting blind farm anyway sends the player across empty authored spots.
+        if (objects.LocalPlayer?.StatusList.Has(PotTreasureIds.TreasureBuffStatusId) != true)
+        {
+            logger.Info(
+                "Skipping pot chest farm for fate {FateId}: no Cache Me If You Can buff (pot not completed)",
+                fateId.Value);
             return;
         }
 

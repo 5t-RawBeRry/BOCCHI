@@ -24,7 +24,7 @@
     },
     "apply_buffs_using_inquiring_mind": {
       "label": "尽量使用探求心",
-      "tooltip": "作为辅助自由人时，条件允许则用探求心刷新快攻步，再逐个附加其余所选增益。"
+      "tooltip": "在知识水晶附近，辅助自由人可用探求心一次附加所有已选且已解锁的增益。若还有缺失，再换职逐个附加。"
     },
     "reapply_threshold": {
       "label": "剩余不足（分钟）时刷新",

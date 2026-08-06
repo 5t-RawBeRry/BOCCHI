@@ -51,7 +51,7 @@ public class WaitingForCriticalEncounterHandler
             return StatePriority.Never;
         }
 
-        // ce.Radius is padded (green); red = combat, yellow = combat+5.
+        // ce.Radius is padded (green); red = authored combat / registration.
         float combatRadius = NavigationConstants.CriticalEncounterRedRadius(ce.Radius);
         if (combatRadius <= 0f)
         {
@@ -96,7 +96,6 @@ public class WaitingForCriticalEncounterHandler
         }
 
         float combatRadius = NavigationConstants.CriticalEncounterRedRadius(ce.Radius);
-        float yellowRadius = NavigationConstants.CriticalEncounterYellowRadius(ce.Radius);
         if (combatRadius <= 0f)
         {
             return;
@@ -109,8 +108,8 @@ public class WaitingForCriticalEncounterHandler
 
         float dist = player.Position.Distance2D(ce.Position);
 
-        // Inside the yellow ring (yellow–red band or deeper) — hold; don't yank to center.
-        if (dist <= yellowRadius)
+        // Inside combat (red) — registered; hold. Yellow is debug-only (#140).
+        if (dist <= combatRadius)
         {
             wait.HoldingPosition = true;
             StopNavigation();
@@ -128,7 +127,7 @@ public class WaitingForCriticalEncounterHandler
 
         wait.HoldingPosition = false;
 
-        // Outside yellow — walk into the yellow–red band.
+        // Outside red — walk into the combat circle.
         Vector3 approach = NavigationApproach.GetCriticalEncounterApproachPosition(
             ce.Position,
             player.Position,

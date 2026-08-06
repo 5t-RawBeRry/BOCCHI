@@ -958,6 +958,7 @@ public class TreasureHunterService
 
         if (!ninjaHideRequired)
         {
+            ninjaHide.RestorePreviousGearsetIfNeeded();
             return true;
         }
 
@@ -1338,6 +1339,7 @@ public class TreasureHunterService
         sightCastUtc = DateTime.MinValue;
         locationsSinceLastSight = 0;
         ninjaHideRequired = false;
+        ninjaHide.RestorePreviousGearsetIfNeeded();
         walkViaStepIndex = -1;
         walkViaIndex = 0;
         walkVias.Clear();

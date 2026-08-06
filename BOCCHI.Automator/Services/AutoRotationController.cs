@@ -6,7 +6,7 @@ using Ocelot.Services.PlayerState;
 
 namespace BOCCHI.Automator.Services;
 
-/// <summary>Owns the ephemeral BOCCHI AI BossMod/VBM preset while Illegal Mode is on.</summary>
+/// <summary>Owns ephemeral BOCCHI AI BossMod/VBM presets while Illegal Mode is on.</summary>
 public class AutoRotationController(
     BossModRotationService bossMod,
     AutomatorConfig config,
@@ -38,14 +38,24 @@ public class AutoRotationController(
         bossMod.DestroyAutoRotationPreset();
     }
 
-    public void EnableForActivity()
+    public void EnableForFate()
     {
         if (!config.ToggleAiProvider)
         {
             return;
         }
 
-        bossMod.EnableAutoRotation();
+        bossMod.EnableForActivity(BocchiAiActivity.Fate);
+    }
+
+    public void EnableForCriticalEncounter()
+    {
+        if (!config.ToggleAiProvider)
+        {
+            return;
+        }
+
+        bossMod.EnableForActivity(BocchiAiActivity.CriticalEncounter);
     }
 
     public void DisableForTravel()

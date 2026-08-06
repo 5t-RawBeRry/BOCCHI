@@ -54,6 +54,7 @@ public class ApplyingBuffsHandler
         stateMachine = factory();
 
         memory.TryAdd<ApplyingBuffsMemory>();
+        memory.Forget<InquiringMindAttemptedMemory>();
         if (jobs.TryGetCurrent(out SupportJob job))
         {
             memory.TryAdd(new BuffSupportJobMemory(job.Id));

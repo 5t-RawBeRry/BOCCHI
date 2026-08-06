@@ -21,6 +21,8 @@ public sealed class NinjaHideAssist(IPlayer player, ICondition conditions, IPlug
 
     private static readonly Ocelot.Actions.Action Hide = new(ActionType.Action, HideActionId);
 
+    private int? gearsetBeforeNinja;
+
     public bool IsStealthed =>
         player.PlayerCharacter?.StatusList.Has(HiddenStatusId) == true;
 
@@ -42,6 +44,7 @@ public sealed class NinjaHideAssist(IPlayer player, ICondition conditions, IPlug
                 return false;
             }
 
+            RememberCurrentGearsetIfNeeded();
             TryEquipGearset(ninjaGearsetNumber);
             return false;
         }
@@ -60,6 +63,29 @@ public sealed class NinjaHideAssist(IPlayer player, ICondition conditions, IPlug
         TryCastHide();
         return false;
     }
+
+    /// <summary>Swap back to the job/gearset used before the Ninja Hide flow, if we changed it.</summary>
+    public void RestorePreviousGearsetIfNeeded()
+    {
+        if (gearsetBeforeNinja is not int previous || previous <= 0)
+        {
+            return;
+        }
+
+        if (TryGetActiveGearsetNumber() == previous)
+        {
+            gearsetBeforeNinja = null;
+            return;
+        }
+
+        TryEquipGearsetNumber(previous, requireNinja: false);
+        if (TryGetActiveGearsetNumber() == previous)
+        {
+            gearsetBeforeNinja = null;
+        }
+    }
+
+    public void ClearSavedGearset() => gearsetBeforeNinja = null;
 
     public void TryDismount()
     {
@@ -89,11 +115,44 @@ public sealed class NinjaHideAssist(IPlayer player, ICondition conditions, IPlug
         Hide.Cast();
     }
 
-    public unsafe bool TryEquipGearset(int gearsetNumber)
+    public bool TryEquipGearset(int gearsetNumber) =>
+        TryEquipGearsetNumber(gearsetNumber, requireNinja: true);
+
+    private void RememberCurrentGearsetIfNeeded()
     {
-        if (gearsetNumber <= 0 || IsNinja)
+        if (gearsetBeforeNinja != null)
         {
-            return IsNinja;
+            return;
+        }
+
+        if (TryGetActiveGearsetNumber() is int current && current > 0)
+        {
+            gearsetBeforeNinja = current;
+        }
+    }
+
+    private unsafe int? TryGetActiveGearsetNumber()
+    {
+        RaptureGearsetModule* module = RaptureGearsetModule.Instance();
+        if (module == null)
+        {
+            return null;
+        }
+
+        int slot = module->CurrentGearsetIndex;
+        return slot >= 0 ? slot + 1 : null;
+    }
+
+    private unsafe bool TryEquipGearsetNumber(int gearsetNumber, bool requireNinja)
+    {
+        if (gearsetNumber <= 0)
+        {
+            return false;
+        }
+
+        if (requireNinja && IsNinja)
+        {
+            return true;
         }
 
         if (!EzThrottler.Throttle("NinjaHide::Gearset", 1500))
@@ -123,7 +182,7 @@ public sealed class NinjaHideAssist(IPlayer player, ICondition conditions, IPlug
             return false;
         }
 
-        if (entry->ClassJob != NinjaClassJobId)
+        if (requireNinja && entry->ClassJob != NinjaClassJobId)
         {
             log.Warning(
                 "Ninja Hide: gearset {Number} is ClassJob {Job}, expected Ninja ({Ninja})",
@@ -140,6 +199,7 @@ public sealed class NinjaHideAssist(IPlayer player, ICondition conditions, IPlug
             return false;
         }
 
+        // Equip is async — caller polls active gearset / job.
         return false;
     }
 }

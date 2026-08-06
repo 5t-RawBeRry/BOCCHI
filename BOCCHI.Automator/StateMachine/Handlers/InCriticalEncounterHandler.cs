@@ -1,5 +1,6 @@
 using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services;
+using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
@@ -21,7 +22,9 @@ public class InCriticalEncounterHandler
     ICondition conditions,
     IPathfinder pathfinder,
     AutoRotationController autoRotation,
-    IPlayer playerState
+    IPlayer playerState,
+    AutomatorConfig config,
+    ITargetManager targetManager
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InCriticalEncounter)
 {
     public override StatePriority GetScore() => context.IsInCriticalEncounter() ? StatePriority.VeryHigh : StatePriority.Never;
@@ -30,7 +33,10 @@ public class InCriticalEncounterHandler
     {
         base.Enter();
         memory.Forget<WaitingForCriticalEncounterMemory>();
-        autoRotation.EnableForActivity();
+        memory.TryAdd(new SuspendTravelForActivityMemory());
+        memory.Forget<GoalPathStepMemory>();
+        pathfinder.Stop();
+        autoRotation.EnableForCriticalEncounter();
     }
 
     public override void Handle()
@@ -59,7 +65,8 @@ public class InCriticalEncounterHandler
                 pathfinder,
                 "InCriticalEncounter",
                 approach.IsPending,
-                deferCombatToBossModAi: true))
+                deferCombatToBossModAi: config.ToggleAiProvider,
+                targetManager: targetManager))
         {
             approach.Complete();
         }

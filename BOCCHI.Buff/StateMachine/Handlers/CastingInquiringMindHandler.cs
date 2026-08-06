@@ -1,5 +1,6 @@
 ﻿using BOCCHI.Buff.Data;
 using BOCCHI.Buff.Services;
+using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Conditions;
@@ -15,15 +16,18 @@ public class CastingInquiringMindHandler
     ICondition conditions,
     ISupportJobChanger changer,
     ISupportJobFactory supportJobs,
-    IBuffProvider buffs
+    IBuffProvider buffs,
+    IAutomatorMemory memory
 ) : FlowStateHandler<BuffState>(BuffState.CastingInquiringMind)
 {
     private DateTime lastCast = DateTime.MinValue;
+    private int castAttempts;
 
     public override void Enter()
     {
         base.Enter();
         lastCast = DateTime.MinValue;
+        castAttempts = 0;
     }
 
     public override BuffState? Handle()
@@ -33,9 +37,10 @@ public class CastingInquiringMindHandler
             return null;
         }
 
-        // Success = Quicker Step refreshed (what Inquiring Mind actually applies).
-        if (buffs.IsInquiringMindFresh(player))
+        // Inquiring Mind grants all unlocked crystal buffs in one cast — not Quicker Step only.
+        if (buffs.AreInquiringMindTargetsFresh(player) || castAttempts >= 3)
         {
+            memory.TryAdd<InquiringMindAttemptedMemory>();
             return BuffState.ChoosingBuffToApply;
         }
 
@@ -63,6 +68,7 @@ public class CastingInquiringMindHandler
         if (Actions.PhantomActionIII.CanCast() && time.TotalSeconds >= 3)
         {
             lastCast = DateTime.UtcNow;
+            castAttempts++;
             Actions.PhantomActionIII.Cast();
         }
 

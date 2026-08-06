@@ -58,7 +58,10 @@ public class DebugCommand
             return;
         }
 
-        BocchiChat.Print(chat, uiConfig, $"Created/updated preset '{BossModRotationService.AiPresetName}'.");
+        BocchiChat.Print(
+            chat,
+            uiConfig,
+            $"Created/updated presets '{BossModRotationService.FatePresetName}' and '{BossModRotationService.CePresetName}'.");
         if (string.IsNullOrWhiteSpace(storedJson))
         {
             BocchiChat.PrintError(

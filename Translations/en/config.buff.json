@@ -23,8 +23,8 @@
       "tooltip": "Keep Quicker Step up when buff automation is on."
     },
     "apply_buffs_using_inquiring_mind": {
-      "label": "Use Inquiring Mind when possible",
-      "tooltip": "As Freelancer, use Inquiring Mind to refresh Quicker Step when you can, then apply your other selected buffs one by one."
+      "label": "Use Inquiring Mind when you can",
+      "tooltip": "Near a knowledge crystal, Freelancer can cast Inquiring Mind once to apply all selected unlocked buffs. If anything is still missing, BOCCHI switches jobs and applies those one by one."
     },
     "reapply_threshold": {
       "label": "Refresh when under (minutes left)",

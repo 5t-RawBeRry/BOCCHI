@@ -35,6 +35,15 @@ public static class NavigationConstants
 
     public const float PotPrepositionMaxRadius = 32f;
 
+    /// <summary>
+    ///     Fraction of combat (red) radius used as the outer edge of the CE stand-off ring.
+    ///     Must stay &lt; 1 so we register / participate; yellow is debug-only.
+    /// </summary>
+    public const float CriticalEncounterApproachMaxRatio = 0.85f;
+
+    /// <summary>Inner fraction of combat radius for the CE stand-off ring.</summary>
+    public const float CriticalEncounterApproachMinRatio = 0.35f;
+
     /// <summary>Euclidean distance above which long pathfinds should mount first.</summary>
     public const float MountMinDistance = 20f;
 
@@ -46,7 +55,7 @@ public static class NavigationConstants
     public static float CriticalEncounterYellowRadius(float paddedRadius) =>
         MathF.Max(0f, paddedRadius - CriticalEncounterYellowInset);
 
-    /// <summary>Outer edge of the yellow–red wait band from authored combat radius.</summary>
+    /// <summary>Outer edge of the yellow–red debug band from authored combat radius.</summary>
     public static float CriticalEncounterYellowFromCombat(float combatRadius) =>
         combatRadius + CriticalEncounterRadiusPadding - CriticalEncounterYellowInset;
 }
@@ -62,18 +71,21 @@ public static class NavigationApproach
     }
 
     /// <summary>
-    ///     Random point in the yellow–red band (combat radius … combat+5) so pathing matches debug rings.
+    ///     Random point inside the combat (red) ring so the player registers for the CE.
+    ///     Waiting in the yellow–red band (outside red) looks fine on debug overlays but
+    ///     does not count as participating on live (#140).
     /// </summary>
     public static Vector3 GetCriticalEncounterApproachPosition(Vector3 center, Vector3 from, float combatRadius)
     {
-        float red = MathF.Max(0f, combatRadius);
-        float yellow = NavigationConstants.CriticalEncounterYellowFromCombat(combatRadius);
-        if (yellow < red)
+        float red = MathF.Max(1f, combatRadius);
+        float min = red * NavigationConstants.CriticalEncounterApproachMinRatio;
+        float max = red * NavigationConstants.CriticalEncounterApproachMaxRatio;
+        if (max < min)
         {
-            yellow = red;
+            max = min;
         }
 
-        float approachRange = red + Random.Shared.NextSingle() * (yellow - red);
+        float approachRange = min + Random.Shared.NextSingle() * (max - min);
         return center.GetApproachPosition(from, approachRange);
     }
 

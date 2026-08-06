@@ -139,11 +139,11 @@ public class PathCalculator
 
         if (config.StopAfterReturn)
         {
-            // Keep Return / Teleport; drop the walk to the FATE or CE (#109).
+            // Keep Return / Teleport; drop the walk to the FATE or CE (#139).
             resolvedSteps = resolvedSteps
                 .Where(step => step.Kind != PathStepKind.Pathfind)
                 .ToList();
-            logger.Debug("StopAfterReturn: {Count} step(s) after dropping pathfinds", resolvedSteps.Count);
+            logger.Debug("TeleportOnlyTravel: {Count} step(s) after dropping pathfinds", resolvedSteps.Count);
         }
 
         return new(resolvedSteps);
