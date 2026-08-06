@@ -17,6 +17,7 @@
     "pots_treasure": "Pots & Treasure",
     "mob_farmer": "Mob Farmer",
     "treasure_hunt": "Treasure Hunt",
+    "carrot_hunt": "Carrot Hunt",
     "on": "On",
     "off": "Off",
     "idle": "Idle",
@@ -170,6 +171,18 @@
     "active_bronze": "Active bronze",
     "active_silver": "Active silver",
     "distance": "Distance: {0:F1}y",
-    "position": "({0:F1}, {1:F1}, {2:F1})"
+    "position": "({0:F1}, {1:F1}, {2:F1})",
+    "carrot_hunt_title": "Carrot Hunt",
+    "start_carrot_hunt": "Start Carrot Hunt",
+    "stop_carrot_hunt": "Stop Carrot Hunt",
+    "carrot_hunt_phase": "Phase",
+    "fortune_carrots": "Fortune Carrots",
+    "carrot_hunt_phases": {
+      "idle": "Waiting for carrot",
+      "pathing": "Pathing to carrot",
+      "using_item": "Using Fortune Carrot",
+      "waiting_for_bunny": "Waiting for bunny chest",
+      "opening_bunny": "Opening bunny chest"
+    }
   }
 }

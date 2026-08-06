@@ -84,4 +84,12 @@ public class TreasureConfig : IAutoConfig
     /// <summary>Clear Hide requirement when threats are beyond this distance (yalms).</summary>
     [FloatRange(10f, 60f, Order = 20)]
     public float KnowledgeThreatExitDistance { get; set; } = 20f;
+
+    /// <summary>Show Start Carrot Hunt and allow the nearby carrot loop.</summary>
+    [Checkbox(Order = 21)]
+    public bool EnableCarrotHunt { get; set; } = false;
+
+    /// <summary>Only chase live chewed carrots within this distance (yalms).</summary>
+    [FloatRange(10f, 200f, Order = 22)]
+    public float CarrotHuntDetectionRange { get; set; } = 80f;
 }

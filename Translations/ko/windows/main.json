@@ -17,6 +17,7 @@
     "pots_treasure": "항아리 & 트레저",
     "mob_farmer": "몹 파머",
     "treasure_hunt": "트레저 헌트",
+    "carrot_hunt": "캐럿 헌트",
     "on": "켜짐",
     "off": "꺼짐",
     "idle": "대기",
@@ -170,6 +171,18 @@
     "active_bronze": "활성 청동",
     "active_silver": "활성 백은",
     "distance": "거리: {0:F1}y",
-    "position": "({0:F1}, {1:F1}, {2:F1})"
+    "position": "({0:F1}, {1:F1}, {2:F1})",
+    "carrot_hunt_title": "캐럿 헌트",
+    "start_carrot_hunt": "캐럿 헌트 시작",
+    "stop_carrot_hunt": "캐럿 헌트 중지",
+    "carrot_hunt_phase": "단계",
+    "fortune_carrots": "포춘 캐럿",
+    "carrot_hunt_phases": {
+      "idle": "캐럿 대기",
+      "pathing": "캐럿으로 이동",
+      "using_item": "포춘 캐럿 사용",
+      "waiting_for_bunny": "버니 상자 대기",
+      "opening_bunny": "버니 상자 열기"
+    }
   }
 }

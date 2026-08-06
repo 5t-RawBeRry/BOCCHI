@@ -6,7 +6,8 @@ public enum AutomationMode
     IllegalMode = 1,
     PotsAndTreasure = 2,
     MobFarmer = 3,
-    TreasureHunt = 4
+    TreasureHunt = 4,
+    CarrotHunt = 5
 }
 
 /// <summary>Ensures only one primary automation mode runs at a time.</summary>

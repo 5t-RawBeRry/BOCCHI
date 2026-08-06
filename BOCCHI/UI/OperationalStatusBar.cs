@@ -28,6 +28,7 @@ public class OperationalStatusBar
     Func<IPotsTreasureMode> potsTreasureFactory,
     Func<IMobFarmer> farmerFactory,
     ITreasureHunter hunter,
+    ICarrotHunter carrotHunter,
     IBuffRunner buffRunner,
     UIConfig uiConfig,
     IAutomatorMemory memory,
@@ -60,14 +61,17 @@ public class OperationalStatusBar
 
     public bool StandaloneTreasureHuntActive => hunter.Running && !hunter.ManagedByPotsTreasure;
 
+    public bool CarrotHuntActive => carrotHunter.Running;
+
     public bool AnyAutomationActive =>
-        IllegalModeActive || PotsTreasureActive || MobFarmerActive || TreasureHuntActive;
+        IllegalModeActive || PotsTreasureActive || MobFarmerActive || TreasureHuntActive || CarrotHuntActive;
 
     public void Render()
     {
         ImGui.Separator();
 
-        bool anyMode = IllegalModeActive || PotsTreasureActive || MobFarmerActive || StandaloneTreasureHuntActive;
+        bool anyMode = IllegalModeActive || PotsTreasureActive || MobFarmerActive || StandaloneTreasureHuntActive
+                       || CarrotHuntActive;
         if (!anyMode)
         {
             ui.Text(translator.T(".status.idle"), branding.DalamudGrey);
@@ -118,6 +122,13 @@ public class OperationalStatusBar
                 Chip(
                     translator.T(".status.treasure_hunt"),
                     TreasureHuntStatusUi.FormatProgress(hunter, translator));
+            }
+
+            if (CarrotHuntActive)
+            {
+                Chip(
+                    translator.T(".status.carrot_hunt"),
+                    translator.T($".treasure.carrot_hunt_phases.{carrotHunter.Phase.ToString().ToSnakeCase()}"));
             }
         }
 

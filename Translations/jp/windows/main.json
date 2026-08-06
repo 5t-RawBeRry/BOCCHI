@@ -17,6 +17,7 @@
     "pots_treasure": "ポット＆トレジャー",
     "mob_farmer": "モブファーム",
     "treasure_hunt": "トレジャーハント",
+    "carrot_hunt": "キャロットハント",
     "on": "オン",
     "off": "オフ",
     "idle": "待機中",
@@ -170,6 +171,18 @@
     "active_bronze": "アクティブな銅箱",
     "active_silver": "アクティブな銀箱",
     "distance": "距離: {0:F1}y",
-    "position": "({0:F1}, {1:F1}, {2:F1})"
+    "position": "({0:F1}, {1:F1}, {2:F1})",
+    "carrot_hunt_title": "キャロットハント",
+    "start_carrot_hunt": "キャロットハント開始",
+    "stop_carrot_hunt": "キャロットハント停止",
+    "carrot_hunt_phase": "フェーズ",
+    "fortune_carrots": "フォーチュンキャロット",
+    "carrot_hunt_phases": {
+      "idle": "ニンジン待ち",
+      "pathing": "ニンジンへ移動中",
+      "using_item": "フォーチュンキャロット使用",
+      "waiting_for_bunny": "バニーチェスト待ち",
+      "opening_bunny": "バニーチェスト開封中"
+    }
   }
 }

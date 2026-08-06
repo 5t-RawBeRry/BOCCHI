@@ -81,7 +81,8 @@ public class MainRenderer
                 MainWindowSection.Automation => statusBar.IllegalModeActive,
                 MainWindowSection.PotsTreasure => statusBar.PotsTreasureActive,
                 MainWindowSection.MobFarmer => statusBar.MobFarmerActive,
-                MainWindowSection.Treasure => statusBar.StandaloneTreasureHuntActive,
+                MainWindowSection.Treasure => statusBar.StandaloneTreasureHuntActive
+                                             || statusBar.CarrotHuntActive,
                 var _ => false
             };
 

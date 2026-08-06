@@ -17,6 +17,7 @@ public class TreasureRenderer
 (
     ITreasureTracker tracker,
     ITreasureHunter hunter,
+    ICarrotHunter carrotHunter,
     IActivityNavigation navigation,
     TreasureConfig config,
     UIConfig uiConfig,
@@ -32,6 +33,7 @@ public class TreasureRenderer
     {
         DrawActiveChests();
         DrawHuntPanel();
+        DrawCarrotHuntPanel();
         DrawNearbyTreasures();
     }
 
@@ -111,6 +113,52 @@ public class TreasureRenderer
         }
 
         TreasureHuntStatusUi.DrawProgress(hunter, ui, translator, config);
+    }
+
+    private void DrawCarrotHuntPanel()
+    {
+        if (!config.EnableCarrotHunt)
+        {
+            return;
+        }
+
+        ImGui.Separator();
+        ui.Text(translator.T(".treasure.carrot_hunt_title"));
+
+        if (!carrotHunter.IsVnavAvailable)
+        {
+            ImGui.TextUnformatted(translator.T(".treasure.requires_vnav"));
+            return;
+        }
+
+        if (!carrotHunter.IsVnavReady)
+        {
+            ImGui.TextUnformatted(translator.T(".treasure.waiting_navmesh"));
+            return;
+        }
+
+        if (!carrotHunter.Running)
+        {
+            if (ImGui.Button(translator.T(".treasure.start_carrot_hunt")))
+            {
+                carrotHunter.Toggle();
+            }
+        }
+        else if (ImGui.Button(translator.T(".treasure.stop_carrot_hunt")))
+        {
+            carrotHunter.Toggle();
+        }
+
+        if (carrotHunter.Running || carrotHunter.Elapsed > TimeSpan.Zero)
+        {
+            ui.LabelledValue(translator.T(".treasure.elapsed"), $"{carrotHunter.Elapsed:mm\\:ss}");
+            ui.LabelledValue(
+                translator.T(".treasure.carrot_hunt_phase"),
+                translator.T($".treasure.carrot_hunt_phases.{carrotHunter.Phase.ToString().ToSnakeCase()}"));
+            ui.LabelledValue(
+                translator.T(".treasure.fortune_carrots"),
+                carrotHunter.FortuneCarrotsRemaining.ToString());
+        }
     }
 
     private void DrawNearbyTreasures()

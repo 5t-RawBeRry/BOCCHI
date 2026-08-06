@@ -20,6 +20,7 @@ public class AutomationModeGuard
     Func<IPotsTreasureMode> potsTreasureFactory,
     Func<IMobFarmer> farmerFactory,
     Func<ITreasureHunter> hunterFactory,
+    Func<ICarrotHunter> carrotHunterFactory,
     IBuffRunner buffRunner,
     IPathfinder pathfinder,
     IVNavmeshIpc vnav,
@@ -36,6 +37,8 @@ public class AutomationModeGuard
     private IMobFarmer Farmer => farmerFactory();
 
     private ITreasureHunter Hunter => hunterFactory();
+
+    private ICarrotHunter CarrotHunter => carrotHunterFactory();
 
     private bool stopping;
 
@@ -75,6 +78,11 @@ public class AutomationModeGuard
                 && Hunter.Running)
             {
                 Hunter.Toggle();
+            }
+
+            if (mode != AutomationMode.CarrotHunt && CarrotHunter.Running)
+            {
+                CarrotHunter.Toggle();
             }
         }
         finally
@@ -125,6 +133,11 @@ public class AutomationModeGuard
             if (Hunter.Running)
             {
                 Hunter.Toggle();
+            }
+
+            if (CarrotHunter.Running)
+            {
+                CarrotHunter.Toggle();
             }
 
             if (buffRunner.IsRunning)

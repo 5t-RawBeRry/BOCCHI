@@ -86,6 +86,14 @@
     "knowledge_threat_exit_distance": {
       "label": "Keep Hide until farther than (yalms)",
       "tooltip": "Once Hide is on, keep it until enemies are farther than this. Use a larger value than “Start Hide” so it does not flicker on and off."
+    },
+    "enable_carrot_hunt": {
+      "label": "Enable Carrot Hunt",
+      "tooltip": "Show Start Carrot Hunt on the Treasure panel. Paths to nearby chewed carrots, uses a Fortune Carrot, then opens the bunny gold chest. Exclusive mode (stops Illegal Mode / hunt / etc.)."
+    },
+    "carrot_hunt_detection_range": {
+      "label": "Carrot Hunt range (yalms)",
+      "tooltip": "Only chase live chewed carrots within this distance. Stay near a carrot cluster — this is not a full-zone tour yet."
     }
   }
 }

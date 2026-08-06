@@ -17,6 +17,7 @@
     "pots_treasure": "魔法罐与寻宝",
     "mob_farmer": "刷怪",
     "treasure_hunt": "寻宝",
+    "carrot_hunt": "胡萝卜狩猎",
     "on": "开",
     "off": "关",
     "idle": "待机",
@@ -170,6 +171,18 @@
     "active_bronze": "可采青铜",
     "active_silver": "可采白银",
     "distance": "距离：{0:F1}y",
-    "position": "({0:F1}, {1:F1}, {2:F1})"
+    "position": "({0:F1}, {1:F1}, {2:F1})",
+    "carrot_hunt_title": "胡萝卜狩猎",
+    "start_carrot_hunt": "开始胡萝卜狩猎",
+    "stop_carrot_hunt": "停止胡萝卜狩猎",
+    "carrot_hunt_phase": "阶段",
+    "fortune_carrots": "幸运胡萝卜",
+    "carrot_hunt_phases": {
+      "idle": "等待胡萝卜",
+      "pathing": "前往胡萝卜",
+      "using_item": "使用幸运胡萝卜",
+      "waiting_for_bunny": "等待兔子宝箱",
+      "opening_bunny": "开启兔子宝箱"
+    }
   }
 }
