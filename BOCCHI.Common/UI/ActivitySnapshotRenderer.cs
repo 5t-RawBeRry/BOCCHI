@@ -88,7 +88,7 @@ public static class ActivitySnapshotRenderer
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip($"Pathfind to {title}");
+            ImGui.SetTooltip($"Path to {title} (aethernet when at a shard, then walk)");
         }
 
         if (!includeTeleport)
@@ -110,7 +110,7 @@ public static class ActivitySnapshotRenderer
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
             ImGui.SetTooltip(canTeleport
-                ? $"Teleport toward {title}"
+                ? $"Teleport toward {title} (aethernet only — does not walk)"
                 : disabledReason ?? "Teleport unavailable");
         }
     }

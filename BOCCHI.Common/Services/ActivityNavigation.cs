@@ -35,7 +35,7 @@ public class ActivityNavigation
 {
     private const string ChainPrefix = "ActivityGoto::";
 
-    private int teleportGeneration;
+    private int navigationGeneration;
 
     public bool CanPathfind => vnav.IsNavmeshReady();
 
@@ -74,9 +74,16 @@ public class ActivityNavigation
             return;
         }
 
+        // Near an aetheryte: hop best shard then walk. Otherwise walk from here.
+        if (CanTeleport(destination, out _))
+        {
+            int generation = BeginNavigation();
+            _ = PathViaAethernetAsync(destination, name, id, generation);
+            return;
+        }
+
         Vector3 approach = NavigationApproach.GetEventPosition(destination, player.Position);
         logger.Info("Pathfinding to {Name} at {Destination:f1}", name, approach);
-
         CancelActivityChains();
         _ = manager.Manage(BuildPathChain($"{ChainPrefix}Path::{id}", approach));
     }
@@ -89,24 +96,77 @@ public class ActivityNavigation
             return;
         }
 
-        int generation = Interlocked.Increment(ref teleportGeneration);
-        manager.CancelWhere(name => name.StartsWith(ChainPrefix, StringComparison.Ordinal));
-        _ = TeleportTowardAsync(destination, name, id, generation);
+        int generation = BeginNavigation();
+        _ = TeleportOnlyAsync(destination, name, id, generation);
     }
 
-    private async Task TeleportTowardAsync(Vector3 destination, string name, string id, int generation)
+    private async Task PathViaAethernetAsync(Vector3 destination, string name, string id, int generation)
     {
         try
         {
             AethernetData? target = await SelectBestAetheryteAsync(destination).ConfigureAwait(false);
-            if (generation != teleportGeneration)
+            if (generation != navigationGeneration)
             {
                 return;
             }
 
             await framework.Run(() =>
             {
-                if (generation != teleportGeneration)
+                if (generation != navigationGeneration)
+                {
+                    return;
+                }
+
+                Vector3 approachFrom = target?.Position ?? player.Position;
+                Vector3 approach = NavigationApproach.GetEventPosition(destination, approachFrom);
+
+                if (target == null || AetheryteApproach.IsAlreadyAtAetheryte(target, player.Position))
+                {
+                    logger.Info("Pathfinding to {Name} at {Destination:f1}", name, approach);
+                    _ = manager.Manage(BuildPathChain($"{ChainPrefix}Path::{id}", approach));
+                    return;
+                }
+
+                logger.Info(
+                    "Path via aethernet {Aethernet} then walk to {Name}",
+                    target.Id,
+                    name);
+
+                IChain chain = AethernetTeleport.BuildChain(
+                    chains.Create($"{ChainPrefix}Path::{id}"),
+                    chains,
+                    zones,
+                    objects,
+                    pathfinder,
+                    vnav,
+                    lifestream,
+                    logger,
+                    target.Id,
+                    automatorConfig.SprintOnAetheryteApproach);
+
+                chain = AppendPath(chain, $"{ChainPrefix}Path::{id}", approach);
+                _ = manager.Manage(chain);
+            }).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            logger.Error(ex, "Failed path via aethernet toward {Name}", name);
+        }
+    }
+
+    private async Task TeleportOnlyAsync(Vector3 destination, string name, string id, int generation)
+    {
+        try
+        {
+            AethernetData? target = await SelectBestAetheryteAsync(destination).ConfigureAwait(false);
+            if (generation != navigationGeneration)
+            {
+                return;
+            }
+
+            await framework.Run(() =>
+            {
+                if (generation != navigationGeneration)
                 {
                     return;
                 }
@@ -119,12 +179,13 @@ public class ActivityNavigation
 
                 if (AetheryteApproach.IsAlreadyAtAetheryte(target, player.Position))
                 {
-                    logger.Info("Already at best aethernet {Aethernet} for {Name} — pathfinding", target.Id, name);
-                    PathTo(destination, name, id);
+                    logger.Info(
+                        "Already at best aethernet {Aethernet} for {Name} — teleport does not pathfind",
+                        target.Id,
+                        name);
                     return;
                 }
 
-                Vector3 approach = NavigationApproach.GetEventPosition(destination, target.Position);
                 logger.Info("Teleporting via {Aethernet} toward {Name}", target.Id, name);
 
                 IChain chain = AethernetTeleport.BuildChain(
@@ -138,11 +199,6 @@ public class ActivityNavigation
                     logger,
                     target.Id,
                     automatorConfig.SprintOnAetheryteApproach);
-
-                if (CanPathfind)
-                {
-                    chain = AppendPath(chain, $"{ChainPrefix}Teleport::{id}", approach);
-                }
 
                 _ = manager.Manage(chain);
             }).ConfigureAwait(false);
@@ -278,9 +334,16 @@ public class ActivityNavigation
         return null;
     }
 
+    private int BeginNavigation()
+    {
+        int generation = Interlocked.Increment(ref navigationGeneration);
+        manager.CancelWhere(name => name.StartsWith(ChainPrefix, StringComparison.Ordinal));
+        return generation;
+    }
+
     private void CancelActivityChains()
     {
-        Interlocked.Increment(ref teleportGeneration);
+        Interlocked.Increment(ref navigationGeneration);
         manager.CancelWhere(name => name.StartsWith(ChainPrefix, StringComparison.Ordinal));
     }
 }
