@@ -72,7 +72,7 @@
       "tooltip": "닌자를 장비하는 기어셋 번호(목록의 1부터). 0 = 전환 없음 — 이미 닌자여야 합니다."
     },
     "knowledge_hide_offset": {
-      "label": "적 지식이 +이면 은신",
+      "label": "지식이 이만큼 높으면 은신",
       "tooltip": "적의 지식이 내 지식 + 이 값 이상일 때 Hide를 씁니다. 0 = 같거나 더 높음."
     },
     "knowledge_threat_enter_distance": {
@@ -80,7 +80,7 @@
       "tooltip": "위험한 적이 이 거리까지 오면 은신 흐름을 시작합니다."
     },
     "knowledge_threat_exit_distance": {
-      "label": "이 거리보다 멀면 은신 해제(얄름)",
+      "label": "이 거리보다 멀어질 때까지 은신 유지(얄름)",
       "tooltip": "Hide가 켜진 뒤에는 적이 이보다 멀어질 때까지 유지합니다. 「은신 시작」보다 크게 해서 켜졌다 꺼졌다 하지 않게 합니다."
     }
   }

@@ -35,11 +35,17 @@
   "waiting_for_critical_encounter": {
     "label": "CE待機中"
   },
+  "waiting_for_pot_fate": {
+    "label": "マジックポット待機中"
+  },
   "in_critical_encounter": {
     "label": "CE中"
   },
   "returning_to_job": {
     "label": "ジョブに戻しています"
+  },
+  "leveling_phantom_job": {
+    "label": "サポートジョブ切替中"
   },
   "farming_pot_chests": {
     "label": "マジックポット宝箱を回収中"

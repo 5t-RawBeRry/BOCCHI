@@ -35,11 +35,17 @@
   "waiting_for_critical_encounter": {
     "label": "Waiting for CE"
   },
+  "waiting_for_pot_fate": {
+    "label": "Waiting for pot"
+  },
   "in_critical_encounter": {
     "label": "In CE"
   },
   "returning_to_job": {
     "label": "Switching back to job"
+  },
+  "leveling_phantom_job": {
+    "label": "Switching phantom job"
   },
   "farming_pot_chests": {
     "label": "Farming pot chests"

@@ -38,8 +38,10 @@
       "pathfinding": "Traveling",
       "in_fate": "In FATE",
       "waiting_for_critical_encounter": "Waiting for CE",
+      "waiting_for_pot_fate": "Waiting for pot",
       "in_critical_encounter": "In CE",
       "returning_to_job": "Switching back to job",
+      "leveling_phantom_job": "Switching phantom job",
       "farming_pot_chests": "Farming pot chests"
     },
     "farmer_phases": {

@@ -1,6 +1,6 @@
 {
   "label": "일반",
-  "tooltip": "불법 모드가 하는 일: 돌발, 비상 조우, 항아리, 탈것, AI, 귀환, 수리.",
+  "tooltip": "돌발, 비상 조우, 항아리, 탈것, BOCCHI AI, 귀환, 수리.",
   "fields": {
     "should_do_fates": {
       "label": "돌발 수행",
@@ -24,7 +24,7 @@
     },
     "toggle_ai_provider": {
       "label": "BOCCHI AI 사용",
-      "tooltip": "돌발·비상 조우 전투에서 BOCCHI AI BossMod 프리셋을 씁니다(대상 지정과 전투 이동). 이동 중에는 끄고 도착하면 다시 켭니다. 끄면 BOCCHI AI 없음."
+      "tooltip": "돌발·비상 조우 전투에서 BOCCHI AI로 대상 지정과 전투 이동을 합니다(BossMod 또는 BossMod Reborn 필요). 이동 중에는 끄고 도착하면 다시 켭니다."
     },
     "should_auto_mount": {
       "label": "이동 중 탈것 탑승",

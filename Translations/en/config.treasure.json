@@ -72,15 +72,15 @@
       "tooltip": "Gearset number that equips Ninja (as shown in the gearset list, starting at 1). 0 = do not swap — you must already be on Ninja."
     },
     "knowledge_hide_offset": {
-      "label": "Hide if enemy Knowledge is +",
-      "tooltip": "Use Hide when an enemy's Knowledge is at least yours plus this number. 0 = same Knowledge or higher."
+      "label": "Hide when Knowledge is this much higher",
+      "tooltip": "Use Hide when a nearby enemy's Knowledge is at least yours plus this number. 0 = same Knowledge or higher."
     },
     "knowledge_threat_enter_distance": {
       "label": "Start Hide within (yalms)",
       "tooltip": "Begin the Hide flow when a dangerous enemy is this close."
     },
     "knowledge_threat_exit_distance": {
-      "label": "Stop Hide beyond (yalms)",
+      "label": "Keep Hide until farther than (yalms)",
       "tooltip": "Once Hide is on, keep it until enemies are farther than this. Use a larger value than “Start Hide” so it does not flicker on and off."
     }
   }

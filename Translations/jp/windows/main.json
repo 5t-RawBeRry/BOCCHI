@@ -38,8 +38,10 @@
       "pathfinding": "移動中",
       "in_fate": "FATE中",
       "waiting_for_critical_encounter": "CE待機中",
+      "waiting_for_pot_fate": "マジックポット待機中",
       "in_critical_encounter": "CE中",
       "returning_to_job": "ジョブに戻しています",
+      "leveling_phantom_job": "サポートジョブ切替中",
       "farming_pot_chests": "マジックポット宝箱を回収中"
     },
     "farmer_phases": {

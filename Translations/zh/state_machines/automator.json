@@ -35,11 +35,17 @@
   "waiting_for_critical_encounter": {
     "label": "等待紧急遭遇战"
   },
+  "waiting_for_pot_fate": {
+    "label": "等待魔法罐"
+  },
   "in_critical_encounter": {
     "label": "紧急遭遇战中"
   },
   "returning_to_job": {
     "label": "正在切回职业"
+  },
+  "leveling_phantom_job": {
+    "label": "正在切换辅助职业"
   },
   "farming_pot_chests": {
     "label": "正在收取魔法罐宝箱"

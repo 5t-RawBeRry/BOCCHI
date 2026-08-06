@@ -35,11 +35,17 @@
   "waiting_for_critical_encounter": {
     "label": "비상 조우 대기 중"
   },
+  "waiting_for_pot_fate": {
+    "label": "항아리 대기 중"
+  },
   "in_critical_encounter": {
     "label": "비상 조우 중"
   },
   "returning_to_job": {
     "label": "원래 잡으로 바꾸는 중"
+  },
+  "leveling_phantom_job": {
+    "label": "서포트 잡 전환 중"
   },
   "farming_pot_chests": {
     "label": "항아리 상자 수집 중"

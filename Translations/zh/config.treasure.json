@@ -72,7 +72,7 @@
       "tooltip": "装备忍者的套装编号（套装列表中从 1 开始显示）。0＝不切换 —— 你必须已经是忍者。"
     },
     "knowledge_hide_offset": {
-      "label": "敌人知见高出＋时隐遁",
+      "label": "知见高出这么多时隐遁",
       "tooltip": "当敌人的知见至少为你的知见加上该数值时使用隐遁。0＝相同或更高即使用。"
     },
     "knowledge_threat_enter_distance": {
@@ -80,7 +80,7 @@
       "tooltip": "危险敌人接近到该距离时开始隐遁流程。"
     },
     "knowledge_threat_exit_distance": {
-      "label": "超过该距离停止隐遁（米）",
+      "label": "远于该距离前保持隐遁（米）",
       "tooltip": "隐遁生效后，直到敌人远于该距离才解除。请设为大于“开始隐遁”的值，以免反复开关。"
     }
   }

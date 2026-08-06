@@ -1,6 +1,6 @@
 {
   "label": "General",
-  "tooltip": "What Illegal Mode does: FATEs, CEs, pots, mount, AI, Return, and repair.",
+  "tooltip": "FATEs, Critical Encounters, pots, mounting, BOCCHI AI, Return, and repair.",
   "fields": {
     "should_do_fates": {
       "label": "Do FATEs",
@@ -24,7 +24,7 @@
     },
     "toggle_ai_provider": {
       "label": "Use BOCCHI AI",
-      "tooltip": "In FATE and CE combat, use the BOCCHI AI BossMod preset (targets and combat movement). It turns off while traveling and back on when you arrive. Off = no BOCCHI AI."
+      "tooltip": "In FATE and CE combat, use BOCCHI AI for targeting and combat movement (needs BossMod or BossMod Reborn). It turns off while traveling and back on when you arrive."
     },
     "should_auto_mount": {
       "label": "Mount while traveling",

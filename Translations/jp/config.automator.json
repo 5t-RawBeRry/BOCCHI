@@ -1,6 +1,6 @@
 {
   "label": "一般",
-  "tooltip": "不正モードの動き：FATE、CE、マジックポット、マウント、AI、デジョン、修理。",
+  "tooltip": "FATE、クリティカルエンカウント、マジックポット、マウント、BOCCHI AI、デジョン、修理。",
   "fields": {
     "should_do_fates": {
       "label": "FATE をやる",
@@ -24,7 +24,7 @@
     },
     "toggle_ai_provider": {
       "label": "BOCCHI AI を使う",
-      "tooltip": "FATE / CE の戦闘中、BOCCHI AI の BossMod プリセットを使います（ターゲットと戦闘移動）。移動中はオフ、到着するとオンに戻します。オフ＝BOCCHI AI なし。"
+      "tooltip": "FATE / CE の戦闘中、BOCCHI AI でターゲットと戦闘移動を行います（BossMod または BossMod Reborn が必要）。移動中はオフ、到着するとオンに戻します。"
     },
     "should_auto_mount": {
       "label": "移動中はマウント",
