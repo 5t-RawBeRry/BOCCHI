@@ -25,7 +25,9 @@ public static class ImGuiSectionHelper
 
         float row = ImGui.GetTextLineHeightWithSpacing() + ImGui.GetFrameHeightWithSpacing() + extraPerItem;
         float padding = ImGui.GetStyle().WindowPadding.Y * 2f;
-        float height = Math.Clamp(itemCount * row + padding, row + padding, maxHeight);
+        float minHeight = row + padding;
+        // Math.Clamp throws if min > max (tall rows + small maxHeight / high UI scale).
+        float height = Math.Clamp(itemCount * row + padding, minHeight, Math.Max(minHeight, maxHeight));
         return new BoundedListScope(id, height);
     }
 

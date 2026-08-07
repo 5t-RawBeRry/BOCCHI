@@ -121,9 +121,10 @@ public class PotsTreasureRenderer
         float dropExtra = southHorn && eventDropConfig.AnyEnabled
             ? EventDropIconRenderer.IconBoxSize + 4f
             : 0f;
+        float maxHeight = dropExtra > 0f ? 240f : 120f;
 
         using ImGuiSectionHelper.BoundedListScope list =
-            ImGuiSectionHelper.BoundedList("##pots_treasure_fates", potFates.Count, 120f, dropExtra);
+            ImGuiSectionHelper.BoundedList("##pots_treasure_fates", potFates.Count, maxHeight, dropExtra);
         if (!list.IsOpen)
         {
             return;

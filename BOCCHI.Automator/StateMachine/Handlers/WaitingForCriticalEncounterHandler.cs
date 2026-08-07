@@ -21,6 +21,8 @@ namespace BOCCHI.Automator.StateMachine.Handlers;
 /// <summary>
 ///     Hold near a CE after arrival. Travel delivers via PathCalculator; this state prevents leaving
 ///     for another activity while the arrived CE moves from preparation into Battle.
+///     Once Battle is underway (player EventId, CE enemies, or combat), yield to
+///     <see cref="InCriticalEncounterHandler"/> so BOCCHI AI can enable.
 /// </summary>
 public class WaitingForCriticalEncounterHandler
 (
@@ -35,6 +37,12 @@ public class WaitingForCriticalEncounterHandler
     AutomatorConfig config
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.WaitingForCriticalEncounter)
 {
+    /// <summary>
+    ///     If player EventId never appears, still hand off after this so we do not sit in Waiting
+    ///     for the whole fight (CE AI never enables).
+    /// </summary>
+    private static readonly TimeSpan BattleHandoffGrace = TimeSpan.FromSeconds(3);
+
     public override StatePriority GetScore()
     {
         if (objects.LocalPlayer is not { } player)
@@ -56,7 +64,9 @@ public class WaitingForCriticalEncounterHandler
 
         if (ce.IsActive())
         {
-            if (context.GetCriticalEncounterId() == ce.Id)
+            // Hand off to InCritical as soon as we look like participants — do not keep Waiting
+            // for the whole Battle when EventId is slow/missing.
+            if (ShouldHandOffToInCritical(ce))
             {
                 return StatePriority.Never;
             }
@@ -124,6 +134,35 @@ public class WaitingForCriticalEncounterHandler
         {
             Actions.Unmount.Cast();
         }
+    }
+
+    private bool ShouldHandOffToInCritical(CriticalEncounter ce)
+    {
+        if (context.GetCriticalEncounterId() == ce.Id)
+        {
+            return true;
+        }
+
+        if (!memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory wait)
+            || !wait.IsFor(ce.Id))
+        {
+            return false;
+        }
+
+        wait.MarkBattleStarted();
+
+        if (context.HasEncounterEnemies(ce.Id))
+        {
+            return true;
+        }
+
+        if (conditions[ConditionFlag.InCombat])
+        {
+            return true;
+        }
+
+        return wait.BattleStartedAtUtc is { } started
+               && DateTimeOffset.UtcNow - started >= BattleHandoffGrace;
     }
 
     private bool TryGetGoalEncounter(out CriticalEncounter ce)

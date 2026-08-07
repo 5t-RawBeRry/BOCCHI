@@ -47,7 +47,11 @@ public class FarmingPotChestsHandler
 
     private static readonly TimeSpan ChestSpawnWait = TimeSpan.FromSeconds(45);
 
-    private static readonly TimeSpan BuffWaitTimeout = TimeSpan.FromSeconds(5);
+    /// <summary>
+    ///     Cache Me If You Can / Magical Elixir can appear shortly after the pot FATE despawns.
+    ///     Keep this longer than a frame or two so we do not abandon a real reward.
+    /// </summary>
+    private static readonly TimeSpan BuffWaitTimeout = TimeSpan.FromSeconds(25);
 
     private static readonly TimeSpan HintWaitTimeout = TimeSpan.FromSeconds(4);
 
@@ -150,7 +154,9 @@ public class FarmingPotChestsHandler
 
     private void HandleWaitingForBuff(PotChestFarmMemory farm)
     {
-        if (HasTreasureBuff())
+        // Status 1531 is the Eureka "Down the Rabbit Hole" row reused for Cache Me If You Can.
+        // Magical Elixir is granted with the buff — treat either as "reward landed".
+        if (HasTreasureBuff() || elixir.HasElixir())
         {
             hints.Arm();
             farm.Phase = PotChestFarmPhase.ApproachCenter;
@@ -162,7 +168,8 @@ public class FarmingPotChestsHandler
 
         if (DateTimeOffset.UtcNow - farm.PhaseStartedUtc >= BuffWaitTimeout)
         {
-            logger.Info("Pot treasure: no Cache Me If You Can buff — ending farm (not blind-sweeping empty spots)");
+            logger.Info(
+                "Pot treasure: no Cache Me If You Can / Magical Elixir after wait — ending farm (not selected or abandoned pot)");
             FinishFarm();
         }
     }

@@ -46,21 +46,21 @@ public class CriticalEncounterContext
         return id;
     }
 
-    public unsafe IEnumerable<IBattleNpc> GetTargets()
+    public IEnumerable<IBattleNpc> GetTargets()
     {
         CriticalEncounterId? id = GetCriticalEncounterId();
-        if (id == null)
-        {
-            return [];
-        }
+        return id == null ? [] : GetTargetsFor(id.Value);
+    }
 
+    public unsafe IEnumerable<IBattleNpc> GetTargetsFor(CriticalEncounterId id)
+    {
         IPlayerCharacter? player = objects.LocalPlayer;
         if (player == null)
         {
             return [];
         }
 
-        ushort ceId = id.Value.Value;
+        ushort ceId = id.Value;
 
         return objects.OfType<IBattleNpc>()
             .Where(obj => obj is { IsDead: false, IsTargetable: true })
@@ -73,4 +73,6 @@ public class CriticalEncounterContext
             })
             .OrderBy(o => o.Position.Distance2D(player.Position));
     }
+
+    public bool HasEncounterEnemies(CriticalEncounterId id) => GetTargetsFor(id).Any();
 }

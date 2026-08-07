@@ -66,20 +66,21 @@ public class GoalValidator
         }
 
         // During Battle, prefer the player's CE event id. If we had already reached the CE wait
-        // area before it started, keep the goal so we do not path out to another activity.
+        // area before it started — or we are mid-fight with travel suspended — keep the goal so
+        // we do not path out when EventId is slow/missing.
         if (criticalEncounterContext.GetCriticalEncounterId() == id)
         {
             return true;
         }
 
-        if (!memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory wait)
-            || !wait.IsFor(id))
+        if (memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory wait)
+            && wait.IsFor(id))
         {
-            return false;
+            wait.MarkBattleStarted();
+            return true;
         }
 
-        wait.MarkBattleStarted();
-        return true;
+        return memory.TryRemember<SuspendTravelForActivityMemory>(out _);
     }
 
     private bool ValidateFate(FateId id)

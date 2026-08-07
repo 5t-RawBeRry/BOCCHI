@@ -295,22 +295,23 @@ public class Automator
             return;
         }
 
-        // Preposition / abandoned pot goals never grant "Cache Me If You Can".
-        // Starting blind farm anyway sends the player across empty authored spots.
-        if (objects.LocalPlayer?.StatusList.Has(PotTreasureIds.TreasureBuffStatusId) != true)
-        {
-            logger.Info(
-                "Skipping pot chest farm for fate {FateId}: no Cache Me If You Can buff (pot not completed)",
-                fateId.Value);
-            return;
-        }
-
         // Magical Elixir + compass hints whenever we have pot chest data (SH authored groups, NH binned).
+        // Do NOT require Cache Me If You Can yet — the buff/elixir can land a second or two after the
+        // FATE despawns. FarmingPotChests WaitingForBuff waits, then aborts if nothing arrives.
         ActivityData? potFate = zone.GetPotFateData().FirstOrDefault(f => f.Id == fateId.Value);
         if (potFate != null && PotTreasureGroups.CanRunSmart(zone, fateId.Value))
         {
             logger.Info("Starting pot treasure (elixir/hints) for fate {FateId}", fateId.Value);
             memory.TryAdd(PotChestFarmMemory.CreateSmart(fateId, potFate.Position));
+            return;
+        }
+
+        // Blind authored sweep only when the buff is already present (no WaitingForBuff phase).
+        if (objects.LocalPlayer?.StatusList.Has(PotTreasureIds.TreasureBuffStatusId) != true)
+        {
+            logger.Info(
+                "Skipping blind pot chest farm for fate {FateId}: no Cache Me If You Can buff and no smart groups",
+                fateId.Value);
             return;
         }
 

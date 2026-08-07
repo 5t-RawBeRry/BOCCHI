@@ -52,6 +52,10 @@ public sealed class PotTreasureHintEvent
 
 public static class PotTreasureIds
 {
+    /// <summary>
+    ///     Cache Me If You Can (Occult Crescent pot treasure). Sheet name is still Eureka's
+    ///     "Down the Rabbit Hole"; description is "Being guided to buried treasure."
+    /// </summary>
     public const uint TreasureBuffStatusId = 1531;
 
     public const uint MagicalElixirItemId = 2003296;

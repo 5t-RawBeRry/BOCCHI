@@ -13,5 +13,11 @@ public interface ICriticalEncounterContext
 
     IEnumerable<IBattleNpc> GetTargets();
 
-    bool IsInZone(IPlayerCharacter player, CriticalEncounter encounter) => player.Position.Distance2D(encounter.Position) <= encounter.Radius;
+    /// <summary>Hostiles tagged with this CE EventId (works even if the local player EventId is unset).</summary>
+    IEnumerable<IBattleNpc> GetTargetsFor(CriticalEncounterId id);
+
+    bool HasEncounterEnemies(CriticalEncounterId id);
+
+    bool IsInZone(IPlayerCharacter player, CriticalEncounter encounter) =>
+        player.Position.Distance2D(encounter.Position) <= encounter.Radius;
 }

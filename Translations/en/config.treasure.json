@@ -77,7 +77,7 @@
     },
     "knowledge_hide_offset": {
       "label": "Hide when Knowledge is this much higher",
-      "tooltip": "Use Hide when a nearby enemy's Knowledge is at least yours plus this number. 0 = same Knowledge or higher."
+      "tooltip": "Use Hide when a nearby enemy's Knowledge is at least your current (synced) Knowledge plus this number. 0 = same Knowledge or higher. On South Horn you are synced to Knowledge 20 even if your real Knowledge is higher — so mid-20s enemies can still trigger Hide there."
     },
     "knowledge_threat_enter_distance": {
       "label": "Start Hide within (yalms)",

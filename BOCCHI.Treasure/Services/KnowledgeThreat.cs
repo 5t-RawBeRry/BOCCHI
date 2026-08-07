@@ -14,6 +14,9 @@ public static class KnowledgeThreat
 
     public const float IsleblazerUnhideDistance = 5f;
 
+    /// <summary>Occult Crescent Knowledge cap (North Horn / 7.55+).</summary>
+    public const int MaxKnowledgeLevel = 40;
+
     public static unsafe int? TryGetPlayerForayLevel(IObjectTable objects)
     {
         if (objects.LocalPlayer is not { } player)
@@ -99,5 +102,5 @@ public static class KnowledgeThreat
     }
 
     public static int HideAtOrAbove(int playerForayLevel, int hideOffset) =>
-        Math.Clamp(playerForayLevel + hideOffset, 1, 28);
+        Math.Clamp(playerForayLevel + hideOffset, 1, MaxKnowledgeLevel);
 }
