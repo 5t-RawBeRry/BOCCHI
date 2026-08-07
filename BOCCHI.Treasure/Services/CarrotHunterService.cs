@@ -23,6 +23,10 @@ namespace BOCCHI.Treasure.Services;
 /// <summary>
 ///     Nearby-only carrot loop: path to a live chewed carrot → Fortune Carrot → open bunny gold chest.
 /// </summary>
+/// <remarks>
+///     TODO: Optimize/add Carrot Hunt routes — full-zone authored tour (and later live polish)
+///     beyond this nearby-only MVP.
+/// </remarks>
 public sealed class CarrotHunterService
 (
     ICarrotTracker carrots,
@@ -152,6 +156,8 @@ public sealed class CarrotHunterService
 
     private void TickIdle()
     {
+        // TODO: Optimize/add Carrot Hunt routes — when building a full-zone tour, seed from
+        // IZone.GetCarrotData() instead of only chasing live carrots in detection range.
         Carrot? next = FindNextCarrot();
         if (next == null)
         {

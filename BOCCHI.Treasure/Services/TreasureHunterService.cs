@@ -726,6 +726,8 @@ public class TreasureHunterService
             return true;
         }
 
+        // TODO: Optimize Treasure Hunt — when Sight reports remaining coffers, trim/rebuild the
+        // route (drop known-empty nodes / prefer live) instead of only aborting on zero counts.
         return false;
     }
 

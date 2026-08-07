@@ -21,6 +21,8 @@ using DalamudObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
+// TODO: Optimize pot farming and pot chest routes — smarter candidate search, visit order,
+// and recovery when elixir hints / live chests disagree with authored groups.
 public class FarmingPotChestsHandler
 (
     IAutomatorMemory memory,
