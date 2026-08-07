@@ -48,7 +48,7 @@
     },
     "maximum_battle_bell_wait_time": {
       "label": "전투의 종 최대 대기",
-      "tooltip": "쿨이 이보다 길면 기다리지 않고 바로 끌어옵니다."
+      "tooltip": "전투의 종 쿨이 이보다 길면(초), 이번 끌어오기에서 종과 질주를 건너뛰고 바로 모으기 시작합니다."
     },
     "minimum_mobs_to_start_loop": {
       "label": "시작에 필요한 적 수",

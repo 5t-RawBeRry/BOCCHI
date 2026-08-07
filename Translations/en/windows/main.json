@@ -83,7 +83,7 @@
     "title": "Buffs",
     "apply_button": "Apply Buffs",
     "stop_button": "Stop Buffs",
-    "apply_tooltip": "Cast your configured buffs now. Stand in the knowledge crystal buff circle — this does not pathfind.",
+    "apply_tooltip": "Cast your configured buffs now. Stand inside the knowledge crystal buff circle first — this button does not walk you there.",
     "stop_tooltip": "Stop applying buffs",
     "applying": "Applying…"
   },

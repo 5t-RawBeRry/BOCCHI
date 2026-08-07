@@ -48,7 +48,7 @@
     },
     "maximum_battle_bell_wait_time": {
       "label": "等待战斗之铃的最长时间",
-      "tooltip": "若战斗之铃冷却长于该时间，跳过它直接拉怪。"
+      "tooltip": "若战斗之铃冷却长于该时间（秒），本次拉怪跳过铃与冲刺，直接开始聚怪。"
     },
     "minimum_mobs_to_start_loop": {
       "label": "开始拉怪的最少敌人",

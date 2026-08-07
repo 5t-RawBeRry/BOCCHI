@@ -1,6 +1,6 @@
 {
   "label": "Pot timing",
-  "tooltip": "When to leave for pots, when to abandon short pots, and reroll chests.",
+  "tooltip": "When to leave for pots, when to abandon short pots, and reroll chests. The next-pot prediction clears if you leave Occult Crescent or change instance.",
   "fields": {
     "min_pot_fate_minutes_remaining": {
       "label": "Skip pots with under (minutes left)",
@@ -8,7 +8,7 @@
     },
     "pot_spawn_lead_minutes": {
       "label": "Leave for pots this many minutes early",
-      "tooltip": "Minutes before the predicted pot spawn to stop other work and head to pots."
+      "tooltip": "Minutes before the predicted pot spawn to stop other work and head to pots. Timer resets when you leave OC or hop instances."
     },
     "fate_fallback_cutoff_minutes": {
       "label": "Do not start FATEs within (minutes of pots)",
@@ -20,7 +20,7 @@
     },
     "should_farm_reroll_pot_chests": {
       "label": "Also farm reroll pot chests",
-      "tooltip": "After a pot FATE, also visit the shared reroll chest spots."
+      "tooltip": "After a pot FATE chest run, also visit the shared reroll chest spots (while Cache Me is still up)."
     }
   }
 }

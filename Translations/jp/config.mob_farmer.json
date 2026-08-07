@@ -48,7 +48,7 @@
     },
     "maximum_battle_bell_wait_time": {
       "label": "バトルベルの最大待ち時間",
-      "tooltip": "クールダウンがこれより長い場合は待たず、そのまま釣りを始めます。"
+      "tooltip": "クールダウンがこれ（秒）より長い場合は、その拉取でベルとスプリントをスキップし、そのまま集め始めます。"
     },
     "minimum_mobs_to_start_loop": {
       "label": "開始に必要な敵の数",

@@ -57,7 +57,7 @@
     },
     "enable_automatic_treasure_hunt_during_illegal_mode": {
       "label": "不正モードで自動トレジャーハント",
-      "tooltip": "CE または FATE のあと：キャンプへデジョンし、トレジャーサイトを覚えていれば唱え、宝箱が残っていればハントを始めます。"
+      "tooltip": "CE / FATE のあと：必要ならトリアージを終えてから、キャンプへデジョンし、覚えていればサイトを唱え、宝箱が残っていればハントを始めます。"
     },
     "enable_coffer_observation_submission": {
       "label": "開封位置を共有（ライブルート）",

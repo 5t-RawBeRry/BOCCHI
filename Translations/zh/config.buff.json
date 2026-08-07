@@ -4,7 +4,7 @@
   "fields": {
     "should_automate_buffs": {
       "label": "自动维持增益",
-      "tooltip": "自动刷新你在下方勾选的增益。"
+      "tooltip": "在违规模式中，于知识水晶自动刷新你在下方勾选的增益。不会仅为补增益而离开已在等待或战斗中的紧急遭遇战。"
     },
     "apply_romeos_ballad": {
       "label": "爱之歌",
@@ -32,7 +32,7 @@
     },
     "knowledge_crystal_distance": {
       "label": "距离水晶超过时走近",
-      "tooltip": "若距离知识水晶超过该距离（米），先走近再附加增益。"
+      "tooltip": "仅用于违规模式自动增益：若距离知识水晶超过该距离（米），先走近再施放。主界面「附加增益」/ /bocchi buff 不会寻路 — 请自己站在增益圈内。"
     }
   }
 }

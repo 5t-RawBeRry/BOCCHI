@@ -57,7 +57,7 @@
     },
     "enable_automatic_treasure_hunt_during_illegal_mode": {
       "label": "违规模式中自动寻宝",
-      "tooltip": "紧急遭遇战或危命任务结束后：返回营地，若会魔寻宝则使用，若仍有宝箱则开始寻宝。"
+      "tooltip": "紧急遭遇战或危命任务结束后（若跑过急救模式则在其后）：返回营地，若会魔寻宝则使用，若仍有宝箱则开始寻宝。"
     },
     "enable_coffer_observation_submission": {
       "label": "分享开箱位置（实时路线）",

@@ -83,7 +83,7 @@
     "title": "增益",
     "apply_button": "附加增益",
     "stop_button": "停止增益",
-    "apply_tooltip": "站在知识水晶增益圈内立即附加已设置的增益（不会寻路）。",
+    "apply_tooltip": "立即附加已设置的增益。不会走近水晶 — 请先站在知识水晶增益圈内再点。",
     "stop_tooltip": "停止附加增益",
     "applying": "正在附加……"
   },

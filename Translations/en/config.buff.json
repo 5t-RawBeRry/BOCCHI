@@ -4,7 +4,7 @@
   "fields": {
     "should_automate_buffs": {
       "label": "Automate buffs",
-      "tooltip": "Automatically keep the buffs you select below refreshed."
+      "tooltip": "In Illegal Mode, automatically keep the buffs you select below refreshed at knowledge crystals. Will not leave a CE you are already waiting for or fighting just to rebuff."
     },
     "apply_romeos_ballad": {
       "label": "Romeo's Ballad",
@@ -32,7 +32,7 @@
     },
     "knowledge_crystal_distance": {
       "label": "Walk to crystal if farther than",
-      "tooltip": "If you are farther than this (yalms) from a knowledge crystal, walk closer before casting buffs."
+      "tooltip": "For automated Illegal Mode buffs only: if you are farther than this (yalms) from a knowledge crystal, walk closer before casting. The Apply Buffs button / /bocchi buff never walks — stand in the circle yourself."
     }
   }
 }

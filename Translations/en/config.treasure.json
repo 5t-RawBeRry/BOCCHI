@@ -57,7 +57,7 @@
     },
     "enable_automatic_treasure_hunt_during_illegal_mode": {
       "label": "Auto treasure hunt in Illegal Mode",
-      "tooltip": "After a CE or FATE: Return to camp, use Treasure Sight if you know it, then start a treasure hunt if coffers remain."
+      "tooltip": "After a CE or FATE (and after Triage Mode, if it ran): Return to camp, use Treasure Sight if you know it, then start a treasure hunt if coffers remain."
     },
     "enable_coffer_observation_submission": {
       "label": "Share coffer opens (live routes)",

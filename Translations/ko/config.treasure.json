@@ -57,7 +57,7 @@
     },
     "enable_automatic_treasure_hunt_during_illegal_mode": {
       "label": "불법 모드 자동 트레저 헌트",
-      "tooltip": "비상 조우 또는 돌발 후: 캠프로 귀환하고, 마기 보물 탐색을 알고 있으면 사용한 뒤, 상자가 남아 있으면 헌트를 시작합니다."
+      "tooltip": "비상 조우/돌발 후(트리아지가 돌았다면 그 다음): 캠프로 귀환하고, 마기 보물 탐색을 알고 있으면 사용한 뒤, 상자가 남아 있으면 헌트를 시작합니다."
     },
     "enable_coffer_observation_submission": {
       "label": "상자 개봉 공유(실시간 경로)",
