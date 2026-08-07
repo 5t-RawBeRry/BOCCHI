@@ -42,7 +42,8 @@ public class AddActivitiesStep : IGraphBuildStep
                 {
                     Id = criticalEncounter.Id,
                     PreferredAethernetId = criticalEncounter.PreferredAethernetId,
-                    CombatRadius = criticalEncounter.CombatRadius ?? 0f
+                    CombatRadius = criticalEncounter.CombatRadius ?? 0f,
+                    AreaShape = criticalEncounter.AreaShape,
                 }
             });
         }

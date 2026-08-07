@@ -127,7 +127,7 @@ public class NorthHorn
 
     public override List<ActivityData> GetCriticalEncounterData() =>
     [
-        new(56, new(238f, 15f, 367f), 20f), // A Beast Unleashed
+        new(56, new(238f, 15f, 367f), 22f, AreaShape: ActivityAreaShape.Square), // A Beast Unleashed (axis-aligned blue square)
         new(63, new(500f, 56f, -310f), 20f), // Accept No Imitators
         new(62, new(-82f, 12f, 485f), 20f), // Ahead of the Competition
         new(59, new(807f, 61f, -562f), 20f), // Appalling Behavior

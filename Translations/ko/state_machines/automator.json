@@ -49,5 +49,8 @@
   },
   "farming_pot_chests": {
     "label": "항아리 상자 수집 중"
+  },
+  "triaging": {
+    "label": "트리아지 중"
   }
 }

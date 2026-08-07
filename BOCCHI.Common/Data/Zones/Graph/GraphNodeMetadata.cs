@@ -32,6 +32,9 @@ public class ActivityNodeMetadata : INodeMetadata
 
     /// <summary>Authored engage radius for CE nodes; 0 for FATEs.</summary>
     public float CombatRadius { get; set; }
+
+    /// <summary>Circle or axis-aligned square join area.</summary>
+    public ActivityAreaShape AreaShape { get; set; } = ActivityAreaShape.Circle;
 }
 
 public class TeleportNodeMetadata : INodeMetadata

@@ -140,6 +140,12 @@ public class IllegalModeTreasureFillerService
             return true;
         }
 
+        if (memory.TryRemember<PendingTriageMemory>(out PendingTriageMemory _)
+            || memory.TryRemember<TriagingMemory>(out TriagingMemory _))
+        {
+            return true;
+        }
+
         if (memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _))
         {
             return true;
@@ -151,6 +157,13 @@ public class IllegalModeTreasureFillerService
     private void OnActivityCompleted(AutomaticTreasureSurveyMemory survey)
     {
         if (survey.WaitingForSurveyResult || survey.PendingSurvey)
+        {
+            return;
+        }
+
+        // TriageLatchService owns raise latch; wait until it finishes before Sight.
+        if (memory.TryRemember<PendingTriageMemory>(out PendingTriageMemory _)
+            || memory.TryRemember<TriagingMemory>(out TriagingMemory _))
         {
             return;
         }

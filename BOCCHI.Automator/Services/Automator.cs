@@ -35,6 +35,7 @@ public class Automator
     IPathfinder pathfinder,
     IVNavmeshIpc vnav,
     IZoneProvider zones,
+    IFateRepository fates,
     IObjectTable objects,
     IChatGui chat,
     PotsConfig potsConfig,
@@ -218,6 +219,8 @@ public class Automator
             return;
         }
 
+        TryStartPendingPotChestFarm();
+
         if (memory.TryRemember<GoalMemory>(out GoalMemory goal))
         {
             if (!validator.Validate(goal.Goal))
@@ -281,6 +284,22 @@ public class Automator
         }
     }
 
+    private void TryStartPendingPotChestFarm()
+    {
+        if (!memory.TryRemember<PendingPotChestFarmMemory>(out PendingPotChestFarmMemory pending))
+        {
+            return;
+        }
+
+        if (fates.HasFate(pending.FateId))
+        {
+            return;
+        }
+
+        memory.Forget<PendingPotChestFarmMemory>();
+        TryStartPotChestFarm(pending.FateId);
+    }
+
     private void TryStartPotChestFarm(FateId fateId)
     {
         bool farmChests = automatorConfig.ShouldFarmPotChests || context.IsPotsAndTreasure;
@@ -295,9 +314,18 @@ public class Automator
             return;
         }
 
+        // Still mid-FATE (e.g. HasFate flicker) — wait until the pot is actually gone.
+        if (fates.HasFate(fateId))
+        {
+            memory.TryAdd(new PendingPotChestFarmMemory(fateId));
+            logger.Info("Pot FATE {FateId} still active — deferring chest farm", fateId.Value);
+            return;
+        }
+
+        memory.Forget<PendingPotChestFarmMemory>();
+
         // Magical Elixir + compass hints whenever we have pot chest data (SH authored groups, NH binned).
-        // Do NOT require Cache Me If You Can yet — the buff/elixir can land a second or two after the
-        // FATE despawns. FarmingPotChests WaitingForBuff waits, then aborts if nothing arrives.
+        // WaitingForBuff waits for Cache Me; leftover elixir alone must not start a blind sweep.
         ActivityData? potFate = zone.GetPotFateData().FirstOrDefault(f => f.Id == fateId.Value);
         if (potFate != null && PotTreasureGroups.CanRunSmart(zone, fateId.Value))
         {

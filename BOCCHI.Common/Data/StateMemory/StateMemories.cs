@@ -18,6 +18,20 @@ public sealed class InquiringMindAttemptedMemory;
 
 public sealed class CastingTreasureSightMemory;
 
+/// <summary>Post-FATE/CE: raise nearby players as Phantom Chemist before leaving.</summary>
+public sealed class PendingTriageMemory
+{
+    public readonly DateTimeOffset LatchedUtc = DateTimeOffset.UtcNow;
+}
+
+/// <summary>Sticky while TriagingHandler is actively swapping/casting raises.</summary>
+public sealed class TriagingMemory;
+
+public sealed class TriageSupportJobMemory(SupportJobId job)
+{
+    public readonly SupportJobId Job = job;
+}
+
 /// <summary>
 ///     Post-activity Treasure Sight latch for Illegal Mode auto hunts.
 /// </summary>
@@ -59,6 +73,14 @@ public sealed class SuspendTravelForActivityMemory;
 ///     Arrived at predicted pot stand-off; hold until the FATE spawns (#112).
 /// </summary>
 public sealed class WaitingForPotFateMemory;
+
+/// <summary>
+///     Pot FATE goal ended while the event was still up — start chest farm once it despawns.
+/// </summary>
+public sealed class PendingPotChestFarmMemory(FateId fateId)
+{
+    public FateId FateId { get; } = fateId;
+}
 
 /// <summary>
 ///     User / soft-cancel stopped navigation. Blocks auto-replan until Illegal Mode is toggled.
@@ -226,7 +248,7 @@ public sealed class PotChestFarmMemory
 
     public Vector3? RefineTarget { get; set; }
 
-    /// <summary>Finish farm after the current open chain completes (smart reveal).</summary>
+    /// <summary>Finish farm after the current open chain completes (unused — farm ends when Cache Me clears).</summary>
     public bool FinishAfterOpen { get; set; }
 
     /// <summary>When we started waiting for the current (peek) blind chest to spawn.</summary>

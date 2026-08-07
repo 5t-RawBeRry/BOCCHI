@@ -63,6 +63,7 @@ https://raw.githubusercontent.com/OhKannaDuh/plugins/refs/heads/master/manifest.
 | **vnavmesh** | Pathfinding / walking |
 | **Lifestream** | Aethernet teleports |
 | **BossMod** or **BossMod Reborn** | BOCCHI AI combat (optional) |
+| **Wrath Combo** or **Rotation Solver Reborn** | Autorotation (optional) |
 
 ---
 

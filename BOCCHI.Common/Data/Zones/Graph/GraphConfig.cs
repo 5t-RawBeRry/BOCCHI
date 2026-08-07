@@ -5,14 +5,26 @@ using Path = Ocelot.Services.Pathfinding.Path;
 
 namespace BOCCHI.Common.Data.Zones.Graph;
 
+/// <summary>How CE join / combat area is measured around <see cref="ActivityData.Position"/>.</summary>
+public enum ActivityAreaShape
+{
+    /// <summary>Euclidean radius (<see cref="ActivityData.CombatRadius"/>).</summary>
+    Circle = 0,
+
+    /// <summary>Axis-aligned square; <see cref="ActivityData.CombatRadius"/> is half-extent (center → edge).</summary>
+    Square = 1,
+}
+
 /// <param name="Position">Path / wait destination (CE staging or FATE start).</param>
-/// <param name="CombatRadius">Engage radius for CEs; unused for FATEs.</param>
+/// <param name="CombatRadius">Engage radius (circle) or half-extent (square) for CEs; unused for FATEs.</param>
 /// <param name="PreferredAethernetId">PlaceNameId of preferred inbound shard, if any.</param>
+/// <param name="AreaShape">Circle (default) or axis-aligned square (e.g. A Beast Unleashed).</param>
 public record ActivityData(
     int Id,
     Vector3 Position,
     float? CombatRadius = null,
-    uint? PreferredAethernetId = null);
+    uint? PreferredAethernetId = null,
+    ActivityAreaShape AreaShape = ActivityAreaShape.Circle);
 
 public record CarrotData(int Id, Vector3 Position, int Level);
 

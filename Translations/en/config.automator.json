@@ -1,6 +1,6 @@
 {
   "label": "General",
-  "tooltip": "FATEs, Critical Encounters, pots, mounting, BOCCHI AI, Return, and repair.",
+  "tooltip": "FATEs, Critical Encounters, pots, mounting, BOCCHI AI, raises, Return, and repair.",
   "fields": {
     "should_do_fates": {
       "label": "Do FATEs",
@@ -50,6 +50,10 @@
     "phantom_jobs_leveling_mode": {
       "label": "Level phantom jobs automatically",
       "tooltip": "When your current phantom job is maxed, switch to the next unlocked one that is not maxed. Skips Freelancer (it does not level from combat). Stays put if every unlocked job is already maxed."
+    },
+    "enable_triage_mode": {
+      "label": "Triage Mode",
+      "tooltip": "When a FATE or CE ends, switch to Phantom Chemist and Revive nearby dead players, then switch back. Skips anyone who already has a raise pending. Needs Chemist unlocked. Happens before Return and before Illegal Mode Treasure Sight."
     },
     "should_cast_treasure_sight": {
       "label": "Cast Treasure Sight at camp",

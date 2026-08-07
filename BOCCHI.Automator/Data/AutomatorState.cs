@@ -18,7 +18,8 @@ public enum AutomatorState
     InCriticalEncounter,
     ReturningToJob,
     LevelingPhantomJob,
-    FarmingPotChests
+    FarmingPotChests,
+    Triaging
 }
 
 public enum StatePriority

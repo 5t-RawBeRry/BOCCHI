@@ -105,14 +105,25 @@ public class InCriticalEncounterHandler
             return false;
         }
 
+        // Already handed off into InCritical — stay committed for this CE Battle even when
+        // EventId / wait-area geometry lag (Unbridled "Return when CE started").
+        if (memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _))
+        {
+            ce = encounter;
+            return true;
+        }
+
         if (objects.LocalPlayer is not { } player)
         {
             return false;
         }
 
         float combatRadius = NavigationConstants.CriticalEncounterRedRadius(encounter.Radius);
-        float waitRadius = NavigationConstants.CriticalEncounterWaitRadius(combatRadius);
-        if (player.Position.Distance2D(encounter.Position) >= waitRadius)
+        if (!NavigationConstants.IsInsideCriticalEncounterWaitArea(
+                encounter.Position,
+                combatRadius,
+                encounter.AreaShape,
+                player.Position))
         {
             return false;
         }
@@ -120,19 +131,6 @@ public class InCriticalEncounterHandler
         if (!memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory wait)
             || !wait.IsFor(encounter.Id))
         {
-            // Already in InCritical — wait memory may have been cleared on Enter. Keep scoring
-            // while SuspendTravel is latched and CE enemies / combat remain.
-            if (!memory.TryRemember<SuspendTravelForActivityMemory>(out _))
-            {
-                return false;
-            }
-
-            if (context.HasEncounterEnemies(encounter.Id) || conditions[ConditionFlag.InCombat])
-            {
-                ce = encounter;
-                return true;
-            }
-
             return false;
         }
 

@@ -106,20 +106,19 @@ public class FarmingPotChestsHandler
             return;
         }
 
-        if (activeChain is { IsCompleted: true }
-            && memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory completedFarm)
-            && completedFarm.FinishAfterOpen)
-        {
-            activeChain = null;
-            FinishFarm();
-            return;
-        }
-
         activeChain = null;
 
         if (conditions[ConditionFlag.InCombat])
         {
             pathfinder.Stop();
+            return;
+        }
+
+        // Cache Me clears when pot chests are done or the pot dies — that is the farm end signal.
+        if (farm.Phase != PotChestFarmPhase.WaitingForBuff && !HasTreasureBuff())
+        {
+            logger.Info("Pot treasure: Cache Me If You Can gone — ending farm");
+            FinishFarm();
             return;
         }
 
@@ -154,9 +153,9 @@ public class FarmingPotChestsHandler
 
     private void HandleWaitingForBuff(PotChestFarmMemory farm)
     {
-        // Status 1531 is the Eureka "Down the Rabbit Hole" row reused for Cache Me If You Can.
-        // Magical Elixir is granted with the buff — treat either as "reward landed".
-        if (HasTreasureBuff() || elixir.HasElixir())
+        // Status 1531 = Cache Me If You Can (Eureka row). Do not start on leftover Magical Elixir alone —
+        // that caused blind sweeps after "persistent pot is too injured" with no reward.
+        if (HasTreasureBuff())
         {
             hints.Arm();
             farm.Phase = PotChestFarmPhase.ApproachCenter;
@@ -169,19 +168,13 @@ public class FarmingPotChestsHandler
         if (DateTimeOffset.UtcNow - farm.PhaseStartedUtc >= BuffWaitTimeout)
         {
             logger.Info(
-                "Pot treasure: no Cache Me If You Can / Magical Elixir after wait — ending farm (not selected or abandoned pot)");
+                "Pot treasure: no Cache Me If You Can after wait — ending farm (not selected or pot failed)");
             FinishFarm();
         }
     }
 
     private void HandleApproachCenter(PotChestFarmMemory farm)
     {
-        if (!HasTreasureBuff())
-        {
-            FallBackToBlind(farm);
-            return;
-        }
-
         float dist = player.Position.Distance2D(farm.FateCenter);
         if (dist > CenterArrival)
         {
@@ -218,8 +211,8 @@ public class FarmingPotChestsHandler
         {
             if (evt.Kind == PotTreasureHintKind.BonusOffer)
             {
-                logger.Info("Pot treasure: bonus offer — ending farm");
-                FinishFarm();
+                // Optional second chest — keep farming while Cache Me remains.
+                farm.HintRevisionBaseline = evt.Revision;
                 return;
             }
 
@@ -255,12 +248,6 @@ public class FarmingPotChestsHandler
             farm.HintRevisionBaseline = evt.Revision;
         }
 
-        if (!HasTreasureBuff() && !hints.RevealLatched)
-        {
-            FallBackToBlind(farm);
-            return;
-        }
-
         if (farm.ElixirAttempts >= MaxElixirAttempts
             && DateTimeOffset.UtcNow - farm.PhaseStartedUtc >= HintWaitTimeout)
         {
@@ -294,7 +281,7 @@ public class FarmingPotChestsHandler
         if (TryAcquireReveal(farm, out IGameObject? reveal) && reveal != null)
         {
             farm.Phase = PotChestFarmPhase.OpeningReveal;
-            OpenChest(reveal.Position, finishAfterOpen: farm.Mode == PotChestFarmMode.Smart);
+            OpenChest(reveal.Position);
             return;
         }
 
@@ -304,7 +291,6 @@ public class FarmingPotChestsHandler
 
             if (evt.Kind == PotTreasureHintKind.BonusOffer)
             {
-                FinishFarm();
                 return;
             }
 
@@ -317,9 +303,14 @@ public class FarmingPotChestsHandler
 
             if (evt.Kind == PotTreasureHintKind.Hint && farm.Candidates.Count > 0)
             {
+                if (TryRedirectCandidateGroup(farm, evt))
+                {
+                    return;
+                }
+
                 if (!evt.IsLocalHint)
                 {
-                    // Far at this candidate → skip to next.
+                    // Same compass group, far from this spot — skip to the next candidate.
                     farm.Candidates.Dequeue();
                     farm.ElixirAttempts = 0;
                     farm.RefineSteps = 0;
@@ -359,8 +350,8 @@ public class FarmingPotChestsHandler
 
         if (farm.Candidates.Count == 0)
         {
-            logger.Info("Pot treasure: candidates exhausted");
-            FinishFarm();
+            logger.Info("Pot treasure: candidates exhausted — blind fallback while Cache Me remains");
+            FallBackToBlind(farm);
             return;
         }
 
@@ -394,7 +385,7 @@ public class FarmingPotChestsHandler
         if (live != null)
         {
             farm.Phase = PotChestFarmPhase.OpeningReveal;
-            OpenChest(live.Position, finishAfterOpen: true);
+            OpenChest(live.Position);
             return;
         }
 
@@ -440,14 +431,25 @@ public class FarmingPotChestsHandler
             }
 
             pathfinder.Stop();
-            OpenChest(reveal.Position, finishAfterOpen: true);
+            OpenChest(reveal.Position);
             return;
         }
 
         if (DateTimeOffset.UtcNow - farm.PhaseStartedUtc > TimeSpan.FromSeconds(15))
         {
-            logger.Info("Pot treasure: reveal timed out");
-            FinishFarm();
+            logger.Info("Pot treasure: reveal timed out — resume search while Cache Me remains");
+            farm.Phase = farm.Candidates.Count > 0
+                ? PotChestFarmPhase.SearchingCandidates
+                : PotChestFarmPhase.BlindSweep;
+            if (farm.Phase == PotChestFarmPhase.BlindSweep)
+            {
+                FallBackToBlind(farm);
+            }
+            else
+            {
+                farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
+                farm.SettledAtUtc = DateTimeOffset.MinValue;
+            }
         }
     }
 
@@ -521,14 +523,45 @@ public class FarmingPotChestsHandler
         OpenChest(liveChest.Position);
     }
 
-    private void OpenChest(Vector3 position, bool finishAfterOpen = false)
+    private bool TryRedirectCandidateGroup(PotChestFarmMemory farm, PotTreasureHintEvent evt)
     {
-        if (finishAfterOpen
-            && memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory farm))
+        string groupKey = PotTreasureIds.GroupKey(evt.Direction);
+        if (string.IsNullOrEmpty(groupKey)
+            || string.Equals(groupKey, farm.ActiveGroupKey, StringComparison.OrdinalIgnoreCase))
         {
-            farm.FinishAfterOpen = true;
+            return false;
         }
 
+        if (!PotTreasureGroups.TryGetGroup(
+                farm.FateId.Value,
+                groupKey,
+                farm.FateCenter,
+                zones.GetZone(),
+                out IReadOnlyList<PotTreasureCandidate> group)
+            || group.Count == 0)
+        {
+            logger.Warning(
+                "Pot treasure: hint redirected {From} → {To} but no candidates — keeping current group",
+                farm.ActiveGroupKey ?? "?",
+                groupKey);
+            return false;
+        }
+
+        // Walk toward the nearest spot in the new compass group from where we are now.
+        IEnumerable<PotTreasureCandidate> ordered = OrderNearestNeighbor(group, player.Position);
+        string previous = farm.ActiveGroupKey ?? "?";
+        farm.BeginCandidateSearch(groupKey, ordered);
+        logger.Info(
+            "Pot treasure: hint redirected {From} → {To}/{Distance} ({Count} candidates)",
+            previous,
+            groupKey,
+            evt.Distance,
+            farm.CandidateTotal);
+        return true;
+    }
+
+    private void OpenChest(Vector3 position)
+    {
         activeChain = chainManager.Manage(
             chains.Create("PotChestFarm::Open")
                 .Then<OpenTreasureCofferChain, Vector3>(position)

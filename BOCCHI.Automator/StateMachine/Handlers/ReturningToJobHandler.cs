@@ -13,7 +13,9 @@ public class ReturningToJobHandler(IAutomatorMemory memory, ISupportJobFactory j
     // Do not restore while Treasure Sight is still in progress — otherwise Freelancer swap loops forever.
     public override StatePriority GetScore()
     {
-        if (memory.TryRemember<CastingTreasureSightMemory>(out CastingTreasureSightMemory _))
+        // Do not restore while Treasure Sight / Triage is still in progress — otherwise job swap loops.
+        if (memory.TryRemember<CastingTreasureSightMemory>(out CastingTreasureSightMemory _)
+            || memory.TryRemember<TriagingMemory>(out TriagingMemory _))
         {
             return StatePriority.Never;
         }
@@ -47,7 +49,8 @@ public class ReturningToJobHandler(IAutomatorMemory memory, ISupportJobFactory j
 
     private bool HasJobToRestore() =>
         memory.TryRemember<BuffSupportJobMemory>(out BuffSupportJobMemory _)
-        || memory.TryRemember<TreasureSightSupportJobMemory>(out TreasureSightSupportJobMemory _);
+        || memory.TryRemember<TreasureSightSupportJobMemory>(out TreasureSightSupportJobMemory _)
+        || memory.TryRemember<TriageSupportJobMemory>(out TriageSupportJobMemory _);
 
     private bool TryGetJobToRestore(out SupportJobId jobId)
     {
@@ -63,6 +66,12 @@ public class ReturningToJobHandler(IAutomatorMemory memory, ISupportJobFactory j
             return true;
         }
 
+        if (memory.TryRemember<TriageSupportJobMemory>(out TriageSupportJobMemory triageJob))
+        {
+            jobId = triageJob.Job;
+            return true;
+        }
+
         jobId = default;
         return false;
     }
@@ -71,5 +80,6 @@ public class ReturningToJobHandler(IAutomatorMemory memory, ISupportJobFactory j
     {
         memory.Forget<BuffSupportJobMemory>();
         memory.Forget<TreasureSightSupportJobMemory>();
+        memory.Forget<TriageSupportJobMemory>();
     }
 }

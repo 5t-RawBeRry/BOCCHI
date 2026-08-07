@@ -31,6 +31,31 @@ public interface IZone
 
     bool HasNearbyKnowledgeCrystals() => GetNearbyKnowledgeCrystals().Count != 0;
 
+    /// <summary>
+    ///     True when standing where crystal buffs can be cast (authored annulus, else ≤5y of a nearby crystal).
+    /// </summary>
+    bool IsInBuffCastRange(Vector3 position)
+    {
+        if (GetBuffZone() is { } buffZone)
+        {
+            return buffZone.Contains2D(position);
+        }
+
+        const float crystalInteractionRange = 5f;
+        float maxSq = crystalInteractionRange * crystalInteractionRange;
+        foreach (KnowledgeCrystalData crystal in GetNearbyKnowledgeCrystals())
+        {
+            float dx = position.X - crystal.Position.X;
+            float dz = position.Z - crystal.Position.Z;
+            if ((dx * dx) + (dz * dz) <= maxSq)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     bool IsInForkedTower();
 
     float GetCriticalEncounterRadius(int eventId);

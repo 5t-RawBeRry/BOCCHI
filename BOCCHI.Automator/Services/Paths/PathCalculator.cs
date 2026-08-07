@@ -83,21 +83,24 @@ public class PathCalculator
         }
 
         float ceCombatRadius = 0f;
-        float ceWaitRadius = 0f;
+        ActivityAreaShape ceShape = ActivityAreaShape.Circle;
         if (goal.GoalType is CriticalEncounterGoal ceGoalForRadius)
         {
-            ceCombatRadius = zone.GetCriticalEncounterData()
-                .FirstOrDefault(a => a.Id == ceGoalForRadius.id.Value)?.CombatRadius ?? 0f;
-            ceWaitRadius = ceCombatRadius > 0f
-                ? NavigationConstants.CriticalEncounterWaitRadius(ceCombatRadius)
-                : 0f;
+            ActivityData? authored = zone.GetCriticalEncounterData()
+                .FirstOrDefault(a => a.Id == ceGoalForRadius.id.Value);
+            ceCombatRadius = authored?.CombatRadius ?? 0f;
+            ceShape = authored?.AreaShape ?? ActivityAreaShape.Circle;
         }
 
         Vector3 arrivalCheck = potPrepositionStandOff ?? pathGoal.Position;
         float distanceToGoal = player.Position.Distance2D(arrivalCheck);
         if (ceCombatRadius > 0f)
         {
-            if (distanceToGoal <= ceWaitRadius)
+            if (NavigationConstants.IsInsideCriticalEncounterWaitArea(
+                    arrivalCheck,
+                    ceCombatRadius,
+                    ceShape,
+                    player.Position))
             {
                 logger.Debug("Inside CE wait area.");
                 return [];
@@ -119,7 +122,11 @@ public class PathCalculator
             ? player.Position.Distance2D(camp.Position)
             : float.MaxValue;
         bool nearCriticalEncounter = ceCombatRadius > 0f
-                                     && distanceToGoal <= ceWaitRadius;
+                                     && NavigationConstants.IsInsideCriticalEncounterWaitArea(
+                                         arrivalCheck,
+                                         ceCombatRadius,
+                                         ceShape,
+                                         player.Position);
         if (!nearCriticalEncounter
             && distanceToGoal > NavigationConstants.MaxDirectWalkDistance
             && distanceToGoal >= distToCamp * 0.5f)

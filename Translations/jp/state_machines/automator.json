@@ -49,5 +49,8 @@
   },
   "farming_pot_chests": {
     "label": "マジックポット宝箱を回収中"
+  },
+  "triaging": {
+    "label": "トリアージ中"
   }
 }

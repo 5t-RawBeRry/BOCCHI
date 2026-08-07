@@ -1,6 +1,7 @@
 using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services;
 using BOCCHI.Common.Data.Aethernet;
+using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
@@ -28,6 +29,7 @@ public class ReturningHandler
     ICondition conditions,
     IAddonLifecycle addons,
     IFateRepository fates,
+    ICriticalEncounterRepository criticalEncounters,
     IPlayer player,
     IGateService gate,
     IGameGui gui,
@@ -73,6 +75,20 @@ public class ReturningHandler
 
         // Waiting inside / near the goal FATE circle — don't Return-to-base (#84).
         if (IsNearActiveFateGoal())
+        {
+            return StatePriority.Never;
+        }
+
+        // Committed to a CE (wait latch / SuspendTravel / live Preparing|Battle goal) — never
+        // opportunistic Return while Goal still shows that CE (Familiar / Unbridled Discord).
+        if (IsCommittedToCriticalEncounterGoal())
+        {
+            return StatePriority.Never;
+        }
+
+        // Raise nearby players before leaving the FATE/CE site.
+        if (memory.TryRemember<PendingTriageMemory>(out PendingTriageMemory _)
+            || memory.TryRemember<TriagingMemory>(out TriagingMemory _))
         {
             return StatePriority.Never;
         }
@@ -223,5 +239,24 @@ public class ReturningHandler
             ? fate.Radius * 0.9f
             : NavigationConstants.EventArrivalRadius;
         return player.Position.Distance2D(fate.Position) <= radius;
+    }
+
+    private bool IsCommittedToCriticalEncounterGoal()
+    {
+        if (memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory _)
+            || memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _))
+        {
+            return true;
+        }
+
+        if (!memory.TryRemember<GoalMemory>(out GoalMemory goal)
+            || goal.Goal.GoalType is not CriticalEncounterGoal ceGoal)
+        {
+            return false;
+        }
+
+        CriticalEncounter? ce = criticalEncounters.SnapshotWithoutForkedTower()
+            .FirstOrDefault(c => c.Id == ceGoal.id);
+        return ce is { } encounter && (encounter.IsPreparing() || encounter.IsActive());
     }
 }

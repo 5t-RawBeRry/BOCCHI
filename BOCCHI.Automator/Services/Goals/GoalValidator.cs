@@ -80,7 +80,13 @@ public class GoalValidator
             return true;
         }
 
-        return memory.TryRemember<SuspendTravelForActivityMemory>(out _);
+        if (memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _))
+        {
+            return true;
+        }
+
+        // Still pathing into the CE when Battle flips — keep the goal (don't abort → FATE).
+        return memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _);
     }
 
     private bool ValidateFate(FateId id)
@@ -110,44 +116,27 @@ public class GoalValidator
             return false;
         }
 
-        if (!isPot)
-        {
-            PotCycleSnapshot cycle = potCycle.Snapshot;
-            bool potFarming = fatesConfig.IsPotFallbackGatingEnabled(
-                (uint)cycle.PredictedNextPotFateId,
-                automatorConfig.ShouldDoFates,
-                automatorConfig.PreferPotFates,
-                automatorConfig.ShouldFarmPotChests);
-            (TimeSpan cutoff, int lead) = GetIllegalPotWindow();
-            PotFallbackStartDecision decision = PotFallbackWindow.Evaluate(
-                cycle,
-                DateTimeOffset.UtcNow,
-                cutoff,
-                lead,
-                potFarming,
-                "FATE");
-            if (!decision.AllowStart)
-            {
-                return false;
-            }
-        }
-
-        int minRemaining = potsOnly
-            ? PotsTreasureDefaults.MinPotFateMinutesRemaining
-            : potsConfig.MinPotFateMinutesRemaining;
-        if (minRemaining <= 0 || !isPot)
+        // Live pot FATE — stay until it despawns. Chest farm starts then (not between waves / on min-remaining).
+        if (isPot)
         {
             return true;
         }
 
-        Fate? fate = fateRepository.Snapshot().FirstOrDefault(f => f.Id.Value == id.Value);
-        if (fate == null)
-        {
-            return false;
-        }
-
-        // Drop pot FATE goals that are about to expire so we don't path into an empty event.
-        return fate.TimeRemainingSeconds >= minRemaining * 60L;
+        PotCycleSnapshot cycle = potCycle.Snapshot;
+        bool potFarming = fatesConfig.IsPotFallbackGatingEnabled(
+            (uint)cycle.PredictedNextPotFateId,
+            automatorConfig.ShouldDoFates,
+            automatorConfig.PreferPotFates,
+            automatorConfig.ShouldFarmPotChests);
+        (TimeSpan cutoff, int lead) = GetIllegalPotWindow();
+        PotFallbackStartDecision decision = PotFallbackWindow.Evaluate(
+            cycle,
+            DateTimeOffset.UtcNow,
+            cutoff,
+            lead,
+            potFarming,
+            "FATE");
+        return decision.AllowStart;
     }
 
     /// <summary>

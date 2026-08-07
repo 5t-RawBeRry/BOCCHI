@@ -49,5 +49,8 @@
   },
   "farming_pot_chests": {
     "label": "Farming pot chests"
+  },
+  "triaging": {
+    "label": "Triage Mode"
   }
 }

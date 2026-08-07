@@ -101,3 +101,10 @@ public static class PhantomItems
     public const ushort OccultPotion = 47741;
     public const ushort OccultElixir = 47743;
 }
+
+/// <summary>Common player statuses used by Occult automation (not phantom-job exclusives).</summary>
+public static class PlayerStatuses
+{
+    /// <summary>Pending raise prompt on a corpse — skip these for Triage Mode.</summary>
+    public const ushort Raise = 148;
+}

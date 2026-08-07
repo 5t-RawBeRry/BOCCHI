@@ -1,4 +1,5 @@
 ﻿using BOCCHI.Common.Data;
+using BOCCHI.Common.Data.Zones.Graph;
 using ECommons;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using FFXIVClientStructs.FFXIV.Client.LayoutEngine;
@@ -13,7 +14,12 @@ public readonly record struct CriticalEncounterId(ushort Value)
     public override string ToString() => Value.ToString();
 }
 
-public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev, float radius, Vector3 fallbackPosition)
+public class CriticalEncounter(
+    CriticalEncounterId id,
+    DynamicEvent ev,
+    float radius,
+    Vector3 fallbackPosition,
+    ActivityAreaShape areaShape = ActivityAreaShape.Circle)
 {
     private readonly Vector3 fallbackPosition = fallbackPosition;
 
@@ -23,9 +29,12 @@ public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev, float ra
 
     public readonly ActivityProgressTracker ProgressTracker = new();
 
+    /// <summary>Padded size used for debug outer ring (circle radius or square half-extent).</summary>
     public readonly float Radius = radius;
 
-    public Vector3 Position { get; private set; } = ResolvePosition(ev, fallbackPosition);
+    public readonly ActivityAreaShape AreaShape = areaShape;
+
+    public Vector3 Position { get; private set; } = ResolvePosition(ev, fallbackPosition, areaShape);
 
     public DynamicEventState State { get; private set; } = ev.State;
 
@@ -65,9 +74,19 @@ public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev, float ra
         return new(position.X, position.Y, position.Z);
     }
 
-    private static Vector3 ResolvePosition(DynamicEvent ev, Vector3 fallbackPosition)
+    private static Vector3 ResolvePosition(DynamicEvent ev, Vector3 fallbackPosition, ActivityAreaShape shape)
     {
-        // Authored staging points win when present — live LGB markers can sit under elevated CEs
+        // Square CEs: live LGB is usually the blue-zone center; authored staging can sit off-square.
+        if (shape == ActivityAreaShape.Square)
+        {
+            Vector3 live = TryReadLayoutPosition(ev);
+            if (!float.IsNaN(live.X))
+            {
+                return live;
+            }
+        }
+
+        // Authored staging points win for circular CEs — live LGB markers can sit under elevated CEs
         // (e.g. Accept No Imitators on the tower: live at base, player at y=56).
         if (!float.IsNaN(fallbackPosition.X))
         {
@@ -83,7 +102,7 @@ public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev, float ra
         Progress = ev.Progress;
         StartTimestamp = ev.StartTimestamp;
 
-        if (float.IsNaN(fallbackPosition.X))
+        if (AreaShape == ActivityAreaShape.Square || float.IsNaN(fallbackPosition.X))
         {
             Vector3 live = TryReadLayoutPosition(ev);
             if (!float.IsNaN(live.X))

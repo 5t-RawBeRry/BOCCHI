@@ -7,6 +7,7 @@ using ECommons.Throttlers;
 using Ocelot.Lifecycle;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
+using Ocelot.Services.PlayerState;
 using Ocelot.States;
 
 namespace BOCCHI.Buff.Services;
@@ -15,6 +16,7 @@ public class BuffRunner
 (
     Func<IStateMachine<BuffState>> factory,
     IZoneProvider zones,
+    IPlayer player,
     IAutomatorMemory memory,
     ISupportJobFactory jobs,
     ISupportJobChanger changer,
@@ -132,6 +134,11 @@ public class BuffRunner
         if (!zone.HasNearbyKnowledgeCrystals())
         {
             return "You must be near a knowledge crystal.";
+        }
+
+        if (!zone.IsInBuffCastRange(player.Position))
+        {
+            return "Stand in the buff circle at the knowledge crystal.";
         }
 
         return null;

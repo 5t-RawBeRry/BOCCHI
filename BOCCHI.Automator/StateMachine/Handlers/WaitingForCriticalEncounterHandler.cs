@@ -45,22 +45,13 @@ public class WaitingForCriticalEncounterHandler
 
     public override StatePriority GetScore()
     {
-        if (objects.LocalPlayer is not { } player)
-        {
-            return StatePriority.Never;
-        }
-
         if (!TryGetGoalEncounter(out CriticalEncounter ce))
         {
             return StatePriority.Never;
         }
 
-        float combatRadius = NavigationConstants.CriticalEncounterRedRadius(ce.Radius);
-        float waitRadius = NavigationConstants.CriticalEncounterWaitRadius(combatRadius);
-        if (player.Position.Distance2D(ce.Position) >= waitRadius)
-        {
-            return StatePriority.Never;
-        }
+        bool hasWaitLatch = memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory wait)
+                            && wait.IsFor(ce.Id);
 
         if (ce.IsActive())
         {
@@ -71,13 +62,31 @@ public class WaitingForCriticalEncounterHandler
                 return StatePriority.Never;
             }
 
-            return memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory wait)
-                   && wait.IsFor(ce.Id)
-                ? StatePriority.VeryHigh
-                : StatePriority.Never;
+            return hasWaitLatch ? StatePriority.VeryHigh : StatePriority.Never;
         }
 
         if (!ce.IsPreparing())
+        {
+            return StatePriority.Never;
+        }
+
+        // Already arrived — keep Waiting even if authored center / circle vs blue zone flickers.
+        if (hasWaitLatch)
+        {
+            return StatePriority.VeryHigh;
+        }
+
+        if (objects.LocalPlayer is not { } player)
+        {
+            return StatePriority.Never;
+        }
+
+        float combatRadius = NavigationConstants.CriticalEncounterRedRadius(ce.Radius);
+        if (!NavigationConstants.IsInsideCriticalEncounterWaitArea(
+                ce.Position,
+                combatRadius,
+                ce.AreaShape,
+                player.Position))
         {
             return StatePriority.Never;
         }

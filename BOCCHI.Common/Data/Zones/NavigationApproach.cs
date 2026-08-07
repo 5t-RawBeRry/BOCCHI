@@ -54,6 +54,35 @@ public static class NavigationConstants
     /// <summary>CE wait / travel-arrival radius. Keep tighter than the padded debug ring so Battle starts inside the live join area.</summary>
     public static float CriticalEncounterWaitRadius(float combatRadius) =>
         CriticalEncounterWaitRadiusYalms;
+
+    /// <summary>
+    ///     True when <paramref name="point"/> is inside the CE wait/join area.
+    ///     <paramref name="combatRadius"/> is authored combat size (circle radius or square half-extent).
+    /// </summary>
+    public static bool IsInsideCriticalEncounterWaitArea(
+        Vector3 center,
+        float combatRadius,
+        ActivityAreaShape shape,
+        Vector3 point)
+    {
+        if (combatRadius <= 0f)
+        {
+            return point.Distance2D(center) <= EventArrivalRadius;
+        }
+
+        if (shape == ActivityAreaShape.Square)
+        {
+            // Stay inside the blue square (Chebyshev), not a circumscribed circle.
+            float half = combatRadius;
+            float dx = MathF.Abs(point.X - center.X);
+            float dz = MathF.Abs(point.Z - center.Z);
+            return MathF.Max(dx, dz) <= half;
+        }
+
+        // Circles: at least the authored combat radius, or the flat wait ring (whichever larger).
+        float wait = MathF.Max(combatRadius, CriticalEncounterWaitRadius(combatRadius));
+        return point.Distance2D(center) < wait;
+    }
 }
 
 public static class NavigationApproach
@@ -66,8 +95,12 @@ public static class NavigationApproach
         return destination.GetApproachPosition(from, range, NavigationConstants.CampApproachJitter);
     }
 
-    /// <summary>Random point inside the combat ring so travel lands on the blue registration area.</summary>
-    public static Vector3 GetCriticalEncounterApproachPosition(Vector3 center, Vector3 from, float combatRadius)
+    /// <summary>Random point inside the combat area so travel lands on the blue registration zone.</summary>
+    public static Vector3 GetCriticalEncounterApproachPosition(
+        Vector3 center,
+        Vector3 from,
+        float combatRadius,
+        ActivityAreaShape shape = ActivityAreaShape.Circle)
     {
         float red = MathF.Max(1f, combatRadius);
         float min = red * NavigationConstants.CriticalEncounterApproachMinRatio;
@@ -78,6 +111,20 @@ public static class NavigationApproach
         }
 
         float approachRange = min + Random.Shared.NextSingle() * (max - min);
+        if (shape == ActivityAreaShape.Square)
+        {
+            // Approach along the inbound ray, clamped into the square (Chebyshev).
+            Vector3 delta = from - center;
+            float chebyshev = MathF.Max(MathF.Abs(delta.X), MathF.Abs(delta.Z));
+            if (chebyshev < 0.001f)
+            {
+                return center + new Vector3(approachRange, 0f, 0f);
+            }
+
+            float scale = approachRange / chebyshev;
+            return center + new Vector3(delta.X * scale, 0f, delta.Z * scale);
+        }
+
         return center.GetApproachPosition(from, approachRange);
     }
 
@@ -86,7 +133,7 @@ public static class NavigationApproach
         if (goal.Type == NodeType.CriticalEncounter
             && goal.Metadata is ActivityNodeMetadata { CombatRadius: > 0 } meta)
         {
-            return GetCriticalEncounterApproachPosition(goal.Position, from, meta.CombatRadius);
+            return GetCriticalEncounterApproachPosition(goal.Position, from, meta.CombatRadius, meta.AreaShape);
         }
 
         return GetEventPosition(goal.Position, from);

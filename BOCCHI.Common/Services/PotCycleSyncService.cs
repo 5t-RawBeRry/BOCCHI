@@ -89,10 +89,15 @@ public sealed class PotCycleSyncService
         ushort territory = zone.TerritoryType;
         if (fingerprintTerritory != territory)
         {
+            if (fingerprintTerritory != 0)
+            {
+                potCycles.Clear(fingerprintTerritory);
+            }
+
             ResetFingerprint(territory);
         }
 
-        EnsureFingerprint(territory);
+        RefreshFingerprint(territory);
         if (string.IsNullOrEmpty(instanceKey))
         {
             return;
@@ -239,13 +244,8 @@ public sealed class PotCycleSyncService
         }
     }
 
-    private void EnsureFingerprint(ushort territory)
+    private void RefreshFingerprint(ushort territory)
     {
-        if (!string.IsNullOrEmpty(instanceKey))
-        {
-            return;
-        }
-
         uint? datacenterId = TryGetDatacenterId();
         if (datacenterId is not uint dc)
         {
@@ -263,9 +263,25 @@ public sealed class PotCycleSyncService
             return;
         }
 
+        string newKey = ComputeInstanceKey(dc, fingerprintFate.Id.Value, fingerprintFate.StartTimeEpoch);
+        if (instanceKey == newKey)
+        {
+            return;
+        }
+
+        // New OC instance (or first key this session) — drop the previous instance's pot timer.
+        if (instanceKey != null)
+        {
+            potCycles.Clear(territory);
+            logger.Info(
+                "[PotCycleSync] instance changed ({Old}… → {New}…) — cleared pot cycle",
+                instanceKey[..8],
+                newKey[..8]);
+        }
+
         fingerprintFateId = fingerprintFate.Id.Value;
         fingerprintStartEpoch = fingerprintFate.StartTimeEpoch;
-        instanceKey = ComputeInstanceKey(dc, fingerprintFateId, fingerprintStartEpoch);
+        instanceKey = newKey;
         fingerprintTerritory = territory;
         lastFetchedInstanceKey = null;
         logger.Info(
@@ -326,6 +342,7 @@ public sealed class PotCycleSyncService
             return;
         }
 
+        potCycles.ClearAll();
         fingerprintTerritory = 0;
         instanceKey = null;
         fingerprintFateId = 0;

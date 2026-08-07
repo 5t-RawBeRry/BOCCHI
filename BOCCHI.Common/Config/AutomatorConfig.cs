@@ -57,28 +57,35 @@ public class AutomatorConfig : IAutoConfig
     [Checkbox(Order = 11)]
     public bool PhantomJobsLevelingMode { get; set; } = false;
 
+    /// <summary>
+    ///     After a FATE/CE ends, switch to Phantom Chemist and raise nearby dead players
+    ///     (skip anyone who already has a raise pending).
+    /// </summary>
     [Checkbox(Order = 12)]
+    public bool EnableTriageMode { get; set; } = false;
+
+    [Checkbox(Order = 13)]
     public bool ShouldCastTreasureSight { get; set; } = false;
 
-    [IntRange(60, 600, Order = 13)]
+    [IntRange(60, 600, Order = 14)]
     public int TreasureSightRecastIntervalSeconds { get; set; } = 120;
 
     /// <summary>
     ///     Upper bound (seconds) for the random 2..max wait before Return after a FATE/CE.
     /// </summary>
-    [IntRange(2, 60, Order = 14)]
+    [IntRange(2, 60, Order = 15)]
     public int MaxRemoteIdleTimeSeconds { get; set; } = 10;
 
     /// <summary>
     ///     Upper bound (seconds) for a random 0..max idle at camp before teleporting to a FATE/CE (#138).
     ///     0 = leave immediately.
     /// </summary>
-    [IntRange(0, 60, Order = 15)]
+    [IntRange(0, 60, Order = 16)]
     public int MaxBaseTeleportDelaySeconds { get; set; } = 0;
 
     /// <summary>
     ///     Repair equipped gear when any piece falls to or below this condition (%).
     /// </summary>
-    [IntRange(1, 99, Order = 16)]
+    [IntRange(1, 99, Order = 17)]
     public int AutoRepairThreshold { get; set; } = 30;
 }

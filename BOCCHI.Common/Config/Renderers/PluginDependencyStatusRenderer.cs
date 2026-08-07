@@ -32,9 +32,16 @@ public sealed class PluginDependencyStatusRenderer(
 
         ImGui.Spacing();
         DrawSection(T(translator, "optional"));
+        ImGui.TextWrapped(T(translator, "optional_intro"));
+        ImGui.Spacing();
+
+        DrawSubsection(T(translator, "optional_ai"));
         // Shared BossMod.Presets.* IPC — only show when that specific plugin is loaded.
         Draw("BossMod", "BossMod", translator, BossModIpcIfLoaded);
         Draw("BossMod Reborn", "BossModReborn", translator, BossModIpcIfLoaded);
+
+        ImGui.Spacing();
+        DrawSubsection(T(translator, "optional_autorotation"));
         Draw("Wrath Combo", "WrathCombo", translator);
         // Dalamud InternalName is still "RotationSolver" (display name is Rotation Solver Reborn).
         Draw("Rotation Solver Reborn", "RotationSolver", translator);
@@ -104,6 +111,11 @@ public sealed class PluginDependencyStatusRenderer(
         ImGui.Separator();
         ImGui.TextUnformatted(title);
         ImGui.Spacing();
+    }
+
+    private static void DrawSubsection(string title)
+    {
+        ImGui.TextUnformatted(title);
     }
 
     private static string T(ITranslator translator, string field) =>

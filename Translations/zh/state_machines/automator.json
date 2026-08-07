@@ -49,5 +49,8 @@
   },
   "farming_pot_chests": {
     "label": "正在收取魔法罐宝箱"
+  },
+  "triaging": {
+    "label": "急救中"
   }
 }
