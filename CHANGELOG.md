@@ -6,6 +6,7 @@
 
 ### Fixes
 - Triage Mode: only swap to Chemist when a raisable corpse is nearby; settle/throttle job changes (avoid “unable to change phantom jobs”)
+- Mob Farmer (#145): reapply Battle Bell every pull when enabled; retry Sprint after Bell until it lands (or short timeout)
 - Apply Buffs button / `/bocchi buff`: cast in place only (no pathfinding); must already stand in the crystal buff circle
 - Pot chests: farm until **Cache Me If You Can** clears (not on first open / silver / leftover elixir); abort when pot dies with no buff
 - Pot chests: do not start between FATE waves — wait until the pot FATE is gone

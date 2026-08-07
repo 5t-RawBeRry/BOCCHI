@@ -25,7 +25,13 @@ public class BuffingHandler
     /// <summary>Battle Bell by action ID — not the current job's Phantom Action I slot.</summary>
     private static readonly Action BattleBell = new(ActionType.Action, PhantomActions.BattleBell);
 
+    private static readonly TimeSpan SprintGiveUp = TimeSpan.FromSeconds(2.5);
+
     private bool castBattleBell;
+
+    private bool sprintDone;
+
+    private DateTimeOffset? sprintWaitStartedUtc;
 
     private SupportJobId? jobToRestore;
 
@@ -33,6 +39,8 @@ public class BuffingHandler
     {
         base.Enter();
         castBattleBell = false;
+        sprintDone = false;
+        sprintWaitStartedUtc = null;
         jobToRestore = null;
 
         if (supportJobs.TryGetCurrent(out SupportJob job)
@@ -45,12 +53,6 @@ public class BuffingHandler
     public override FarmerPhase? Handle()
     {
         if (!config.ApplyBattleBell)
-        {
-            return RestoreThenGather();
-        }
-
-        // Still ringing from a previous pack — no need to re-cast.
-        if (HasBattleBell())
         {
             return RestoreThenGather();
         }
@@ -71,7 +73,7 @@ public class BuffingHandler
             return null;
         }
 
-        // Only force Geo while we still need to cast Bell — after that, restore must win (#94).
+        // Reapply every pull when enabled (#145) — do not skip just because Bell/Clangor is still up.
         if (!castBattleBell)
         {
             if (!IsGeomancer())
@@ -95,15 +97,47 @@ public class BuffingHandler
             return null;
         }
 
+        // Action must have been consumed (covers refresh while buff still ticking).
+        if (BattleBell.GetRecastTime() <= 0f)
+        {
+            if (IsGeomancer() && Actions.PhantomActionI.CanCast())
+            {
+                Actions.PhantomActionI.Cast();
+            }
+
+            return null;
+        }
+
         // Don't swap jobs until the buff actually sticks (#103).
         if (!HasBattleBell())
         {
             return null;
         }
 
-        if (Actions.Sprint.CanCast())
+        return TrySprintThenGather();
+    }
+
+    private FarmerPhase? TrySprintThenGather()
+    {
+        if (!sprintDone)
         {
-            Actions.Sprint.Cast();
+            sprintWaitStartedUtc ??= DateTimeOffset.UtcNow;
+
+            if (Actions.Sprint.CanCast())
+            {
+                Actions.Sprint.Cast();
+                return null;
+            }
+
+            // CanCast false: on CD (cast landed) or still animation-locked after Bell — keep waiting a bit.
+            bool sprintOnCooldown = Actions.Sprint.GetRecastTime() > 0f;
+            bool timedOut = DateTimeOffset.UtcNow - sprintWaitStartedUtc >= SprintGiveUp;
+            if (!sprintOnCooldown && !timedOut)
+            {
+                return null;
+            }
+
+            sprintDone = true;
         }
 
         return RestoreThenGather();

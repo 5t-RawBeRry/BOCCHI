@@ -44,7 +44,7 @@
     },
     "apply_battle_bell": {
       "label": "Use Battle Bell",
-      "tooltip": "Switch to Geomancer and cast Battle Bell before each pull. Skips if the buff is already up, or the cooldown is longer than the wait below."
+      "tooltip": "Switch to Geomancer and cast Battle Bell before every pull (even if the buff is still up), then Sprint. Skips only if the cooldown is longer than the wait below."
     },
     "maximum_battle_bell_wait_time": {
       "label": "Max wait for Battle Bell",
