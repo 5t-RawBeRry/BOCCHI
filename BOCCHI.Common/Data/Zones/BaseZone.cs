@@ -81,6 +81,8 @@ public abstract class BaseZone
 
     public virtual List<PotChestData> GetRerollPotChestData() => [];
 
+    // TODO: Optimize/add Carrot Hunt routes — authored GetCarrotData is unused by the nearby MVP;
+    // wire a full-zone tour (and later live polish) through CarrotHunterService.
     public virtual List<CarrotData> GetCarrotData() => [];
 
     public virtual BuffZone? GetBuffZone() => null;
