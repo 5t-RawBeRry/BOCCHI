@@ -2,6 +2,7 @@
 using BOCCHI.Buff.Services;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.SupportJobs;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
@@ -44,13 +45,8 @@ public class CastingInquiringMindHandler
             return BuffState.ChoosingBuffToApply;
         }
 
-        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
+        if (DismountAssist.TryDismount(conditions))
         {
-            if (!conditions[ConditionFlag.Mounting])
-            {
-                Actions.Dismount.Cast();
-            }
-
             return null;
         }
 

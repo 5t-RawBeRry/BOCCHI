@@ -1,6 +1,5 @@
 using BOCCHI.Automator.Data;
 using BOCCHI.Common.Config;
-using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Data.Zones;
@@ -25,6 +24,9 @@ public class IllegalModeTreasureFillerService
     ILogger<IllegalModeTreasureFillerService> logger
 ) : IOnUpdate
 {
+    // Default Order (0). TriageLatchService is Order 10 so PendingTriage is set before Sight latches.
+    public int Order => 0;
+
     private bool hadActivity;
 
     private bool hadFillerHunt;
@@ -53,7 +55,7 @@ public class IllegalModeTreasureFillerService
         EnsureSurveyMemory(out AutomaticTreasureSurveyMemory survey);
         ClearSurveyLatchIfSightUnavailable(survey);
 
-        bool activityNow = HasActivityWork();
+        bool activityNow = IllegalModeActivityWork.HasFillerBlockingActivity(memory);
         if (hadActivity && !activityNow)
         {
             OnActivityCompleted(survey);
@@ -108,62 +110,15 @@ public class IllegalModeTreasureFillerService
         memory.TryAdd(survey);
     }
 
-    private bool HasActivityWork()
-    {
-        if (memory.TryRemember<GoalMemory>(out GoalMemory _))
-        {
-            return true;
-        }
-
-        if (memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _))
-        {
-            return true;
-        }
-
-        if (memory.TryRemember<WaitingForPotFateMemory>(out WaitingForPotFateMemory _))
-        {
-            return true;
-        }
-
-        if (memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory _))
-        {
-            return true;
-        }
-
-        if (memory.TryRemember<ApplyingBuffsMemory>(out ApplyingBuffsMemory _))
-        {
-            return true;
-        }
-
-        if (memory.TryRemember<CastingTreasureSightMemory>(out CastingTreasureSightMemory _))
-        {
-            return true;
-        }
-
-        if (memory.TryRemember<PendingTriageMemory>(out PendingTriageMemory _)
-            || memory.TryRemember<TriagingMemory>(out TriagingMemory _))
-        {
-            return true;
-        }
-
-        if (memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _))
-        {
-            return true;
-        }
-
-        return false;
-    }
-
     private void OnActivityCompleted(AutomaticTreasureSurveyMemory survey)
     {
-        if (survey.WaitingForSurveyResult || survey.PendingSurvey)
+        if (survey.IsBusy)
         {
             return;
         }
 
         // TriageLatchService owns raise latch; wait until it finishes before Sight.
-        if (memory.TryRemember<PendingTriageMemory>(out PendingTriageMemory _)
-            || memory.TryRemember<TriagingMemory>(out TriagingMemory _))
+        if (TriageSession.IsActive(memory))
         {
             return;
         }
@@ -194,7 +149,7 @@ public class IllegalModeTreasureFillerService
             return;
         }
 
-        if (!survey.PendingSurvey && !survey.WaitingForSurveyResult)
+        if (!survey.IsBusy)
         {
             return;
         }
@@ -269,7 +224,7 @@ public class IllegalModeTreasureFillerService
 
     private bool ShouldStartHunt(AutomaticTreasureSurveyMemory survey)
     {
-        if (!hunter.IsVnavAvailable || survey.PendingSurvey || survey.WaitingForSurveyResult)
+        if (!hunter.IsVnavAvailable || survey.IsBusy)
         {
             return false;
         }

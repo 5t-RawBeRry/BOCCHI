@@ -1,5 +1,5 @@
 using BOCCHI.Common.Config;
-using BOCCHI.Common.Data.Mobs;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Extensions;
 using BOCCHI.MobFarmer.Data;
 using BOCCHI.MobFarmer.Services;
@@ -7,7 +7,6 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
-using Ocelot.Actions;
 using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
@@ -31,7 +30,8 @@ public class GatheringHandler
         List<IBattleNpc> inCombat = scanner.InCombat.ToList();
         List<IBattleNpc> notInCombat = scanner.NotInCombat.ToList();
 
-        if (CountTowardMinimum(inCombat) >= config.MinimumMobsToStartFight)
+        if (MobFarmerPack.CountTowardMinimum(inCombat, config.CountSpecialMobsTowardMinimum)
+            >= config.MinimumMobsToStartFight)
         {
             pathfinder.Stop();
             return FarmerPhase.Stacking;
@@ -59,13 +59,8 @@ public class GatheringHandler
             return null;
         }
 
-        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
+        if (DismountAssist.TryDismount(conditions))
         {
-            if (!conditions[ConditionFlag.Mounting])
-            {
-                Actions.Dismount.Cast();
-            }
-
             return null;
         }
 
@@ -88,15 +83,5 @@ public class GatheringHandler
         });
 
         return null;
-    }
-
-    private int CountTowardMinimum(IEnumerable<IBattleNpc> mobs)
-    {
-        if (config.CountSpecialMobsTowardMinimum)
-        {
-            return mobs.Count();
-        }
-
-        return mobs.Count(m => !MobData.IsSpecialMob(m.NameId));
     }
 }

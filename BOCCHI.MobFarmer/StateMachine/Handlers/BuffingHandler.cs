@@ -1,6 +1,7 @@
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.OccultCrescent;
 using BOCCHI.Common.Data.SupportJobs;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using BOCCHI.MobFarmer.Data;
 using Dalamud.Game.ClientState.Conditions;
@@ -63,17 +64,12 @@ public class BuffingHandler
             return RestoreThenGather();
         }
 
-        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
+        if (DismountAssist.TryDismount(conditions))
         {
-            if (!conditions[ConditionFlag.Mounting])
-            {
-                Actions.Dismount.Cast();
-            }
-
             return null;
         }
 
-        // Reapply every pull when enabled (#145) — do not skip just because Bell/Clangor is still up.
+        // Reapply every pull when enabled (#145).
         if (!castBattleBell)
         {
             if (!IsGeomancer())
@@ -129,7 +125,7 @@ public class BuffingHandler
                 return null;
             }
 
-            // CanCast false: on CD (cast landed) or still animation-locked after Bell — keep waiting a bit.
+            // CanCast false: Sprint on CD (ok) or still animation-locked after Bell.
             bool sprintOnCooldown = Actions.Sprint.GetRecastTime() > 0f;
             bool timedOut = DateTimeOffset.UtcNow - sprintWaitStartedUtc >= SprintGiveUp;
             if (!sprintOnCooldown && !timedOut)

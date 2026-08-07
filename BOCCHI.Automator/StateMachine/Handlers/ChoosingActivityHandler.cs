@@ -61,8 +61,7 @@ public class ChoosingActivityHandler
             return StatePriority.Never;
         }
 
-        if (memory.TryRemember<PendingTriageMemory>(out PendingTriageMemory _)
-            || memory.TryRemember<TriagingMemory>(out TriagingMemory _))
+        if (TriageSession.IsActive(memory))
         {
             return StatePriority.Never;
         }
@@ -70,7 +69,7 @@ public class ChoosingActivityHandler
         // Finish camp survey before picking the next CE/FATE.
         // (filler clears the latch if Treasure Sight is unavailable).
         if (memory.TryRemember<AutomaticTreasureSurveyMemory>(out AutomaticTreasureSurveyMemory survey)
-            && (survey.PendingSurvey || survey.WaitingForSurveyResult))
+            && survey.IsBusy)
         {
             return StatePriority.Never;
         }

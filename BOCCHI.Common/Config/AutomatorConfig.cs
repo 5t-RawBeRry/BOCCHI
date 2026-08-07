@@ -58,8 +58,8 @@ public class AutomatorConfig : IAutoConfig
     public bool PhantomJobsLevelingMode { get; set; } = false;
 
     /// <summary>
-    ///     After a FATE/CE ends, switch to Phantom Chemist and raise nearby dead players
-    ///     (skip anyone who already has a raise pending).
+    ///     After FATE/CE: if raisable corpses are nearby, Chemist Revive then continue Illegal Mode.
+    ///     No bodies → no swap / no wait; Illegal Mode continues as usual.
     /// </summary>
     [Checkbox(Order = 12)]
     public bool EnableTriageMode { get; set; } = false;

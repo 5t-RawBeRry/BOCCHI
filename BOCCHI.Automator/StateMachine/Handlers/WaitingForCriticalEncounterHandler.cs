@@ -41,8 +41,6 @@ public class WaitingForCriticalEncounterHandler
     ///     If player EventId never appears, still hand off after this so we do not sit in Waiting
     ///     for the whole fight (CE AI never enables).
     /// </summary>
-    private static readonly TimeSpan BattleHandoffGrace = TimeSpan.FromSeconds(3);
-
     public override StatePriority GetScore()
     {
         if (!TryGetGoalEncounter(out CriticalEncounter ce))
@@ -158,20 +156,7 @@ public class WaitingForCriticalEncounterHandler
             return false;
         }
 
-        wait.MarkBattleStarted();
-
-        if (context.HasEncounterEnemies(ce.Id))
-        {
-            return true;
-        }
-
-        if (conditions[ConditionFlag.InCombat])
-        {
-            return true;
-        }
-
-        return wait.BattleStartedAtUtc is { } started
-               && DateTimeOffset.UtcNow - started >= BattleHandoffGrace;
+        return CriticalEncounterBattleHandoff.IsReady(wait, ce.Id, context, conditions);
     }
 
     private bool TryGetGoalEncounter(out CriticalEncounter ce)

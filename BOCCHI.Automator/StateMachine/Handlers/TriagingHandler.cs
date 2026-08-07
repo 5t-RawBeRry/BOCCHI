@@ -1,8 +1,10 @@
 using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Services;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.OccultCrescent;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.SupportJobs;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.SubKinds;
@@ -10,7 +12,6 @@ using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using Ocelot.Actions;
 using Ocelot.Extensions;
 using Ocelot.Pathfinding.Extensions;
 using Ocelot.Services.Logger;
@@ -21,7 +22,7 @@ using Action = Ocelot.Actions.Action;
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
 /// <summary>
-///     After FATE/CE: Chemist Revive on nearby dead players. Skips anyone who already has Raise pending.
+///     After FATE/CE with nearby dead players: Chemist → Revive (skip Raise pending) → restore job → Return.
 /// </summary>
 public class TriagingHandler
 (
@@ -39,12 +40,6 @@ public class TriagingHandler
 {
     private static readonly Action Revive = new(ActionType.Action, PhantomActions.Revive);
 
-    private const float RaiseRangeYalms = 28f;
-
-    /// <summary>How long to watch for corpses after latch before giving up (no Chemist swap).</summary>
-    private static readonly TimeSpan CorpseWaitWindow = TimeSpan.FromSeconds(8);
-
-    /// <summary>Wait after entering before attempting a phantom-job change (game rejects immediate swaps).</summary>
     private static readonly TimeSpan JobSwapSettle = TimeSpan.FromSeconds(2);
 
     private static readonly TimeSpan SessionTimeout = TimeSpan.FromSeconds(90);
@@ -55,19 +50,13 @@ public class TriagingHandler
     {
         if (!context.IsIllegalMode || !config.EnableTriageMode)
         {
-            memory.Forget<PendingTriageMemory>();
-            memory.Forget<TriagingMemory>();
+            TriageSession.Clear(memory);
             return StatePriority.Never;
         }
 
         if (memory.TryRemember<TriagingMemory>(out TriagingMemory _))
         {
-            if (conditions[ConditionFlag.Unconscious])
-            {
-                return StatePriority.Never;
-            }
-
-            return StatePriority.Critical;
+            return conditions[ConditionFlag.Unconscious] ? StatePriority.Never : StatePriority.Critical;
         }
 
         if (conditions[ConditionFlag.Unconscious] || conditions[ConditionFlag.InCombat])
@@ -75,31 +64,19 @@ public class TriagingHandler
             return StatePriority.Never;
         }
 
-        if (!memory.TryRemember<PendingTriageMemory>(out PendingTriageMemory pending))
+        if (!memory.TryRemember<PendingTriageMemory>(out PendingTriageMemory _))
         {
             return StatePriority.Never;
         }
 
-        SupportJob chemist = supportJobs.Create(SupportJobId.PhantomChemist);
-        if (chemist.Level < 1)
+        if (!SupportJobChemist.IsUnlocked(supportJobs) || !RaiseableCorpses.Any(objects))
         {
+            // No bodies (or Chemist unavailable) — clear and let Return proceed.
             memory.Forget<PendingTriageMemory>();
             return StatePriority.Never;
         }
 
-        // Do not enter / swap Chemist unless someone nearby actually needs a raise.
-        if (FindNearestRaiseableCorpse() != null)
-        {
-            return StatePriority.Always;
-        }
-
-        if (DateTimeOffset.UtcNow - pending.LatchedUtc >= CorpseWaitWindow)
-        {
-            memory.Forget<PendingTriageMemory>();
-            logger.Info("Triage Mode skipped — no raisable targets nearby");
-        }
-
-        return StatePriority.Never;
+        return StatePriority.Always;
     }
 
     public override void Enter()
@@ -136,26 +113,20 @@ public class TriagingHandler
             return;
         }
 
-        // Combat can start mid-triage — pause, stay committed via GetScore.
-        if (conditions[ConditionFlag.InCombat] || IsJobChangeBlocked())
+        if (conditions[ConditionFlag.InCombat] || PhantomJobChangeGate.IsBlocked(conditions))
         {
             return;
         }
 
-        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
+        if (DismountAssist.TryDismount(conditions))
         {
-            if (!conditions[ConditionFlag.Mounting])
-            {
-                Actions.Dismount.Cast();
-            }
-
             return;
         }
 
-        IPlayerCharacter? corpse = FindNearestRaiseableCorpse();
+        IPlayerCharacter? corpse = RaiseableCorpses.FindNearest(objects);
         if (corpse == null)
         {
-            logger.Info("Triage Mode: no more raisable targets");
+            logger.Info("Triage Mode: done — restoring job then Return");
             FinishTriage();
             return;
         }
@@ -175,13 +146,13 @@ public class TriagingHandler
             ? self.Position.Distance2D(corpse.Position)
             : float.MaxValue;
 
-        if (distance > RaiseRangeYalms)
+        if (distance > RaiseableCorpses.CastRangeYalms)
         {
             if (pathfinder.IsIdle())
             {
                 pathfinder.PathfindAndMoveTo(new(corpse.Position)
                 {
-                    DistanceThreshold = RaiseRangeYalms - 2f,
+                    DistanceThreshold = RaiseableCorpses.CastRangeYalms - 2f,
                     ShouldSnapToFloor = true
                 });
             }
@@ -210,13 +181,7 @@ public class TriagingHandler
             return;
         }
 
-        if (changer.IsBusy())
-        {
-            return;
-        }
-
-        // Game rejects rapid ChangeSupportJob spam with "unable to change phantom jobs".
-        if (!EzThrottler.Throttle("TriagingHandler::JobSwap", 2500))
+        if (changer.IsBusy() || !EzThrottler.Throttle("TriagingHandler::JobSwap", 2500))
         {
             return;
         }
@@ -230,76 +195,12 @@ public class TriagingHandler
         changer.Change(SupportJobId.PhantomChemist);
     }
 
-    private bool IsJobChangeBlocked()
-    {
-        return conditions[ConditionFlag.BetweenAreas]
-            || conditions[ConditionFlag.BetweenAreas51]
-            || conditions[ConditionFlag.Casting]
-            || conditions[ConditionFlag.Casting87]
-            || conditions[ConditionFlag.Jumping]
-            || conditions[ConditionFlag.Jumping61]
-            || conditions[ConditionFlag.Occupied]
-            || conditions[ConditionFlag.Occupied30]
-            || conditions[ConditionFlag.Occupied33]
-            || conditions[ConditionFlag.Occupied38]
-            || conditions[ConditionFlag.Occupied39]
-            || conditions[ConditionFlag.OccupiedInEvent]
-            || conditions[ConditionFlag.OccupiedInQuestEvent]
-            || conditions[ConditionFlag.OccupiedSummoningBell]
-            || conditions[ConditionFlag.OccupiedInCutSceneEvent];
-    }
-
     private void FinishTriage()
     {
         pathfinder.Stop();
-        memory.Forget<PendingTriageMemory>();
-        memory.Forget<TriagingMemory>();
+        TriageSession.Clear(memory);
     }
 
-    private IPlayerCharacter? FindNearestRaiseableCorpse()
-    {
-        if (objects.LocalPlayer is not { } self)
-        {
-            return null;
-        }
-
-        IPlayerCharacter? best = null;
-        float bestDist = float.MaxValue;
-
-        foreach (IGameObject obj in objects)
-        {
-            if (obj is not IPlayerCharacter player
-                || player.EntityId == self.EntityId
-                || !player.IsDead
-                || !player.IsTargetable)
-            {
-                continue;
-            }
-
-            // Already has a raise prompt — do not waste Revive (Discord reminder).
-            if (player.StatusList.Has(PlayerStatuses.Raise))
-            {
-                continue;
-            }
-
-            float dist = self.Position.Distance2D(player.Position);
-            if (dist > RaiseRangeYalms + 15f || dist >= bestDist)
-            {
-                continue;
-            }
-
-            best = player;
-            bestDist = dist;
-        }
-
-        return best;
-    }
-
-    private static unsafe bool TryCastRevive(IGameObject target)
-    {
-        return ActionManager.Instance()->UseAction(
-            ActionType.Action,
-            PhantomActions.Revive,
-            target.GameObjectId);
-    }
+    private static unsafe bool TryCastRevive(IGameObject target) =>
+        ActionManager.Instance()->UseAction(ActionType.Action, PhantomActions.Revive, target.GameObjectId);
 }

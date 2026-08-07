@@ -87,8 +87,7 @@ public class ReturningHandler
         }
 
         // Raise nearby players before leaving the FATE/CE site.
-        if (memory.TryRemember<PendingTriageMemory>(out PendingTriageMemory _)
-            || memory.TryRemember<TriagingMemory>(out TriagingMemory _))
+        if (TriageSession.IsActive(memory))
         {
             return StatePriority.Never;
         }
@@ -168,13 +167,7 @@ public class ReturningHandler
         }
 
         // Fallback: some clients block Return on mount.
-        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
-        {
-            if (Actions.Dismount.CanCast())
-            {
-                Actions.Dismount.Cast();
-            }
-        }
+        DismountAssist.TryDismount(conditions);
     }
 
     public override void Exit(AutomatorState next)

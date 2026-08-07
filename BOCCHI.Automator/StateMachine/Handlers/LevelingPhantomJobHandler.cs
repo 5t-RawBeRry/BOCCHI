@@ -1,4 +1,5 @@
 using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Services;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.SupportJobs;
@@ -28,8 +29,11 @@ public class LevelingPhantomJobHandler
 
         if (memory.TryRemember<CastingTreasureSightMemory>(out CastingTreasureSightMemory _)
             || memory.TryRemember<ApplyingBuffsMemory>(out ApplyingBuffsMemory _)
+            || TriageSession.IsActive(memory)
             || memory.TryRemember<BuffSupportJobMemory>(out BuffSupportJobMemory _)
             || memory.TryRemember<TreasureSightSupportJobMemory>(out TreasureSightSupportJobMemory _)
+            || memory.TryRemember<TriageSupportJobMemory>(out TriageSupportJobMemory _)
+            || memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _)
             || memory.TryRemember<GoalMemory>(out GoalMemory _)
             || memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _)
             || memory.TryRemember<NavigationInterruptedMemory>(out NavigationInterruptedMemory _))

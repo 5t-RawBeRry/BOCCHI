@@ -1,9 +1,7 @@
 using BOCCHI.Common.Config;
-using BOCCHI.Common.Data.Mobs;
 using BOCCHI.MobFarmer.Data;
 using BOCCHI.MobFarmer.Services;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using Ocelot.States.Flow;
 
@@ -35,22 +33,12 @@ public class WaitingHandler
         }
 
         // Free (untargeted) selected mobs only — contested packs must not start a loop.
-        int free = CountTowardMinimum(scanner.NotInCombat);
+        int free = MobFarmerPack.CountTowardMinimum(scanner.NotInCombat, config.CountSpecialMobsTowardMinimum);
         if (free == 0)
         {
             return null;
         }
 
         return free >= config.MinimumMobsToStartLoop ? FarmerPhase.Buffing : null;
-    }
-
-    private int CountTowardMinimum(IEnumerable<IBattleNpc> mobs)
-    {
-        if (config.CountSpecialMobsTowardMinimum)
-        {
-            return mobs.Count();
-        }
-
-        return mobs.Count(m => !MobData.IsSpecialMob(m.NameId));
     }
 }

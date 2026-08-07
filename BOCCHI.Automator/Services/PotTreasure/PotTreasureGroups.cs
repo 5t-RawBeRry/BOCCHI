@@ -9,9 +9,6 @@ namespace BOCCHI.Automator.Services.PotTreasure;
 ///     South Horn uses authored directional groups; North Horn (and any other zone) bins authored
 ///     flat <see cref="IZone.GetPotChestData"/> positions by compass bearing from the pot center.
 /// </summary>
-/// <remarks>
-///     TODO: Optimize pot farming and pot chest routes — better group ordering, pathing, and filler-loop efficiency for Magical Elixir chest sweeps.
-/// </remarks>
 public static class PotTreasureGroups
 {
     public static bool CanRunSmart(IZone zone, int fateId) =>

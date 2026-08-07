@@ -156,8 +156,6 @@ public sealed class CarrotHunterService
 
     private void TickIdle()
     {
-        // TODO: Optimize/add Carrot Hunt routes — when building a full-zone tour, seed from
-        // IZone.GetCarrotData() instead of only chasing live carrots in detection range.
         Carrot? next = FindNextCarrot();
         if (next == null)
         {

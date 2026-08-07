@@ -1,4 +1,5 @@
 using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Services;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.SupportJobs;
@@ -39,8 +40,7 @@ public class CastingTreasureSightHandler
             return StatePriority.Never;
         }
 
-        SupportJob freelancer = supportJobs.Create(SupportJobId.PhantomFreelancer);
-        if (freelancer.Level < 10)
+        if (!SupportJobTreasureSight.CanCast(supportJobs))
         {
             return StatePriority.Never;
         }
@@ -93,19 +93,14 @@ public class CastingTreasureSightHandler
             return;
         }
 
-        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
+        if (DismountAssist.TryDismount(conditions))
         {
-            if (!conditions[ConditionFlag.Mounting])
-            {
-                Actions.Dismount.Cast();
-            }
-
             return;
         }
 
         if (current.Id != SupportJobId.PhantomFreelancer)
         {
-            if (!changer.IsBusy())
+            if (!changer.IsBusy() && !PhantomJobChangeGate.IsBlocked(conditions))
             {
                 changer.Change(SupportJobId.PhantomFreelancer);
             }

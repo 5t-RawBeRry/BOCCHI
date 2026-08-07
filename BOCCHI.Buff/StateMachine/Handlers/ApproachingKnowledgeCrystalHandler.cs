@@ -5,7 +5,6 @@ using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
-using Ocelot.Actions;
 using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
@@ -46,17 +45,12 @@ public class ApproachingKnowledgeCrystalHandler
         {
             pathfinder.Stop();
 
-            if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
-            {
-                if (!conditions[ConditionFlag.Mounting])
-                {
-                    Actions.Dismount.Cast();
-                }
+        if (DismountAssist.TryDismount(conditions))
+        {
+            return null;
+        }
 
-                return null;
-            }
-
-            return BuffState.ChoosingBuffToApply;
+        return BuffState.ChoosingBuffToApply;
         }
 
         // Standalone Apply Buffs /buff — cast in place only; Illegal Mode still walks in.

@@ -19,10 +19,7 @@ public sealed class InquiringMindAttemptedMemory;
 public sealed class CastingTreasureSightMemory;
 
 /// <summary>Post-FATE/CE: raise nearby players as Phantom Chemist before leaving.</summary>
-public sealed class PendingTriageMemory
-{
-    public readonly DateTimeOffset LatchedUtc = DateTimeOffset.UtcNow;
-}
+public sealed class PendingTriageMemory;
 
 /// <summary>Sticky while TriagingHandler is actively swapping/casting raises.</summary>
 public sealed class TriagingMemory;
@@ -42,6 +39,9 @@ public sealed class AutomaticTreasureSurveyMemory
 
     /// <summary>Waiting for WideText after a Sight cast.</summary>
     public bool WaitingForSurveyResult { get; set; }
+
+    /// <summary>True while a survey is latched or waiting for the chat result.</summary>
+    public bool IsBusy => PendingSurvey || WaitingForSurveyResult;
 
     /// <summary>Accept surveys with Tracker.SurveyRevision &gt; this value.</summary>
     public int MinAcceptedRevision { get; set; }
@@ -247,9 +247,6 @@ public sealed class PotChestFarmMemory
     public int RefineSteps { get; set; }
 
     public Vector3? RefineTarget { get; set; }
-
-    /// <summary>Finish farm after the current open chain completes (unused — farm ends when Cache Me clears).</summary>
-    public bool FinishAfterOpen { get; set; }
 
     /// <summary>When we started waiting for the current (peek) blind chest to spawn.</summary>
     public DateTimeOffset WaitingForSpawnSince { get; set; } = DateTimeOffset.MinValue;

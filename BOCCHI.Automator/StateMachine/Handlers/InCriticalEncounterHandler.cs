@@ -32,8 +32,6 @@ public class InCriticalEncounterHandler
     ITargetManager targetManager
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InCriticalEncounter)
 {
-    private static readonly TimeSpan BattleHandoffGrace = TimeSpan.FromSeconds(3);
-
     public override StatePriority GetScore()
     {
         if (context.IsInCriticalEncounter())
@@ -134,12 +132,7 @@ public class InCriticalEncounterHandler
             return false;
         }
 
-        wait.MarkBattleStarted();
-
-        if (context.HasEncounterEnemies(encounter.Id)
-            || conditions[ConditionFlag.InCombat]
-            || (wait.BattleStartedAtUtc is { } started
-                && DateTimeOffset.UtcNow - started >= BattleHandoffGrace))
+        if (CriticalEncounterBattleHandoff.IsReady(wait, encounter.Id, context, conditions))
         {
             ce = encounter;
             return true;

@@ -1,4 +1,4 @@
-﻿using Dalamud.Game.ClientState.Fates;
+using Dalamud.Game.ClientState.Fates;
 using Ocelot.Services.Data;
 using System.Numerics;
 using FateData = Lumina.Excel.Sheets.Fate;

@@ -1,11 +1,11 @@
 ﻿using BOCCHI.Buff.Data;
 using BOCCHI.Buff.Services;
 using BOCCHI.Common.Data.SupportJobs;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Extensions;
 using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
-using Ocelot.Actions;
 using Ocelot.States.Flow;
 
 namespace BOCCHI.Buff.StateMachine.Handlers.ApplyingBuff;
@@ -43,14 +43,9 @@ public abstract class BaseHandler
             return BuffState.ChoosingBuffToApply;
         }
 
-        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
+        // Don't gate on CanCast — mounted at crystal with a blocked dismount soft-locks.
+        if (DismountAssist.TryDismount(conditions))
         {
-            // Don't gate on CanCast — mounted at crystal with a blocked dismount soft-locks.
-            if (!conditions[ConditionFlag.Mounting])
-            {
-                Actions.Dismount.Cast();
-            }
-
             return null;
         }
 

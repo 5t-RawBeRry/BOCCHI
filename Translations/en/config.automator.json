@@ -53,7 +53,7 @@
     },
     "enable_triage_mode": {
       "label": "Triage Mode",
-      "tooltip": "When a FATE or CE ends, switch to Phantom Chemist and Revive nearby dead players, then switch back. Skips anyone who already has a raise pending. Needs Chemist unlocked. Happens before Return and before Illegal Mode Treasure Sight."
+      "tooltip": "After a FATE or CE, if dead players are nearby: briefly switch to Phantom Chemist, Revive them (skip raise-pending), switch back, then continue Illegal Mode (Return / Sight / next activity). If nobody needs a raise, Illegal Mode continues unchanged — no Chemist swap and no wait. Needs Chemist unlocked."
     },
     "should_cast_treasure_sight": {
       "label": "Cast Treasure Sight at camp",

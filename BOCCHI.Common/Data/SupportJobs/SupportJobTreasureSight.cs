@@ -1,3 +1,5 @@
+using BOCCHI.Common.Services;
+
 namespace BOCCHI.Common.Data.SupportJobs;
 
 public static class SupportJobTreasureSight

@@ -82,10 +82,7 @@ public class Automator
         }
 
         // Soft-stop movement so Treasure Hunt can own vnav; keep GoalMemory if any.
-        memory.Forget<GoalPathStepMemory>();
-        memory.Forget<WaitingForCriticalEncounterMemory>();
-        memory.Forget<WaitingForPotFateMemory>();
-        memory.Forget<SuspendTravelForActivityMemory>();
+        IllegalModeActivityWork.ForgetTravelLatches(memory);
         manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
         pathfinder.Stop();
         vnav.Stop();
@@ -155,11 +152,7 @@ public class Automator
 
         logger.Info("Refreshing pathfinding from current position");
         memory.Forget<NavigationInterruptedMemory>();
-        memory.Forget<GoalPathStepMemory>();
-        memory.Forget<WaitingForCriticalEncounterMemory>();
-        memory.Forget<WaitingForPotFateMemory>();
-        memory.Forget<SuspendTravelForActivityMemory>();
-        memory.Forget<PotChestFarmMemory>();
+        IllegalModeActivityWork.ForgetTravelLatches(memory, includePotChests: true);
         manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
         pathfinder.Stop();
         vnav.Stop();
@@ -232,10 +225,7 @@ public class Automator
 
                 logger.Info("Goal no longer valid — aborting pathfinding");
                 memory.Forget<GoalMemory>();
-                memory.Forget<GoalPathStepMemory>();
-                memory.Forget<WaitingForCriticalEncounterMemory>();
-                memory.Forget<WaitingForPotFateMemory>();
-                memory.Forget<SuspendTravelForActivityMemory>();
+                IllegalModeActivityWork.ForgetTravelLatches(memory);
                 manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
                 pathfinder.Stop();
                 vnav.Stop();
