@@ -152,30 +152,33 @@ public class CompletionistRenderer
 
         if (ImGui.IsItemHovered())
         {
+            bool canTravel = navigation.CanPathfind && entry.CanPath;
             ImGui.SetTooltip(translator.T(
-                navigation.CanPathfind
+                canTravel
                     ? ".completionist.survey_tooltip"
                     : ".completionist.survey_tooltip_flag_only"));
         }
 
         if (clicked)
         {
-            GoToSurvey(entry, noteName);
+            // Click = map flag only. Ctrl+click = flag + Lifestream + vnav to authored world coords.
+            bool travel = ImGui.GetIO().KeyCtrl;
+            GoToSurvey(entry, noteName, travel);
         }
     }
 
-    private void GoToSurvey(FieldNoteTargets.Entry entry, string noteName)
+    private void GoToSurvey(FieldNoteTargets.Entry entry, string noteName, bool travel)
     {
         float mapX = entry.MapX!.Value;
         float mapY = entry.MapY!.Value;
-        if (!TryResolveSurveyLink(mapX, mapY, out MapLinkPayload link, out Vector3 world))
+        if (!TryResolveSurveyLink(mapX, mapY, out MapLinkPayload link))
         {
             return;
         }
 
         gameGui.OpenMapWithMapLink(link);
 
-        if (!navigation.CanPathfind)
+        if (!travel || !entry.CanPath || !navigation.CanPathfind)
         {
             return;
         }
@@ -191,13 +194,12 @@ public class CompletionistRenderer
         }
 
         string title = $"{translator.T(".completionist.sources.survey_point")} — {noteName}";
-        navigation.PathToPoint(world, title, $"survey_{entry.MkdLoreId}");
+        navigation.PathToPoint(entry.WorldPosition!.Value, title, $"survey_{entry.MkdLoreId}");
     }
 
-    private bool TryResolveSurveyLink(float mapX, float mapY, out MapLinkPayload link, out Vector3 world)
+    private bool TryResolveSurveyLink(float mapX, float mapY, out MapLinkPayload link)
     {
         link = null!;
-        world = default;
 
         IZone zone = zones.GetZone();
         uint territoryId = zone.TerritoryType;
@@ -213,8 +215,6 @@ public class CompletionistRenderer
         }
 
         link = new MapLinkPayload(territoryId, mapId, mapX, mapY);
-        // MapLink raw ints are world XZ × 1000; Y is snapped by pathfinding.
-        world = new Vector3(link.RawX / 1000f, 0f, link.RawY / 1000f);
         return true;
     }
 

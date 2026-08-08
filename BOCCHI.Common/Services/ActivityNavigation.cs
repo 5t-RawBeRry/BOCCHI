@@ -2,7 +2,10 @@ using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph;
+using BOCCHI.Common.Data.Zones.Graph.Traversal;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
+using Ocelot.Actions;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Chain.Recipes;
@@ -27,12 +30,20 @@ public class ActivityNavigation
     IVNavmeshIpc vnav,
     ILifestreamIpc lifestream,
     ICondition conditions,
+    IGameGui gui,
     IPlayer player,
     IFramework framework,
     AutomatorConfig automatorConfig,
     ILogger<ActivityNavigation> logger
 ) : IActivityNavigation
 {
+    private enum SurveyRoute
+    {
+        Direct,
+        FieldAethernet,
+        ReturnThenAethernet,
+    }
+
     private const string ChainPrefix = "ActivityGoto::";
 
     private int navigationGeneration;
@@ -70,7 +81,98 @@ public class ActivityNavigation
         StartPath(destination, name, id, treatAsActivity: true);
 
     public void PathToPoint(Vector3 destination, string name, string id) =>
-        StartPath(destination, name, id, treatAsActivity: false);
+        StartPath(SeedDestinationAltitude(destination), name, id, treatAsActivity: false);
+
+    /// <summary>
+    ///     Survey travel via live map flag: same routing as <see cref="PathToPoint"/>.
+    /// </summary>
+    public void PathToFlag(string name, string id)
+    {
+        if (!CanPathfind)
+        {
+            logger.Warning("Navmesh not ready — cannot path to flag for {Name}", name);
+            return;
+        }
+
+        if (TryResolveFlagPoint(out Vector3 point))
+        {
+            logger.Info("FlagToPoint → {Point:f1} for {Name}", point, name);
+            StartPath(point, name, id, treatAsActivity: false);
+            return;
+        }
+
+        // Flag marker can lag one frame after OpenMapWithMapLink.
+        _ = PathToFlagDeferredAsync(name, id);
+    }
+
+    private async Task PathToFlagDeferredAsync(string name, string id)
+    {
+        try
+        {
+            for (int attempt = 0; attempt < 8; attempt++)
+            {
+                await Task.Delay(50).ConfigureAwait(false);
+
+                bool started = false;
+                await framework.Run(() =>
+                {
+                    if (!TryResolveFlagPoint(out Vector3 resolved))
+                    {
+                        return;
+                    }
+
+                    logger.Info("FlagToPoint → {Point:f1} for {Name} (retry {Attempt})", resolved, name, attempt + 1);
+                    StartPath(resolved, name, id, treatAsActivity: false);
+                    started = true;
+                }).ConfigureAwait(false);
+
+                if (started)
+                {
+                    return;
+                }
+            }
+
+            logger.Warning("FlagToPoint unavailable for {Name} after retries", name);
+        }
+        catch (Exception ex)
+        {
+            logger.Error(ex, "Failed PathToFlag for {Name}", name);
+        }
+    }
+
+    private bool TryResolveFlagPoint(out Vector3 point)
+    {
+        point = default;
+        Vector3? flag = vnav.FlagToPoint();
+        if (flag is not { } resolved)
+        {
+            return false;
+        }
+
+        point = resolved;
+        return true;
+    }
+
+    /// <summary>
+    ///     Fallback when FlagToPoint is unavailable. Map flags often arrive as Y=0;
+    ///     vnav's moveflag seeds floor queries from Y=1024.
+    /// </summary>
+    private Vector3 SeedDestinationAltitude(Vector3 destination)
+    {
+        Vector3 fromHigh = new(destination.X, 1024f, destination.Z);
+        Vector3 floored = vnav.FindPointOnFloor(fromHigh, 5f);
+        if (MathF.Abs(floored.Y - 1024f) > 1f)
+        {
+            return floored;
+        }
+
+        IZone zone = zones.GetZone();
+        AethernetData? near = zone.GetAetherytes()
+            .OrderBy(a => destination.Distance2D(a.Position))
+            .FirstOrDefault();
+        float y = near?.Position.Y ?? player.Position.Y;
+        return new Vector3(destination.X, y, destination.Z);
+    }
 
     private void StartPath(Vector3 destination, string name, string id, bool treatAsActivity)
     {
@@ -80,15 +182,23 @@ public class ActivityNavigation
             return;
         }
 
-        // Near an aetheryte: Lifestream hop then vnav. Otherwise vnav from here.
-        if (CanTeleport(destination, out _))
+        // Surveys: pick direct walk vs field aethernet vs Return+aethernet by estimated cost.
+        if (!treatAsActivity)
         {
             int generation = BeginNavigation();
-            _ = PathViaAethernetAsync(destination, name, id, generation, treatAsActivity);
+            _ = PathToSurveyAsync(destination, name, id, generation);
             return;
         }
 
-        if (!TryResolveWalkTarget(destination, player.Position, treatAsActivity, out Vector3 approach, out bool alreadyAtCeRing))
+        // World FATE/CE Path: hop only when already in Lifestream range (existing button behavior).
+        if (CanTeleport(destination, out _))
+        {
+            int generation = BeginNavigation();
+            _ = PathViaAethernetAsync(destination, name, id, generation, treatAsActivity: true);
+            return;
+        }
+
+        if (!TryResolveWalkTarget(destination, player.Position, treatAsActivity: true, out Vector3 approach, out bool alreadyAtCeRing))
         {
             return;
         }
@@ -103,7 +213,243 @@ public class ActivityNavigation
 
         logger.Info("Pathfinding to {Name} at {Destination:f1}", name, approach);
         CancelActivityChains();
-        _ = manager.Manage(BuildPathChain($"{ChainPrefix}Path::{id}", approach));
+        _ = manager.Manage(BuildPathChain($"{ChainPrefix}Path::{id}", () => approach, treatAsActivity: true));
+    }
+
+    /// <summary>
+    ///     Ctrl+click survey: compare direct vnav, walk-to-shard + Lifestream, and Return + Lifestream.
+    /// </summary>
+    private async Task PathToSurveyAsync(Vector3 destination, string name, string id, int generation)
+    {
+        try
+        {
+            Vector3 start = player.Position;
+            IZone zone = zones.GetZone();
+            bool inCamp = zone.IsInBasecamp();
+
+            (AethernetData? best, float walkFromBest) = await SelectBestAetheryteWithDistanceAsync(destination, treatAsActivity: false)
+                .ConfigureAwait(false);
+            if (generation != navigationGeneration)
+            {
+                return;
+            }
+
+            float directScore = await MeasureWalkDistanceAsync(start, destination).ConfigureAwait(false);
+            if (generation != navigationGeneration)
+            {
+                return;
+            }
+
+            float walkToLifestream = 0f;
+            if (!AetheryteApproach.IsReadyForLifestream(zone, lifestream, start))
+            {
+                AethernetData? nearest = zone.GetAetherytes()
+                    .OrderBy(a => start.Distance2D(a.Position))
+                    .FirstOrDefault();
+                walkToLifestream = nearest == null
+                    ? float.PositiveInfinity
+                    : await MeasureWalkDistanceAsync(start, nearest.GetCampStandOffPosition(start))
+                        .ConfigureAwait(false);
+            }
+
+            if (generation != navigationGeneration)
+            {
+                return;
+            }
+
+            bool alreadyAtBest = best != null && AetheryteApproach.IsAlreadyAtAetheryte(best, start);
+            bool bestIsMain = best != null && best.Id == zone.GetMainAetheryte().Id;
+
+            float fieldScore = float.PositiveInfinity;
+            if (best != null && !float.IsPositiveInfinity(walkFromBest))
+            {
+                fieldScore = alreadyAtBest
+                    ? walkFromBest
+                    : walkToLifestream + GraphTraverser.TeleportCost + walkFromBest;
+            }
+
+            float returnScore = float.PositiveInfinity;
+            if (!inCamp
+                && best != null
+                && !float.IsPositiveInfinity(walkFromBest)
+                && CanOfferSurveyReturn())
+            {
+                float teleportLeg = bestIsMain ? 0f : GraphTraverser.TeleportCost;
+                returnScore = GraphTraverser.ReturnCost + teleportLeg + walkFromBest;
+            }
+
+            SurveyRoute route = SurveyRoute.Direct;
+            float bestScore = directScore;
+            if (fieldScore < bestScore)
+            {
+                bestScore = fieldScore;
+                route = SurveyRoute.FieldAethernet;
+            }
+
+            if (returnScore < bestScore)
+            {
+                bestScore = returnScore;
+                route = SurveyRoute.ReturnThenAethernet;
+            }
+
+            if (float.IsPositiveInfinity(bestScore))
+            {
+                route = CanSurveyAethernet(out _) ? SurveyRoute.FieldAethernet : SurveyRoute.Direct;
+            }
+
+            logger.Info(
+                "Survey route for {Name}: {Route} (direct={Direct:f0}, field={Field:f0}, return={Return:f0})",
+                name,
+                route,
+                directScore,
+                fieldScore,
+                returnScore);
+
+            await framework.Run(() =>
+            {
+                if (generation != navigationGeneration)
+                {
+                    return;
+                }
+
+                ExecuteSurveyRoute(route, destination, best, name, id);
+            }).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            logger.Error(ex, "Failed survey path toward {Name}", name);
+        }
+    }
+
+    private bool CanOfferSurveyReturn()
+    {
+        if (conditions[ConditionFlag.Unconscious] || conditions[ConditionFlag.InCombat])
+        {
+            return false;
+        }
+
+        // Mounted Return often needs a dismount first — still offer the route.
+        return Actions.Return.CanCast()
+               || conditions[ConditionFlag.Mounted]
+               || conditions[ConditionFlag.Mounting];
+    }
+
+    private void ExecuteSurveyRoute(
+        SurveyRoute route,
+        Vector3 destination,
+        AethernetData? target,
+        string name,
+        string id)
+    {
+        if (!TryResolveWalkTarget(destination, player.Position, treatAsActivity: false, out Vector3 approach, out _))
+        {
+            return;
+        }
+
+        Func<Vector3> walkTo = () => approach;
+        string chainName = $"{ChainPrefix}Path::{id}";
+
+        if (route == SurveyRoute.Direct)
+        {
+            logger.Info("Pathfinding directly to survey {Name} at {Destination:f1}", name, approach);
+            _ = manager.Manage(BuildPathChain(chainName, walkTo, treatAsActivity: false));
+            return;
+        }
+
+        bool prependReturn = route == SurveyRoute.ReturnThenAethernet;
+        IChain chain = chains.Create(chainName);
+        if (prependReturn)
+        {
+            logger.Info("Return to base camp, then path to survey {Name}", name);
+            chain = ReturnToBaseCamp.Append(chain, zones, conditions, gui, pathfinder, vnav);
+        }
+
+        if (target == null)
+        {
+            chain = AppendPath(chain, chainName, walkTo, treatAsActivity: false);
+            _ = manager.Manage(chain);
+            return;
+        }
+
+        // After Return we land at camp — AethernetTeleport skips the hop when already at the shard.
+        if (!prependReturn && AetheryteApproach.IsAlreadyAtAetheryte(target, player.Position))
+        {
+            logger.Info("Already at best aethernet — vnav to survey {Name} at {Destination:f1}", name, approach);
+            chain = AppendPath(chain, chainName, walkTo, treatAsActivity: false);
+            _ = manager.Manage(chain);
+            return;
+        }
+
+        logger.Info(
+            "{Prefix}Lifestream to aethernet {Aethernet}, then vnav to survey {Name}",
+            prependReturn ? "Then " : string.Empty,
+            target.Id,
+            name);
+
+        chain = AethernetTeleport.BuildChain(
+            chain,
+            chains,
+            zones,
+            objects,
+            pathfinder,
+            vnav,
+            lifestream,
+            logger,
+            target.Id,
+            automatorConfig.SprintOnAetheryteApproach);
+
+        chain = AppendPath(chain, chainName, walkTo, treatAsActivity: false);
+        _ = manager.Manage(chain);
+    }
+
+    private async Task<float> MeasureWalkDistanceAsync(Vector3 from, Vector3 to)
+    {
+        if (from.Distance2D(to) <= 2f)
+        {
+            return 0f;
+        }
+
+        if (!vnav.IsNavmeshReady())
+        {
+            return from.Distance2D(to);
+        }
+
+        Path path = await pathfinder.Pathfind(new PathfinderConfig(to)
+            {
+                From = from,
+                AllowFlying = false,
+                ShouldSnapToFloor = true,
+            })
+            .ConfigureAwait(false);
+
+        if (path.Nodes.Count < 2 || float.IsPositiveInfinity(path.Distance) || path.Distance <= 0f)
+        {
+            return float.PositiveInfinity;
+        }
+
+        return path.Distance;
+    }
+
+    /// <summary>
+    ///     Survey travel may start away from a crystal — <see cref="AethernetTeleport"/> approaches first.
+    /// </summary>
+    private bool CanSurveyAethernet(out string? disabledReason)
+    {
+        IZone zone = zones.GetZone();
+        if (!zone.IsOccultCrescentZone())
+        {
+            disabledReason = "Not in a supported Occult Crescent zone.";
+            return false;
+        }
+
+        if (zone.GetAetherytes().Count == 0)
+        {
+            disabledReason = "No aethernet destination found.";
+            return false;
+        }
+
+        disabledReason = null;
+        return true;
     }
 
     public void TeleportToward(Vector3 destination, string name, string id)
@@ -159,18 +505,25 @@ public class ActivityNavigation
                     return;
                 }
 
+                // Surveys use authored/seeded world coords (not a live FlagToPoint re-query).
+                Func<Vector3> walkTo = () => approach;
+
                 if (target == null || AetheryteApproach.IsAlreadyAtAetheryte(target, player.Position))
                 {
-                    logger.Info("Pathfinding to {Name} at {Destination:f1}", name, approach);
-                    _ = manager.Manage(BuildPathChain($"{ChainPrefix}Path::{id}", approach));
+                    logger.Info(
+                        "Already at best aethernet — vnav to {Name} at {Destination:f1}",
+                        name,
+                        approach);
+                    _ = manager.Manage(BuildPathChain($"{ChainPrefix}Path::{id}", walkTo, treatAsActivity));
                     return;
                 }
 
                 logger.Info(
-                    "Path via aethernet {Aethernet} then walk to {Name}",
+                    "Lifestream to aethernet {Aethernet}, then vnav to {Name}",
                     target.Id,
                     name);
 
+                // Lifestream hop (approach crystal if needed) → then vnav to the point.
                 IChain chain = AethernetTeleport.BuildChain(
                     chains.Create($"{ChainPrefix}Path::{id}"),
                     chains,
@@ -183,7 +536,7 @@ public class ActivityNavigation
                     target.Id,
                     automatorConfig.SprintOnAetheryteApproach);
 
-                chain = AppendPath(chain, $"{ChainPrefix}Path::{id}", approach);
+                chain = AppendPath(chain, $"{ChainPrefix}Path::{id}", walkTo, treatAsActivity);
                 _ = manager.Manage(chain);
             }).ConfigureAwait(false);
         }
@@ -249,8 +602,11 @@ public class ActivityNavigation
         }
     }
 
-    private IChain BuildPathChain(string name, Vector3 destination) =>
-        AppendPath(chains.Create(name), name, destination);
+    private IChain BuildPathChain(string name, Vector3 destination, bool treatAsActivity = true) =>
+        AppendPath(chains.Create(name), name, () => destination, treatAsActivity);
+
+    private IChain BuildPathChain(string name, Func<Vector3> destination, bool treatAsActivity = true) =>
+        AppendPath(chains.Create(name), name, destination, treatAsActivity);
 
     private bool TryResolveWalkTarget(
         Vector3 destination,
@@ -281,18 +637,27 @@ public class ActivityNavigation
         return true;
     }
 
-    private IChain AppendPath(IChain chain, string name, Vector3 destination) =>
+    private IChain AppendPath(IChain chain, string name, Func<Vector3> destination, bool treatAsActivity = true) =>
         chain.Then<PathfindToChain, PathfinderConfig>(new(destination)
         {
             DistanceThreshold = 2f,
             ShouldSnapToFloor = true,
-            WhileMoving = () => MountWait.TryCastIfNeeded(
-                conditions,
-                objects,
-                destination,
-                automatorConfig.ShouldAutoMount,
-                automatorConfig.PreferredMountId,
-                zones.GetZone().IsInBasecamp()),
+            // Map-flag Y is often 0; allow a wide vertical snap once altitude is seeded.
+            FloorSnapExtents = 40f,
+            WhileMoving = () =>
+            {
+                Vector3 dest = destination();
+                // Surveys (Ctrl+click) should mount even when departing the base camp ring;
+                // FATE/CE keep the camp mount skip so short crystal walks stay on foot.
+                bool inBaseCamp = treatAsActivity && zones.GetZone().IsInBasecamp();
+                MountWait.TryCastIfNeeded(
+                    conditions,
+                    objects,
+                    dest,
+                    automatorConfig.ShouldAutoMount,
+                    automatorConfig.PreferredMountId,
+                    inBaseCamp);
+            },
         });
 
     /// <summary>
@@ -302,10 +667,19 @@ public class ActivityNavigation
     /// </summary>
     private async Task<AethernetData?> SelectBestAetheryteAsync(Vector3 destination, bool treatAsActivity)
     {
+        (AethernetData? best, _) = await SelectBestAetheryteWithDistanceAsync(destination, treatAsActivity)
+            .ConfigureAwait(false);
+        return best;
+    }
+
+    private async Task<(AethernetData? Aetheryte, float WalkDistance)> SelectBestAetheryteWithDistanceAsync(
+        Vector3 destination,
+        bool treatAsActivity)
+    {
         List<AethernetData> aetherytes = zones.GetZone().GetAetherytes();
         if (aetherytes.Count == 0)
         {
-            return null;
+            return (null, float.PositiveInfinity);
         }
 
         // Surveys ignore authored FATE/CE preferred shards — just the best hop for the point.
@@ -318,7 +692,11 @@ public class ActivityNavigation
 
         if (!vnav.IsNavmeshReady())
         {
-            return ByEuclidean();
+            AethernetData? euclidean = ByEuclidean();
+            float estimate = euclidean == null
+                ? float.PositiveInfinity
+                : destination.Distance2D(euclidean.Position);
+            return (euclidean, estimate);
         }
 
         // Preferred first, then a few Euclidean-nearest. Cap queries so the UI button stays snappy.
@@ -369,7 +747,7 @@ public class ActivityNavigation
 
             if (preferredId is { } pid && aetheryte.Id == pid)
             {
-                return aetheryte;
+                return (aetheryte, path.Distance);
             }
 
             if (path.Distance < bestDistance)
@@ -379,7 +757,16 @@ public class ActivityNavigation
             }
         }
 
-        return best ?? ByEuclidean();
+        if (best != null)
+        {
+            return (best, bestDistance);
+        }
+
+        AethernetData? fallback = ByEuclidean();
+        float fallbackDistance = fallback == null
+            ? float.PositiveInfinity
+            : destination.Distance2D(fallback.Position);
+        return (fallback, fallbackDistance);
     }
 
     private uint? FindPreferredAethernetId(Vector3 destination)

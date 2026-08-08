@@ -36,7 +36,12 @@ public class IdleHandler(
     {
         base.Enter();
         chains.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
-        pathfinder.Stop();
+        // Survey / World PathTo use ActivityGoto chains — don't kill them on idle handoff.
+        if (!IsNavigationInterrupted())
+        {
+            pathfinder.Stop();
+        }
+
         autoRotation.DisableForTravel();
         memory.TryAdd(new IdleStateMemory(ReturnDelay.Roll(config)));
     }
@@ -45,11 +50,19 @@ public class IdleHandler(
     {
         base.Exit(next);
         memory.Forget<IdleStateMemory>();
-        pathfinder.Stop();
+        if (!IsNavigationInterrupted())
+        {
+            pathfinder.Stop();
+        }
     }
 
     public override void Handle()
     {
+        if (IsNavigationInterrupted())
+        {
+            return;
+        }
+
         if (objects.LocalPlayer is not { } player)
         {
             return;
@@ -112,4 +125,7 @@ public class IdleHandler(
             ui.LabelledValue(translator.T(".automation.automator.time_idle"), idle.GetIdleTime().Format());
         }
     }
+
+    private bool IsNavigationInterrupted() =>
+        memory.TryRemember<NavigationInterruptedMemory>(out NavigationInterruptedMemory _);
 }

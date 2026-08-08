@@ -59,6 +59,15 @@ public class PathfindingHandler
             return;
         }
 
+        // Soft-interrupt (e.g. Completionist survey click) owns vnav via ActivityGoto — leave it alone.
+        if (memory.TryRemember<NavigationInterruptedMemory>(out NavigationInterruptedMemory _))
+        {
+            currentPathTask = null;
+            pendingPauseReason = null;
+            manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
+            return;
+        }
+
         ResetPathfinding();
     }
 

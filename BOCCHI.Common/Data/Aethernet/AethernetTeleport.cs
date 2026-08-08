@@ -48,8 +48,9 @@ public static class AethernetTeleport
                             lifestream.Abort();
                         }
 
+                        // Success (not Break): callers may AppendPath after this chain — Break would skip the walk.
                         logger.Info("Already at aetheryte {Id} — skipping teleport", placeNameId);
-                        return StepResult.Break();
+                        return StepResult.Success();
                     }
 
                     return StepResult.Success();
@@ -79,7 +80,7 @@ public static class AethernetTeleport
                         }
 
                         logger.Info("Arrived at aetheryte {Id} during approach — skipping teleport", placeNameId);
-                        return StepResult.Break();
+                        return StepResult.Success();
                     }
 
                     if (!AetheryteApproach.IsReadyForLifestream(zones.GetZone(), lifestream, player.Position))

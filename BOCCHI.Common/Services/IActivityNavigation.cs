@@ -17,5 +17,11 @@ public interface IActivityNavigation
     /// </summary>
     void PathToPoint(Vector3 destination, string name, string id);
 
+    /// <summary>
+    ///     After a map flag is set: Lifestream to the best aethernet shard, then vnav to the flag
+    ///     via <c>FlagToPoint</c> (same targeting as <c>/vnav moveflag</c>).
+    /// </summary>
+    void PathToFlag(string name, string id);
+
     void TeleportToward(Vector3 destination, string name, string id);
 }
