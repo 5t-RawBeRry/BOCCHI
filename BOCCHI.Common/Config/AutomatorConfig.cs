@@ -68,6 +68,11 @@ public class AutomatorConfig : IAutoConfig
     [TriageRaiseJob(Order = 13)]
     public TriageRaiseJobPreference PreferredTriageRaiseJob { get; set; } = TriageRaiseJobPreference.PhantomChemist;
 
+    /// <summary>
+    ///     Session hint for Completionist UI (run mode is the source of truth while active).
+    /// </summary>
+    public bool EnableCompletionistMode { get; set; } = false;
+
     [Checkbox(Order = 14)]
     public bool ShouldCastTreasureSight { get; set; } = false;
 

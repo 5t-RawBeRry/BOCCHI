@@ -11,14 +11,13 @@ public static class AethernetNavigation
     /// <summary>Graph routing when exact interact points are unreachable.</summary>
     public const float AetherytePathfindArrivalRadius = 3.5f;
 
-    /// <summary>Soft vnav stop while closing in for Lifestream.</summary>
-    public const float PathfindArrivalRadius = 1.5f;
+    /// <summary>Soft vnav stop while closing on the camp approach ring.</summary>
+    public const float PathfindArrivalRadius = 0.5f;
 
     /// <summary>
-    ///     Idle stand-off: outside the stone base, inside
-    ///     <see cref="AethernetData.LifestreamInteractRadius"/>.
+    ///     Stand-off from crystal center: path here, then hand off to Lifestream (do not path closer).
     /// </summary>
-    public const float CampApproachRadius = 3.0f;
+    public const float CampApproachRadius = 2.0f;
 
     public static Vector3 GetInteractPosition(this AethernetData data) => data.Destination != Vector3.Zero ? data.Destination : data.Position;
 

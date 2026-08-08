@@ -7,6 +7,7 @@
   "sections": {
     "trackers": "추적기",
     "automation": "불법 모드",
+    "completionist": "컬렉터",
     "potstreasure": "항아리 & 트레저",
     "mobfarmer": "몹 파머",
     "world": "월드",
@@ -14,6 +15,7 @@
   },
   "status": {
     "automator": "불법 모드",
+    "completionist": "컬렉터",
     "pots_treasure": "항아리 & 트레저",
     "mob_farmer": "몹 파머",
     "treasure_hunt": "트레저 헌트",
@@ -86,6 +88,41 @@
     "apply_tooltip": "지금 설정한 버프를 적용합니다. 크리스탈로는 걸어가지 않습니다 — 지식 크리스탈 버프 원 안에 선 뒤 누르세요.",
     "stop_tooltip": "버프 적용을 멈춥니다",
     "applying": "적용 중…"
+  },
+  "completionist": {
+    "enable": "컬렉터 모드 시작",
+    "disable": "컬렉터 모드 중지",
+    "mode_on": "[BOCCHI] 컬렉터 모드 켜짐",
+    "mode_off": "[BOCCHI] 컬렉터 모드 꺼짐",
+    "description": "아직 없는 필드 노트가 떨어지는 돌발/비상 조우만 갑니다. 이동·전투는 불법 모드 설정을 씁니다. 목록은 남쪽/북쪽 뿔에 따라 바뀝니다. 조사 지점과 갈래탑 노트는 확인용이며 자동으로 가지 않습니다. 조사 지점을 클릭하면 지도에 깃발을 꽂습니다.",
+    "legend": "체크 = 보유 · × = 미보유 · 별 = 서포트 잡 최대",
+    "notes_header": "필드 노트",
+    "jobs_header": "서포트 잡",
+    "outside_zone": "남쪽 뿔 또는 북쪽 뿔에 들어가면 해당 지역의 필드 노트 목록이 표시됩니다.",
+    "flag_tooltip": "클릭하면 이 조사 지점 위치에 지도 깃발을 놓습니다.",
+    "sources": {
+      "persistent_pots": "Persistent / Pleading Pots",
+      "black_regiment": "The Black Regiment",
+      "the_unbridled": "The Unbridled",
+      "calamity_bound": "Calamity Bound",
+      "from_times_bygone": "From Times Bygone",
+      "shark_attack": "Shark Attack",
+      "cursed_concern": "Cursed Concern",
+      "survey_point": "조사 지점",
+      "forked_tower_blood": "갈래탑: 블러드 전용",
+      "persistent_pots_nh": "Daylight Pottery / In a Pot of Bother",
+      "doubled_trouble": "Doubled Trouble",
+      "quarried_away": "Quarried Away",
+      "forbidden_folios": "Forbidden Folios",
+      "cursed_resurgence": "Cursed Resurgence",
+      "imbalanced_diet": "Imbalanced Diet",
+      "dark_artistry": "Dark Artistry",
+      "appalling_behavior": "Appalling Behavior",
+      "tiny_terror": "Tiny Terror",
+      "lost_on_the_wind": "Lost on the Wind",
+      "accept_no_imitators": "Accept No Imitators",
+      "forked_tower_magic": "갈래탑: 매직 전용"
+    }
   },
   "automation": {
     "automator": {

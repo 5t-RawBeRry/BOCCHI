@@ -156,8 +156,8 @@ public class PotsTreasureRenderer
             return;
         }
 
-        bool southHorn = zone.ZoneId == ZoneId.SouthHorn;
-        float dropExtra = southHorn && eventDropConfig.AnyEnabled
+        bool showDrops = eventDropConfig.AnyEnabled;
+        float dropExtra = showDrops
             ? EventDropIconRenderer.IconBoxSize + 4f
             : 0f;
         float maxHeight = dropExtra > 0f ? 240f : 120f;
@@ -169,6 +169,7 @@ public class PotsTreasureRenderer
             return;
         }
 
+        ZoneId zoneId = zone.ZoneId;
         foreach (Fate fate in potFates)
         {
             string details = $"{fate.State} {fate.Progress}% · #{fate.Id.Value}";
@@ -187,8 +188,7 @@ public class PotsTreasureRenderer
                 fate.Position,
                 $"pot_fate_{fate.Id.Value}");
 
-            if (southHorn
-                && SouthHornEventDrops.TryGetFate(fate.Id.Value, out EventDropInfo drops))
+            if (FieldNoteTargets.TryGetDropsForFate(zoneId, fate.Id.Value, out EventDropInfo drops))
             {
                 eventDrops.Render(fate.Id.Value, drops);
             }

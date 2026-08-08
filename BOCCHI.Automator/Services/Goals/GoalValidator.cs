@@ -22,7 +22,8 @@ public class GoalValidator
     CriticalEncountersConfig criticalEncountersConfig,
     IPotCycleTracker potCycle,
     IAutomatorContext automatorContext,
-    IAutomatorMemory memory
+    IAutomatorMemory memory,
+    IFieldNoteTracker fieldNotes
 ) : IGoalValidator
 {
     public bool Validate(IGoal goal)
@@ -57,7 +58,7 @@ public class GoalValidator
 
         if (ce.IsPreparing())
         {
-            return true;
+            return PassesCompletionistCriticalEncounter(id.Value);
         }
 
         if (!ce.IsActive())
@@ -86,7 +87,12 @@ public class GoalValidator
         }
 
         // Still pathing into the CE when Battle flips — keep the goal (don't abort → FATE).
-        return memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _);
+        if (memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _))
+        {
+            return true;
+        }
+
+        return PassesCompletionistCriticalEncounter(id.Value);
     }
 
     private bool ValidateFate(FateId id)
@@ -108,7 +114,7 @@ public class GoalValidator
 
         if (isPot && IsValidPotPreposition(id))
         {
-            return true;
+            return PassesCompletionistFate(id.Value, potsOnly);
         }
 
         if (!fateRepository.HasFate(id))
@@ -120,6 +126,11 @@ public class GoalValidator
         if (isPot)
         {
             return true;
+        }
+
+        if (!PassesCompletionistFate(id.Value, potsOnly))
+        {
+            return false;
         }
 
         PotCycleSnapshot cycle = potCycle.Snapshot;
@@ -138,6 +149,15 @@ public class GoalValidator
             "FATE");
         return decision.AllowStart;
     }
+
+    private bool PassesCompletionistFate(uint fateId, bool potsOnly) =>
+        potsOnly
+        || !automatorContext.IsCompletionist
+        || fieldNotes.ShouldPursueFate(fateId);
+
+    private bool PassesCompletionistCriticalEncounter(uint encounterId) =>
+        !automatorContext.IsCompletionist
+        || fieldNotes.ShouldPursueCriticalEncounter(encounterId);
 
     /// <summary>
     ///     Predicted pot goal kept before the FATE exists (and briefly after predicted spawn) (#112).

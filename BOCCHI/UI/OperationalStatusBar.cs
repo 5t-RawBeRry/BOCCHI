@@ -53,6 +53,8 @@ public class OperationalStatusBar
 
     public bool IllegalModeActive => Automator.Enabled;
 
+    public bool CompletionistActive => Automator.IsCompletionist;
+
     public bool PotsTreasureActive => PotsTreasure.Running;
 
     public bool MobFarmerActive => Farmer.Running;
@@ -64,14 +66,15 @@ public class OperationalStatusBar
     public bool CarrotHuntActive => carrotHunter.Running;
 
     public bool AnyAutomationActive =>
-        IllegalModeActive || PotsTreasureActive || MobFarmerActive || TreasureHuntActive || CarrotHuntActive;
+        IllegalModeActive || CompletionistActive || PotsTreasureActive || MobFarmerActive
+        || TreasureHuntActive || CarrotHuntActive;
 
     public void Render()
     {
         ImGui.Separator();
 
-        bool anyMode = IllegalModeActive || PotsTreasureActive || MobFarmerActive || StandaloneTreasureHuntActive
-                       || CarrotHuntActive;
+        bool anyMode = IllegalModeActive || CompletionistActive || PotsTreasureActive || MobFarmerActive
+                       || StandaloneTreasureHuntActive || CarrotHuntActive;
         if (!anyMode)
         {
             ui.Text(translator.T(".status.idle"), branding.DalamudGrey);
@@ -94,6 +97,13 @@ public class OperationalStatusBar
             {
                 Chip(
                     translator.T(".status.automator"),
+                    Automator.CurrentState is { } state ? FormatAutomatorState(state) : null);
+            }
+
+            if (CompletionistActive)
+            {
+                Chip(
+                    translator.T(".status.completionist"),
                     Automator.CurrentState is { } state ? FormatAutomatorState(state) : null);
             }
 
@@ -148,8 +158,9 @@ public class OperationalStatusBar
             DrawBuffAction();
         }
 
-        // Goal / pot chests only while Illegal Mode or Pots phase is driving the automator.
+        // Goal / pot chests while Illegal Mode, Completionist, or Pots phase drives the automator.
         bool showGoalRows = IllegalModeActive
+                            || CompletionistActive
                             || (PotsTreasureActive && PotsTreasure.Phase == PotsTreasurePhase.DoingPots);
         if (showGoalRows)
         {

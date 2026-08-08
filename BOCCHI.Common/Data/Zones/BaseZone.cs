@@ -99,22 +99,65 @@ public abstract class BaseZone
 
         // Do not gate on IsInBasecamp() — SubAreaPlaceNameId often does not match the
         // authored BasecampPlaceNameId even while standing at camp. Same BaseId is also
-        // used by some CE event objects, so require proximity to the main aetheryte.
+        // used by some CE event objects, so require proximity to an aetheryte / shard
+        // (or the authored camp buff point) rather than the main camp only.
         Vector3 playerPos = player.Position;
-        Vector3 camp = GetAetherytePosition();
         const float playerRange = 60f;
-        const float campRange = 100f;
+        const float aetheryteRange = 100f;
+        float playerRangeSq = playerRange * playerRange;
+        float aetheryteRangeSq = aetheryteRange * aetheryteRange;
 
-        return objects
+        List<Vector3> anchors = [];
+        foreach (AethernetData aetheryte in GetAetherytes())
+        {
+            anchors.Add(aetheryte.Position);
+        }
+
+        foreach (AethernetData shard in GetAethernetShards())
+        {
+            if (anchors.All(a => Vector3.DistanceSquared(a, shard.Position) > 1f))
+            {
+                anchors.Add(shard.Position);
+            }
+        }
+
+        if (anchors.Count == 0)
+        {
+            anchors.Add(GetAetherytePosition());
+        }
+
+        if (GetBuffZone() is { } buffZone)
+        {
+            anchors.Add(buffZone.Center);
+        }
+
+        List<KnowledgeCrystalData> crystals = objects
             .Where(o => o is { ObjectKind: ObjectKind.EventObj, BaseId: KnowledgeCrystalData.BaseId })
-            .Where(o => Vector3.Distance(o.Position, camp) <= campRange)
-            .Where(o => Vector3.Distance(o.Position, playerPos) <= playerRange)
+            .Where(o => Vector3.DistanceSquared(o.Position, playerPos) <= playerRangeSq)
+            .Where(o => anchors.Any(a => Vector3.DistanceSquared(o.Position, a) <= aetheryteRangeSq))
             .OrderBy(o => Vector3.DistanceSquared(o.Position, playerPos))
             .Select(o => new KnowledgeCrystalData
             {
                 Position = o.Position
             })
             .ToList();
+
+        // Authored camp buff point: still count as a crystal when the live object is
+        // missing / id-mismatched but the player is standing at the known buff site.
+        if (GetBuffZone() is { } zone
+            && Vector3.DistanceSquared(playerPos, zone.Center) <= playerRangeSq
+            && crystals.All(c => Vector3.DistanceSquared(c.Position, zone.Center) > 25f))
+        {
+            crystals.Add(new KnowledgeCrystalData
+            {
+                Position = zone.Center
+            });
+            crystals = crystals
+                .OrderBy(c => Vector3.DistanceSquared(c.Position, playerPos))
+                .ToList();
+        }
+
+        return crystals;
     }
 
     public virtual float GetCriticalEncounterRadius(int eventId)

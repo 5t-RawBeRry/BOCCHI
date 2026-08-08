@@ -38,6 +38,10 @@
       "label": "显示违规模式板块",
       "tooltip": "在主窗口中显示违规模式控制项。"
     },
+    "show_completionist_section": {
+      "label": "显示收集者板块",
+      "tooltip": "在主窗口中显示收集者模式（开始/停止与勘察记录清单）。"
+    },
     "show_mob_farmer_section": {
       "label": "显示刷怪板块",
       "tooltip": "在主窗口中显示刷怪控制项。"

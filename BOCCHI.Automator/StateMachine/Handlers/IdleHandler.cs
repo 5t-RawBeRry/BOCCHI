@@ -95,7 +95,7 @@ public class IdleHandler(
         Vector3 target = candidates[idle.ApproachCandidateIndex];
         idle.ApproachCandidateIndex++;
 
-        SprintAssist.MaybeCast(config.SprintOnAetheryteApproach);
+        SprintAssist.MaybeCast(config.SprintOnAetheryteApproach, inBasecamp: true);
         pathfinder.PathfindAndMoveTo(new PathfinderConfig(target)
         {
             DistanceThreshold = AethernetNavigation.PathfindArrivalRadius,

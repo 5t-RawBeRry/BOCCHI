@@ -33,6 +33,7 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<IOnStop>(sp => sp.GetRequiredService<PotTreasureHintTracker>());
         services.AddSingleton<MagicalElixirAssist>();
         services.AddSingleton<IDynamicRenderer, AutomatorRenderer>();
+        services.AddSingleton<IDynamicRenderer, CompletionistRenderer>();
         services.AddSingleton<IDynamicRenderer, PotsTreasureRenderer>();
 
         services.AddSingleton<IGoalFactory, GoalFactory>();

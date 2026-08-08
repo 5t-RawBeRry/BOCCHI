@@ -79,6 +79,7 @@ public class MainRenderer
             bool forceOpen = section switch
             {
                 MainWindowSection.Automation => statusBar.IllegalModeActive,
+                MainWindowSection.Completionist => statusBar.CompletionistActive,
                 MainWindowSection.PotsTreasure => statusBar.PotsTreasureActive,
                 MainWindowSection.MobFarmer => statusBar.MobFarmerActive,
                 MainWindowSection.Treasure => statusBar.StandaloneTreasureHuntActive

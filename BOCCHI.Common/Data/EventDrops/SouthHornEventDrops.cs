@@ -2,7 +2,6 @@
 
 /// <summary>
 ///     Authored South Horn FATE/CE reward icons (demiatma / notes / soul shards).
-///     North Horn is intentionally omitted until drop tables exist.
 /// </summary>
 public static class SouthHornEventDrops
 {

@@ -32,13 +32,14 @@ public interface IZone
     bool HasNearbyKnowledgeCrystals() => GetNearbyKnowledgeCrystals().Count != 0;
 
     /// <summary>
-    ///     True when standing where crystal buffs can be cast (authored annulus, else ≤5y of a nearby crystal).
+    ///     True when standing where crystal buffs can be cast: inside the authored buff radius
+    ///     (including on the crystal), or ≤5y of a nearby knowledge crystal / shard crystal.
     /// </summary>
     bool IsInBuffCastRange(Vector3 position)
     {
-        if (GetBuffZone() is { } buffZone)
+        if (GetBuffZone() is { } buffZone && buffZone.IsWithinCastRadius2D(position))
         {
-            return buffZone.Contains2D(position);
+            return true;
         }
 
         const float crystalInteractionRange = 5f;

@@ -35,7 +35,7 @@ public class IllegalModeTreasureFillerService
 
     public void Update()
     {
-        if (!context.IsIllegalMode || context.IsPotsAndTreasure)
+        if ((!context.IsIllegalMode && !context.IsCompletionist) || context.IsPotsAndTreasure)
         {
             ResetSession();
             return;

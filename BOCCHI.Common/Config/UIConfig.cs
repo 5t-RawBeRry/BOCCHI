@@ -60,6 +60,8 @@ public class UIConfig : IAutoConfig
 
     [Checkbox] public bool ShowAutomationSection { get; set; } = true;
 
+    [Checkbox] public bool ShowCompletionistSection { get; set; } = true;
+
     [Checkbox] public bool ShowMobFarmerSection { get; set; } = true;
 
     [Checkbox] public bool ShowPotsTreasureSection { get; set; } = true;

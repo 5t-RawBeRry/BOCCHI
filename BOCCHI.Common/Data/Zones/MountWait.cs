@@ -48,18 +48,15 @@ public static class MountWait
     /// <param name="preferredMountId">Mount sheet row ID; 0 = Mount Roulette.</param>
     public static void TryCast(uint preferredMountId = 0)
     {
-        if (preferredMountId != 0)
+        Ocelot.Actions.Action mount = Actions.Mount(preferredMountId);
+        if (mount.CanCast())
         {
-            Ocelot.Actions.Action mount = Actions.Mount(preferredMountId);
-            if (mount.CanCast())
-            {
-                mount.Cast();
-            }
-
+            mount.Cast();
             return;
         }
 
-        if (Actions.MountRoulette.CanCast())
+        // Preferred mount unavailable (locked / on cooldown) → fall back to roulette.
+        if (preferredMountId != 0 && Actions.MountRoulette.CanCast())
         {
             Actions.MountRoulette.Cast();
         }

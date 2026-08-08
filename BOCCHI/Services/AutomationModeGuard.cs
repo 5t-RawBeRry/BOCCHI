@@ -52,12 +52,21 @@ public class AutomationModeGuard
         stopping = true;
         try
         {
-            // Soft-pause Illegal Mode for hunt (resume when hunt ends); don't Toggle off.
-            if (mode == AutomationMode.TreasureHunt && Automator.IsIllegalMode)
+            // Soft-pause Illegal Mode / Completionist for hunt (resume when hunt ends); don't Toggle off.
+            if (mode == AutomationMode.TreasureHunt
+                && (Automator.IsIllegalMode || Automator.IsCompletionist))
             {
                 Automator.SetSuspendedForTreasure(true);
             }
-            else if (mode != AutomationMode.IllegalMode && Automator.Enabled)
+            else if (mode is not AutomationMode.IllegalMode and not AutomationMode.Completionist)
+            {
+                StopIllegalOrCompletionist();
+            }
+            else if (mode == AutomationMode.IllegalMode && Automator.IsCompletionist)
+            {
+                Automator.ToggleCompletionist();
+            }
+            else if (mode == AutomationMode.Completionist && Automator.IsIllegalMode)
             {
                 Automator.Toggle();
             }
@@ -72,9 +81,11 @@ public class AutomationModeGuard
                 Farmer.Toggle();
             }
 
-            // Pots & Treasure or Illegal Mode filler owns the hunter — leave it running when entering that mode.
-            if (mode is not AutomationMode.TreasureHunt and not AutomationMode.PotsAndTreasure
+            // Pots & Treasure / Illegal / Completionist filler may own the hunter — leave it running.
+            if (mode is not AutomationMode.TreasureHunt
+                and not AutomationMode.PotsAndTreasure
                 and not AutomationMode.IllegalMode
+                and not AutomationMode.Completionist
                 && Hunter.Running)
             {
                 Hunter.Toggle();
@@ -98,8 +109,8 @@ public class AutomationModeGuard
             return;
         }
 
-        // Resume Illegal Mode only — Pots & Treasure manages its own suspension.
-        if (Automator.IsIllegalMode && Automator.SuspendedForTreasure)
+        // Resume Illegal Mode / Completionist — Pots & Treasure manages its own suspension.
+        if ((Automator.IsIllegalMode || Automator.IsCompletionist) && Automator.SuspendedForTreasure)
         {
             Automator.SetSuspendedForTreasure(false);
         }
@@ -115,10 +126,7 @@ public class AutomationModeGuard
         stopping = true;
         try
         {
-            if (Automator.Enabled)
-            {
-                Automator.Toggle();
-            }
+            StopIllegalOrCompletionist();
 
             if (PotsTreasure.Running)
             {
@@ -153,6 +161,18 @@ public class AutomationModeGuard
         finally
         {
             stopping = false;
+        }
+    }
+
+    private void StopIllegalOrCompletionist()
+    {
+        if (Automator.IsIllegalMode)
+        {
+            Automator.Toggle();
+        }
+        else if (Automator.IsCompletionist)
+        {
+            Automator.ToggleCompletionist();
         }
     }
 }

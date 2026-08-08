@@ -32,7 +32,7 @@ public sealed class TriageLatchService
 
     public void Update()
     {
-        if (!context.IsIllegalMode || !automatorConfig.EnableTriageMode)
+        if ((!context.IsIllegalMode && !context.IsCompletionist) || !automatorConfig.EnableTriageMode)
         {
             hadActivity = false;
             if (!automatorConfig.EnableTriageMode)

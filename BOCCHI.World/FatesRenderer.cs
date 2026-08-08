@@ -38,8 +38,9 @@ public class FatesRenderer
             return;
         }
 
-        bool southHorn = zones.GetZone().ZoneId == ZoneId.SouthHorn;
-        float dropExtra = southHorn && eventDropConfig.AnyEnabled
+        ZoneId zoneId = zones.GetZone().ZoneId;
+        bool showDrops = zones.GetZone().IsOccultCrescentZone() && eventDropConfig.AnyEnabled;
+        float dropExtra = showDrops
             ? EventDropIconRenderer.IconBoxSize + 4f
             : 0f;
         float maxHeight = dropExtra > 0f ? 240f : 120f;
@@ -67,8 +68,7 @@ public class FatesRenderer
                 fate.Position,
                 $"fate_{fate.Id.Value}");
 
-            if (southHorn
-                && SouthHornEventDrops.TryGetFate(fate.Id.Value, out EventDropInfo drops))
+            if (FieldNoteTargets.TryGetDropsForFate(zoneId, fate.Id.Value, out EventDropInfo drops))
             {
                 eventDrops.Render(fate.Id.Value, drops);
             }

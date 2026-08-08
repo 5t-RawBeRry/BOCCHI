@@ -29,6 +29,7 @@ public class ChoosingActivityHandler
     IFateScorer fateScorer,
     IPotCycleTracker potCycle,
     IZoneProvider zones,
+    IFieldNoteTracker fieldNotes,
     ILogger<ChoosingActivityHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.ChoosingActivity)
 {
@@ -157,6 +158,11 @@ public class ChoosingActivityHandler
                 continue;
             }
 
+            if (CompletionistBlocksFate(fate.Id.Value))
+            {
+                continue;
+            }
+
             if (!isPot)
             {
                 (TimeSpan cutoff, int lead) = GetIllegalPotWindow();
@@ -225,6 +231,11 @@ public class ChoosingActivityHandler
             return false;
         }
 
+        if (CompletionistBlocksFate((uint)cycle.PredictedNextPotFateId))
+        {
+            return false;
+        }
+
         FateId predicted = new((ushort)cycle.PredictedNextPotFateId);
         if (fateRepository.HasFate(predicted))
         {
@@ -257,6 +268,16 @@ public class ChoosingActivityHandler
     private int GetPotPrepositionLead() =>
         PotsOnly ? PotsTreasureDefaults.PrepositionLeadMinutes : potsConfig.PotSpawnLeadMinutes;
 
+    private bool CompletionistBlocksFate(uint fateId) =>
+        !PotsOnly
+        && automatorContext.IsCompletionist
+        && !fieldNotes.ShouldPursueFate(fateId);
+
+    private bool CompletionistBlocksCriticalEncounter(uint encounterId) =>
+        !PotsOnly
+        && automatorContext.IsCompletionist
+        && !fieldNotes.ShouldPursueCriticalEncounter(encounterId);
+
     private CriticalEncounter? FindStartableCriticalEncounter()
     {
         if (PotsOnly || !automatorConfig.ShouldDoCriticalEncounters)
@@ -276,6 +297,11 @@ public class ChoosingActivityHandler
         foreach (CriticalEncounter ce in criticalEncounterRepository.SnapshotWithoutForkedTower())
         {
             if (!ce.IsPreparing() || !criticalEncountersConfig.IsCriticalEncounterEnabled(ce.Id.Value))
+            {
+                continue;
+            }
+
+            if (CompletionistBlocksCriticalEncounter(ce.Id.Value))
             {
                 continue;
             }

@@ -63,7 +63,7 @@ public static class AetheryteApproach
                     Vector3 target = crystal.GetApproachPosition(current.Position, AethernetNavigation.CampApproachRadius);
                     target = new Vector3(target.X, crystal.Y, target.Z);
 
-                    SprintAssist.MaybeCast(sprintEnabled);
+                    SprintAssist.MaybeCast(sprintEnabled, zone.IsInBasecamp());
                     pathfinder.PathfindAndMoveTo(new PathfinderConfig(target)
                     {
                         DistanceThreshold = AethernetNavigation.PathfindArrivalRadius,

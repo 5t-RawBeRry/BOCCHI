@@ -34,7 +34,7 @@ public class SouthHorn
         Id = 4928,
         BaseId = 2014665,
         Position = new(-173.02f, 8.19f, -611.14f),
-        // Keep Dest inside LifestreamInteractRadius; old pad was ~4.29y out.
+        // Keep Dest near crystal; approach stops at CampApproachRadius (2y) for Lifestream.
         Destination = new(-170.74f, 6.5f, -610.13f),
         DeadRadius = 3.2f
     };

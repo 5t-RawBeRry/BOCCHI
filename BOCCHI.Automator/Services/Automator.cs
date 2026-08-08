@@ -61,6 +61,8 @@ public class Automator
 
     public bool IsPotsAndTreasure => context.IsPotsAndTreasure;
 
+    public bool IsCompletionist => context.IsCompletionist;
+
     public bool SuspendedForTreasure { get; private set; }
 
     public AutomatorState? CurrentState =>
@@ -100,6 +102,7 @@ public class Automator
         if (turningOn)
         {
             modeGuard.EnsureExclusive(AutomationMode.IllegalMode);
+            automatorConfig.EnableCompletionistMode = false;
         }
 
         AutomatorRunMode target = turningOn ? AutomatorRunMode.IllegalMode : AutomatorRunMode.Off;
@@ -116,7 +119,7 @@ public class Automator
     public void TogglePotsAndTreasure()
     {
         bool turningOn = !context.IsPotsAndTreasure;
-        if (turningOn && context.IsIllegalMode)
+        if (turningOn && (context.IsIllegalMode || context.IsCompletionist))
         {
             StopAutomation();
         }
@@ -127,10 +130,37 @@ public class Automator
             return;
         }
 
+        if (turningOn)
+        {
+            automatorConfig.EnableCompletionistMode = false;
+        }
+
         context.SetRunMode(target);
         BocchiChat.Print(chat, uiConfig, translator.T(turningOn
             ? ".automation.pots_treasure.on"
             : ".automation.pots_treasure.off"));
+        ApplyRunModeSideEffects(turningOn);
+    }
+
+    public void ToggleCompletionist()
+    {
+        bool turningOn = !context.IsCompletionist;
+        if (turningOn)
+        {
+            modeGuard.EnsureExclusive(AutomationMode.Completionist);
+        }
+
+        AutomatorRunMode target = turningOn ? AutomatorRunMode.Completionist : AutomatorRunMode.Off;
+        if (context.RunMode == target)
+        {
+            return;
+        }
+
+        automatorConfig.EnableCompletionistMode = turningOn;
+        context.SetRunMode(target);
+        BocchiChat.Print(chat, uiConfig, translator.T(turningOn
+            ? ".completionist.mode_on"
+            : ".completionist.mode_off"));
         ApplyRunModeSideEffects(turningOn);
     }
 

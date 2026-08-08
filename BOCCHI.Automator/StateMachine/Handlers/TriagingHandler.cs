@@ -51,7 +51,7 @@ public class TriagingHandler
 
     public override StatePriority GetScore()
     {
-        if (!context.IsIllegalMode || !config.EnableTriageMode)
+        if ((!context.IsIllegalMode && !context.IsCompletionist) || !config.EnableTriageMode)
         {
             TriageSession.Clear(memory);
             return StatePriority.Never;

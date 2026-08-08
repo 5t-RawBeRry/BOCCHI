@@ -38,6 +38,10 @@
       "label": "Show Illegal Mode section",
       "tooltip": "Show Illegal Mode controls in the main window."
     },
+    "show_completionist_section": {
+      "label": "Show Completionist section",
+      "tooltip": "Show Completionist Mode (start/stop, field-note checklist) in the main window."
+    },
     "show_mob_farmer_section": {
       "label": "Show Mob Farmer section",
       "tooltip": "Show Mob Farmer controls in the main window."

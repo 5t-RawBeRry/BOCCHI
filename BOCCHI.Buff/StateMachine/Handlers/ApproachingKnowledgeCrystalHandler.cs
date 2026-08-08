@@ -70,9 +70,11 @@ public class ApproachingKnowledgeCrystalHandler
 
         BuffZone? buffZone = zone.GetBuffZone();
         KnowledgeCrystalData closest = crystals[0];
+        // Prefer the authored camp annulus only when the closest crystal is that camp crystal.
         Vector3 destination = buffZone is { } bz
-            ? bz.GetApproachPoint(player.Position)
-            : closest.Position.GetApproachPosition(player.Position, CrystalInteractionRange - 0.2f);
+            && Vector3.DistanceSquared(closest.Position, bz.Center) <= 900f
+                ? bz.GetApproachPoint(player.Position)
+                : closest.Position.GetApproachPosition(player.Position, CrystalInteractionRange - 0.2f);
 
         pathfinder.PathfindAndMoveTo(new(destination)
         {

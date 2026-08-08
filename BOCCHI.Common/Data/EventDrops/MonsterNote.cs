@@ -2,6 +2,7 @@
 
 public enum MonsterNote : uint
 {
+    // South Horn / Forked Tower: Blood
     CloisterDemon = 47728,
     CrescentBerserker = 47730,
     NymianPotaladus = 47731,
@@ -12,4 +13,22 @@ public enum MonsterNote : uint
     MarbleDragon = 47736,
     Magitaur = 47737,
     PersistentPots = 47738,
+
+    // North Horn CEs / pots
+    Arbatel = 51979,
+    TinyMage = 51980,
+    Algol = 51981,
+    Metamorph = 51982,
+    Pallmagia = 51983,
+    PhantomNecromancer = 51984,
+    Abductor = 51985,
+    ClaretDragon = 51986,
+    AlabasterBlade = 51987,
+    ConjuredCalofisteri = 51988,
+
+    // Forked Tower: Magic
+    TwoHeadedAevis = 51989,
+    SwordDancer = 51990,
+    Necrophobia = 51991,
+    Index = 51992,
 }

@@ -7,6 +7,7 @@
   "sections": {
     "trackers": "统计",
     "automation": "违规模式",
+    "completionist": "收集者",
     "potstreasure": "魔法罐与寻宝",
     "mobfarmer": "刷怪",
     "world": "世界",
@@ -14,6 +15,7 @@
   },
   "status": {
     "automator": "违规模式",
+    "completionist": "收集者",
     "pots_treasure": "魔法罐与寻宝",
     "mob_farmer": "刷怪",
     "treasure_hunt": "寻宝",
@@ -86,6 +88,41 @@
     "apply_tooltip": "立即附加已设置的增益。不会走近水晶 — 请先站在知识水晶增益圈内再点。",
     "stop_tooltip": "停止附加增益",
     "applying": "正在附加……"
+  },
+  "completionist": {
+    "enable": "开始收集者模式",
+    "disable": "停止收集者模式",
+    "mode_on": "[BOCCHI] 收集者模式已开启",
+    "mode_off": "[BOCCHI] 收集者模式已关闭",
+    "description": "只前往仍会掉落你尚未拥有的勘察记录的危命／紧急遭遇。移动与战斗使用违规模式的设置。列表随南角／北角切换。调查点与分叉塔记录仅供查看，不会自动前往——点击调查点可在地图上插旗。",
+    "legend": "勾选 = 已拥有 · × = 仍需 · 星 = 辅助职业满级",
+    "notes_header": "勘察记录",
+    "jobs_header": "辅助职业",
+    "outside_zone": "进入南角或北角后，会显示该区域的勘察记录列表。",
+    "flag_tooltip": "点击后在地图上于该调查点位置插旗。",
+    "sources": {
+      "persistent_pots": "Persistent / Pleading Pots",
+      "black_regiment": "The Black Regiment",
+      "the_unbridled": "The Unbridled",
+      "calamity_bound": "Calamity Bound",
+      "from_times_bygone": "From Times Bygone",
+      "shark_attack": "Shark Attack",
+      "cursed_concern": "Cursed Concern",
+      "survey_point": "调查点",
+      "forked_tower_blood": "仅分叉塔：血",
+      "persistent_pots_nh": "Daylight Pottery / In a Pot of Bother",
+      "doubled_trouble": "Doubled Trouble",
+      "quarried_away": "Quarried Away",
+      "forbidden_folios": "Forbidden Folios",
+      "cursed_resurgence": "Cursed Resurgence",
+      "imbalanced_diet": "Imbalanced Diet",
+      "dark_artistry": "Dark Artistry",
+      "appalling_behavior": "Appalling Behavior",
+      "tiny_terror": "Tiny Terror",
+      "lost_on_the_wind": "Lost on the Wind",
+      "accept_no_imitators": "Accept No Imitators",
+      "forked_tower_magic": "仅分叉塔：魔"
+    }
   },
   "automation": {
     "automator": {

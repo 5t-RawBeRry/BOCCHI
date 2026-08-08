@@ -5,12 +5,21 @@ namespace BOCCHI.Common.Data.Zones;
 /// <summary>Fixed annulus around the knowledge crystal for buff casting.</summary>
 public readonly record struct BuffZone(Vector3 Center, float RadiusMin, float RadiusMax)
 {
+    /// <summary>Preferred stand band (inner–outer ring) used when walking in.</summary>
     public bool Contains2D(Vector3 position)
+    {
+        float dist = Distance2D(position);
+        return dist >= RadiusMin && dist <= RadiusMax;
+    }
+
+    /// <summary>True inside the outer buff radius (includes standing on the crystal).</summary>
+    public bool IsWithinCastRadius2D(Vector3 position) => Distance2D(position) <= RadiusMax;
+
+    private float Distance2D(Vector3 position)
     {
         float dx = position.X - Center.X;
         float dz = position.Z - Center.Z;
-        float dist = MathF.Sqrt((dx * dx) + (dz * dz));
-        return dist >= RadiusMin && dist <= RadiusMax;
+        return MathF.Sqrt((dx * dx) + (dz * dz));
     }
 
     /// <summary>Point on the inner ring toward the player (stand here to buff).</summary>

@@ -4,15 +4,17 @@ namespace BOCCHI.Automator.Services;
 
 public interface IAutomator
 {
-    /// <summary>Illegal Mode is on (not Pots &amp; Treasure).</summary>
+    /// <summary>Illegal Mode is on (not Pots &amp; Treasure / Completionist).</summary>
     bool Enabled { get; }
 
-    /// <summary>Automator pipeline is active for Illegal Mode or Pots &amp; Treasure.</summary>
+    /// <summary>Automator pipeline is active for Illegal Mode, Completionist, or Pots &amp; Treasure.</summary>
     bool IsActive { get; }
 
     bool IsPotsAndTreasure { get; }
 
-    /// <summary>Treasure hunt owns vnav (Illegal Mode soft-pause or Pots &amp; Treasure filler).</summary>
+    bool IsCompletionist { get; }
+
+    /// <summary>Treasure hunt owns vnav (Illegal/Completionist soft-pause or Pots &amp; Treasure filler).</summary>
     bool SuspendedForTreasure { get; }
 
     /// <summary>Illegal Mode is on (including while suspended for treasure).</summary>
@@ -29,6 +31,8 @@ public interface IAutomator
     void Toggle();
 
     void TogglePotsAndTreasure();
+
+    void ToggleCompletionist();
 
     /// <summary>Drop the current route and replan from the player's position (keeps the goal).</summary>
     void RefreshPathfinding();

@@ -1,5 +1,6 @@
 using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.Paths;
@@ -22,6 +23,7 @@ public class PathCalculator
     IObjectTable objects,
     IZoneProvider zones,
     IFateRepository fates,
+    ICriticalEncounterRepository criticalEncounters,
     IFateContext fateContext,
     AutomatorConfig config,
     ILogger<PathCalculator> logger
@@ -62,7 +64,8 @@ public class PathCalculator
             return [];
         }
 
-        // Prefer live FATE center when available — CEs use authored graph staging (#122).
+        // Prefer live FATE center when available. Square CEs prefer live LGB center (#122);
+        // circular CEs keep authored graph staging (live markers can sit under elevated CEs).
         Node pathGoal = goalNode;
         Vector3? potPrepositionStandOff = null;
         if (goal.GoalType is FateGoal liveFateGoal
@@ -73,6 +76,18 @@ public class PathCalculator
                 Id = goalNode.Id,
                 Type = goalNode.Type,
                 Position = liveFate.Position,
+                Metadata = goalNode.Metadata
+            };
+        }
+        else if (goal.GoalType is CriticalEncounterGoal liveCeGoal
+                 && criticalEncounters.Snapshot()
+                     .FirstOrDefault(c => c.Id.Value == liveCeGoal.id.Value) is { AreaShape: ActivityAreaShape.Square } liveCe)
+        {
+            pathGoal = new Node
+            {
+                Id = goalNode.Id,
+                Type = goalNode.Type,
+                Position = liveCe.Position,
                 Metadata = goalNode.Metadata
             };
         }

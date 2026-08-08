@@ -247,7 +247,7 @@ public class ActivityNavigation
             && activity?.CombatRadius is { } radius)
         {
             alreadyAtCeRing = NavigationConstants.IsInsideCriticalEncounterWaitArea(
-                activity.Position, radius, activity.AreaShape, from);
+                destination, radius, activity.AreaShape, from);
             return true;
         }
 

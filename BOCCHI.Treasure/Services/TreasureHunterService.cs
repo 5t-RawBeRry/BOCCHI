@@ -904,7 +904,7 @@ public class TreasureHunterService
 
         if (inCombat && !vnav.IsRunning())
         {
-            SprintAssist.MaybeCast(automatorConfig.SprintOnAetheryteApproach);
+            SprintAssist.MaybeCast(automatorConfig.SprintOnAetheryteApproach, zone.IsInBasecamp());
             vnav.PathfindAndMoveTo(zone.GetMainAetheryte().GetInteractPosition(), false);
             return false;
         }
@@ -1000,27 +1000,15 @@ public class TreasureHunterService
         Vector3 crystal = ResolveAethernet(step.Aethernet).Position;
         StepDistance = player.Position.Distance2D(crystal);
 
-        if (StepDistance <= AethernetData.LifestreamInteractRadius)
+        // At the approach ring — Lifestream owns the interact / teleport.
+        if (StepDistance <= AethernetNavigation.CampApproachRadius)
         {
             vnav.Stop();
             return true;
         }
 
-        // Keep stand-off + arrival inside LifestreamInteractRadius (#113).
-        float standOff;
-        float arrival;
-        if (StepDistance <= AethernetData.LifestreamInteractRadius + AethernetNavigation.PathfindArrivalRadius + 0.5f)
-        {
-            standOff = 0.75f;
-            arrival = 0.5f;
-        }
-        else
-        {
-            standOff = Math.Min(
-                AethernetNavigation.CampApproachRadius,
-                AethernetData.LifestreamInteractRadius - AethernetNavigation.PathfindArrivalRadius - 0.25f);
-            arrival = AethernetNavigation.PathfindArrivalRadius;
-        }
+        float standOff = AethernetNavigation.CampApproachRadius;
+        float arrival = AethernetNavigation.PathfindArrivalRadius;
 
         Vector3 destination = crystal.GetApproachPosition(player.Position, standOff);
         destination = new Vector3(destination.X, crystal.Y, destination.Z);

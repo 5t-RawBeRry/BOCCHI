@@ -38,6 +38,10 @@
       "label": "불법 모드 섹션 표시",
       "tooltip": "메인 창에 불법 모드 조작을 표시합니다."
     },
+    "show_completionist_section": {
+      "label": "컬렉터 섹션 표시",
+      "tooltip": "메인 창에 컬렉터 모드(시작/중지, 노트 목록)를 표시합니다."
+    },
     "show_mob_farmer_section": {
       "label": "몹 파머 섹션 표시",
       "tooltip": "메인 창에 몹 파머 조작을 표시합니다."

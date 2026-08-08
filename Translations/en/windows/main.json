@@ -7,6 +7,7 @@
   "sections": {
     "trackers": "Trackers",
     "automation": "Illegal Mode",
+    "completionist": "Completionist",
     "potstreasure": "Pots & Treasure",
     "mobfarmer": "Mob Farmer",
     "world": "World",
@@ -14,6 +15,7 @@
   },
   "status": {
     "automator": "Illegal Mode",
+    "completionist": "Completionist",
     "pots_treasure": "Pots & Treasure",
     "mob_farmer": "Mob Farmer",
     "treasure_hunt": "Treasure Hunt",
@@ -86,6 +88,41 @@
     "apply_tooltip": "Cast your configured buffs now. Stand inside the knowledge crystal buff circle first — this button does not walk you there.",
     "stop_tooltip": "Stop applying buffs",
     "applying": "Applying…"
+  },
+  "completionist": {
+    "enable": "Start Completionist Mode",
+    "disable": "Stop Completionist Mode",
+    "mode_on": "[BOCCHI] Completionist Mode On",
+    "mode_off": "[BOCCHI] Completionist Mode Off",
+    "description": "Goes only for FATEs and Critical Encounters that drop a field note you still need. Travel and combat use your Illegal Mode settings. The list follows South or North Horn based on where you are. Survey points and Forked Tower notes are shown for tracking but not automated — click a survey point to place a map flag.",
+    "legend": "Check = unlocked · × = still needed · star = phantom job maxed",
+    "notes_header": "Field notes",
+    "jobs_header": "Phantom jobs",
+    "outside_zone": "Enter South Horn or North Horn to see that zone’s field-note checklist.",
+    "flag_tooltip": "Click to place a flag on the map at this survey point.",
+    "sources": {
+      "persistent_pots": "Persistent / Pleading Pots",
+      "black_regiment": "The Black Regiment",
+      "the_unbridled": "The Unbridled",
+      "calamity_bound": "Calamity Bound",
+      "from_times_bygone": "From Times Bygone",
+      "shark_attack": "Shark Attack",
+      "cursed_concern": "Cursed Concern",
+      "survey_point": "Survey point",
+      "forked_tower_blood": "Forked Tower: Blood only",
+      "persistent_pots_nh": "Daylight Pottery / In a Pot of Bother",
+      "doubled_trouble": "Doubled Trouble",
+      "quarried_away": "Quarried Away",
+      "forbidden_folios": "Forbidden Folios",
+      "cursed_resurgence": "Cursed Resurgence",
+      "imbalanced_diet": "Imbalanced Diet",
+      "dark_artistry": "Dark Artistry",
+      "appalling_behavior": "Appalling Behavior",
+      "tiny_terror": "Tiny Terror",
+      "lost_on_the_wind": "Lost on the Wind",
+      "accept_no_imitators": "Accept No Imitators",
+      "forked_tower_magic": "Forked Tower: Magic only"
+    }
   },
   "automation": {
     "automator": {

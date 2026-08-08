@@ -103,6 +103,23 @@ public static class NavigationApproach
         ActivityAreaShape shape = ActivityAreaShape.Circle)
     {
         float red = MathF.Max(1f, combatRadius);
+        if (shape == ActivityAreaShape.Square)
+        {
+            // Squares (e.g. A Beast Unleashed): go well inside the blue zone, not the circle-style
+            // outer stand-off — 35–55% of half-extent lands on/near the edge or outside.
+            float maxFromCenter = MathF.Min(red * 0.2f, NavigationConstants.EventApproachMaxRadius);
+            float approachRange = Random.Shared.NextSingle() * maxFromCenter;
+            Vector3 delta = from - center;
+            float chebyshev = MathF.Max(MathF.Abs(delta.X), MathF.Abs(delta.Z));
+            if (chebyshev < 0.001f || approachRange < 0.001f)
+            {
+                return center;
+            }
+
+            float scale = approachRange / chebyshev;
+            return center + new Vector3(delta.X * scale, 0f, delta.Z * scale);
+        }
+
         float min = red * NavigationConstants.CriticalEncounterApproachMinRatio;
         float max = red * NavigationConstants.CriticalEncounterApproachMaxRatio;
         if (max < min)
@@ -110,22 +127,8 @@ public static class NavigationApproach
             max = min;
         }
 
-        float approachRange = min + Random.Shared.NextSingle() * (max - min);
-        if (shape == ActivityAreaShape.Square)
-        {
-            // Approach along the inbound ray, clamped into the square (Chebyshev).
-            Vector3 delta = from - center;
-            float chebyshev = MathF.Max(MathF.Abs(delta.X), MathF.Abs(delta.Z));
-            if (chebyshev < 0.001f)
-            {
-                return center + new Vector3(approachRange, 0f, 0f);
-            }
-
-            float scale = approachRange / chebyshev;
-            return center + new Vector3(delta.X * scale, 0f, delta.Z * scale);
-        }
-
-        return center.GetApproachPosition(from, approachRange);
+        float approachRangeCircle = min + Random.Shared.NextSingle() * (max - min);
+        return center.GetApproachPosition(from, approachRangeCircle);
     }
 
     public static Vector3 ResolveActivityApproach(Node goal, Vector3 from)
@@ -163,15 +166,17 @@ public static class NavigationApproach
             }
 
             activity = candidate;
+            // Prefer PathTo destination as center (live CE position from World panel for squares).
+            Vector3 center = destination;
             if (NavigationConstants.IsInsideCriticalEncounterWaitArea(
-                    candidate.Position, radius, candidate.AreaShape, from))
+                    center, radius, candidate.AreaShape, from))
             {
                 approach = from;
                 return true;
             }
 
             approach = GetCriticalEncounterApproachPosition(
-                candidate.Position, from, radius, candidate.AreaShape);
+                center, from, radius, candidate.AreaShape);
             return true;
         }
 

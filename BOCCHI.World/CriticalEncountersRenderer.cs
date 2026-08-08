@@ -45,8 +45,9 @@ public class CriticalEncountersRenderer
             return;
         }
 
-        bool southHorn = zones.GetZone().ZoneId == ZoneId.SouthHorn;
-        float dropExtra = southHorn && eventDropConfig.AnyEnabled
+        ZoneId zoneId = zones.GetZone().ZoneId;
+        bool showDrops = zones.GetZone().IsOccultCrescentZone() && eventDropConfig.AnyEnabled;
+        float dropExtra = showDrops
             ? EventDropIconRenderer.IconBoxSize + 4f
             : 0f;
         float maxHeight = dropExtra > 0f ? 240f : 120f;
@@ -88,8 +89,8 @@ public class CriticalEncountersRenderer
                     details);
             }
 
-            if (southHorn
-                && SouthHornEventDrops.TryGetCriticalEncounter(
+            if (FieldNoteTargets.TryGetDropsForCriticalEncounter(
+                    zoneId,
                     criticalEncounter.Id.Value,
                     out EventDropInfo drops))
             {
