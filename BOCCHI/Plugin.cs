@@ -16,6 +16,7 @@ using BOCCHI.Data;
 using BOCCHI.MobFarmer;
 using BOCCHI.Renderers;
 using BOCCHI.Services;
+using BOCCHI.Services.Changelog;
 using BOCCHI.Services.Repair;
 using BOCCHI.Trackers;
 using BOCCHI.Treasure;
@@ -70,6 +71,7 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<IAutomationModeGuard, AutomationModeGuard>();
         services.AddSingleton<OperationalStatusBar>();
         services.AddSingleton<OccultCrescentWindowAutoOpener>();
+        services.AddSingleton<CombatPathfindCancelService>();
         services.AddSingleton<IMainWindowTitleBarContributor, IllegalModeTitleBarContributor>();
         services.AddSingleton<IMainWindowTitleBarContributor, KofiTitleBarContributor>();
         services.AddSingleton<IFieldRenderer<MobMultiSelectAttribute>, MobMultiSelectRenderer>();
@@ -81,10 +83,16 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<IFieldRenderer<Mp3SoundSelectAttribute>, Mp3SoundSelectRenderer>();
         services.AddSingleton<UILanguageDisplay>();
         services.AddSingleton<NoOpFilter<UILanguage>>();
+        services.AddSingleton<IFieldRenderer<TriageRaiseJobAttribute>, TriageRaiseJobRenderer>();
 
         services.AddSingleton<MessageOfTheDayService>();
         services.AddSingleton<IOnStart>(sp => sp.GetRequiredService<MessageOfTheDayService>());
         services.AddSingleton<IOnStop>(sp => sp.GetRequiredService<MessageOfTheDayService>());
+
+        services.AddSingleton<ChangelogWindow>();
+        services.AddSingleton<IChangelogWindow>(sp => sp.GetRequiredService<ChangelogWindow>());
+        services.AddSingleton<IWindow>(sp => sp.GetRequiredService<ChangelogWindow>());
+        services.AddSingleton<ChangelogPopupService>();
 
         services.AddSingleton<ISupportJobFactory, SupportJobFactory>();
         services.AddSingleton<ISupportJobChanger, SupportJobChanger>();

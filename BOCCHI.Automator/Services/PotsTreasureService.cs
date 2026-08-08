@@ -49,6 +49,8 @@ public class PotsTreasureService
 
     public bool Running => context.IsPotsAndTreasure;
 
+    public bool Paused { get; private set; }
+
     public PotsTreasurePhase Phase { get; private set; } = PotsTreasurePhase.Off;
 
     public void OnStop()
@@ -60,6 +62,7 @@ public class PotsTreasureService
         }
 
         ResetTreasureLoop();
+        Paused = false;
         Phase = PotsTreasurePhase.Off;
     }
 
@@ -70,6 +73,7 @@ public class PotsTreasureService
             StopHuntSession();
             automator.TogglePotsAndTreasure();
             ResetTreasureLoop();
+            Paused = false;
             Phase = PotsTreasurePhase.Off;
             return;
         }
@@ -91,8 +95,32 @@ public class PotsTreasureService
         automator.TogglePotsAndTreasure();
         hunter.ManagedByPotsTreasure = true;
         ResetTreasureLoop();
+        Paused = false;
         Phase = PotsTreasurePhase.DoingPots;
         logger.Info("Pots & Treasure mode started");
+    }
+
+    public void Pause()
+    {
+        if (!Running || Paused)
+        {
+            return;
+        }
+
+        Paused = true;
+        SoftPauseMovement();
+        logger.Info("Pots & Treasure paused");
+    }
+
+    public void Resume()
+    {
+        if (!Running || !Paused)
+        {
+            return;
+        }
+
+        Paused = false;
+        logger.Info("Pots & Treasure resumed");
     }
 
     public void ResumeTreasureHunt()
@@ -102,6 +130,7 @@ public class PotsTreasureService
             return;
         }
 
+        Paused = false;
         forceTreasureUntil = DateTimeOffset.UtcNow + ManualTreasureOverride;
         nextTreasureHuntAt = DateTimeOffset.MinValue;
         EnterHuntPhase();
@@ -116,6 +145,7 @@ public class PotsTreasureService
             {
                 StopHuntSession();
                 ResetTreasureLoop();
+                Paused = false;
                 Phase = PotsTreasurePhase.Off;
             }
 
@@ -124,6 +154,12 @@ public class PotsTreasureService
 
         hunter.ManagedByPotsTreasure = true;
         CaptureFinishedTreasureHunt();
+
+        if (Paused)
+        {
+            SoftPauseMovement();
+            return;
+        }
 
         if (!zones.GetZone().IsOccultCrescentZone())
         {
@@ -139,6 +175,16 @@ public class PotsTreasureService
         {
             EnterHuntPhase();
         }
+    }
+
+    private void SoftPauseMovement()
+    {
+        if (hunter.Running && !hunter.Paused)
+        {
+            hunter.Pause();
+        }
+
+        automator.SoftStopPathfinding();
     }
 
     private void EnterPotPhase()

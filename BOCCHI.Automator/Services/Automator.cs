@@ -83,10 +83,15 @@ public class Automator
 
         // Soft-stop movement so Treasure Hunt can own vnav; keep GoalMemory if any.
         IllegalModeActivityWork.ForgetTravelLatches(memory);
+        SoftStopPathfinding();
+        autoRotation.DisableForTravel();
+    }
+
+    public void SoftStopPathfinding()
+    {
         manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
         pathfinder.Stop();
         vnav.Stop();
-        autoRotation.DisableForTravel();
     }
 
     public void Toggle()

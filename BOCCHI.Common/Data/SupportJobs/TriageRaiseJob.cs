@@ -1,0 +1,54 @@
+using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.OccultCrescent;
+using BOCCHI.Common.Services;
+
+namespace BOCCHI.Common.Data.SupportJobs;
+
+public static class SupportJobWhiteMage
+{
+    public static bool IsUnlocked(ISupportJobFactory supportJobs) =>
+        supportJobs.Create(SupportJobId.PhantomWhiteMage).Level >= 1;
+}
+
+/// <summary>Phantom jobs that can raise in Triage Mode.</summary>
+public static class TriageRaiseJob
+{
+    public static bool AnyUnlocked(ISupportJobFactory supportJobs) =>
+        SupportJobChemist.IsUnlocked(supportJobs) || SupportJobWhiteMage.IsUnlocked(supportJobs);
+
+    public static bool TrySelect(
+        ISupportJobFactory supportJobs,
+        TriageRaiseJobPreference preference,
+        out SupportJobId jobId)
+    {
+        SupportJobId preferred = preference == TriageRaiseJobPreference.PhantomWhiteMage
+            ? SupportJobId.PhantomWhiteMage
+            : SupportJobId.PhantomChemist;
+        SupportJobId fallback = preferred == SupportJobId.PhantomChemist
+            ? SupportJobId.PhantomWhiteMage
+            : SupportJobId.PhantomChemist;
+
+        if (IsUnlocked(supportJobs, preferred))
+        {
+            jobId = preferred;
+            return true;
+        }
+
+        if (IsUnlocked(supportJobs, fallback))
+        {
+            jobId = fallback;
+            return true;
+        }
+
+        jobId = default;
+        return false;
+    }
+
+    public static uint RaiseActionId(SupportJobId jobId) =>
+        jobId == SupportJobId.PhantomWhiteMage ? PhantomActions.OccultRaise : PhantomActions.Revive;
+
+    private static bool IsUnlocked(ISupportJobFactory supportJobs, SupportJobId jobId) =>
+        jobId == SupportJobId.PhantomWhiteMage
+            ? SupportJobWhiteMage.IsUnlocked(supportJobs)
+            : SupportJobChemist.IsUnlocked(supportJobs);
+}

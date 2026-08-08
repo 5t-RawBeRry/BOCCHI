@@ -101,8 +101,11 @@ public class OperationalStatusBar
             {
                 string phase = translator.T(
                     $".automation.pots_treasure.phases.{PotsTreasure.Phase.ToString().ToSnakeCase()}");
-                string? detail = phase;
-                if (PotsTreasure.Phase == PotsTreasurePhase.Hunting
+                string? detail = PotsTreasure.Paused
+                    ? translator.T(".automation.pots_treasure.paused")
+                    : phase;
+                if (!PotsTreasure.Paused
+                    && PotsTreasure.Phase == PotsTreasurePhase.Hunting
                     && hunter.Running
                     && (hunter.StepCount > 0 || hunter.WaitingForSafeWindow))
                 {

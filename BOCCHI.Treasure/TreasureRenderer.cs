@@ -159,6 +159,22 @@ public class TreasureRenderer
                 translator.T(".treasure.fortune_carrots"),
                 carrotHunter.FortuneCarrotsRemaining.ToString());
         }
+
+        bool showUseCarrot = carrotHunter.Running || carrotHunter.Elapsed > TimeSpan.Zero;
+        if (showUseCarrot || carrotHunter.FortuneCarrotsRemaining > 0)
+        {
+            ImGui.BeginDisabled(carrotHunter.FortuneCarrotsRemaining <= 0);
+            if (ImGui.Button(translator.T(".treasure.use_fortune_carrot")))
+            {
+                carrotHunter.UseFortuneCarrot();
+            }
+
+            ImGui.EndDisabled();
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                ImGui.SetTooltip(translator.T(".treasure.use_fortune_carrot_tooltip"));
+            }
+        }
     }
 
     private void DrawNearbyTreasures()

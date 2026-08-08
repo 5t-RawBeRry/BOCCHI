@@ -18,11 +18,12 @@ using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
 using Ocelot.States.Score;
 using Action = Ocelot.Actions.Action;
+using ActionCastScope = Ocelot.Actions.ActionCastScope;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
 /// <summary>
-///     After FATE/CE with nearby dead players: Chemist → Revive (skip Raise pending) → restore job → Return.
+///     After FATE/CE with nearby dead players: Chemist or White Mage raise → restore job → continue.
 /// </summary>
 public class TriagingHandler
 (
@@ -38,13 +39,15 @@ public class TriagingHandler
     ILogger<TriagingHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Triaging)
 {
-    private static readonly Action Revive = new(ActionType.Action, PhantomActions.Revive);
-
     private static readonly TimeSpan JobSwapSettle = TimeSpan.FromSeconds(2);
 
     private static readonly TimeSpan SessionTimeout = TimeSpan.FromSeconds(90);
 
     private DateTimeOffset sessionStartedUtc = DateTimeOffset.MinValue;
+
+    private SupportJobId raiseJob = SupportJobId.PhantomChemist;
+
+    private Action raiseAction = new(ActionType.Action, PhantomActions.Revive);
 
     public override StatePriority GetScore()
     {
@@ -69,9 +72,8 @@ public class TriagingHandler
             return StatePriority.Never;
         }
 
-        if (!SupportJobChemist.IsUnlocked(supportJobs) || !RaiseableCorpses.Any(objects))
+        if (!TriageRaiseJob.AnyUnlocked(supportJobs) || !RaiseableCorpses.Any(objects))
         {
-            // No bodies (or Chemist unavailable) — clear and let Return proceed.
             memory.Forget<PendingTriageMemory>();
             return StatePriority.Never;
         }
@@ -85,7 +87,14 @@ public class TriagingHandler
         sessionStartedUtc = DateTimeOffset.UtcNow;
         pathfinder.Stop();
         memory.TryAdd<TriagingMemory>();
-        logger.Info("Triage Mode: raising nearby players");
+
+        if (!TriageRaiseJob.TrySelect(supportJobs, config.PreferredTriageRaiseJob, out raiseJob))
+        {
+            raiseJob = SupportJobId.PhantomChemist;
+        }
+
+        raiseAction = new Action(ActionType.Action, TriageRaiseJob.RaiseActionId(raiseJob));
+        logger.Info("Triage Mode: raising nearby players with {Job}", raiseJob);
     }
 
     public override void Exit(AutomatorState next)
@@ -131,9 +140,9 @@ public class TriagingHandler
             return;
         }
 
-        if (!supportJobs.TryGetCurrent(out SupportJob current) || current.Id != SupportJobId.PhantomChemist)
+        if (!supportJobs.TryGetCurrent(out SupportJob current) || current.Id != raiseJob)
         {
-            TrySwapToChemist(current);
+            TrySwapToRaiseJob(current);
             return;
         }
 
@@ -163,18 +172,18 @@ public class TriagingHandler
         pathfinder.Stop();
         targetManager.Target = corpse;
 
-        if (!Revive.CanCast())
+        if (!raiseAction.CanCast())
         {
             return;
         }
 
-        if (TryCastRevive(corpse))
+        if (TryCastRaise(corpse))
         {
-            logger.Info("Triage Mode: Revive on {Name}", corpse.Name.TextValue);
+            logger.Info("Triage Mode: raise on {Name}", corpse.Name.TextValue);
         }
     }
 
-    private void TrySwapToChemist(SupportJob? current)
+    private void TrySwapToRaiseJob(SupportJob? current)
     {
         if (DateTimeOffset.UtcNow - sessionStartedUtc < JobSwapSettle)
         {
@@ -186,13 +195,14 @@ public class TriagingHandler
             return;
         }
 
-        if (current is { Id: not SupportJobId.PhantomChemist }
+        if (current is { } job
+            && job.Id != raiseJob
             && !memory.TryRemember<TriageSupportJobMemory>(out TriageSupportJobMemory _))
         {
-            memory.TryAdd(new TriageSupportJobMemory(current.Id));
+            memory.TryAdd(new TriageSupportJobMemory(job.Id));
         }
 
-        changer.Change(SupportJobId.PhantomChemist);
+        changer.Change(raiseJob);
     }
 
     private void FinishTriage()
@@ -201,6 +211,11 @@ public class TriagingHandler
         TriageSession.Clear(memory);
     }
 
-    private static unsafe bool TryCastRevive(IGameObject target) =>
-        ActionManager.Instance()->UseAction(ActionType.Action, PhantomActions.Revive, target.GameObjectId);
+    private unsafe bool TryCastRaise(IGameObject target)
+    {
+        using (ActionCastScope.SuppressPathfindCancel())
+        {
+            return ActionManager.Instance()->UseAction(ActionType.Action, raiseAction.Id, target.GameObjectId);
+        }
+    }
 }

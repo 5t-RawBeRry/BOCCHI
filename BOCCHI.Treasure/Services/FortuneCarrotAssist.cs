@@ -18,9 +18,12 @@ public sealed class FortuneCarrotAssist(IPluginLog log)
 
     public bool HasAny() => Count() > 0;
 
-    public unsafe bool TryUse()
+    /// <param name="manual">Shorter throttle for the UI button; auto hunt uses the longer gate.</param>
+    public unsafe bool TryUse(bool manual = false)
     {
-        if (!EzThrottler.Throttle("CarrotHunt::FortuneCarrot", 1000))
+        string throttleKey = manual ? "CarrotHunt::FortuneCarrotManual" : "CarrotHunt::FortuneCarrot";
+        int throttleMs = manual ? 500 : 1000;
+        if (!EzThrottler.Throttle(throttleKey, throttleMs))
         {
             return false;
         }

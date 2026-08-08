@@ -26,3 +26,8 @@ public class DebugCommandDelegate(DebugCommand command) : IMainCommandDelegate
 {
     public IOcelotCommand Command { get; } = command;
 }
+
+public class ChangelogCommandDelegate(ChangelogCommand command) : IMainCommandDelegate
+{
+    public IOcelotCommand Command { get; } = command;
+}

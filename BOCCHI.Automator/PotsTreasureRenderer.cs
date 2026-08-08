@@ -45,11 +45,45 @@ public class PotsTreasureRenderer
     {
         ImGui.Spacing();
 
-        if (ImGui.Button(PotsTreasure.Running
-            ? translator.T(".automation.pots_treasure.stop")
-            : translator.T(".automation.pots_treasure.start")))
+        if (!PotsTreasure.Running)
         {
-            PotsTreasure.Toggle();
+            if (ImGui.Button(translator.T(".automation.pots_treasure.start")))
+            {
+                PotsTreasure.Toggle();
+            }
+        }
+        else
+        {
+            if (PotsTreasure.Paused)
+            {
+                if (ImGui.Button(translator.T(".automation.pots_treasure.resume")))
+                {
+                    PotsTreasure.Resume();
+                }
+
+                if (ImGui.IsItemHovered())
+                {
+                    ImGui.SetTooltip(translator.T(".automation.pots_treasure.resume_tooltip"));
+                }
+            }
+            else
+            {
+                if (ImGui.Button(translator.T(".automation.pots_treasure.pause")))
+                {
+                    PotsTreasure.Pause();
+                }
+
+                if (ImGui.IsItemHovered())
+                {
+                    ImGui.SetTooltip(translator.T(".automation.pots_treasure.pause_tooltip"));
+                }
+            }
+
+            ImGui.SameLine();
+            if (ImGui.Button(translator.T(".automation.pots_treasure.stop")))
+            {
+                PotsTreasure.Toggle();
+            }
         }
 
         ImGui.Spacing();
@@ -66,11 +100,16 @@ public class PotsTreasureRenderer
         }
 
         ImGui.Spacing();
+        if (PotsTreasure.Paused)
+        {
+            ui.Text(translator.T(".automation.pots_treasure.paused"), branding.DalamudYellow);
+        }
+
         ui.LabelledValue(
             translator.T(".automation.pots_treasure.phase"),
             translator.T($".automation.pots_treasure.phases.{PotsTreasure.Phase.ToString().ToSnakeCase()}"));
 
-        if (PotsTreasure.Phase == PotsTreasurePhase.Hunting && !hunter.Running)
+        if (PotsTreasure.Phase == PotsTreasurePhase.Hunting && !hunter.Running && !PotsTreasure.Paused)
         {
             if (ImGui.Button(translator.T(".automation.pots_treasure.resume_treasure_hunt")))
             {

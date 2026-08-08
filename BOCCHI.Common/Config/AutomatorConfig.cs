@@ -58,34 +58,38 @@ public class AutomatorConfig : IAutoConfig
     public bool PhantomJobsLevelingMode { get; set; } = false;
 
     /// <summary>
-    ///     After FATE/CE: if raisable corpses are nearby, Chemist Revive then continue Illegal Mode.
+    ///     After FATE/CE: if raisable corpses are nearby, raise with the selected phantom job then continue.
     ///     No bodies → no swap / no wait; Illegal Mode continues as usual.
     /// </summary>
     [Checkbox(Order = 12)]
     public bool EnableTriageMode { get; set; } = false;
 
-    [Checkbox(Order = 13)]
+    /// <summary>Which phantom job Triage Mode swaps to for raises (falls back if not unlocked).</summary>
+    [TriageRaiseJob(Order = 13)]
+    public TriageRaiseJobPreference PreferredTriageRaiseJob { get; set; } = TriageRaiseJobPreference.PhantomChemist;
+
+    [Checkbox(Order = 14)]
     public bool ShouldCastTreasureSight { get; set; } = false;
 
-    [IntRange(60, 600, Order = 14)]
+    [IntRange(60, 600, Order = 15)]
     public int TreasureSightRecastIntervalSeconds { get; set; } = 120;
 
     /// <summary>
     ///     Upper bound (seconds) for the random 2..max wait before Return after a FATE/CE.
     /// </summary>
-    [IntRange(2, 60, Order = 15)]
+    [IntRange(2, 60, Order = 16)]
     public int MaxRemoteIdleTimeSeconds { get; set; } = 10;
 
     /// <summary>
     ///     Upper bound (seconds) for a random 0..max idle at camp before teleporting to a FATE/CE (#138).
     ///     0 = leave immediately.
     /// </summary>
-    [IntRange(0, 60, Order = 16)]
+    [IntRange(0, 60, Order = 17)]
     public int MaxBaseTeleportDelaySeconds { get; set; } = 0;
 
     /// <summary>
     ///     Repair equipped gear when any piece falls to or below this condition (%).
     /// </summary>
-    [IntRange(1, 99, Order = 17)]
+    [IntRange(1, 99, Order = 18)]
     public int AutoRepairThreshold { get; set; } = 30;
 }

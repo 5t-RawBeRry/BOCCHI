@@ -53,7 +53,13 @@
     },
     "enable_triage_mode": {
       "label": "Triage Mode",
-      "tooltip": "Fits into normal Illegal Mode. After a FATE or CE: if dead players nearby still need a raise, briefly switch to Phantom Chemist, Revive them (skips anyone who already has a raise pending), switch back, then continue as usual (Return / Sight / next activity). If nobody needs a raise, nothing extra happens — no job swap and no waiting. Needs Chemist unlocked."
+      "tooltip": "Fits into normal Illegal Mode. After a FATE or CE: if dead players nearby still need a raise, briefly switch to your chosen raise job, raise them (skips anyone who already has a raise pending), switch back, then continue as usual (Return / Sight / next activity). If nobody needs a raise, nothing extra happens — no job swap and no waiting. Needs Chemist or White Mage unlocked."
+    },
+    "preferred_triage_raise_job": {
+      "label": "Triage raise job",
+      "tooltip": "Which phantom job to use for raises. If that job is not unlocked, Triage uses the other one when available.",
+      "chemist": "Phantom Chemist",
+      "white_mage": "Phantom White Mage"
     },
     "should_cast_treasure_sight": {
       "label": "Cast Treasure Sight at camp",

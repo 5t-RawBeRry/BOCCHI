@@ -116,6 +116,23 @@ public sealed class CarrotHunterService
         log.Information("Carrot hunt started (nearby mode)");
     }
 
+    public bool UseFortuneCarrot()
+    {
+        if (!fortuneCarrot.HasAny())
+        {
+            BocchiChat.PrintError(chat, uiConfig, "No Fortune Carrots in inventory.");
+            return false;
+        }
+
+        if (!fortuneCarrot.TryUse(manual: true))
+        {
+            return false;
+        }
+
+        log.Information("Carrot hunt: manual Fortune Carrot use");
+        return true;
+    }
+
     public void Update()
     {
         if (!Running)

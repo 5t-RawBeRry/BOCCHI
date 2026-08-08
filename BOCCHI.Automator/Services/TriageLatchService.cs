@@ -64,9 +64,9 @@ public sealed class TriageLatchService
             return;
         }
 
-        if (!SupportJobChemist.IsUnlocked(supportJobs))
+        if (!TriageRaiseJob.AnyUnlocked(supportJobs))
         {
-            logger.Info("Triage Mode skipped — Phantom Chemist not unlocked");
+            logger.Info("Triage Mode skipped — Phantom Chemist / White Mage not unlocked");
             return;
         }
 

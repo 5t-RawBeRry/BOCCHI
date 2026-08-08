@@ -24,4 +24,7 @@ public interface ICarrotHunter
     bool IsVnavReady { get; }
 
     void Toggle();
+
+    /// <summary>Manual Fortune Carrot use (for stuck / intervene).</summary>
+    bool UseFortuneCarrot();
 }

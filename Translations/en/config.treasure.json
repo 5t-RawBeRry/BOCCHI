@@ -89,11 +89,11 @@
     },
     "enable_carrot_hunt": {
       "label": "Enable Carrot Hunt",
-      "tooltip": "Show Start Carrot Hunt on the Treasure panel. Paths to nearby chewed carrots, uses a Fortune Carrot, then opens the bunny gold chest. Exclusive mode (stops Illegal Mode / hunt / etc.)."
+      "tooltip": "Show Carrot Hunt on the Treasure panel. Walks to nearby chewed carrots, uses a Fortune Carrot automatically, then opens the bunny gold chest. Stops other automation while it runs. You can also press Use Fortune Carrot by hand if it gets stuck."
     },
     "carrot_hunt_detection_range": {
       "label": "Carrot Hunt range (yalms)",
-      "tooltip": "Only chase live chewed carrots within this distance. Stay near a carrot cluster — this is not a full-zone tour yet."
+      "tooltip": "Only go after chewed carrots within this distance. Stay near a carrot area — it does not tour the whole zone yet."
     }
   }
 }

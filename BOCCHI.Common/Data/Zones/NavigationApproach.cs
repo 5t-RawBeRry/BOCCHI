@@ -139,6 +139,47 @@ public static class NavigationApproach
         return GetEventPosition(goal.Position, from);
     }
 
+    /// <summary>
+    ///     World / non-Illegal PathTo: use CE outer-ring stand-off when the destination is a known CE.
+    /// </summary>
+    public static bool TryResolveCriticalEncounterApproach(
+        IZone zone,
+        Vector3 destination,
+        Vector3 from,
+        out Vector3 approach,
+        out ActivityData? activity)
+    {
+        const float matchRadius = 80f;
+        foreach (ActivityData candidate in zone.GetCriticalEncounterData())
+        {
+            if (candidate.CombatRadius is not { } radius || radius <= 0f)
+            {
+                continue;
+            }
+
+            if (destination.Distance2D(candidate.Position) > matchRadius)
+            {
+                continue;
+            }
+
+            activity = candidate;
+            if (NavigationConstants.IsInsideCriticalEncounterWaitArea(
+                    candidate.Position, radius, candidate.AreaShape, from))
+            {
+                approach = from;
+                return true;
+            }
+
+            approach = GetCriticalEncounterApproachPosition(
+                candidate.Position, from, radius, candidate.AreaShape);
+            return true;
+        }
+
+        activity = null;
+        approach = default;
+        return false;
+    }
+
     public static Vector3 GetPotPrepositionPosition(Vector3 potCenter, Vector3 from)
     {
         float dist = from.Distance2D(potCenter);

@@ -82,7 +82,19 @@ public class ActivityNavigation
             return;
         }
 
-        Vector3 approach = NavigationApproach.GetEventPosition(destination, player.Position);
+        if (!TryBuildApproach(destination, player.Position, out Vector3 approach, out bool alreadyAtCeRing))
+        {
+            return;
+        }
+
+        if (alreadyAtCeRing)
+        {
+            logger.Info("Already at CE outer ring for {Name} — not pathing into the center", name);
+            CancelActivityChains();
+            pathfinder.Stop();
+            return;
+        }
+
         logger.Info("Pathfinding to {Name} at {Destination:f1}", name, approach);
         CancelActivityChains();
         _ = manager.Manage(BuildPathChain($"{ChainPrefix}Path::{id}", approach));
@@ -118,7 +130,17 @@ public class ActivityNavigation
                 }
 
                 Vector3 approachFrom = target?.Position ?? player.Position;
-                Vector3 approach = NavigationApproach.GetEventPosition(destination, approachFrom);
+                if (!TryBuildApproach(destination, approachFrom, out Vector3 approach, out bool alreadyAtCeRing))
+                {
+                    return;
+                }
+
+                if (alreadyAtCeRing)
+                {
+                    logger.Info("Already at CE outer ring for {Name} — not pathing into the center", name);
+                    pathfinder.Stop();
+                    return;
+                }
 
                 if (target == null || AetheryteApproach.IsAlreadyAtAetheryte(target, player.Position))
                 {
@@ -211,6 +233,27 @@ public class ActivityNavigation
 
     private IChain BuildPathChain(string name, Vector3 destination) =>
         AppendPath(chains.Create(name), name, destination);
+
+    private bool TryBuildApproach(
+        Vector3 destination,
+        Vector3 from,
+        out Vector3 approach,
+        out bool alreadyAtCeRing)
+    {
+        alreadyAtCeRing = false;
+        IZone zone = zones.GetZone();
+        if (NavigationApproach.TryResolveCriticalEncounterApproach(
+                zone, destination, from, out approach, out ActivityData? activity)
+            && activity?.CombatRadius is { } radius)
+        {
+            alreadyAtCeRing = NavigationConstants.IsInsideCriticalEncounterWaitArea(
+                activity.Position, radius, activity.AreaShape, from);
+            return true;
+        }
+
+        approach = NavigationApproach.GetEventPosition(destination, from);
+        return true;
+    }
 
     private IChain AppendPath(IChain chain, string name, Vector3 destination) =>
         chain.Then<PathfindToChain, PathfinderConfig>(new(destination)

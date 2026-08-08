@@ -1,13 +1,12 @@
-# 4.0.2.15
+# 4.0.2.16
 
 ### New
-- **Triage Mode** (Illegal Mode setting, off by default): after a FATE or CE, if someone nearby is dead and needs a raise, BOCCHI briefly switches to Phantom Chemist, raises them (skips people who already have a raise pending), switches back, then continues as usual. If nobody needs a raise, nothing extra happens — no job swap and no waiting around.
-- **Dependencies** screen: optional plugins are grouped more clearly — **BOCCHI AI** (BossMod *or* BossMod Reborn) and **Autorotation** (Wrath Combo *or* Rotation Solver Reborn).
+- After you update BOCCHI, a **What’s new** window shows these notes once. You can open it again anytime with `/bocchi changelog`.
+- **Triage Mode** can raise with **Phantom Chemist** or **Phantom White Mage** — pick which job under Illegal Mode settings. If your choice isn’t unlocked, it uses the other when available.
+- **Pots & Treasure** has **Pause** and **Resume**. Pause stops movement but keeps your run going; **Stop** ends it fully.
 
 ### Fixes
-- **Mob Farmer:** with Use Battle Bell on, Bell is refreshed before every pull (not skipped while the buff is still up), and Sprint is used more reliably right after Bell.
-- **Apply Buffs** / `/bocchi buff`: casts where you stand — you must already be in the knowledge crystal circle (no auto-walk to the crystal).
-- **Pot chests:** keeps farming while you have **Cache Me If You Can**; stops when that buff is gone (including if the pot dies and you never got the buff). No longer starts chest runs between pot FATE waves, and the next-pot timer resets when you leave Occult Crescent or change instance.
-- **Pot elixir hints:** if the compass redirects you (e.g. Far → another direction), BOCCHI switches to that area instead of walking the old group’s next spot.
-- **A Beast Unleashed:** join area is treated as a square (matches the blue zone better for waiting and overlays).
-- **Critical Encounters:** less likely to Return to camp early while you’re waiting in or committed to a CE (e.g. Familiar Tactics / Unbridled) when buffs are low or the join area flickers.
+- Clicking **Path** on a Critical Encounter on the World panel now waits at the outer ring (same as Illegal Mode), instead of walking into the middle.
+- You’re counted as “close enough” to an aetheryte from a bit farther away, so BOCCHI is less likely to start walking when you should teleport.
+- Using a combat ability while traveling cancels pathfinding. If that interrupts Illegal Mode, toggle Illegal Mode to continue.
+- **Carrot Hunt:** clearer waiting text, and a **Use Fortune Carrot** button if you need to use one by hand when things get stuck. Fortune Carrots are still used automatically when the hunt reaches a chewed carrot.

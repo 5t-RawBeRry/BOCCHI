@@ -34,7 +34,7 @@ public class SouthHorn
         Id = 4928,
         BaseId = 2014665,
         Position = new(-173.02f, 8.19f, -611.14f),
-        // Keep Dest inside LifestreamInteractRadius (3.5); old pad was ~4.29y out.
+        // Keep Dest inside LifestreamInteractRadius; old pad was ~4.29y out.
         Destination = new(-170.74f, 6.5f, -610.13f),
         DeadRadius = 3.2f
     };
