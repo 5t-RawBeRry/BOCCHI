@@ -17,8 +17,6 @@ public class Fate(FateId id, IFate context, IDataRepository<FateData> fateDataRe
 
     public readonly string Name = context.Name.ToString();
 
-    public readonly ActivityProgressTracker ProgressTracker = new();
-
     public readonly float Radius = context.Radius;
 
     public Vector3 Position { get; private set; } = context.Position;
@@ -40,7 +38,5 @@ public class Fate(FateId id, IFate context, IDataRepository<FateData> fateDataRe
         Progress = context.Progress;
         StartTimeEpoch = context.StartTimeEpoch;
         TimeRemainingSeconds = context.TimeRemaining;
-
-        ProgressTracker.Observe(Progress);
     }
 }

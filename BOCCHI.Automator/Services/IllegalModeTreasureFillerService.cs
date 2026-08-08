@@ -128,7 +128,7 @@ public class IllegalModeTreasureFillerService
 
     private void LatchSurvey(AutomaticTreasureSurveyMemory survey, string reason)
     {
-        if (!CanCastTreasureSight())
+        if (!SupportJobTreasureSight.CanCast(supportJobs))
         {
             LogSightUnavailableOnce();
             return;
@@ -143,7 +143,7 @@ public class IllegalModeTreasureFillerService
 
     private void ClearSurveyLatchIfSightUnavailable(AutomaticTreasureSurveyMemory survey)
     {
-        if (CanCastTreasureSight())
+        if (SupportJobTreasureSight.CanCast(supportJobs))
         {
             loggedSightUnavailable = false;
             return;
@@ -159,8 +159,6 @@ public class IllegalModeTreasureFillerService
         survey.SurveyWaitDeadlineUtc = DateTime.MinValue;
         LogSightUnavailableOnce();
     }
-
-    private bool CanCastTreasureSight() => SupportJobTreasureSight.CanCast(supportJobs);
 
     private void LogSightUnavailableOnce()
     {

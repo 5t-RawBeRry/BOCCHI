@@ -1,5 +1,4 @@
-﻿using BOCCHI.Common.Data;
-using BOCCHI.Common.Data.Zones.Graph;
+﻿using BOCCHI.Common.Data.Zones.Graph;
 using ECommons;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using FFXIVClientStructs.FFXIV.Client.LayoutEngine;
@@ -26,8 +25,6 @@ public class CriticalEncounter(
     public readonly CriticalEncounterId Id = id;
 
     public readonly string Name = ev.Name.ToString();
-
-    public readonly ActivityProgressTracker ProgressTracker = new();
 
     /// <summary>Padded size used for debug outer ring (circle radius or square half-extent).</summary>
     public readonly float Radius = radius;
@@ -110,8 +107,6 @@ public class CriticalEncounter(
                 Position = live;
             }
         }
-
-        ProgressTracker.Observe(Progress);
     }
 
     public TimeSpan? GetTimeUntilStart()

@@ -3,6 +3,7 @@ using BOCCHI.Automator.Services.Goals;
 using BOCCHI.Automator.Services.PotTreasure;
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
@@ -13,6 +14,7 @@ using BOCCHI.Common.Services.Paths;
 using Dalamud.Plugin.Services;
 using Ocelot.Chain;
 using Ocelot.Extensions;
+using Ocelot.Ipc.BossMod;
 using Ocelot.Ipc.VNavmesh;
 using Ocelot.Lifecycle;
 using Ocelot.Services.Logger;
@@ -34,6 +36,7 @@ public class Automator
     IChainManager manager,
     IPathfinder pathfinder,
     IVNavmeshIpc vnav,
+    ILifestreamIpc lifestream,
     IZoneProvider zones,
     IFateRepository fates,
     IObjectTable objects,
@@ -83,7 +86,7 @@ public class Automator
             return;
         }
 
-        // Soft-stop movement so Treasure Hunt can own vnav; keep GoalMemory if any.
+        // Keep GoalMemory; Treasure Hunt owns vnav while suspended.
         IllegalModeActivityWork.ForgetTravelLatches(memory);
         SoftStopPathfinding();
         autoRotation.DisableForTravel();
@@ -91,9 +94,8 @@ public class Automator
 
     public void SoftStopPathfinding()
     {
-        manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
-        pathfinder.Stop();
-        vnav.Stop();
+        PathStepSoftStop.Stop(manager, pathfinder, vnav);
+        AethernetTeleport.AbortIfBusy(lifestream);
     }
 
     public void Toggle()
@@ -188,9 +190,7 @@ public class Automator
         logger.Info("Refreshing pathfinding from current position");
         memory.Forget<NavigationInterruptedMemory>();
         IllegalModeActivityWork.ForgetTravelLatches(memory, includePotChests: true);
-        manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
-        pathfinder.Stop();
-        vnav.Stop();
+        SoftStopPathfinding();
 
         // GoalMemory kept — Update() will rebuild GoalPathStepMemory from here.
         if (!memory.TryRemember<GoalMemory>(out GoalMemory _))
@@ -261,9 +261,7 @@ public class Automator
                 logger.Info("Goal no longer valid — aborting pathfinding");
                 memory.Forget<GoalMemory>();
                 IllegalModeActivityWork.ForgetTravelLatches(memory);
-                manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
-                pathfinder.Stop();
-                vnav.Stop();
+                SoftStopPathfinding();
             }
             else if (!memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _)
                      && !memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory _)
@@ -290,6 +288,7 @@ public class Automator
         SuspendedForTreasure = false;
         memory.Wipe();
         manager.CancelAll();
+        AethernetTeleport.AbortIfBusy(lifestream);
         pathfinder.Stop();
         vnav.Stop();
         if (resetPausedFlag)

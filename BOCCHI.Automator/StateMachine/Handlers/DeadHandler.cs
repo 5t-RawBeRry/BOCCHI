@@ -1,6 +1,7 @@
 ﻿using BOCCHI.Automator.Data;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
+using BOCCHI.Common.Services.Paths;
 using Dalamud.Game.ClientState.Conditions;
 using Ocelot.Chain;
 using Ocelot.Services.Pathfinding;
@@ -26,7 +27,7 @@ public class DeadHandler
         // Stop any in-flight Return so death prompts aren't auto-accepted.
         memory.Forget<ReturningStateMemory>();
         memory.Forget<GoalPathStepMemory>();
-        chains.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
+        PathStepSoftStop.Cancel(chains);
         pathfinder.Stop();
     }
 

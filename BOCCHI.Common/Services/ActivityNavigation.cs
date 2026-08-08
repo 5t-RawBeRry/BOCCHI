@@ -687,6 +687,7 @@ public class ActivityNavigation
     {
         int generation = Interlocked.Increment(ref navigationGeneration);
         manager.CancelWhere(name => name.StartsWith(ChainPrefix, StringComparison.Ordinal));
+        AethernetTeleport.AbortIfBusy(lifestream);
         return generation;
     }
 
@@ -694,5 +695,6 @@ public class ActivityNavigation
     {
         Interlocked.Increment(ref navigationGeneration);
         manager.CancelWhere(name => name.StartsWith(ChainPrefix, StringComparison.Ordinal));
+        AethernetTeleport.AbortIfBusy(lifestream);
     }
 }

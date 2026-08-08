@@ -64,7 +64,7 @@ public class PathfindingHandler
         {
             currentPathTask = null;
             pendingPauseReason = null;
-            manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
+            PathStepSoftStop.Cancel(manager);
             return;
         }
 
@@ -296,7 +296,7 @@ public class PathfindingHandler
 
     private void ResetPathfinding()
     {
-        manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
+        PathStepSoftStop.Cancel(manager);
 
         currentPathTask = null;
         pendingPauseReason = null;

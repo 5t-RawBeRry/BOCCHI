@@ -204,27 +204,50 @@ public abstract class BaseZone
 
         // Bump when walk-cost / edge semantics or which nodes are wired change.
         // v6: Eye to Eye prefers Crown of Karnak (Unhallowed is Euclidean-near but cut off).
-        const int graphSchemaVersion = 6;
+        // v7: discard suspect early caches; load validates usability and rebuilds if broken.
+        const int graphSchemaVersion = 7;
         string path = Path.Combine(dir, $"{TerritoryType}.v{graphSchemaVersion}.json");
 
         if (File.Exists(path))
         {
-            logger.Debug("Loaded zone graph from path: " + path);
-            string json = await File.ReadAllTextAsync(path);
-            ZoneGraph loaded = ZoneGraph.FromJson(json);
-            cachedGraph = loaded;
-            return loaded;
+            try
+            {
+                string json = await File.ReadAllTextAsync(path);
+                ZoneGraph? loaded = ZoneGraph.FromJson(json);
+                if (loaded is { } graph && graph.IsUsableForRouting())
+                {
+                    logger.Debug("Loaded zone graph from path: " + path);
+                    cachedGraph = graph;
+                    return graph;
+                }
+
+                logger.Warning(
+                    "Zone graph cache is empty or missing routing edges — rebuilding ({Path})",
+                    path);
+            }
+            catch (Exception ex)
+            {
+                logger.Warning(ex, "Failed to load zone graph cache — rebuilding ({Path})", path);
+            }
+
+            try
+            {
+                File.Delete(path);
+            }
+            catch
+            {
+                // Rebuild overwrites; delete is best-effort.
+            }
         }
 
         logger.Info($"Building zone graph for territory {TerritoryType} (one-time; Automator waits until done)");
-        logger.Debug("Data: " + GetNormalFateData().Count);
         GraphConfig config = new(pathfinder, logger);
-        ZoneGraph graph = await graphs.BuildAsync(config, this);
+        ZoneGraph built = await graphs.BuildAsync(config, this);
         logger.Debug("Writing zone graph to: " + path);
-        await File.WriteAllTextAsync(path, graph.ToJson());
+        await File.WriteAllTextAsync(path, built.ToJson());
 
-        cachedGraph = graph;
-        return graph;
+        cachedGraph = built;
+        return built;
     }
 
     private unsafe uint GetCurrentSubAreaPlaceNameId()

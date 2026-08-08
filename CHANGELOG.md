@@ -1,19 +1,14 @@
-# 4.0.2.16
-
-### New
-- After you update BOCCHI, a **What’s new** window shows these notes once. Open it again anytime with `/bocchi changelog`.
-- **Completionist Mode** — collect missing Occult Records. Notes from FATEs and Critical Encounters use Illegal Mode travel and combat. **Survey points:** click to flag the map; **Ctrl+click** to travel there (mounts while walking; picks walking, a nearby aethernet, or Return when that’s shorter). Shows status and current goal like other modes, with **Replan route** while it’s running. Forked Tower notes are tracking-only.
-- **Triage Mode** can raise with **Phantom Chemist** or **Phantom White Mage** — pick which under Illegal Mode settings. If your choice isn’t unlocked, it uses the other when available.
-- **Pots & Treasure** has **Pause** and **Resume**. Pause stops movement but keeps the run; **Stop** ends it.
-- **Preferred mount** defaults to **Mount Roulette**. If a chosen mount can’t be used, BOCCHI falls back to roulette.
+# 4.0.2.18
 
 ### Fixes
-- **Apply Buffs** works again at knowledge crystals when you stand at them (including right next to the crystal).
-- Walking to the base-camp aetheryte stops about **2 yalms** out and hands off to Lifestream, instead of pathing into the middle of the crystal.
-- Critical Encounters path into the blue zone instead of stopping on the edge (**A Beast Unleashed**, **Quarried Away**, **With Extreme Prejudice**, and similar). World panel **Path** uses the same behavior.
-- **On the Hunt** approaches through Lost Citadel from base camp, instead of routing around from Eldergrowth.
-- **Next pot** timer no longer resets to unknown when a FATE ends or you leave Occult Crescent.
-- **North Horn pot chests** no longer get stuck looping on already-opened coffers. Elixir direction hints that point at empty areas pick a nearby direction instead.
-- BOCCHI no longer uses Sprint while in base camp.
-- Using a combat ability while traveling cancels pathfinding. Toggle Illegal Mode or Completionist to continue if that interrupted a run.
-- **Carrot Hunt:** clearer waiting text, and a **Use Fortune Carrot** button when you need to use one by hand. Fortune Carrots are still used automatically at chewed carrots.
+- Illegal Mode travel: rebuild broken cached zone routes on load (and refresh old caches) so pathfinding doesn’t stay stuck until you reset plugin data.
+- Clamp out-of-range travel timing / hunt distance settings left over from older configs.
+- Auto shop now actually runs when enabled (the setting existed but the shopper was never started).
+- Combat no longer cancels pathfinding outside Occult Crescent (was breaking other plugins’ movement in dungeons).
+- Occult Sprint no longer counts as a combat cancel while traveling.
+- Illegal Mode no longer soft-locks idle after a combat cancel mid-travel (keeps the goal; Replan/toggle no longer required).
+- Leaving camp for the next FATE/CE no longer walks around behind the base aetheryte when you’re already in range.
+- Field aetherytes: stop pathing into/through the crystal when the interact pad sits inside the body ring.
+- Treasure Hunt: walk-to-shard uses the same stand-off (was still pathing into the crystal).
+- Clearing a stuck aethernet hop (so the next teleport can start) when travel is stopped or replaced.
+- Critical Engagements: BOCCHI AI enables again after Preparing→Battle even when the wait-area circle doesn’t match the live zone.

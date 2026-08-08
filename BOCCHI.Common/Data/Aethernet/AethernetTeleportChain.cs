@@ -1,5 +1,4 @@
 using BOCCHI.Common.Config;
-using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Zones;
 using Dalamud.Plugin.Services;
 using Ocelot.Chain;
@@ -8,9 +7,10 @@ using Ocelot.Ipc.VNavmesh;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
 
-namespace BOCCHI.Treasure.ChainRecipes;
+namespace BOCCHI.Common.Data.Aethernet;
 
-public class HuntTeleportChain
+/// <summary>Shared Lifestream aethernet hop used by Illegal Mode and Treasure Hunt.</summary>
+public class AethernetTeleportChain
 (
     IChainFactory chains,
     ILifestreamIpc lifestream,
@@ -19,13 +19,10 @@ public class HuntTeleportChain
     IPathfinder pathfinder,
     IVNavmeshIpc vnav,
     AutomatorConfig config,
-    ILogger<HuntTeleportChain> logger
+    ILogger<AethernetTeleportChain> logger
 ) : ChainRecipe<uint>(chains)
 {
-    public override string Name
-    {
-        get => "Hunt Teleport Chain";
-    }
+    public override string Name => "Aethernet Teleport";
 
     protected override IChain Compose(IChain chain, uint placeNameId) =>
         AethernetTeleport.BuildChain(

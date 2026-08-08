@@ -23,6 +23,7 @@ public class ConfigMigratorV10ToV11 : IMigrator
         "MinPotFateMinutesRemaining",
         "PotSpawnLeadMinutes",
         "FateFallbackCutoffMinutes",
+        "CeFallbackCutoffMinutes",
         "ShouldFarmRerollPotChests",
     ];
 

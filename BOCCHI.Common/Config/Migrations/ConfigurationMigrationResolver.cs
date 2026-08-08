@@ -11,15 +11,6 @@ public interface IMigrator
     JObject Migrate(JObject oldConfig);
 }
 
-public interface IConfigurationMigrationResolver
-{
-    IMigrator? Resolve(int from);
-
-    IMigrator? Resolve(JObject obj);
-
-    bool CanMigrateTo(int from, int to);
-}
-
 public class DuplicateMigrationBaseException(int from) : Exception($"Found duplicate from migrator {from}");
 
 public static class JObjectExtensions
@@ -29,14 +20,10 @@ public static class JObjectExtensions
         public bool BoolOr(string path, bool fallback) => self.SelectToken(path)?.Value<bool>() ?? fallback;
 
         public int IntOr(string path, int fallback) => self.SelectToken(path)?.Value<int>() ?? fallback;
-
-        public uint UintOr(string path, uint fallback) => self.SelectToken(path)?.Value<uint>() ?? fallback;
-
-        public float FloatOr(string path, float fallback) => self.SelectToken(path)?.Value<float>() ?? fallback;
     }
 }
 
-public class ConfigurationMigrationResolver : IConfigurationMigrationResolver
+public class ConfigurationMigrationResolver
 {
     private readonly Dictionary<int, IMigrator> migratorMap = [];
 
@@ -52,8 +39,6 @@ public class ConfigurationMigrationResolver : IConfigurationMigrationResolver
     }
 
     public IMigrator? Resolve(int from) => migratorMap.TryGetValue(from, out IMigrator? migrator) ? migrator : null;
-
-    public IMigrator? Resolve(JObject obj) => Resolve(obj["Version"]?.Value<int>() ?? 1);
 
     public bool CanMigrateTo(int from, int to)
     {

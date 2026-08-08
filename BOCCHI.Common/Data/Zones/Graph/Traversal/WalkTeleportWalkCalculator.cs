@@ -99,7 +99,8 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
             return null;
         }
 
-        Path walkToNearestTeleportPath = await pathfinder.Pathfind(new(nearest.Position)
+        Vector3 approach = nearest.GetCampStandOffPosition(start);
+        Path walkToNearestTeleportPath = await pathfinder.Pathfind(new(approach)
         {
             From = start,
             AllowFlying = false
@@ -140,12 +141,17 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
     {
         List<PathStep> steps = [];
 
-        Vector3 standOff = departure.GetCampStandOffPosition(start);
-        // Already in Lifestream range — AetheryteApproach is a no-op / short camp close-in.
-        if (start.Distance2D(departure.Position) > AethernetData.LifestreamInteractRadius
-            && start.Distance2D(standOff) > AethernetData.LifestreamInteractRadius)
+        // Already Lifestream-ready (or in the idle band): Teleport's AetheryteApproach closes in.
+        // Don't path around to the Dest-side stand-off (#158).
+        float body = MathF.Max(2f, AethernetData.DefaultDeadRadius);
+        float ready = body + AethernetNavigation.EdgeClearance + AethernetNavigation.PathfindArrivalRadius;
+        if (start.Distance2D(departure.Position) > ready)
         {
-            steps.Add(PathStep.Pathfind(standOff, AethernetNavigation.PathfindArrivalRadius));
+            Vector3 standOff = departure.GetCampStandOffPosition(start);
+            if (start.Distance2D(standOff) > AethernetNavigation.PathfindArrivalRadius + 0.5f)
+            {
+                steps.Add(PathStep.Pathfind(standOff, AethernetNavigation.PathfindArrivalRadius));
+            }
         }
 
         steps.Add(PathStep.Teleport(aetheryteId));

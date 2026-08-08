@@ -15,7 +15,7 @@ public static class MountWait
 
     private static readonly TimeSpan TryCastInterval = TimeSpan.FromMilliseconds(750);
 
-    public static bool ShouldSkip(
+    private static bool ShouldSkip(
         ICondition conditions,
         IObjectTable objects,
         Vector3 destination,

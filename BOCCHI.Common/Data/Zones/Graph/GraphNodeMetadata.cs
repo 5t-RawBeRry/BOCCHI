@@ -24,8 +24,6 @@ public class RerollPotChestNodeMetadata : INodeMetadata
 
 public class ActivityNodeMetadata : INodeMetadata
 {
-    public bool Available { get; set; } = false;
-
     public int Id { get; set; }
 
     public uint? PreferredAethernetId { get; set; }
@@ -41,11 +39,7 @@ public class TeleportNodeMetadata : INodeMetadata
 {
     public uint AetheryteId { get; set; } = 0;
 
-    public float InteractRange { get; set; } = 3f;
-
     public Vector3 Destination { get; set; } = Vector3.Zero;
-
-    public bool Unlocked { get; set; } = false;
 }
 
 public enum TreasureType

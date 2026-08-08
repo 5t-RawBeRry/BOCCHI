@@ -32,18 +32,12 @@ public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
             return Task.FromResult<TraversalCandidate?>(null);
         }
 
-        if (returnNode == null)
+        if (returnNode == null || baseCampAetheryte == null)
         {
             return Task.FromResult<TraversalCandidate?>(null);
         }
 
-        Node? baseCampNode = graph.GetBaseCampAetheryteNode();
-        if (baseCampNode == null)
-        {
-            return Task.FromResult<TraversalCandidate?>(null);
-        }
-
-        Edge? toBaseCampNodeEdge = graph.GetEdge(returnNode, baseCampNode);
+        Edge? toBaseCampNodeEdge = graph.GetEdge(returnNode, baseCampAetheryte);
         if (toBaseCampNodeEdge == null)
         {
             return Task.FromResult<TraversalCandidate?>(null);

@@ -111,28 +111,11 @@ public class InCriticalEncounterHandler
             return true;
         }
 
-        if (objects.LocalPlayer is not { } player)
-        {
-            return false;
-        }
-
-        float combatRadius = NavigationConstants.CriticalEncounterRedRadius(encounter.Radius);
-        if (!NavigationConstants.IsInsideCriticalEncounterWaitArea(
-                encounter.Position,
-                combatRadius,
-                encounter.AreaShape,
-                player.Position))
-        {
-            return false;
-        }
-
-        if (!memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory wait)
-            || !wait.IsFor(encounter.Id))
-        {
-            return false;
-        }
-
-        if (CriticalEncounterBattleHandoff.IsReady(wait, encounter.Id, context, conditions))
+        // Waiting already decided to hand off — take the CE even if authored wait-area
+        // geometry doesn't match the live blue zone (otherwise AI never enables).
+        if (memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory wait)
+            && wait.IsFor(encounter.Id)
+            && CriticalEncounterBattleHandoff.IsReady(wait, encounter.Id, context, conditions))
         {
             ce = encounter;
             return true;

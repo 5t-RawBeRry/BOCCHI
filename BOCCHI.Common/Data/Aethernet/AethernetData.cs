@@ -1,18 +1,19 @@
 ﻿using System.Numerics;
+
 namespace BOCCHI.Common.Data.Aethernet;
 
 public class AethernetData
 {
-    // Graph routing / idle stand-off from the crystal or Destination pad.
+    /// <summary>Pad / interact proximity used by graph routing.</summary>
     public const float InteractRadius = 4.3f;
 
-    /// <summary>
-    ///     Hand off to Lifestream at this distance from crystal center (base camp and shards).
-    ///     BOCCHI paths to <see cref="AethernetNavigation.CampApproachRadius"/> and stops — no closer.
-    /// </summary>
-    public const float LifestreamInteractRadius = 2.0f;
+    /// <summary>Idle band width outside the magenta (Lifestream) ring.</summary>
+    public const float LifestreamEdgeClearance = 2.0f;
 
-    public float DeadRadius { get; init; } = 3.2f;
+    public const float DefaultDeadRadius = 3.2f;
+
+    /// <summary>Magenta / Lifestream radius from <see cref="Position"/>.</summary>
+    public float DeadRadius { get; init; } = DefaultDeadRadius;
 
     public uint Id { get; init; }
 

@@ -22,7 +22,6 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<IDynamicRenderer, TreasureRenderer>();
         services.AddSingleton<TreasureRadarDrawer>();
         services.AddSingleton<OpenTreasureCofferChain>();
-        services.AddSingleton<HuntTeleportChain>();
         services.AddSingleton<HuntTreasureSightChain>();
     }
 }

@@ -1,9 +1,9 @@
 using BOCCHI.Automator;
-using BOCCHI.Automator.ChainRecipes;
 using BOCCHI.Buff;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Config.Fields;
 using BOCCHI.Common.Config.Renderers;
+using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph.Factory;
@@ -40,6 +40,7 @@ using Ocelot.UI.Services;
 using Ocelot.Windows;
 using System.Reflection;
 using BOCCHI.Services.MOTD;
+using BOCCHI.Services.Shopping;
 using Ocelot.Lifecycle;
 #if DEBUG
 using BOCCHI.Debug;
@@ -109,7 +110,8 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<UnmountStep>();
         services.AddSingleton<RepairStep>();
         services.AddSingleton<IRepairService, RepairService>();
-        services.AddSingleton<TeleportToAethernetChain>();
+        services.AddSingleton<AethernetTeleportChain>();
+        services.AddSingleton<ShoppingService>();
 
         services.LoadTrackersModule();
         services.LoadWorldModule();
@@ -206,5 +208,38 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         cfg.CriticalEncountersConfig.DisabledCriticalEncounterIds ??= [];
         cfg.ShoppingConfig.PreferredItemIds ??= [];
         cfg.MobFarmerConfig.Mobs ??= [];
+        SanitizeAutomatorConfig(cfg.AutomatorConfig);
+        SanitizeTreasureConfig(cfg.TreasureConfig);
+    }
+
+    /// <summary>
+    ///     UI ranges are not enforced on load — early/partial JSON can leave delays that look like stuck pathing.
+    /// </summary>
+    private static void SanitizeAutomatorConfig(AutomatorConfig automator)
+    {
+        automator.MaxRemoteIdleTimeSeconds = Math.Clamp(automator.MaxRemoteIdleTimeSeconds, 2, 60);
+        automator.MaxBaseTeleportDelaySeconds = Math.Clamp(automator.MaxBaseTeleportDelaySeconds, 0, 60);
+        automator.TreasureSightRecastIntervalSeconds =
+            Math.Clamp(automator.TreasureSightRecastIntervalSeconds, 60, 600);
+        automator.AutoRepairThreshold = Math.Clamp(automator.AutoRepairThreshold, 1, 99);
+    }
+
+    private static void SanitizeTreasureConfig(TreasureConfig treasure)
+    {
+        if (!float.IsFinite(treasure.HuntTeleportCost))
+        {
+            treasure.HuntTeleportCost = 50f;
+        }
+
+        treasure.HuntTeleportCost = Math.Clamp(treasure.HuntTeleportCost, 10f, 500f);
+
+        if (!float.IsFinite(treasure.HuntDetectionRange) || treasure.HuntDetectionRange < 10f)
+        {
+            treasure.HuntDetectionRange = 75f;
+        }
+
+        treasure.HuntDetectionRange = Math.Clamp(treasure.HuntDetectionRange, 10f, 100f);
+        treasure.TreasureSightEveryNLocations = Math.Clamp(treasure.TreasureSightEveryNLocations, 1, 50);
+        treasure.HuntMaxLevel = Math.Clamp(treasure.HuntMaxLevel, 1, 50);
     }
 }

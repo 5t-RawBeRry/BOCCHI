@@ -13,6 +13,17 @@ namespace BOCCHI.Common.Data.Aethernet;
 
 public static class AethernetTeleport
 {
+    /// <summary>
+    ///     Clear leftover Lifestream work so the next hop can start. Chain cancel alone does not Abort.
+    /// </summary>
+    public static void AbortIfBusy(ILifestreamIpc lifestream)
+    {
+        if (lifestream.IsBusy())
+        {
+            lifestream.Abort();
+        }
+    }
+
     public static IChain BuildChain(
         IChain chain,
         IChainFactory chains,

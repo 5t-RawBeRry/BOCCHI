@@ -172,7 +172,7 @@ public class TreasureHunterService
             steps.AddRange(pathPlanner.FindPath(player.Position, validNodes, preferStart).GetAwaiter().GetResult());
             pathPlanner = null;
             StepIndex = 0;
-            pendingStartSight = config.CastTreasureSightDuringHunt && CanCastTreasureSight();
+            pendingStartSight = config.CastTreasureSightDuringHunt && SupportJobTreasureSight.CanCast(supportJobs);
             if (steps.Count == 0)
             {
                 log.Warning(
@@ -633,11 +633,9 @@ public class TreasureHunterService
         return ids;
     }
 
-    private bool CanCastTreasureSight() => SupportJobTreasureSight.CanCast(supportJobs);
-
     private bool TryBeginTreasureSight()
     {
-        if (!config.CastTreasureSightDuringHunt || !CanCastTreasureSight())
+        if (!config.CastTreasureSightDuringHunt || !SupportJobTreasureSight.CanCast(supportJobs))
         {
             pendingStartSight = false;
             return false;
@@ -998,22 +996,20 @@ public class TreasureHunterService
             return true;
         }
 
-        Vector3 crystal = ResolveAethernet(step.Aethernet).Position;
+        AethernetData aethernet = ResolveAethernet(step.Aethernet);
+        Vector3 crystal = aethernet.Position;
+        Vector3 destination = aethernet.GetCampStandOffPosition(player.Position);
         StepDistance = player.Position.Distance2D(crystal);
 
-        // At the approach ring — Lifestream owns the interact / teleport.
-        if (StepDistance <= AethernetNavigation.CampApproachRadius)
+        // Prefer Lifestream-ready (magenta) over raw crystal distance — stand-off may sit on the pad.
+        if (zones.GetZone().IsWithinLifestreamRange(player.Position)
+            || player.Position.Distance2D(destination) <= AethernetNavigation.PathfindArrivalRadius + 0.35f)
         {
             vnav.Stop();
             return true;
         }
 
-        float standOff = AethernetNavigation.CampApproachRadius;
         float arrival = AethernetNavigation.PathfindArrivalRadius;
-
-        Vector3 destination = crystal.GetApproachPosition(player.Position, standOff);
-        destination = new Vector3(destination.X, crystal.Y, destination.Z);
-
         if (!vnav.IsRunning())
         {
             vnav.PathfindAndMoveCloseTo(destination, false, arrival);
@@ -1049,7 +1045,7 @@ public class TreasureHunterService
         uint placeNameId = (uint)step.Aethernet;
         activeChain = chainManager.Manage(
             chains.Create($"TreasureHunt::Teleport({placeNameId})")
-                .Then<HuntTeleportChain, uint>(placeNameId)
+                .Then<AethernetTeleportChain, uint>(placeNameId)
         );
 
         return false;

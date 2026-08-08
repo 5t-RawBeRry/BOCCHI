@@ -13,6 +13,10 @@ public static class SprintAssist
             return;
         }
 
-        Actions.Sprint.Cast();
+        // Belt-and-suspenders: Sprint is GeneralAction, but never trip combat path-cancel.
+        using (ActionCastScope.SuppressPathfindCancel())
+        {
+            Actions.Sprint.Cast();
+        }
     }
 }

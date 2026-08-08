@@ -9,10 +9,7 @@ public class AddTeleportsStep : IGraphBuildStep
         {
             Type = NodeType.BaseCampReturnPosition,
             Position = zone.GetStartingPosition(),
-            Metadata = new TeleportNodeMetadata
-            {
-                Unlocked = true
-            }
+            Metadata = new TeleportNodeMetadata()
         };
 
         AethernetData mainAetheryte = zone.GetMainAetheryte();

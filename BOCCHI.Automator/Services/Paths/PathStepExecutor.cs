@@ -1,5 +1,5 @@
-using BOCCHI.Automator.ChainRecipes;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Paths;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services.Paths;
@@ -28,8 +28,8 @@ public class PathStepExecutor
         {
             Pathfind(var destination, var range) => BuildPathfindChain(destination, range),
 
-            Teleport(var id) => chains.Create($"PathStep::Teleport({id})")
-                .Then<TeleportToAethernetChain, uint>(id),
+            Teleport(var id) => chains.Create($"{PathStepSoftStop.Prefix}Teleport({id})")
+                .Then<AethernetTeleportChain, uint>(id),
 
             Return _ => throw new InvalidOperationException("Return path steps are handled by PathfindingHandler."),
 
@@ -41,7 +41,7 @@ public class PathStepExecutor
 
     private IChain BuildPathfindChain(System.Numerics.Vector3 destination, float range)
     {
-        return chains.Create($"PathStep::Pathfind({destination:f2}, {range:f2})")
+        return chains.Create($"{PathStepSoftStop.Prefix}Pathfind({destination:f2}, {range:f2})")
             .Then<PathfindToChain, PathfinderConfig>(new(destination)
             {
                 DistanceThreshold = range > 0f ? range : 2f,

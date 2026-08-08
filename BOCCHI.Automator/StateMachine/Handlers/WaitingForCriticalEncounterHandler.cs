@@ -6,6 +6,7 @@ using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
+using BOCCHI.Common.Services.Paths;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
@@ -179,10 +180,5 @@ public class WaitingForCriticalEncounterHandler
         return true;
     }
 
-    private void StopNavigation()
-    {
-        manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
-        pathfinder.Stop();
-        vnav.Stop();
-    }
+    private void StopNavigation() => PathStepSoftStop.Stop(manager, pathfinder, vnav);
 }

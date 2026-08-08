@@ -45,36 +45,37 @@ public class ConfigMigrator(IDalamudPluginInterface plugin, IPluginLog logger)
         int version = config["Version"]?.Value<int>() ?? 1;
         if (!resolver.CanMigrateTo(version, Configuration.CurrentVersion))
         {
-            logger.Warning("Could not migrate configuration from {0} to {1}. Backing up to {2}", version, Configuration.CurrentVersion, GetConfigFileBackupPath(version));
-            BackupConfig(version);
+            FailMigration(version);
             return;
         }
 
         JObject? latest = Migrate(config, version, resolver);
         if (latest == null)
         {
-            logger.Warning("Could not migrate configuration from {0} to {1}. Backing up to {2}", version, Configuration.CurrentVersion, GetConfigFileBackupPath(version));
-            BackupConfig(version);
+            FailMigration(version);
             return;
         }
 
         Configuration? output = latest.ToObject<Configuration>();
         if (output == null)
         {
-            logger.Warning("Could not migrate configuration from {0} to {1}. Backing up to {2}", version, Configuration.CurrentVersion, GetConfigFileBackupPath(version));
-            BackupConfig(version);
+            FailMigration(version);
             return;
         }
 
         logger.Info("Successfully migrated config from {0} to {1}.", version, Configuration.CurrentVersion);
         BackupConfig(version);
-        string serialized = JsonConvert.SerializeObject(
-            output,
-            Formatting.Indented
-        );
+        File.WriteAllText(GetConfigFilePath(), JsonConvert.SerializeObject(output, Formatting.Indented));
+    }
 
-        string path = GetConfigFilePath();
-        File.WriteAllText(path, serialized);
+    private void FailMigration(int version)
+    {
+        logger.Warning(
+            "Could not migrate configuration from {0} to {1}. Backing up to {2}",
+            version,
+            Configuration.CurrentVersion,
+            GetConfigFileBackupPath(version));
+        BackupConfig(version);
     }
 
     private JObject? Migrate(JObject config, int version, ConfigurationMigrationResolver resolver)
@@ -90,7 +91,7 @@ public class ConfigMigrator(IDalamudPluginInterface plugin, IPluginLog logger)
             config = migrator.Migrate(config);
             version = config["Version"]?.Value<int>() ?? 1;
         }
-        while(version < Configuration.CurrentVersion);
+        while (version < Configuration.CurrentVersion);
 
         return config;
     }
@@ -100,7 +101,7 @@ public class ConfigMigrator(IDalamudPluginInterface plugin, IPluginLog logger)
         string path = GetConfigFilePath();
         if (!File.Exists(path))
         {
-            logger.Warning("Tried backing up config of version {0} but could to read config from path {1}.", version, path);
+            logger.Warning("Tried backing up config of version {0} but could not read config from path {1}.", version, path);
             return;
         }
 
@@ -123,29 +124,19 @@ public class ConfigMigrator(IDalamudPluginInterface plugin, IPluginLog logger)
             File.Copy(path, backupPath);
             logger.Info("Backed up config file to {Path}", backupPath);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             logger.Error(ex, "Failed to back up config file");
         }
     }
 
-    private string GetConfigFilePath()
-    {
-        string fileName = $"{plugin.InternalName}.json";
-        string pluginDir = plugin.GetPluginConfigDirectory();
-        string pluginConfigsDir = Directory.GetParent(pluginDir)!.FullName;
+    private string GetPluginConfigsDirectory() => Directory.GetParent(plugin.GetPluginConfigDirectory())!.FullName;
 
-        return Path.Combine(pluginConfigsDir, fileName);
-    }
+    private string GetConfigFilePath() =>
+        Path.Combine(GetPluginConfigsDirectory(), $"{plugin.InternalName}.json");
 
-    private string GetConfigFileBackupPath(int version)
-    {
-        string fileName = $"{plugin.InternalName}.{version}.json";
-        string pluginDir = plugin.GetPluginConfigDirectory();
-        string pluginConfigsDir = Directory.GetParent(pluginDir)!.FullName;
-
-        return Path.Combine(pluginConfigsDir, fileName);
-    }
+    private string GetConfigFileBackupPath(int version) =>
+        Path.Combine(GetPluginConfigsDirectory(), $"{plugin.InternalName}.{version}.json");
 
     private JObject? GetCurrentConfigJObject()
     {
@@ -161,7 +152,7 @@ public class ConfigMigrator(IDalamudPluginInterface plugin, IPluginLog logger)
         {
             return JObject.Parse(raw);
         }
-        catch(JsonReaderException e)
+        catch (JsonReaderException e)
         {
             logger.Error(e, "An error occured when trying to parse the config file: {0}", filePath);
             return null;

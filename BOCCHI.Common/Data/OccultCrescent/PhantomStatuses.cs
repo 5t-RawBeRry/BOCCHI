@@ -80,28 +80,6 @@ public static class PhantomDebuffs
     public const ushort WindWeakness = 5325;
 }
 
-public static class PhantomTraits
-{
-    public const ushort EnhancedPhantomGuard = 0;
-    public const ushort EnhancedPray = 1;
-    public const ushort EnhancedPhantomKick = 2;
-    public const ushort EnhancedPhantomKickII = 3;
-    public const ushort Lockpicker = 4;
-    public const ushort EnhancedRage = 5;
-    public const ushort EnhancedPhantomAim = 6;
-    public const ushort EnhancedPhantomAimII = 7;
-    public const ushort EnhancedVocals = 8;
-    public const ushort EnhancedPhantomFire = 9;
-    public const ushort EnhancedIainuki = 10;
-    public const ushort EnhancedBell = 11;
-}
-
-public static class PhantomItems
-{
-    public const ushort OccultPotion = 47741;
-    public const ushort OccultElixir = 47743;
-}
-
 /// <summary>Common player statuses used by Occult automation (not phantom-job exclusives).</summary>
 public static class PlayerStatuses
 {
