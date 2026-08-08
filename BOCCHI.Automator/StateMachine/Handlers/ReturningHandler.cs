@@ -80,7 +80,7 @@ public class ReturningHandler
         }
 
         // Committed to a CE (wait latch / SuspendTravel / live Preparing|Battle goal) — never
-        // opportunistic Return while Goal still shows that CE (Familiar / Unbridled Discord).
+        // Opportunistic Return while Goal still shows that CE (e.g. Familiar / Unbridled).
         if (IsCommittedToCriticalEncounterGoal())
         {
             return StatePriority.Never;

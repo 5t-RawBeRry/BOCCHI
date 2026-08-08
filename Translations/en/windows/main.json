@@ -99,8 +99,8 @@
     "notes_header": "Field notes",
     "jobs_header": "Phantom jobs",
     "outside_zone": "Enter South Horn or North Horn to see that zone’s field-note checklist.",
-    "survey_tooltip": "Click to place a map flag and path there (teleport from aetheryte when possible). If Completionist is running, toggle it again to resume automation.",
-    "survey_tooltip_flag_only": "Click to place a map flag (navmesh not ready — pathing unavailable).",
+    "survey_tooltip": "Click to place a map flag and travel there (teleport from an aetheryte when possible). If Completionist is running, start/stop it again to resume automation.",
+    "survey_tooltip_flag_only": "Click to place a map flag (pathing unavailable until the navmesh is ready).",
     "sources": {
       "persistent_pots": "Persistent / Pleading Pots",
       "black_regiment": "The Black Regiment",

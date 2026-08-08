@@ -99,8 +99,8 @@
     "notes_header": "フィールドノート",
     "jobs_header": "サポートジョブ",
     "outside_zone": "南征編または北征編に入ると、そのゾーンのフィールドノート一覧が表示されます。",
-    "survey_tooltip": "クリックでマップフラグを立て、そこへ移動します（可能ならエーテライトからテレポ）。コンプリーショニスト実行中は、再開するために再度トグルしてください。",
-    "survey_tooltip_flag_only": "クリックでマップフラグを立てます（ナビメッシュ未準備のため移動不可）。",
+    "survey_tooltip": "クリックでマップフラグを立て、そこへ移動します（可能ならエーテライトからテレポ）。コンプリーショニスト実行中は、再開するために開始／停止をもう一度押してください。",
+    "survey_tooltip_flag_only": "クリックでマップフラグを立てます（移動経路の準備ができていないため移動不可）。",
     "sources": {
       "persistent_pots": "Persistent / Pleading Pots",
       "black_regiment": "The Black Regiment",

@@ -12,7 +12,7 @@ public static class TreasureHuntPathOverrides
     /// <summary>Reach before opening the coffer.</summary>
     private static readonly Dictionary<(ZoneId Zone, uint NodeId), Vector3[]> ApproachByNode = new()
     {
-        // Suspended Masonry_9 — map ~5.4, 34.1; vnav cuts through wind and thrash-jumps (#Discord Alexandre).
+        // Suspended Masonry_9 — map ~5.4, 34.1; plain path cuts through wind.
         // Approach via map 3.4, 34.2 then the chest.
         [(ZoneId.NorthHorn, 2061)] =
         [

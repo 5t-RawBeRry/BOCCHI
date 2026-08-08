@@ -99,8 +99,8 @@
     "notes_header": "勘察记录",
     "jobs_header": "辅助职业",
     "outside_zone": "进入南角或北角后，会显示该区域的勘察记录列表。",
-    "survey_tooltip": "点击后在地图插旗并前往（可能时从以太之光传送）。若收集者模式正在运行，请再次开关以恢复自动。",
-    "survey_tooltip_flag_only": "点击后在地图插旗（导航网格未就绪，无法寻路）。",
+    "survey_tooltip": "点击后在地图插旗并前往（可能时从以太之光传送）。若收集者模式正在运行，请再次点开始/停止以恢复自动。",
+    "survey_tooltip_flag_only": "点击后在地图插旗（寻路尚未就绪，无法前往）。",
     "sources": {
       "persistent_pots": "Persistent / Pleading Pots",
       "black_regiment": "The Black Regiment",

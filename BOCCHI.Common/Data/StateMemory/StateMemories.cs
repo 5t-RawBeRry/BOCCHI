@@ -83,7 +83,7 @@ public sealed class PendingPotChestFarmMemory(FateId fateId)
 }
 
 /// <summary>
-///     User / soft-cancel stopped navigation. Blocks auto-replan until Illegal Mode is toggled.
+///     User / soft-cancel stopped navigation. Blocks auto-replan until the mode is toggled.
 /// </summary>
 public sealed class NavigationInterruptedMemory;
 

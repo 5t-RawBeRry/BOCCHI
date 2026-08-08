@@ -61,7 +61,7 @@ public abstract class HuntRoutePlanner
                 .OrderBy(id => Vector3.DistanceSquared(start, GetNodePosition(id)))
                 .First();
         int startIndex = remaining.IndexOf(startNode);
-        // Wrap: suffix then prefix — suffix-only permanently skipped earlier coffers (Discord Moldering bronze).
+        // Wrap: suffix then prefix — suffix-only permanently skipped earlier coffers.
         List<uint> tour = remaining.Skip(startIndex).Concat(remaining.Take(startIndex)).ToList();
 
         List<HuntPathfinderStep> steps = [HuntPathfinderStep.WalkToDestination(tour[0])];

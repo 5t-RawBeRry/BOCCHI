@@ -89,7 +89,7 @@ public class ActivityNavigation
 
         if (alreadyAtCeRing)
         {
-            logger.Info("Already at CE outer ring for {Name} — not pathing into the center", name);
+            logger.Info("Already inside CE wait area for {Name} — not pathing into the center", name);
             CancelActivityChains();
             pathfinder.Stop();
             return;
@@ -137,7 +137,7 @@ public class ActivityNavigation
 
                 if (alreadyAtCeRing)
                 {
-                    logger.Info("Already at CE outer ring for {Name} — not pathing into the center", name);
+                    logger.Info("Already inside CE wait area for {Name} — not pathing into the center", name);
                     pathfinder.Stop();
                     return;
                 }

@@ -99,8 +99,8 @@
     "notes_header": "필드 노트",
     "jobs_header": "서포트 잡",
     "outside_zone": "남쪽 뿔 또는 북쪽 뿔에 들어가면 해당 지역의 필드 노트 목록이 표시됩니다.",
-    "survey_tooltip": "클릭하면 지도 깃발을 놓고 그곳으로 이동합니다(가능하면 이동핵 텔레포트). 컬렉터 모드 실행 중이면 재개하려면 다시 토글하세요.",
-    "survey_tooltip_flag_only": "클릭하면 지도 깃발을 놓습니다(내비메시 미준비로 이동 불가).",
+    "survey_tooltip": "클릭하면 지도 깃발을 놓고 그곳으로 이동합니다(가능하면 이동핵 텔레포트). 컬렉터 모드 실행 중이면 재개하려면 시작/중지를 다시 누르세요.",
+    "survey_tooltip_flag_only": "클릭하면 지도 깃발을 놓습니다(이동 경로가 준비되지 않아 이동할 수 없음).",
     "sources": {
       "persistent_pots": "Persistent / Pleading Pots",
       "black_regiment": "The Black Regiment",
