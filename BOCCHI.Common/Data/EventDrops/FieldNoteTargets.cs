@@ -14,7 +14,7 @@ public static class FieldNoteTargets
     /// <param name="MapX">In-game map X for click-to-flag (survey points).</param>
     /// <param name="MapY">In-game map Y for click-to-flag (survey points).</param>
     /// <param name="WorldPosition">
-    ///     Authored world XZ for Ctrl+click travel (Y may be 0 — pathing floors via vnav).
+    ///     Authored world XZ for Ctrl+click travel (Y may be 0 — floored at path time).
     ///     Derived from map coords with SizeFactor 100 / Offset 0 (OC Horn maps).
     /// </param>
     public readonly record struct Entry(
@@ -47,7 +47,7 @@ public static class FieldNoteTargets
         new(10, "shark_attack", false, MonsterNote.NymianPotaladus, [], [41]),
         new(8, "cursed_concern", false, MonsterNote.TradeTortoise, [], [45]),
 
-        // Open-world survey points — click flags; Ctrl+click Lifestream + vnav to WorldPosition
+        // Open-world survey points — click flags; Ctrl+click cost-routes to WorldPosition
         Survey(5, 38.6f, 7.6f, new(854.17f, 0f, -694.32f)), // Expedition Base Camp
         Survey(7, 31.4f, 17.0f, new(494.52f, 0f, -224.78f)), // Lost Citadel
         Survey(9, 20.2f, 12.2f, new(-64.94f, 0f, -464.55f)), // Vanishing Slope
@@ -93,9 +93,9 @@ public static class FieldNoteTargets
         Survey(43, 17.5f, 5.2f, new(-199.8f, 0f, -814.2f)), // Marrowood
         Survey(45, 11.1f, 38.8f, new(-519.49f, 0f, 864.16f)), // Suspended Masonry
         Survey(46, 4.8f, 36.4f, new(-834.19f, 0f, 744.27f)), // Windward Watch
-        Survey(47, 2.1f, 23.0f, new(-969.05f, 0f, 74.93f)), // Shrine of Spheres
+        Survey(47, 3.4f, 24.5f, new(-904f, 0f, 151f)), // Shrine of Spheres
         Survey(49, 7.4f, 14.0f, new(-704.31f, 0f, -374.63f)), // Moldering Streets
-        Survey(51, 3.9f, 2.1f, new(-879.14f, 0f, -969.05f)), // Moldering Lake
+        Survey(51, 4.0f, 3.4f, new(-874f, 0f, -904f)), // Moldering Lake
         Survey(52, 21.3f, 19.7f, new(-9.99f, 0f, -89.91f)), // Unhallowed Hamlet
         Survey(54, 22.7f, 23.9f, new(59.94f, 0f, 119.88f)), // Dark Territory
 

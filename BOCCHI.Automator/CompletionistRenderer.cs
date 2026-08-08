@@ -161,7 +161,7 @@ public class CompletionistRenderer
 
         if (clicked)
         {
-            // Click = map flag only. Ctrl+click = flag + Lifestream + vnav to authored world coords.
+            // Click = map flag only. Ctrl+click = flag + cost-routed travel to authored coords.
             bool travel = ImGui.GetIO().KeyCtrl;
             GoToSurvey(entry, noteName, travel);
         }
@@ -183,7 +183,7 @@ public class CompletionistRenderer
             return;
         }
 
-        // Pause automator travel so Illegal/Completionist replan doesn't fight Lifestream + vnav.
+        // Pause automator travel so Illegal/Completionist replan doesn't fight survey pathing.
         if (automator.IsActive)
         {
             memory.Forget<GoalMemory>();

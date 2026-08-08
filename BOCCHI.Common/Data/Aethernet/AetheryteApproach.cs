@@ -24,7 +24,7 @@ public static class AetheryteApproach
         string chainName,
         bool sprintEnabled = true)
     {
-        if (objects.LocalPlayer is not { } player)
+        if (objects.LocalPlayer is null)
         {
             return chains.Create(chainName)
                 .Then(_ => StepResult.Failure("No local player."), $"{chainName}::NoPlayer");

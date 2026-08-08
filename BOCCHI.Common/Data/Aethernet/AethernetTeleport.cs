@@ -32,7 +32,7 @@ public static class AethernetTeleport
             .UseMiddleware(new RetryChainMiddleware(logger)
             {
                 DelayMs = 500,
-                // Was 5 — canceling mid-approach felt like endless teleport retry spam.
+                // Keep low — canceling mid-approach used to feel like endless teleport retries.
                 MaxAttempts = 2
             })
             .UseStepMiddleware<LogStepMiddleware>()
