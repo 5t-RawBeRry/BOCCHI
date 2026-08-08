@@ -11,6 +11,11 @@ namespace BOCCHI.Automator.Services.PotTreasure;
 /// </summary>
 public static class PotTreasureGroups
 {
+    private static readonly string[] Octants =
+    [
+        "north", "northeast", "east", "southeast", "south", "southwest", "west", "northwest",
+    ];
+
     public static bool CanRunSmart(IZone zone, int fateId) =>
         zone.IsPotFate(fateId)
         && (SouthHornPotTreasureGroups.HasGroups(fateId)
@@ -65,6 +70,46 @@ public static class PotTreasureGroups
         return binned.Count > 0;
     }
 
+    /// <summary>
+    ///     When a compass bin is empty (common on North Horn flat lists), pick the nearest
+    ///     non-empty adjacent octant so elixir redirects do not stall.
+    /// </summary>
+    public static bool TryGetNearestNonEmptyGroup(
+        int fateId,
+        string preferredKey,
+        Vector3 fateCenter,
+        IZone zone,
+        out string groupKey,
+        out IReadOnlyList<PotTreasureCandidate> candidates)
+    {
+        groupKey = string.Empty;
+        candidates = Array.Empty<PotTreasureCandidate>();
+
+        int start = Array.IndexOf(Octants, preferredKey);
+        if (start < 0)
+        {
+            return false;
+        }
+
+        for (int step = 1; step <= 4; step++)
+        {
+            int[] deltas = [step, -step];
+            foreach (int delta in deltas)
+            {
+                string key = Octants[(start + delta + 8) % 8];
+                if (TryGetGroup(fateId, key, fateCenter, zone, out IReadOnlyList<PotTreasureCandidate> group)
+                    && group.Count > 0)
+                {
+                    groupKey = key;
+                    candidates = group;
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>Compass octant from pot center toward a chest (FFXIV: −Z is north).</summary>
     public static bool TryDirectionKey(Vector3 from, Vector3 to, out string groupKey)
     {
@@ -84,19 +129,12 @@ public static class PotTreasureGroups
         }
 
         int octant = (int)MathF.Floor((deg + 22.5f) / 45f) % 8;
-        groupKey = octant switch
+        if (octant < 0 || octant >= Octants.Length)
         {
-            0 => "north",
-            1 => "northeast",
-            2 => "east",
-            3 => "southeast",
-            4 => "south",
-            5 => "southwest",
-            6 => "west",
-            7 => "northwest",
-            _ => string.Empty,
-        };
+            return false;
+        }
 
-        return groupKey.Length > 0;
+        groupKey = Octants[octant];
+        return true;
     }
 }

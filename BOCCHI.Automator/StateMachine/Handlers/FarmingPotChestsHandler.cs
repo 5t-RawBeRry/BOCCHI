@@ -419,6 +419,12 @@ public class FarmingPotChestsHandler
     {
         if (TryAcquireReveal(farm, out IGameObject? reveal) && reveal != null)
         {
+            if (OpenTreasureCofferChain.IsOpenedOrLooted(reveal))
+            {
+                AdvancePastOpenedReveal(farm);
+                return;
+            }
+
             float distance = player.Position.Distance(reveal.Position);
             if (distance > OpenTreasureCofferChain.InteractDistance)
             {
@@ -438,19 +444,40 @@ public class FarmingPotChestsHandler
         if (DateTimeOffset.UtcNow - farm.PhaseStartedUtc > TimeSpan.FromSeconds(15))
         {
             logger.Info("Pot treasure: reveal timed out — resume search while Cache Me remains");
-            farm.Phase = farm.Candidates.Count > 0
-                ? PotChestFarmPhase.SearchingCandidates
-                : PotChestFarmPhase.BlindSweep;
-            if (farm.Phase == PotChestFarmPhase.BlindSweep)
-            {
-                FallBackToBlind(farm);
-            }
-            else
-            {
-                farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
-                farm.SettledAtUtc = DateTimeOffset.MinValue;
-            }
+            ResumeSearchOrBlind(farm);
         }
+    }
+
+    private void AdvancePastOpenedReveal(PotChestFarmMemory farm)
+    {
+        pathfinder.Stop();
+        if (farm.Candidates.Count > 0)
+        {
+            farm.Candidates.Dequeue();
+        }
+
+        farm.ElixirAttempts = 0;
+        farm.RefineSteps = 0;
+        farm.RefineTarget = null;
+        farm.SettledAtUtc = DateTimeOffset.MinValue;
+        farm.WaitingForSpawnSince = DateTimeOffset.MinValue;
+        logger.Info(
+            "Pot treasure: reveal already open — next candidate ({Remaining} left)",
+            farm.Candidates.Count);
+        ResumeSearchOrBlind(farm);
+    }
+
+    private void ResumeSearchOrBlind(PotChestFarmMemory farm)
+    {
+        if (farm.Candidates.Count > 0)
+        {
+            farm.Phase = PotChestFarmPhase.SearchingCandidates;
+            farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
+            farm.SettledAtUtc = DateTimeOffset.MinValue;
+            return;
+        }
+
+        FallBackToBlind(farm);
     }
 
     private void HandleBlindSweep(PotChestFarmMemory farm)
@@ -532,22 +559,39 @@ public class FarmingPotChestsHandler
             return false;
         }
 
+        IZone zone = zones.GetZone();
         if (!PotTreasureGroups.TryGetGroup(
                 farm.FateId.Value,
                 groupKey,
                 farm.FateCenter,
-                zones.GetZone(),
+                zone,
                 out IReadOnlyList<PotTreasureCandidate> group)
             || group.Count == 0)
         {
-            logger.Warning(
-                "Pot treasure: hint redirected {From} → {To} but no candidates — keeping current group",
-                farm.ActiveGroupKey ?? "?",
-                groupKey);
-            return false;
+            if (!PotTreasureGroups.TryGetNearestNonEmptyGroup(
+                    farm.FateId.Value,
+                    groupKey,
+                    farm.FateCenter,
+                    zone,
+                    out string fallbackKey,
+                    out group))
+            {
+                logger.Warning(
+                    "Pot treasure: hint redirected {From} → {To} but no candidates — blind fallback",
+                    farm.ActiveGroupKey ?? "?",
+                    groupKey);
+                FallBackToBlind(farm);
+                return true;
+            }
+
+            logger.Info(
+                "Pot treasure: hint {To} empty — using adjacent {Alt} ({Count} candidates)",
+                groupKey,
+                fallbackKey,
+                group.Count);
+            groupKey = fallbackKey;
         }
 
-        // Walk toward the nearest spot in the new compass group from where we are now.
         IEnumerable<PotTreasureCandidate> ordered = OrderNearestNeighbor(group, player.Position);
         string previous = farm.ActiveGroupKey ?? "?";
         farm.BeginCandidateSearch(groupKey, ordered);
@@ -570,7 +614,7 @@ public class FarmingPotChestsHandler
 
     private bool TryAcquireReveal(PotChestFarmMemory farm, out IGameObject? reveal)
     {
-        reveal = FindRevealNear(player.Position);
+        reveal = FindUnopenedRevealNear(player.Position);
         if (reveal != null)
         {
             return true;
@@ -578,12 +622,24 @@ public class FarmingPotChestsHandler
 
         if (farm.Candidates.Count > 0)
         {
-            reveal = FindRevealNear(farm.Candidates.Peek().Position)
-                     ?? FindChestNear(farm.Candidates.Peek().Position);
+            reveal = FindUnopenedRevealNear(farm.Candidates.Peek().Position)
+                     ?? FindUnopenedChestNear(farm.Candidates.Peek().Position);
             return reveal != null;
         }
 
         return false;
+    }
+
+    private IGameObject? FindUnopenedRevealNear(Vector3 origin)
+    {
+        IGameObject? reveal = FindRevealNear(origin);
+        return reveal != null && !OpenTreasureCofferChain.IsOpenedOrLooted(reveal) ? reveal : null;
+    }
+
+    private IGameObject? FindUnopenedChestNear(Vector3 position)
+    {
+        IGameObject? chest = FindChestNear(position);
+        return chest != null && !OpenTreasureCofferChain.IsOpenedOrLooted(chest) ? chest : null;
     }
 
     private void FallBackToBlind(PotChestFarmMemory farm)

@@ -59,9 +59,7 @@ public static class AetheryteApproach
                         return StepResult.Failure("No aetheryte nearby.");
                     }
 
-                    Vector3 crystal = nearest.Position;
-                    Vector3 target = crystal.GetApproachPosition(current.Position, AethernetNavigation.CampApproachRadius);
-                    target = new Vector3(target.X, crystal.Y, target.Z);
+                    Vector3 target = nearest.GetCampStandOffPosition(current.Position);
 
                     SprintAssist.MaybeCast(sprintEnabled, zone.IsInBasecamp());
                     pathfinder.PathfindAndMoveTo(new PathfinderConfig(target)

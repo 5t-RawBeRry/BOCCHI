@@ -112,7 +112,7 @@ public class NorthHorn
         new(2082, new(-855.7433f, 70.67716f, 482.1518f), 30f), // Gale-force Encounter
         new(2079, new(-170f, 30f, -500f), 30f), // Inconstant Gardener
         new(2074, new(724f, 70f, 220f), 30f), // Raging Thrall
-        new(2083, new(-661.0049f, 87f, -54.00021f), 30f), // Scale Model
+        new(2083, new(-661.0049f, 87f, -54.00021f), 30f, MolderingOutskirts.Id), // Scale Model
         new(2076, new(95f, 10f, 470f), 30f), // Shoreline Showdown
         new(2080, new(-90f, 67.47852f, 865.9999f), 30f), // Territorial Dispute
         new(2084, new(140f, 37f, -708f), 30f), // Thunderregnum

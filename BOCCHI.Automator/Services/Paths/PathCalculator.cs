@@ -151,7 +151,7 @@ public class PathCalculator
 
         List<PathStep> steps = await traverser.FindPath(player.Position, pathGoal);
         List<PathStep> resolvedSteps = steps
-            .Select(step => AethernetNavigation.ResolveAetherytePathStep(step, zone))
+            .Select(step => AethernetNavigation.ResolveAetherytePathStep(step, zone, player.Position))
             .ToList();
 
         if (potPrepositionStandOff is { } standOff)

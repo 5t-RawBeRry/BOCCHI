@@ -9,10 +9,11 @@
 
 ### Fixes
 - **Apply Buffs** works again at knowledge crystals when you stand at them (including right next to the crystal).
-- Walking to base-camp aethernet stops at **2 yalms** and hands off to Lifestream (no closer pathing into the crystal).
+- Walking to the base-camp aetheryte stops about **2 yalms** out and hands off to Lifestream, instead of pathing into the middle of the crystal.
 - Critical Encounters path into the blue zone instead of stopping on the edge (**A Beast Unleashed**, **Quarried Away**, **With Extreme Prejudice**, and similar). World panel **Path** uses the same behavior.
 - **On the Hunt** approaches through Lost Citadel from base camp, instead of routing around from Eldergrowth.
 - **Next pot** timer no longer resets to unknown when a FATE ends or you leave Occult Crescent.
+- **North Horn pot chests** no longer get stuck looping on already-opened coffers. Elixir direction hints that point at empty areas pick a nearby direction instead.
 - BOCCHI no longer uses Sprint while in base camp.
 - Using a combat ability while traveling cancels pathfinding. Toggle Illegal Mode or Completionist to continue if that interrupted a run.
 - **Carrot Hunt:** clearer waiting text, and a **Use Fortune Carrot** button when you need to use one by hand. Fortune Carrots are still used automatically at chewed carrots.

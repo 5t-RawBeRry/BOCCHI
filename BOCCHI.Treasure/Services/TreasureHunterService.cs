@@ -905,7 +905,8 @@ public class TreasureHunterService
         if (inCombat && !vnav.IsRunning())
         {
             SprintAssist.MaybeCast(automatorConfig.SprintOnAetheryteApproach, zone.IsInBasecamp());
-            vnav.PathfindAndMoveTo(zone.GetMainAetheryte().GetInteractPosition(), false);
+            Vector3 standOff = zone.GetMainAetheryte().GetCampStandOffPosition(player.Position);
+            vnav.PathfindAndMoveCloseTo(standOff, false, AethernetNavigation.PathfindArrivalRadius);
             return false;
         }
 
