@@ -141,9 +141,8 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
         List<PathStep> steps = [];
 
         Vector3 standOff = departure.GetCampStandOffPosition(start);
-        // Already in Lifestream range — AetheryteApproach is a no-op / short camp close-in.
-        if (start.Distance2D(departure.Position) > AethernetData.LifestreamInteractRadius
-            && start.Distance2D(standOff) > AethernetData.LifestreamInteractRadius)
+        // Already on the approach ring — AetheryteApproach is a no-op / short close-in.
+        if (start.Distance2D(standOff) > AethernetNavigation.PathfindArrivalRadius + 0.5f)
         {
             steps.Add(PathStep.Pathfind(standOff, AethernetNavigation.PathfindArrivalRadius));
         }

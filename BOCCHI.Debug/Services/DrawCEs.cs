@@ -1,3 +1,4 @@
+using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.KnowledgeCrystals;
 using BOCCHI.Common.Data.Zones;
@@ -37,6 +38,15 @@ public class DrawCEs(IOverlayRenderer overlay, ICriticalEncounterRepository ces,
         foreach (KnowledgeCrystalData crystal in zones.GetZone().GetNearbyKnowledgeCrystals())
         {
             overlay.StrokeCircle(crystal.Position, 5f, new(1f, 0f, 1f));
+        }
+
+        // Base-camp aetheryte: magenta = Lifestream (must be inside to TP); cyan = idle outer band.
+        IZone zone = zones.GetZone();
+        if (zone.IsOccultCrescentZone() && zone.IsInBasecamp())
+        {
+            AethernetData main = zone.GetMainAetheryte();
+            overlay.StrokeCircle(main.Position, main.GetBodyRadius(), new(1f, 0f, 1f));
+            overlay.StrokeCircle(main.Position, main.GetIdleOuterRadius(), new(0f, 1f, 1f));
         }
 
 #if DEBUG

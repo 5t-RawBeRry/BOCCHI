@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+
 namespace BOCCHI.Common.Data.Aethernet;
 
 public class AethernetData
@@ -7,11 +8,15 @@ public class AethernetData
     public const float InteractRadius = 4.3f;
 
     /// <summary>
-    ///     Hand off to Lifestream at this distance from crystal center (base camp and shards).
-    ///     BOCCHI paths to <see cref="AethernetNavigation.CampApproachRadius"/> and stops — no closer.
+    ///     Width of the idle band outside the Lifestream (magenta) ring — cyan is
+    ///     <see cref="DeadRadius"/> + this. Teleport requires being inside magenta.
     /// </summary>
-    public const float LifestreamInteractRadius = 2.0f;
+    public const float LifestreamEdgeClearance = 2.0f;
 
+    /// <summary>
+    ///     Magenta / Lifestream radius from <see cref="Position"/> (at the solid model's edge).
+    ///     Must be inside this to teleport; idle waits between this and +<see cref="LifestreamEdgeClearance"/>.
+    /// </summary>
     public float DeadRadius { get; init; } = 3.2f;
 
     public uint Id { get; init; }

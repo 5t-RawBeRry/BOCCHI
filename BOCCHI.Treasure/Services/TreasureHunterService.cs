@@ -998,20 +998,21 @@ public class TreasureHunterService
             return true;
         }
 
-        Vector3 crystal = ResolveAethernet(step.Aethernet).Position;
+        AethernetData aethernet = ResolveAethernet(step.Aethernet);
+        Vector3 crystal = aethernet.Position;
+        // Magenta ring — must be inside for Lifestream.
+        float lifestreamRadius = aethernet.GetBodyRadius();
         StepDistance = player.Position.Distance2D(crystal);
 
-        // At the approach ring — Lifestream owns the interact / teleport.
-        if (StepDistance <= AethernetNavigation.CampApproachRadius)
+        if (StepDistance <= lifestreamRadius)
         {
             vnav.Stop();
             return true;
         }
 
-        float standOff = AethernetNavigation.CampApproachRadius;
         float arrival = AethernetNavigation.PathfindArrivalRadius;
 
-        Vector3 destination = crystal.GetApproachPosition(player.Position, standOff);
+        Vector3 destination = crystal.GetApproachPosition(player.Position, lifestreamRadius);
         destination = new Vector3(destination.X, crystal.Y, destination.Z);
 
         if (!vnav.IsRunning())

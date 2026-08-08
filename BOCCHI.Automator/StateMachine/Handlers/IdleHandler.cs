@@ -8,6 +8,7 @@ using BOCCHI.Common.Services;
 using Dalamud.Plugin.Services;
 using Ocelot.Chain;
 using Ocelot.Extensions;
+using Ocelot.Ipc.VNavmesh;
 using Ocelot.Pathfinding.Extensions;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.Translation;
@@ -23,6 +24,7 @@ public class IdleHandler(
     IZoneProvider zones,
     IObjectTable objects,
     IPathfinder pathfinder,
+    IVNavmeshIpc vnav,
     IChainManager chains,
     AutomatorConfig config,
     AutoRotationController autoRotation,
@@ -39,7 +41,7 @@ public class IdleHandler(
         // Survey / World PathTo use ActivityGoto chains — don't kill them on idle handoff.
         if (!IsNavigationInterrupted())
         {
-            pathfinder.Stop();
+            StopMovement();
         }
 
         autoRotation.DisableForTravel();
@@ -52,7 +54,7 @@ public class IdleHandler(
         memory.Forget<IdleStateMemory>();
         if (!IsNavigationInterrupted())
         {
-            pathfinder.Stop();
+            StopMovement();
         }
     }
 
@@ -79,11 +81,11 @@ public class IdleHandler(
             return;
         }
 
-        // Stay within Lifestream range of the crystal (Destination pads can sit outside it).
-        if (zone.IsWithinLifestreamRange(player.Position))
+        // Inside cyan (idle band or closer / magenta) — stop; do not path into the crystal.
+        if (zone.IsWithinIdleWait(player.Position))
         {
             idle.ApproachCandidateIndex = 0;
-            pathfinder.Stop();
+            StopMovement();
             return;
         }
 
@@ -92,7 +94,8 @@ public class IdleHandler(
             return;
         }
 
-        List<Vector3> candidates = zone.GetApproachCandidates(player.Position)
+        // Path to spots spread between magenta (Lifestream) and cyan (idle outer).
+        List<Vector3> candidates = zone.GetIdleWaitCandidates(player.Position)
             .OrderBy(candidate => player.Position.Distance2D(candidate))
             .ToList();
         if (candidates.Count == 0)
@@ -124,6 +127,12 @@ public class IdleHandler(
         {
             ui.LabelledValue(translator.T(".automation.automator.time_idle"), idle.GetIdleTime().Format());
         }
+    }
+
+    private void StopMovement()
+    {
+        pathfinder.Stop();
+        vnav.Stop();
     }
 
     private bool IsNavigationInterrupted() =>
