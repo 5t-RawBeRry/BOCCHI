@@ -56,7 +56,7 @@ public class CurrencyTracker(TrackerConfig config, IGameGui gui) : ICurrencyTrac
             return;
         }
 
-        // Shopping churns currency reads; re-baseline so spend→recover isn't a false gain (#96).
+        // Shopping churns currency reads; re-baseline so spend→recover isn't a false gain.
         if (IsShopOpen())
         {
             goldTracker.SyncBaseline(gold);

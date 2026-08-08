@@ -24,6 +24,7 @@ public class CompletionistRenderer
 (
     IAutomator automator,
     IAutomatorMemory memory,
+    IActivityNavigation navigation,
     UIConfig uiConfig,
     IFieldNoteTracker fieldNotes,
     ISupportJobFactory supportJobs,
@@ -123,7 +124,7 @@ public class CompletionistRenderer
 
             if (entry.CanFlag)
             {
-                DrawFlagableRow(entry, icon, color, label);
+                DrawSurveyRow(entry, icon, color, label, noteName);
             }
             else
             {
@@ -132,11 +133,12 @@ public class CompletionistRenderer
         }
     }
 
-    private void DrawFlagableRow(
+    private void DrawSurveyRow(
         FieldNoteTargets.Entry entry,
         FontAwesomeIcon icon,
         Vector4 color,
-        string label)
+        string label,
+        string noteName)
     {
         using (ImRaii.PushFont(UiBuilder.IconFont))
         {
@@ -145,36 +147,75 @@ public class CompletionistRenderer
 
         ImGui.SameLine();
         ImGui.PushStyleColor(ImGuiCol.Text, color);
-        bool clicked = ImGui.Selectable($"{label}##flag_{entry.MkdLoreId}");
+        bool clicked = ImGui.Selectable($"{label}##survey_{entry.MkdLoreId}");
         ImGui.PopStyleColor();
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(translator.T(".completionist.flag_tooltip"));
+            ImGui.SetTooltip(translator.T(
+                navigation.CanPathfind
+                    ? ".completionist.survey_tooltip"
+                    : ".completionist.survey_tooltip_flag_only"));
         }
 
         if (clicked)
         {
-            FlagOnMap(entry.MapX!.Value, entry.MapY!.Value);
+            GoToSurvey(entry, noteName);
         }
     }
 
-    private void FlagOnMap(float mapX, float mapY)
+    private void GoToSurvey(FieldNoteTargets.Entry entry, string noteName)
     {
+        float mapX = entry.MapX!.Value;
+        float mapY = entry.MapY!.Value;
+        if (!TryResolveSurveyLink(mapX, mapY, out MapLinkPayload link, out Vector3 world))
+        {
+            return;
+        }
+
+        gameGui.OpenMapWithMapLink(link);
+
+        if (!navigation.CanPathfind)
+        {
+            return;
+        }
+
+        // Yield automator travel so World-style Path isn't stomped by the next replan.
+        if (automator.IsActive)
+        {
+            memory.Forget<GoalMemory>();
+            IllegalModeActivityWork.ForgetTravelLatches(memory);
+            automator.SoftStopPathfinding();
+            memory.Forget<NavigationInterruptedMemory>();
+            memory.TryAdd(new NavigationInterruptedMemory());
+        }
+
+        string title = $"{translator.T(".completionist.sources.survey_point")} — {noteName}";
+        navigation.PathTo(world, title, $"survey_{entry.MkdLoreId}");
+    }
+
+    private bool TryResolveSurveyLink(float mapX, float mapY, out MapLinkPayload link, out Vector3 world)
+    {
+        link = null!;
+        world = default;
+
         IZone zone = zones.GetZone();
         uint territoryId = zone.TerritoryType;
         if (!data.GetExcelSheet<TerritoryType>().TryGetRow(territoryId, out TerritoryType territory))
         {
-            return;
+            return false;
         }
 
         uint mapId = territory.Map.RowId;
         if (mapId == 0)
         {
-            return;
+            return false;
         }
 
-        gameGui.OpenMapWithMapLink(new MapLinkPayload(territoryId, mapId, mapX, mapY));
+        link = new MapLinkPayload(territoryId, mapId, mapX, mapY);
+        // MapLink raw ints are world XZ × 1000; Y is snapped by pathfinding.
+        world = new Vector3(link.RawX / 1000f, 0f, link.RawY / 1000f);
+        return true;
     }
 
     private void RenderJobs()

@@ -73,7 +73,7 @@ public class ReturningHandler
             return StatePriority.Never;
         }
 
-        // Waiting inside / near the goal FATE circle — don't Return-to-base (#84).
+        // Waiting inside / near the goal FATE circle — don't Return-to-base.
         if (IsNearActiveFateGoal())
         {
             return StatePriority.Never;
@@ -137,7 +137,7 @@ public class ReturningHandler
             return;
         }
 
-        // Poll confirm — PostSetup alone can miss when BossMod slows UI setup (#107).
+        // Poll confirm — PostSetup alone can miss when BossMod slows UI setup.
         if (TryConfirmReturnDialog())
         {
             return;

@@ -58,7 +58,7 @@ public class BuffingHandler
             return RestoreThenGather();
         }
 
-        // Gate on Battle Bell's own CD, not whatever Action I the combat job has equipped (#103).
+        // Gate on Battle Bell's own CD, not whatever Action I the combat job has equipped.
         if (BattleBell.GetRecastTime() > config.MaximumBattleBellWaitTime)
         {
             return RestoreThenGather();
@@ -69,7 +69,7 @@ public class BuffingHandler
             return null;
         }
 
-        // Reapply every pull when enabled (#145).
+        // Reapply every pull when enabled.
         if (!castBattleBell)
         {
             if (!IsGeomancer())
@@ -104,7 +104,7 @@ public class BuffingHandler
             return null;
         }
 
-        // Don't swap jobs until the buff actually sticks (#103).
+        // Don't swap jobs until the buff actually sticks.
         if (!HasBattleBell())
         {
             return null;

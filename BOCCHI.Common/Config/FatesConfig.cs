@@ -25,7 +25,7 @@ public class FatesConfig : IAutoConfig
 
     /// <summary>
     ///     Pot fallback cutoffs only apply when pot farming is on AND the predicted next pot FATE is enabled.
-    ///     Disabled pot FATEs must not idle the automator near spawn (#85).
+    ///     Disabled pot FATEs must not idle the automator near spawn.
     /// </summary>
     public bool IsPotFallbackGatingEnabled(
         uint predictedNextPotFateId,

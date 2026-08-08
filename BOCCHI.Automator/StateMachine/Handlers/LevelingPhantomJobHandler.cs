@@ -10,7 +10,7 @@ using Ocelot.States.Score;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
-/// <summary>When the current phantom job is maxed, switch to the next unlocked non-maxed XP job (#89).</summary>
+/// <summary>When the current phantom job is maxed, switch to the next unlocked non-maxed XP job.</summary>
 public class LevelingPhantomJobHandler
 (
     IAutomatorMemory memory,
@@ -116,7 +116,7 @@ public class LevelingPhantomJobHandler
         return false;
     }
 
-    /// <summary>Freelancer advances via knowledge crystals, not combat XP — skip it (#89).</summary>
+    /// <summary>Freelancer advances via knowledge crystals, not combat XP — skip it.</summary>
     private static bool IsLevelableByXp(SupportJob job) =>
         job.Id != SupportJobId.PhantomFreelancer;
 

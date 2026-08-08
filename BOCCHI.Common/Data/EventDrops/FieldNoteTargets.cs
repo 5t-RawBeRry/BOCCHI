@@ -8,10 +8,10 @@ namespace BOCCHI.Common.Data.EventDrops;
 public static class FieldNoteTargets
 {
     /// <param name="MkdLoreId">MKDLore / Occult Record row id.</param>
-    /// <param name="DisplayOnly">True for survey points and Forked Tower — checklist only, not Illegal Mode pathing.</param>
+    /// <param name="DisplayOnly">True for survey points and Forked Tower — not auto-chosen by Completionist.</param>
     /// <param name="Note">Notes item when the record drops from a FATE/CE/tower; null for survey points.</param>
-    /// <param name="MapX">In-game map X for click-to-flag (survey points).</param>
-    /// <param name="MapY">In-game map Y for click-to-flag (survey points).</param>
+    /// <param name="MapX">In-game map X for click-to-flag / path (survey points).</param>
+    /// <param name="MapY">In-game map Y for click-to-flag / path (survey points).</param>
     public readonly record struct Entry(
         uint MkdLoreId,
         string SourceKey,

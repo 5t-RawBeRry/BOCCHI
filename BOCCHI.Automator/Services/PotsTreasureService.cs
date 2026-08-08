@@ -16,7 +16,7 @@ using Ocelot.Windows;
 namespace BOCCHI.Automator.Services;
 
 /// <summary>
-/// Dedicated pots + treasure mode (#114): pot FATEs and chests, then treasure hunt
+/// Dedicated pots + treasure mode: pot FATEs and chests, then treasure hunt
 /// until ~3 minutes before the next pot spawn; preposition and repeat.
 /// </summary>
 public class PotsTreasureService

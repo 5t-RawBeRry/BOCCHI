@@ -24,7 +24,7 @@ public class TreasureConfig : IAutoConfig
     [Checkbox(Order = 4)]
     public bool ReturnToBaseCampAfterHunt { get; set; } = true;
 
-    /// <summary>Play an MP3 when the hunt finishes (#120).</summary>
+    /// <summary>Play an MP3 when the hunt finishes.</summary>
     [Checkbox(Order = 5)]
     public bool PlaySoundOnHuntComplete { get; set; } = true;
 
@@ -32,7 +32,7 @@ public class TreasureConfig : IAutoConfig
     [Mp3SoundSelect(Order = 6)]
     public string HuntCompleteSound { get; set; } = "Moogle";
 
-    /// <summary>Cast Treasure Sight at hunt start and every N coffers; abort early when Sight reports none left (#120).</summary>
+    /// <summary>Cast Treasure Sight at hunt start and every N coffers; abort early when Sight reports none left.</summary>
     [Checkbox(Order = 7)]
     public bool CastTreasureSightDuringHunt { get; set; } = true;
 

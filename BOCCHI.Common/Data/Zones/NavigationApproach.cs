@@ -27,13 +27,22 @@ public static class NavigationConstants
     /// <summary>Yellow debug ring inset from padded CE radius (green − this).</summary>
     public const float CriticalEncounterYellowInset = 2f;
 
+    /// <summary>
+    ///     Fraction of combat (red) size that counts as safely inside for wait / arrival.
+    ///     Using 1.0 (or a flat 22y floor) stopped bots on the blue-zone edge.
+    /// </summary>
+    public const float CriticalEncounterWaitInnerRatio = 0.7f;
+
     /// <summary>Travel stand-off: inner fraction of combat (red) radius.</summary>
-    public const float CriticalEncounterApproachMinRatio = 0.35f;
+    public const float CriticalEncounterApproachMinRatio = 0.3f;
 
-    /// <summary>Travel stand-off: outer fraction of combat (red) radius.</summary>
-    public const float CriticalEncounterApproachMaxRatio = 0.55f;
+    /// <summary>Travel stand-off: outer fraction of combat (red) radius (must stay &lt; wait inner).</summary>
+    public const float CriticalEncounterApproachMaxRatio = 0.5f;
 
-    /// <summary>Random stand-off ring while waiting for a predicted pot FATE (#112).</summary>
+    /// <summary>Square CEs: max Chebyshev stand-off from center as a fraction of half-extent.</summary>
+    public const float CriticalEncounterSquareApproachMaxRatio = 0.25f;
+
+    /// <summary>Random stand-off ring while waiting for a predicted pot FATE.</summary>
     public const float PotPrepositionMinRadius = 12f;
 
     public const float PotPrepositionMaxRadius = 32f;
@@ -49,14 +58,8 @@ public static class NavigationConstants
     public static float CriticalEncounterYellowRadius(float paddedRadius) =>
         MathF.Max(0f, paddedRadius - CriticalEncounterYellowInset);
 
-    public const float CriticalEncounterWaitRadiusYalms = 22f;
-
-    /// <summary>CE wait / travel-arrival radius. Keep tighter than the padded debug ring so Battle starts inside the live join area.</summary>
-    public static float CriticalEncounterWaitRadius(float combatRadius) =>
-        CriticalEncounterWaitRadiusYalms;
-
     /// <summary>
-    ///     True when <paramref name="point"/> is inside the CE wait/join area.
+    ///     True when <paramref name="point"/> is safely inside the CE registration area.
     ///     <paramref name="combatRadius"/> is authored combat size (circle radius or square half-extent).
     /// </summary>
     public static bool IsInsideCriticalEncounterWaitArea(
@@ -70,18 +73,17 @@ public static class NavigationConstants
             return point.Distance2D(center) <= EventArrivalRadius;
         }
 
+        float hold = combatRadius * CriticalEncounterWaitInnerRatio;
+
         if (shape == ActivityAreaShape.Square)
         {
-            // Stay inside the blue square (Chebyshev), not a circumscribed circle.
-            float half = combatRadius;
+            // Chebyshev: keep pathing until clearly inside the blue square, not on the rim.
             float dx = MathF.Abs(point.X - center.X);
             float dz = MathF.Abs(point.Z - center.Z);
-            return MathF.Max(dx, dz) <= half;
+            return MathF.Max(dx, dz) <= hold;
         }
 
-        // Circles: at least the authored combat radius, or the flat wait ring (whichever larger).
-        float wait = MathF.Max(combatRadius, CriticalEncounterWaitRadius(combatRadius));
-        return point.Distance2D(center) < wait;
+        return point.Distance2D(center) <= hold;
     }
 }
 
@@ -105,9 +107,10 @@ public static class NavigationApproach
         float red = MathF.Max(1f, combatRadius);
         if (shape == ActivityAreaShape.Square)
         {
-            // Squares (e.g. A Beast Unleashed): go well inside the blue zone, not the circle-style
-            // outer stand-off — 35–55% of half-extent lands on/near the edge or outside.
-            float maxFromCenter = MathF.Min(red * 0.2f, NavigationConstants.EventApproachMaxRadius);
+            // Squares (e.g. A Beast Unleashed): land well inside the blue box.
+            float maxFromCenter = MathF.Min(
+                red * NavigationConstants.CriticalEncounterSquareApproachMaxRatio,
+                NavigationConstants.EventApproachMaxRadius);
             float approachRange = Random.Shared.NextSingle() * maxFromCenter;
             Vector3 delta = from - center;
             float chebyshev = MathF.Max(MathF.Abs(delta.X), MathF.Abs(delta.Z));
@@ -143,7 +146,7 @@ public static class NavigationApproach
     }
 
     /// <summary>
-    ///     World / non-Illegal PathTo: use CE outer-ring stand-off when the destination is a known CE.
+    ///     World / non-Illegal PathTo: use CE inner stand-off when the destination is a known CE.
     /// </summary>
     public static bool TryResolveCriticalEncounterApproach(
         IZone zone,

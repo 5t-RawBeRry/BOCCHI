@@ -230,7 +230,8 @@ public class ZoneGraph
 
     public async Task ConnectToBaseCamp(List<Node> nodes, GraphConfig config)
     {
-        const float MaxEuclideanDistance2D = 512f;
+        // Cover Lost Citadel CEs (On the Hunt ~685y from return pad); 512 skipped those edges.
+        const float MaxEuclideanDistance2D = 750f;
 
         Node? returnNode = GetBaseCampReturnPositionNode();
         if (returnNode == null)

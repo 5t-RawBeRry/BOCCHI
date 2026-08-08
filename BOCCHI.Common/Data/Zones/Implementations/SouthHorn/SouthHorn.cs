@@ -129,7 +129,8 @@ public class SouthHorn
         new(39, new(-799.895f, 44f, 245.027f), 20f, Stonemarsh.Id), // "From Times Bygone"
         new(40, new(679.954f, 96f, -279.855f), 20f, BaseCamp.Id), // "Company of Stone"
         new(41, new(-117.227f, 1f, -849.941f), 15f, TheWanderersHaven.Id), // "Shark Attack"
-        new(42, new(635.981f, 108f, -53.95f), 20f, Eldergrowth.Id), // "On the Hunt"
+        // BaseCamp: Lost Citadel approach. Eldergrowth walks around the citadel exterior.
+        new(42, new(635.981f, 108f, -53.95f), 20f, BaseCamp.Id), // "On the Hunt"
         new(43, new(-351.222f, 5f, -607.909f), 15f, TheWanderersHaven.Id), // "With Extreme Prejudice"
         new(44, new(460.949f, 97f, -362.86f), 20f, BaseCamp.Id), // "Noise Complaint"
         new(45, new(71.964f, 20f, -544.904f), 20f, TheWanderersHaven.Id), // "Cursed Concern"

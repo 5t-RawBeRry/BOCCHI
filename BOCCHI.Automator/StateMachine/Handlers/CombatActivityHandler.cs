@@ -45,7 +45,7 @@ internal static class CombatActivityHandler
         }
 
         // Seed / keep a hard target from the activity list. CE bosses often never enter
-        // BossMod's potential-target / aggro table, so AutoTarget alone can leave you idle (#133).
+        // BossMod's potential-target / aggro table, so AutoTarget alone can leave you idle.
         SeedActivityTarget(targetManager, list, target, throttlePrefix);
 
         bool isMelee = playerState.IsMelee();

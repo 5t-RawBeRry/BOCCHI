@@ -97,7 +97,7 @@ public class PathfindingHandler
 
         path.Update();
 
-        // Teleport-only mode: calc produced no Return/Teleport steps → pause for manual (#139).
+        // Teleport-only mode: calc produced no Return/Teleport steps → pause for manual.
         if (path.PauseWhenPlanCompletes && path.IsEmptyPlan && currentPathTask == null)
         {
             BeginMountThenPause(TeleportOnlyMessage("no travel steps left"));
@@ -196,7 +196,7 @@ public class PathfindingHandler
             return;
         }
 
-        // Empty plan (already at destination) — keep GoalPathStepMemory so Automator doesn't recreate (#92).
+        // Empty plan (already at destination) — keep GoalPathStepMemory so Automator doesn't recreate.
         if (!path.IsValid)
         {
             memory.Forget<GoalPathStepMemory>();
@@ -220,7 +220,7 @@ public class PathfindingHandler
             }
 
             memory.TryAdd(delay);
-            logger.Info("Waiting {Seconds:F1}s at camp before teleport (#138)", delay.Delay.TotalSeconds);
+            logger.Info("Waiting {Seconds:F1}s at camp before teleport", delay.Delay.TotalSeconds);
             return false;
         }
 

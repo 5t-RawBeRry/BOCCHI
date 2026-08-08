@@ -73,7 +73,7 @@ public class TreasureHunterService
 
     /// <summary>
     /// Only treat a node as empty once we're essentially on top of the layout point.
-    /// A larger radius (e.g. 10y) skipped chests while still outside interact range (#93).
+    /// A larger radius (e.g. 10y) skipped chests while still outside interact range.
     /// </summary>
     private const float EmptySkipRadius = 2f;
 
@@ -212,7 +212,7 @@ public class TreasureHunterService
         }
 
         // Teleport/return handlers must observe completed chains before we clear them.
-        // Clearing first re-starts the same teleport forever (#123 / #125).
+        // Clearing first re-starts the same teleport forever.
         if (steps.Count > 0 && StepIndex < steps.Count && TryAdvanceCurrentStep())
         {
             HuntPathfinderStep completed = steps[StepIndex];
@@ -666,7 +666,7 @@ public class TreasureHunterService
             return false;
         }
 
-        // Defer while fighting — Sight dismounts + swaps PJ; remount fails in combat (#128).
+        // Defer while fighting — Sight dismounts + swaps PJ; remount fails in combat.
         if (conditions[ConditionFlag.InCombat])
         {
             return false;

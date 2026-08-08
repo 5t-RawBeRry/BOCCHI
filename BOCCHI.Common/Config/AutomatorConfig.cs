@@ -34,19 +34,19 @@ public class AutomatorConfig : IAutoConfig
     [MountSelect(Order = 7)]
     public uint PreferredMountId { get; set; } = 0;
 
-    /// <summary>Use Sprint on foot when closing in on an aetheryte (#129).</summary>
+    /// <summary>Use Sprint on foot when closing in on an aetheryte.</summary>
     [Checkbox(Order = 8)]
     public bool SprintOnAetheryteApproach { get; set; } = true;
 
     /// <summary>
-    ///     Stay mounted while a CE is preparing; dismount when it starts (#127).
+    ///     Stay mounted while a CE is preparing; dismount when it starts.
     /// </summary>
     [Checkbox(Order = 9)]
     public bool StayMountedWhileWaitingForCe { get; set; } = false;
 
     /// <summary>
     ///     After FATE/CE: Return, teleport to the nearest aetheryte for the next activity, mount,
-    ///     then stop — no auto-walk (#139 / replaces #109 full-path requirement).
+    ///     then stop — no auto-walk.
     /// </summary>
     [Checkbox(Order = 10)]
     public bool StopAfterReturn { get; set; } = false;
@@ -86,7 +86,7 @@ public class AutomatorConfig : IAutoConfig
     public int MaxRemoteIdleTimeSeconds { get; set; } = 10;
 
     /// <summary>
-    ///     Upper bound (seconds) for a random 0..max idle at camp before teleporting to a FATE/CE (#138).
+    ///     Upper bound (seconds) for a random 0..max idle at camp before teleporting to a FATE/CE.
     ///     0 = leave immediately.
     /// </summary>
     [IntRange(0, 60, Order = 17)]

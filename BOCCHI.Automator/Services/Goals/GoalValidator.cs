@@ -160,7 +160,7 @@ public class GoalValidator
         || fieldNotes.ShouldPursueCriticalEncounter(encounterId);
 
     /// <summary>
-    ///     Predicted pot goal kept before the FATE exists (and briefly after predicted spawn) (#112).
+    ///     Predicted pot goal kept before the FATE exists (and briefly after predicted spawn).
     /// </summary>
     private bool IsValidPotPreposition(FateId id)
     {

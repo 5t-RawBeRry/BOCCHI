@@ -64,7 +64,7 @@ public class PathCalculator
             return [];
         }
 
-        // Prefer live FATE center when available. Square CEs prefer live LGB center (#122);
+        // Prefer live FATE center when available. Square CEs prefer live LGB center;
         // circular CEs keep authored graph staging (live markers can sit under elevated CEs).
         Node pathGoal = goalNode;
         Vector3? potPrepositionStandOff = null;
@@ -132,7 +132,7 @@ public class PathCalculator
         traverser.AddCalculator(new WalkTeleportWalkCalculator());
         traverser.AddCalculator(new DirectWalkCalculator());
 
-        // Don't offer Return when already closer to the goal than to camp — that caused #84 loops.
+        // Don't offer Return when already closer to the goal than to camp — that caused loops.
         float distToCamp = graph.GetBaseCampAetheryteNode() is { } camp
             ? player.Position.Distance2D(camp.Position)
             : float.MaxValue;
@@ -164,7 +164,7 @@ public class PathCalculator
 
         if (config.StopAfterReturn)
         {
-            // Keep Return / Teleport; drop the walk to the FATE or CE (#139).
+            // Keep Return / Teleport; drop the walk to the FATE or CE.
             resolvedSteps = resolvedSteps
                 .Where(step => step.Kind != PathStepKind.Pathfind)
                 .ToList();

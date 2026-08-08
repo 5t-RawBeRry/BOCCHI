@@ -16,7 +16,7 @@ public static class ReturnDelay
     }
 }
 
-/// <summary>Random idle at camp before teleporting to a FATE/CE (#138).</summary>
+/// <summary>Random idle at camp before teleporting to a FATE/CE.</summary>
 public static class BaseTeleportDelay
 {
     /// <summary>

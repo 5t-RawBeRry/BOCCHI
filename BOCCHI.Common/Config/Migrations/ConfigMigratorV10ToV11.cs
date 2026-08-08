@@ -38,7 +38,7 @@ public class ConfigMigratorV10ToV11 : IMigrator
         JObject automator = result["AutomatorConfig"] as JObject
                             ?? new JObject { ["$type"] = "BOCCHI.Common.Config.AutomatorConfig, BOCCHI.Common" };
 
-        // Renamed in #109 without a migrator — copy old value if the new key was never written.
+        // Renamed without a migrator — copy old value if the new key was never written.
         if (automator["StopAfterReturn"] == null
             && automator["StopAfterActivityAetheryte"] is JToken oldStop)
         {

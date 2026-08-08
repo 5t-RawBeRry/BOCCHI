@@ -89,7 +89,7 @@ public class WaitingForCriticalEncounterHandler
             return StatePriority.Never;
         }
 
-        // Beat Pathfinding (High) once near the CE (#132).
+        // Beat Pathfinding (High) once near the CE.
         return StatePriority.VeryHigh;
     }
 

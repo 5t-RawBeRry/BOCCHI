@@ -89,11 +89,7 @@ public sealed class PotCycleSyncService
         ushort territory = zone.TerritoryType;
         if (fingerprintTerritory != territory)
         {
-            if (fingerprintTerritory != 0)
-            {
-                potCycles.Clear(fingerprintTerritory);
-            }
-
+            // Keep the other zone's pot timer (SH/NH are tracked separately).
             ResetFingerprint(territory);
         }
 
@@ -252,6 +248,16 @@ public sealed class PotCycleSyncService
             return;
         }
 
+        // Keep the established fingerprint while that FATE is still up — using "oldest active
+        // FATE" alone rekeys every time a FATE ends and was wiping the next-pot timer.
+        if (instanceKey != null
+            && fingerprintFateId != 0
+            && fates.Snapshot().Any(f =>
+                f.Id.Value == fingerprintFateId && f.StartTimeEpoch == fingerprintStartEpoch))
+        {
+            return;
+        }
+
         Fate? fingerprintFate = fates.Snapshot()
             .Where(f => f.StartTimeEpoch > 0)
             .OrderBy(f => f.StartTimeEpoch)
@@ -266,26 +272,24 @@ public sealed class PotCycleSyncService
         string newKey = ComputeInstanceKey(dc, fingerprintFate.Id.Value, fingerprintFate.StartTimeEpoch);
         if (instanceKey == newKey)
         {
+            fingerprintFateId = fingerprintFate.Id.Value;
+            fingerprintStartEpoch = fingerprintFate.StartTimeEpoch;
             return;
         }
 
-        // New OC instance (or first key this session) — drop the previous instance's pot timer.
-        if (instanceKey != null)
-        {
-            potCycles.Clear(territory);
-            logger.Info(
-                "[PotCycleSync] instance changed ({Old}… → {New}…) — cleared pot cycle",
-                instanceKey[..8],
-                newKey[..8]);
-        }
-
+        bool firstKey = instanceKey == null;
         fingerprintFateId = fingerprintFate.Id.Value;
         fingerprintStartEpoch = fingerprintFate.StartTimeEpoch;
         instanceKey = newKey;
         fingerprintTerritory = territory;
         lastFetchedInstanceKey = null;
+
+        // Do not clear the pot timer on FATE-roster churn. Local/remote anchors re-validate
+        // when the next pot is seen; wiping here caused "next pot → unknown".
         logger.Info(
-            "[PotCycleSync] instance key from fate={FateId} epoch={Epoch} key={KeyPrefix}…",
+            firstKey
+                ? "[PotCycleSync] instance key from fate={FateId} epoch={Epoch} key={KeyPrefix}…"
+                : "[PotCycleSync] fingerprint fate ended — new key from fate={FateId} epoch={Epoch} key={KeyPrefix}… (pot timer kept)",
             fingerprintFateId,
             fingerprintStartEpoch,
             instanceKey[..8]);
@@ -342,7 +346,7 @@ public sealed class PotCycleSyncService
             return;
         }
 
-        potCycles.ClearAll();
+        // Drop sync fingerprint only — keep pot timers so "next pot" survives leaving OC / toggling sync.
         fingerprintTerritory = 0;
         instanceKey = null;
         fingerprintFateId = 0;

@@ -70,7 +70,7 @@ public sealed class WaitingForCriticalEncounterMemory(CriticalEncounterId encoun
 public sealed class SuspendTravelForActivityMemory;
 
 /// <summary>
-///     Arrived at predicted pot stand-off; hold until the FATE spawns (#112).
+///     Arrived at predicted pot stand-off; hold until the FATE spawns.
 /// </summary>
 public sealed class WaitingForPotFateMemory;
 
@@ -87,7 +87,7 @@ public sealed class PendingPotChestFarmMemory(FateId fateId)
 /// </summary>
 public sealed class NavigationInterruptedMemory;
 
-/// <summary>Random idle at camp before the outbound teleport to a FATE/CE (#138).</summary>
+/// <summary>Random idle at camp before the outbound teleport to a FATE/CE.</summary>
 public sealed class BaseTeleportDelayMemory(TimeSpan delay)
 {
     private readonly DateTime startedUtc = DateTime.UtcNow;
@@ -307,7 +307,7 @@ public sealed class GoalPathStepMemory(IGoal goal, IPathCalculator calculator, b
 
     private bool emptyPlan;
 
-    /// <summary>When true, finishing the plan (or an empty teleport-only plan) pauses nav for manual travel (#139).</summary>
+    /// <summary>When true, finishing the plan (or an empty teleport-only plan) pauses nav for manual travel.</summary>
     public bool PauseWhenPlanCompletes { get; } = pauseWhenPlanCompletes;
 
     public Queue<IPathStep> PathSteps { get; private set; } = [];
