@@ -180,7 +180,7 @@ public class CompletionistRenderer
             return;
         }
 
-        // Yield automator travel so World-style Path isn't stomped by the next replan.
+        // Pause automator travel so Illegal/Completionist replan doesn't fight Lifestream + vnav.
         if (automator.IsActive)
         {
             memory.Forget<GoalMemory>();
@@ -191,7 +191,7 @@ public class CompletionistRenderer
         }
 
         string title = $"{translator.T(".completionist.sources.survey_point")} — {noteName}";
-        navigation.PathTo(world, title, $"survey_{entry.MkdLoreId}");
+        navigation.PathToPoint(world, title, $"survey_{entry.MkdLoreId}");
     }
 
     private bool TryResolveSurveyLink(float mapX, float mapY, out MapLinkPayload link, out Vector3 world)

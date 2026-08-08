@@ -2,7 +2,7 @@
 
 ### New
 - After you update BOCCHI, a **What’s new** window shows these notes once. Open it again anytime with `/bocchi changelog`.
-- **Completionist Mode** is its own automation (separate from Illegal Mode). It only goes for field notes you still need. The checklist shows notes and phantom jobs. Click a survey point to flag it on the map and travel there (teleport from an aetheryte when you can, then walk mounted). Forked Tower notes are listed for tracking only.
+- **Completionist Mode** is its own automation (separate from Illegal Mode). Missing notes from FATEs and Critical Encounters run through Illegal Mode. Click a **survey point** to flag it and travel with Lifestream + vnav (mounts while walking) — not Illegal Mode. The checklist shows notes and phantom jobs; Forked Tower notes are tracking-only.
 - **Triage Mode** can raise with **Phantom Chemist** or **Phantom White Mage** — pick which under Illegal Mode settings. If your choice isn’t unlocked, it uses the other when available.
 - **Pots & Treasure** has **Pause** and **Resume**. Pause stops movement but keeps the run; **Stop** ends it.
 - **Preferred mount** defaults to **Mount Roulette**. If a chosen mount can’t be used, BOCCHI falls back to roulette.

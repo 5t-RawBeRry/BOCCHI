@@ -66,7 +66,13 @@ public class ActivityNavigation
         return true;
     }
 
-    public void PathTo(Vector3 destination, string name, string id)
+    public void PathTo(Vector3 destination, string name, string id) =>
+        StartPath(destination, name, id, treatAsActivity: true);
+
+    public void PathToPoint(Vector3 destination, string name, string id) =>
+        StartPath(destination, name, id, treatAsActivity: false);
+
+    private void StartPath(Vector3 destination, string name, string id, bool treatAsActivity)
     {
         if (!CanPathfind)
         {
@@ -74,15 +80,15 @@ public class ActivityNavigation
             return;
         }
 
-        // Near an aetheryte: hop best shard then walk. Otherwise walk from here.
+        // Near an aetheryte: Lifestream hop then vnav. Otherwise vnav from here.
         if (CanTeleport(destination, out _))
         {
             int generation = BeginNavigation();
-            _ = PathViaAethernetAsync(destination, name, id, generation);
+            _ = PathViaAethernetAsync(destination, name, id, generation, treatAsActivity);
             return;
         }
 
-        if (!TryBuildApproach(destination, player.Position, out Vector3 approach, out bool alreadyAtCeRing))
+        if (!TryResolveWalkTarget(destination, player.Position, treatAsActivity, out Vector3 approach, out bool alreadyAtCeRing))
         {
             return;
         }
@@ -112,11 +118,17 @@ public class ActivityNavigation
         _ = TeleportOnlyAsync(destination, name, id, generation);
     }
 
-    private async Task PathViaAethernetAsync(Vector3 destination, string name, string id, int generation)
+    private async Task PathViaAethernetAsync(
+        Vector3 destination,
+        string name,
+        string id,
+        int generation,
+        bool treatAsActivity)
     {
         try
         {
-            AethernetData? target = await SelectBestAetheryteAsync(destination).ConfigureAwait(false);
+            AethernetData? target = await SelectBestAetheryteAsync(destination, treatAsActivity)
+                .ConfigureAwait(false);
             if (generation != navigationGeneration)
             {
                 return;
@@ -130,7 +142,12 @@ public class ActivityNavigation
                 }
 
                 Vector3 approachFrom = target?.Position ?? player.Position;
-                if (!TryBuildApproach(destination, approachFrom, out Vector3 approach, out bool alreadyAtCeRing))
+                if (!TryResolveWalkTarget(
+                        destination,
+                        approachFrom,
+                        treatAsActivity,
+                        out Vector3 approach,
+                        out bool alreadyAtCeRing))
                 {
                     return;
                 }
@@ -180,7 +197,8 @@ public class ActivityNavigation
     {
         try
         {
-            AethernetData? target = await SelectBestAetheryteAsync(destination).ConfigureAwait(false);
+            AethernetData? target = await SelectBestAetheryteAsync(destination, treatAsActivity: true)
+                .ConfigureAwait(false);
             if (generation != navigationGeneration)
             {
                 return;
@@ -234,13 +252,21 @@ public class ActivityNavigation
     private IChain BuildPathChain(string name, Vector3 destination) =>
         AppendPath(chains.Create(name), name, destination);
 
-    private bool TryBuildApproach(
+    private bool TryResolveWalkTarget(
         Vector3 destination,
         Vector3 from,
+        bool treatAsActivity,
         out Vector3 approach,
         out bool alreadyAtCeRing)
     {
         alreadyAtCeRing = false;
+        if (!treatAsActivity)
+        {
+            // Survey / POI: go to the flagged point (vnav snaps Y).
+            approach = destination;
+            return true;
+        }
+
         IZone zone = zones.GetZone();
         if (NavigationApproach.TryResolveCriticalEncounterApproach(
                 zone, destination, from, out approach, out ActivityData? activity)
@@ -274,7 +300,7 @@ public class ActivityNavigation
     ///     Honors authored preferred shards for known activities (Eye to Eye → Crown, not Unhallowed),
     ///     then scores a few Euclidean-near reachable shards by walk distance so island gaps do not win.
     /// </summary>
-    private async Task<AethernetData?> SelectBestAetheryteAsync(Vector3 destination)
+    private async Task<AethernetData?> SelectBestAetheryteAsync(Vector3 destination, bool treatAsActivity)
     {
         List<AethernetData> aetherytes = zones.GetZone().GetAetherytes();
         if (aetherytes.Count == 0)
@@ -282,7 +308,8 @@ public class ActivityNavigation
             return null;
         }
 
-        uint? preferredId = FindPreferredAethernetId(destination);
+        // Surveys ignore authored FATE/CE preferred shards — just the best hop for the point.
+        uint? preferredId = treatAsActivity ? FindPreferredAethernetId(destination) : null;
 
         AethernetData? ByEuclidean() => aetherytes
             .OrderBy(a => preferredId is { } pid && a.Id == pid ? 0 : 1)
