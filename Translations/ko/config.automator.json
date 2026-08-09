@@ -34,7 +34,7 @@
     },
     "toggle_ai_provider": {
       "label": "BOCCHI AI 사용",
-      "tooltip": "돌발·비상 조우 전투에서 BOCCHI AI로 대상 지정과 전투 이동을 합니다(BossMod 또는 BossMod Reborn 필요 — 의존성 참고). 이동 중에는 끄고 도착하면 다시 켭니다."
+      "tooltip": "돌발·비상 조우 전투에서 BossMod / BossMod Reborn의 BOCCHI AI 자동 로테이션 프리셋을 켜 대상 지정과 전투 이동을 합니다. 잡 전투 로테이션(Wrath / Rotation Solver)은 켜지 않으며, 구식 ai:on도 사용하지 않습니다. 이동 중에는 끄고 도착하면 다시 켭니다."
     },
     "should_auto_mount": {
       "label": "이동 중 탈것 탑승",

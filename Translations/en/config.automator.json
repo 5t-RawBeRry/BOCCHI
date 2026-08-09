@@ -34,7 +34,7 @@
     },
     "toggle_ai_provider": {
       "label": "Use BOCCHI AI",
-      "tooltip": "In FATE and CE combat, use BOCCHI AI for targeting and combat movement (needs BossMod or BossMod Reborn — see Dependencies). It turns off while traveling and back on when you arrive."
+      "tooltip": "In FATE and CE combat, activates the BOCCHI AI autorotation preset in BossMod / BossMod Reborn for targeting and combat movement. Does not enable a job combat rotation (Wrath / Rotation Solver) and does not use the legacy ai:on command. Turns off while traveling and back on when you arrive."
     },
     "should_auto_mount": {
       "label": "Mount while traveling",

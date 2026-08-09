@@ -34,7 +34,7 @@
     },
     "toggle_ai_provider": {
       "label": "使用 BOCCHI AI",
-      "tooltip": "在危命任务与紧急遭遇战的战斗中，用 BOCCHI AI 负责选取目标与战斗走位（需要 BossMod 或 BossMod Reborn — 见依赖）。赶路途中会关闭，抵达后重新开启。"
+      "tooltip": "在危命任务与紧急遭遇战战斗中，启用 BossMod / BossMod Reborn 里的 BOCCHI AI 自动循环预设，用于选取目标与战斗走位。不会开启职业战斗循环（Wrath / Rotation Solver），也不会使用旧版 ai:on。赶路途中会关闭，抵达后重新开启。"
     },
     "should_auto_mount": {
       "label": "赶路时上坐骑",

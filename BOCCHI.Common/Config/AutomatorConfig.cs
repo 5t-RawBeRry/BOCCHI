@@ -23,7 +23,10 @@ public class AutomatorConfig : IAutoConfig
     [Checkbox(Order = 4, Section = "activities")]
     public bool ShouldDoCriticalEncounters { get; set; } = true;
 
-    /// <summary>Use BOCCHI AI BossMod preset in FATE/CE combat (off while pathfinding).</summary>
+    /// <summary>
+    ///     Activate the BOCCHI AI BossMod/BMR autorotation preset in FATE/CE combat (off while pathfinding).
+    ///     Does not enable Wrath/RSR job rotation or legacy ai:on.
+    /// </summary>
     [Checkbox(Order = 5, Section = "combat")]
     public bool ToggleAiProvider { get; set; } = true;
 
