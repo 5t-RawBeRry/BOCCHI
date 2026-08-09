@@ -15,7 +15,6 @@
 - Experience and currency history length / graph step size are in UI settings (Tracker is no longer a separate page).
 - Removed unused range settings (open range, carrot match range, prefer aethernet, crystal search range); BOCCHI uses fixed sensible distances.
 - Treasure Hunt skips empty coffer spots once you are close enough that the coffer should be visible.
-- Hunts always use the built-in coffer map (the old optional “share opens / live routes” setting is gone).
 - South Horn’s coffer map now matches North Horn’s style, so hard-to-reach spots are included.
 - Default hunt max level is 50, so North Horn’s full coffer set is included.
 - Carrot Hunt on South and North Horn follows the map and picks the nearest next pad (no more waiting only for nearby carrots).

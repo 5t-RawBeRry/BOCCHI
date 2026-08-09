@@ -47,10 +47,6 @@ https://raw.githubusercontent.com/OhKannaDuh/plugins/refs/heads/master/manifest.
 ### Trackers
 - Experience / gold / silver per hour style session stats
 
-### Background helpers (always on in Occult Crescent)
-- Anonymous pot spawn sync with other BOCCHI users on the same instance
-- Anonymous chewed-carrot location sync (helps keep the carrot map accurate)
-
 ### Languages
 - English, Japanese, Korean, Simplified Chinese
 
@@ -99,5 +95,4 @@ Prefix: `/bocchi` (aliases: `/och`, `/occultcrescenthelper`)
 ## Notes
 
 - Automation modes are **exclusive** — starting one stops the others (Emergency Stop is available in the UI).
-- Treasure and Carrot Hunt use the built-in authored maps (no optional live-route sharing).
-- Pot spawn sync and carrot-location sync run automatically while you are in Occult Crescent.
+- Treasure and Carrot Hunt use the built-in authored maps.
