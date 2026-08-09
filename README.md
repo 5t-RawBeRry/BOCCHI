@@ -35,8 +35,8 @@ https://raw.githubusercontent.com/OhKannaDuh/plugins/refs/heads/master/manifest.
 ### Treasure Hunter
 - Planned coffer routes (bronze / silver) with aethernet-aware pathing
 - Treasure Sight during the hunt; pause / resume / recalculate
-- Radar lines to nearby coffers
-- **Carrot Hunt (nearby):** path to chewed carrots in range, use a Fortune Carrot, open the bunny gold chest
+- Radar lines to nearby coffers and carrots
+- **Carrot Hunt:** authored map tour with nearest-next routing and aethernet hops; Fortune Carrot → bunny gold chest
 
 ### Mob Farmer
 - Pull and clear selected mob packs in a farm area (separate from Illegal Mode)
@@ -47,9 +47,9 @@ https://raw.githubusercontent.com/OhKannaDuh/plugins/refs/heads/master/manifest.
 ### Trackers
 - Experience / gold / silver per hour style session stats
 
-### Optional cloud helpers (opt-in)
-- Share anonymous coffer opens for live hunt routes
-- Share anonymous pot spawn times with other BOCCHI users on the same instance
+### Background helpers (always on in Occult Crescent)
+- Anonymous pot spawn sync with other BOCCHI users on the same instance
+- Anonymous chewed-carrot location sync (helps keep the carrot map accurate)
 
 ### Languages
 - English, Japanese, Korean, Simplified Chinese
@@ -99,5 +99,5 @@ Prefix: `/bocchi` (aliases: `/och`, `/occultcrescenthelper`)
 ## Notes
 
 - Automation modes are **exclusive** — starting one stops the others (Emergency Stop is available in the UI).
-- Carrot Hunt is **nearby-only** for now (not a full-zone tour).
-- Cloud sharing is **off by default**; turn it on in Treasure settings if you want it.
+- Treasure and Carrot Hunt use the built-in authored maps (no optional live-route sharing).
+- Pot spawn sync and carrot-location sync run automatically while you are in Occult Crescent.
