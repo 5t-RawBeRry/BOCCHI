@@ -55,6 +55,13 @@ public class ReturningHandler
             return StatePriority.Never;
         }
 
+        // Pot chest farm / deferred handoff — open the reveal before Sight Return.
+        if (memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _)
+            || memory.TryRemember<PendingPotChestFarmMemory>(out PendingPotChestFarmMemory _))
+        {
+            return StatePriority.Never;
+        }
+
         if (memory.TryRemember<ReturningStateMemory>(out ReturningStateMemory _))
         {
             return StatePriority.VeryHigh;

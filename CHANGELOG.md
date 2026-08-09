@@ -9,6 +9,7 @@
 - Settings pages use small titled sections so related options are easier to find.
 
 ### Fixes
+- After a Magic Pot chest appears, BOCCHI opens it before Returning for Treasure Sight or camp.
 - Illegal Mode can still start an auto treasure hunt without Treasure Sight (uses the built-in coffer map).
 - Treasure Hunt skips empty coffer spots once you are close enough that the coffer should be visible.
 - South Horn’s coffer map now matches North Horn’s style, so hard-to-reach spots are included.

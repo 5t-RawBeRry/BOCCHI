@@ -23,6 +23,7 @@ internal static class IllegalModeActivityWork
     public static bool HasFillerBlockingActivity(IAutomatorMemory memory) =>
         HasPrimaryActivity(memory)
         || memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _)
+        || memory.TryRemember<PendingPotChestFarmMemory>(out PendingPotChestFarmMemory _)
         || memory.TryRemember<ApplyingBuffsMemory>(out ApplyingBuffsMemory _)
         || memory.TryRemember<CastingTreasureSightMemory>(out CastingTreasureSightMemory _)
         || TriageSession.IsActive(memory);
