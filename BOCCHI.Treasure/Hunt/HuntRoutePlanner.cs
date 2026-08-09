@@ -222,7 +222,7 @@ public abstract class HuntRoutePlanner
 
     private void PrintPath(List<HuntPathfinderStep> steps)
     {
-        log.Info("== Treasure Hunt Steps ==");
+        log.Debug("== Treasure Hunt Steps ==");
 
         int index = 1;
         int treasureCount = 0;
@@ -243,24 +243,17 @@ public abstract class HuntRoutePlanner
                 treasureCount++;
             }
 
-            log.Info(message);
+            log.Debug(message);
             index++;
         }
 
-        log.Info($"== Total treasures visited: {treasureCount} ==");
+        log.Debug($"== Total treasures visited: {treasureCount} ==");
     }
 
     private static string GetDataFile(IDalamudPluginInterface plugin, ZoneId zoneId, string filename)
     {
-        string zoneFolder = zoneId switch
-        {
-            ZoneId.SouthHorn => "SouthHorn",
-            ZoneId.NorthHorn => "NorthHorn",
-            var _ => throw new NotSupportedException($"No hunt data for zone {zoneId}")
-        };
-
         string pluginDir = GetPluginDirectory(plugin);
-        return Path.Combine(pluginDir, "Data", zoneFolder, filename);
+        return Path.Combine(pluginDir, "Data", zoneId.TreasureDataFolder(), filename);
     }
 
     private static string GetPluginDirectory(IDalamudPluginInterface plugin)

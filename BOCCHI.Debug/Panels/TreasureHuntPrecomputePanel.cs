@@ -259,12 +259,7 @@ public sealed class TreasureHuntPrecomputePanel
 
     private List<string> WriteOutputs(ZoneId zoneId, string json)
     {
-        string zoneFolder = zoneId switch
-        {
-            ZoneId.SouthHorn => "SouthHorn",
-            ZoneId.NorthHorn => "NorthHorn",
-            var _ => throw new NotSupportedException($"No hunt data folder for {zoneId}")
-        };
+        string zoneFolder = zoneId.TreasureDataFolder();
 
         const string filename = "precomputed_treasure_hunt_data.json";
         List<string> written = [];
@@ -278,7 +273,7 @@ public sealed class TreasureHuntPrecomputePanel
             written.Add(runtimePath);
         }
 
-        string? sourceRoot = FindRepoTreasureDataRoot(pluginDir);
+        string? sourceRoot = TreasureDataPaths.FindRepoTreasureDataRoot(pluginDir);
         if (sourceRoot != null)
         {
             string sourcePath = Path.Combine(sourceRoot, zoneFolder, filename);
@@ -288,23 +283,6 @@ public sealed class TreasureHuntPrecomputePanel
         }
 
         return written;
-    }
-
-    private static string? FindRepoTreasureDataRoot(string? start)
-    {
-        string? dir = start;
-        for(int i = 0; i < 8 && dir != null; i++)
-        {
-            string candidate = Path.Combine(dir, "BOCCHI.Treasure", "Data");
-            if (Directory.Exists(candidate))
-            {
-                return candidate;
-            }
-
-            dir = Directory.GetParent(dir)?.FullName;
-        }
-
-        return null;
     }
 
     private static float PathLength(List<Vector3> path)

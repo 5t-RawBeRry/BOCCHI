@@ -151,23 +151,7 @@ public class NorthHorn
         new(1059485, BaseCamp.Id);
 
     public override TreasureRoutePolicy GetTreasureRoutePolicy() =>
-        new()
-        {
-            AreaAethernetByName = new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["BaseCamp"] = BaseCamp.Id,
-                ["CrownOfKarnak"] = TheCrownOfKarnak.Id,
-                ["The Crown of Karnak"] = TheCrownOfKarnak.Id,
-                ["SuspendedMasonry"] = SuspendedMasonry.Id,
-                ["Suspended Masonry"] = SuspendedMasonry.Id,
-                ["MolderingOutskirts"] = MolderingOutskirts.Id,
-                ["Moldering Outskirts"] = MolderingOutskirts.Id,
-                ["SinkingSanctuary"] = SinkingSanctuary.Id,
-                ["Sinking Sanctuary"] = SinkingSanctuary.Id,
-                ["UnhallowedHamlet"] = UnhallowedHamlet.Id,
-                ["Unhallowed Hamlet"] = UnhallowedHamlet.Id,
-            }
-        };
+        new();
 
     public override List<TreasureData> GetTreasureData() =>
     [

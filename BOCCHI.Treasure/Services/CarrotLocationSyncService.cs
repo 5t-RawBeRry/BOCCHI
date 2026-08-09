@@ -1,5 +1,6 @@
 using BOCCHI.Common.Data;
 using BOCCHI.Common.Data.Zones;
+using BOCCHI.Common.Services;
 using BOCCHI.Treasure.Data;
 using Dalamud.Plugin;
 using Ocelot.Lifecycle;
@@ -7,7 +8,6 @@ using Ocelot.Services.Logger;
 using System.Globalization;
 using System.Net.Http;
 using System.Numerics;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -117,7 +117,7 @@ public sealed class CarrotLocationSyncService
                 worldY = pending.Position.Y,
                 worldZ = pending.Position.Z,
                 objectBaseId = (int)OccultObjectType.Carrot,
-                installationHash = GetInstallationHash(),
+                installationHash = InstallationId.GetHash(plugin),
                 pluginVersion = typeof(CarrotLocationSyncService).Assembly.GetName().Version?.ToString() ?? "0",
                 observedAtUtc = DateTime.UtcNow.ToString("O"),
             });
@@ -213,18 +213,6 @@ public sealed class CarrotLocationSyncService
         string y = MathF.Round(position.Y, 1).ToString("F1", CultureInfo.InvariantCulture);
         string z = MathF.Round(position.Z, 1).ToString("F1", CultureInfo.InvariantCulture);
         return $"{territory}:{x}:{y}:{z}";
-    }
-
-    private string GetInstallationHash()
-    {
-        string path = Path.Combine(plugin.ConfigDirectory.FullName, "coffer-installation-id.txt");
-        if (!File.Exists(path))
-        {
-            File.WriteAllText(path, Guid.NewGuid().ToString("N"));
-        }
-
-        string id = File.ReadAllText(path).Trim();
-        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(id))).ToLowerInvariant();
     }
 
     private readonly record struct PendingSubmit(ushort TerritoryId, Vector3 Position, string Key);

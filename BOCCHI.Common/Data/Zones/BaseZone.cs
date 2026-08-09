@@ -201,9 +201,7 @@ public abstract class BaseZone
         string dir = Path.Combine(plugin.GetPluginConfigDirectory(), "zone_graphs");
         Directory.CreateDirectory(dir);
 
-        // Bump when walk-cost / edge semantics or which nodes are wired change.
-        // v6: Eye to Eye prefers Crown of Karnak (Unhallowed is Euclidean-near but cut off).
-        // v7: discard suspect early caches; load validates usability and rebuilds if broken.
+        // Bump when walk-cost / edge semantics or which nodes are wired change (v7 validates usability).
         const int graphSchemaVersion = 7;
         string path = Path.Combine(dir, $"{TerritoryType}.v{graphSchemaVersion}.json");
 

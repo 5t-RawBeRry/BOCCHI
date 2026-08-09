@@ -27,7 +27,7 @@ public class EventDropIconRenderer(
     public static float ListMaxHeight(bool showDrops) =>
         showDrops ? 240f : 120f;
 
-    public bool WouldRender(EventDropInfo drops) =>
+    private bool WouldRender(EventDropInfo drops) =>
         (drops.Demiatma is not null && config.ShowDemiatmaDrops)
         || (drops.Notes is not null && config.ShowNoteDrops)
         || (drops.SoulShard is not null && config.ShowSoulShardDrops);

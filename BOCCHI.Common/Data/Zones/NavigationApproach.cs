@@ -8,6 +8,9 @@ public static class NavigationConstants
 {
     public const float MaxDirectWalkDistance = 80f;
 
+    /// <summary>Player is considered at base camp within this distance of the aetheryte.</summary>
+    public const float CampRadius = 80f;
+
     /// <summary>Stop this close to FATE/CE center so we enter the engagement circle.</summary>
     public const float EventApproachMinRadius = 0f;
 

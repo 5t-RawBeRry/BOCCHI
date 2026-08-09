@@ -21,13 +21,12 @@ public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
         Node? returnNode = graph.GetBaseCampReturnPositionNode();
 
         // Already at / near camp (return pad or aetheryte) — never offer Return again.
-        const float alreadyAtCampRadius = 80f;
-        if (baseCampAetheryte != null && start.Distance2D(baseCampAetheryte.Position) <= alreadyAtCampRadius)
+        if (baseCampAetheryte != null && start.Distance2D(baseCampAetheryte.Position) <= NavigationConstants.CampRadius)
         {
             return Task.FromResult<TraversalCandidate?>(null);
         }
 
-        if (returnNode != null && start.Distance2D(returnNode.Position) <= alreadyAtCampRadius)
+        if (returnNode != null && start.Distance2D(returnNode.Position) <= NavigationConstants.CampRadius)
         {
             return Task.FromResult<TraversalCandidate?>(null);
         }

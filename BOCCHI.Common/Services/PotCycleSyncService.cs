@@ -135,7 +135,7 @@ public sealed class PotCycleSyncService
                 datacenterId = (int)dc,
                 potFateId = snap.AnchorPotFateId,
                 spawnAtUnix = spawnUnix,
-                installationHash = GetInstallationHash(),
+                installationHash = InstallationId.GetHash(plugin),
                 pluginVersion = typeof(PotCycleSyncService).Assembly.GetName().Version?.ToString() ?? "0",
                 observedAtUtc = DateTime.UtcNow.ToString("O"),
             });
@@ -300,25 +300,13 @@ public sealed class PotCycleSyncService
     }
 
     /// <summary>Linker-compatible: SHA-256 hex of three little-endian int32s (dc, fateId, startEpoch).</summary>
-    public static string ComputeInstanceKey(uint datacenterId, uint fateId, int startTimeEpoch)
+    private static string ComputeInstanceKey(uint datacenterId, uint fateId, int startTimeEpoch)
     {
         Span<byte> buffer = stackalloc byte[12];
         BitConverter.TryWriteBytes(buffer[..4], (int)datacenterId);
         BitConverter.TryWriteBytes(buffer[4..8], (int)fateId);
         BitConverter.TryWriteBytes(buffer[8..12], startTimeEpoch);
         return Convert.ToHexString(SHA256.HashData(buffer));
-    }
-
-    private string GetInstallationHash()
-    {
-        string path = Path.Combine(plugin.ConfigDirectory.FullName, "coffer-installation-id.txt");
-        if (!File.Exists(path))
-        {
-            File.WriteAllText(path, Guid.NewGuid().ToString("N"));
-        }
-
-        string id = File.ReadAllText(path).Trim();
-        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(id))).ToLowerInvariant();
     }
 
     private void ResetFingerprint(ushort territory)

@@ -191,12 +191,7 @@ public sealed class CarrotLocationsExportPanel
 
     private List<string> WriteJsonForZone(IZone zone, List<CatalogLocation> pads, List<CarrotData> authored)
     {
-        string zoneFolder = zone.ZoneId switch
-        {
-            ZoneId.SouthHorn => "SouthHorn",
-            ZoneId.NorthHorn => "NorthHorn",
-            var _ => throw new NotSupportedException($"No carrot data folder for {zone.ZoneId}"),
-        };
+        string zoneFolder = zone.ZoneId.TreasureDataFolder();
 
         List<CarrotJsonEntry> carrots = [];
         int id = 1;
@@ -236,7 +231,7 @@ public sealed class CarrotLocationsExportPanel
             written.Add(runtimePath);
         }
 
-        string? sourceRoot = FindRepoTreasureDataRoot(pluginDir);
+        string? sourceRoot = TreasureDataPaths.FindRepoTreasureDataRoot(pluginDir);
         if (sourceRoot != null)
         {
             string sourcePath = Path.Combine(sourceRoot, zoneFolder, Filename);
@@ -256,7 +251,7 @@ public sealed class CarrotLocationsExportPanel
     private static CarrotData? FindNearestAuthored(Vector3 position, List<CarrotData> authored)
     {
         CarrotData? best = null;
-        float bestDistSq = CarrotHuntDistances.MatchRadius * CarrotHuntDistances.MatchRadius;
+        float bestDistSq = CarrotHuntDistances.MatchRadiusSq;
         foreach (CarrotData pad in authored)
         {
             float distSq = Vector3.DistanceSquared(position, pad.Position);
@@ -270,23 +265,6 @@ public sealed class CarrotLocationsExportPanel
         }
 
         return best;
-    }
-
-    private static string? FindRepoTreasureDataRoot(string? start)
-    {
-        string? dir = start;
-        for (int i = 0; i < 8 && dir != null; i++)
-        {
-            string candidate = Path.Combine(dir, "BOCCHI.Treasure", "Data");
-            if (Directory.Exists(candidate))
-            {
-                return candidate;
-            }
-
-            dir = Directory.GetParent(dir)?.FullName;
-        }
-
-        return null;
     }
 
     private readonly record struct CatalogLocation(int CandidateId, ushort TerritoryId, Vector3 Position);

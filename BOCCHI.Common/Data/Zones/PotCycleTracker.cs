@@ -55,12 +55,6 @@ public interface IPotCycleTracker
     ///     Ignored when a newer local (or equal) anchor already exists, or a pot is live locally.
     /// </summary>
     bool TryApplyRemoteAnchor(int potFateId, DateTimeOffset spawnAt, ushort territoryTypeId);
-
-    /// <summary>Drop the cycle for one territory (e.g. instance hop).</summary>
-    void Clear(ushort territoryTypeId);
-
-    /// <summary>Drop all zones (leave OC).</summary>
-    void ClearAll();
 }
 
 /// <summary>
@@ -181,25 +175,6 @@ public sealed class PotCycleTracker
         logger.Info(
             $"[PotCycleTracker] remote anchor zone={territoryTypeId} pot={potFateId} spawnAt={spawnAt:O} next={opposite?.Id ?? 0} nextSpawnAt={nextSpawn:O}");
         return true;
-    }
-
-    public void Clear(ushort territoryTypeId)
-    {
-        if (cycles.Remove(territoryTypeId))
-        {
-            logger.Info("[PotCycleTracker] cleared cycle for territory {Territory}", territoryTypeId);
-        }
-    }
-
-    public void ClearAll()
-    {
-        if (cycles.Count == 0)
-        {
-            return;
-        }
-
-        cycles.Clear();
-        logger.Info("[PotCycleTracker] cleared all pot cycles");
     }
 
     private PotCycleSnapshot BuildSnapshot(

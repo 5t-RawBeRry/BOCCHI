@@ -85,8 +85,6 @@ public sealed class NinjaHideAssist(IPlayer player, ICondition conditions, IPlug
         }
     }
 
-    public void ClearSavedGearset() => gearsetBeforeNinja = null;
-
     public void TryDismount()
     {
         if (!IsMounted || conditions[ConditionFlag.Mounting])

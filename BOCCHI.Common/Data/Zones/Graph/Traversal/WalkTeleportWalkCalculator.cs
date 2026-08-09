@@ -15,9 +15,6 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
     /// </summary>
     private const float GraphSnapRadius = 45f;
 
-    /// <summary>Treat as basecamp without pathfinding (matches IsInBasecamp proximity).</summary>
-    private const float CampSnapRadius = 80f;
-
     public string Key() => "WalkTeleportWalk";
 
     public async Task<TraversalCandidate?> CalculateAsync(ZoneGraph graph, Vector3 start, Node goal, IPathfinder pathfinder)
@@ -67,7 +64,7 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
     {
         // Prefer camp aetheryte when standing in camp — never burn a vnav query just to leave base.
         Node? baseCamp = graph.GetBaseCampAetheryteNode();
-        if (baseCamp != null && start.Distance2D(baseCamp.Position) <= CampSnapRadius)
+        if (baseCamp != null && start.Distance2D(baseCamp.Position) <= NavigationConstants.CampRadius)
         {
             return (baseCamp, start.Distance(baseCamp.Position));
         }

@@ -544,7 +544,7 @@ public sealed class CarrotHunterService
 
     private void MaybeBindLiveCarrot(CarrotData authored)
     {
-        float matchSq = CarrotHuntDistances.MatchRadius * CarrotHuntDistances.MatchRadius;
+        float matchSq = CarrotHuntDistances.MatchRadiusSq;
         Carrot? live = carrots.Carrots
             .Where(c => c.IsValid())
             .Where(c => Vector3.DistanceSquared(authored.Position, c.GetPosition()) <= matchSq)

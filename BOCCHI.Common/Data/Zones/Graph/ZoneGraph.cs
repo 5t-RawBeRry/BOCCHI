@@ -118,12 +118,6 @@ public class ZoneGraph
         AddEdge(b, a, costAB, type);
     }
 
-    public void AddTwoWayEdge(Guid a, Guid b, float costAB, float costBA, EdgeType type)
-    {
-        AddEdge(a, b, costAB, type);
-        AddEdge(b, a, costBA, type);
-    }
-
     public IEnumerable<Edge> GetEdges(Guid nodeId) => Edges.TryGetValue(nodeId, out List<Edge>? list) ? list : [];
 
     public Edge? GetEdge(Node from, Node to)

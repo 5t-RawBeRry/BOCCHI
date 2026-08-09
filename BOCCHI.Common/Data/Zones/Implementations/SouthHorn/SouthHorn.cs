@@ -150,19 +150,6 @@ public class SouthHorn
             UnsafeWeatherIds = [7, 62, 64, 192],
             AshkinStartEorzeaMinute = 1350,
             AshkinEndEorzeaMinute = 240,
-            AreaAethernetByName = new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["Southdown Heath"] = BaseCamp.Id,
-                ["Lost Citadel"] = BaseCamp.Id,
-                ["Shadowed City"] = Eldergrowth.Id,
-                ["Eldergrowth"] = Eldergrowth.Id,
-                ["Stonemarsh"] = Stonemarsh.Id,
-                ["Heathcliff"] = Stonemarsh.Id,
-                ["Abandoned Ascent"] = Stonemarsh.Id,
-                ["Crystallized Caverns"] = CrystallizedCaverns.Id,
-                ["Vanishing Slope"] = TheWanderersHaven.Id,
-                ["The Wanderer's Haven"] = TheWanderersHaven.Id,
-            }
         };
 
     public override List<TreasureData> GetTreasureData() =>

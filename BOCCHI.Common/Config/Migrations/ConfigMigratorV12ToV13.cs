@@ -25,9 +25,8 @@ public class ConfigMigratorV12ToV13 : IMigrator
                 carrot["CarrotHuntDetectionRange"] = range.DeepClone();
             }
 
-            // EnableCarrotHunt was removed later — Start Carrot Hunt is always on the main UI.
-            treasure.Remove("EnableCarrotHunt");
             treasure.Remove("CarrotHuntDetectionRange");
+            treasure.Remove("EnableCarrotHunt");
         }
 
         carrot.Remove("EnableCarrotHunt");
