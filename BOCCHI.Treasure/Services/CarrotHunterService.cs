@@ -1,6 +1,7 @@
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data;
+using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Common.Services;
@@ -13,7 +14,10 @@ using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Ocelot.Actions;
+using Ocelot.Chain;
+using Ocelot.Chain.Extensions;
 using Ocelot.Extensions;
+using Ocelot.Ipc.BossMod;
 using Ocelot.Ipc.VNavmesh;
 using Ocelot.Lifecycle;
 using Ocelot.Services.PlayerState;
@@ -24,20 +28,24 @@ using DalamudObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 namespace BOCCHI.Treasure.Services;
 
 /// <summary>
-///     Authored carrot tour (SH/NH): nearest-neighbor from the player, skip empty pads once
-///     within tether range with no live chewed carrot, then Fortune Carrot → bunny gold chest.
+///     Authored carrot tour: nearest-neighbor pathing with aethernet hops, empty-pad skips,
+///     then Fortune Carrot → bunny chest.
 /// </summary>
 public sealed class CarrotHunterService
 (
     ICarrotTracker carrots,
     FortuneCarrotAssist fortuneCarrot,
     UIConfig uiConfig,
+    AutomatorConfig automatorConfig,
     IPlayer player,
     ICondition conditions,
     IObjectTable objects,
     IVNavmeshIpc vnav,
     IZoneProvider zones,
     IAutomationModeGuard modeGuard,
+    IChainFactory chains,
+    IChainManager chainManager,
+    ILifestreamIpc lifestream,
     IChatGui chat,
     IPluginLog log
 ) : ICarrotHunter, IOnUpdate, IOnStop
@@ -69,6 +77,12 @@ public sealed class CarrotHunterService
     private DateTime waitingForBunnySince = DateTime.MinValue;
 
     private bool itemUseIssued;
+
+    private AethernetData? hopDeparture;
+
+    private AethernetData? hopArrival;
+
+    private Task<ChainResult>? activeTeleportChain;
 
     public bool Running { get; private set; }
 
@@ -172,6 +186,12 @@ public sealed class CarrotHunterService
             case CarrotHuntPhase.Idle:
                 TickIdle();
                 break;
+            case CarrotHuntPhase.ApproachingAetheryte:
+                TickApproachingAetheryte();
+                break;
+            case CarrotHuntPhase.Teleporting:
+                TickTeleporting();
+                break;
             case CarrotHuntPhase.Pathing:
                 TickPathing();
                 break;
@@ -209,11 +229,139 @@ public sealed class CarrotHunterService
         }
 
         itemUseIssued = false;
-        Phase = CarrotHuntPhase.Pathing;
+        BeginRouteToCurrentAuthored();
         log.Debug(
-            "Carrot hunt: pathing to authored {Id} at {Pos}",
+            "Carrot hunt: pathing to authored {Id} at {Pos} (phase {Phase})",
             currentAuthored!.Id,
-            currentAuthored.Position);
+            currentAuthored.Position,
+            Phase);
+    }
+
+    private void BeginRouteToCurrentAuthored()
+    {
+        ClearHop();
+
+        if (currentAuthored is not { } authored)
+        {
+            Phase = CarrotHuntPhase.Pathing;
+            return;
+        }
+
+        List<AethernetData> aetherytes = zones.GetZone().GetAetherytes();
+        if (TryBestAethernetHop(
+                player.Position,
+                authored.Position,
+                aetherytes,
+                HuntRoutePlanner.AethernetHopCost,
+                out AethernetData departure,
+                out AethernetData arrival,
+                out _))
+        {
+            // Already at the arrival aetheryte — walk the last stretch.
+            if (AetheryteApproach.IsAlreadyAtAetheryte(arrival, player.Position))
+            {
+                Phase = CarrotHuntPhase.Pathing;
+                return;
+            }
+
+            hopDeparture = departure;
+            hopArrival = arrival;
+            log.Information(
+                "Carrot hunt: aethernet hop {From} → {To} toward authored {Id}",
+                departure.Id,
+                arrival.Id,
+                authored.Id);
+
+            if (AetheryteApproach.IsReadyForLifestream(zones.GetZone(), lifestream, player.Position)
+                && AetheryteApproach.IsAlreadyAtAetheryte(departure, player.Position))
+            {
+                Phase = CarrotHuntPhase.Teleporting;
+                return;
+            }
+
+            Phase = CarrotHuntPhase.ApproachingAetheryte;
+            return;
+        }
+
+        Phase = CarrotHuntPhase.Pathing;
+    }
+
+    private void TickApproachingAetheryte()
+    {
+        if (hopDeparture is not { } departure)
+        {
+            Phase = CarrotHuntPhase.Pathing;
+            return;
+        }
+
+        IZone zone = zones.GetZone();
+        Vector3 standOff = departure.GetCampStandOffPosition(player.Position);
+
+        if (zone.IsWithinLifestreamRange(player.Position)
+            || player.Position.Distance2D(standOff) <= AethernetNavigation.PathfindArrivalRadius + 0.35f)
+        {
+            vnav.Stop();
+            Phase = CarrotHuntPhase.Teleporting;
+            return;
+        }
+
+        if (!vnav.IsRunning())
+        {
+            vnav.PathfindAndMoveCloseTo(standOff, false, AethernetNavigation.PathfindArrivalRadius);
+        }
+
+        MaybeMount(standOff);
+    }
+
+    private void TickTeleporting()
+    {
+        if (hopArrival is { } arrival
+            && AetheryteApproach.IsAlreadyAtAetheryte(arrival, player.Position))
+        {
+            activeTeleportChain = null;
+            ClearHop();
+            Phase = CarrotHuntPhase.Pathing;
+            return;
+        }
+
+        if (hopDeparture is not { } departure)
+        {
+            ClearHop();
+            Phase = CarrotHuntPhase.Pathing;
+            return;
+        }
+
+        if (activeTeleportChain != null)
+        {
+            if (!activeTeleportChain.IsCompleted)
+            {
+                return;
+            }
+
+            bool teleported = activeTeleportChain.IsCompletedSuccessfully
+                              && (activeTeleportChain.Result?.IsSuccess ?? false);
+            activeTeleportChain = null;
+
+            if (!teleported)
+            {
+                log.Warning(
+                    "Carrot hunt: aethernet teleport to {Id} failed — walking instead",
+                    hopArrival?.Id ?? 0);
+                ClearHop();
+                Phase = CarrotHuntPhase.Pathing;
+                return;
+            }
+
+            ClearHop();
+            Phase = CarrotHuntPhase.Pathing;
+            return;
+        }
+
+        vnav.Stop();
+        uint placeNameId = departure.Id;
+        activeTeleportChain = chainManager.Manage(
+            chains.Create($"CarrotHunt::Teleport({placeNameId})")
+                .Then<AethernetTeleportChain, uint>(placeNameId));
     }
 
     private void TickPathing()
@@ -264,6 +412,8 @@ public sealed class CarrotHunterService
         {
             vnav.PathfindAndMoveCloseTo(currentTargetPosition, false, PathArrivalRange);
         }
+
+        MaybeMount(currentTargetPosition);
     }
 
     private void TickUsingItem()
@@ -433,9 +583,7 @@ public sealed class CarrotHunterService
             return;
         }
 
-        IReadOnlyList<Vector3> aetherytePositions = zone.GetAetherytes()
-            .Select(a => a.Position)
-            .ToList();
+        List<AethernetData> aetherytes = zone.GetAetherytes();
         float teleportCost = HuntRoutePlanner.AethernetHopCost;
 
         Vector3 start = player.Position;
@@ -444,7 +592,7 @@ public sealed class CarrotHunterService
         bool firstViaAethernet = false;
         foreach (CarrotData candidate in remaining)
         {
-            float cost = TourCost(start, candidate.Position, aetherytePositions, teleportCost, out bool viaAethernet);
+            float cost = TourCost(start, candidate.Position, aetherytes, teleportCost, out bool viaAethernet);
             if (cost < bestStart)
             {
                 bestStart = cost;
@@ -472,7 +620,7 @@ public sealed class CarrotHunterService
             bool bestViaAethernet = false;
             foreach (int id in unvisited)
             {
-                float d = TourCost(from, byId[id].Position, aetherytePositions, teleportCost, out bool viaAethernet);
+                float d = TourCost(from, byId[id].Position, aetherytes, teleportCost, out bool viaAethernet);
                 if (d < best)
                 {
                     best = d;
@@ -499,47 +647,79 @@ public sealed class CarrotHunterService
             unvisited.Remove(nextId);
         }
 
-        log.Information("Carrot hunt aethernet-aware nearest-neighbor tour: {Count} remaining", tour.Count);
+        log.Information("Carrot hunt tour rebuilt: {Count} remaining", tour.Count);
     }
 
-    /// <summary>
-    ///     min(direct Euclidean, min over aetheryte pairs of walk-to-A + teleport + walk-from-B).
-    /// </summary>
+    /// <summary>Direct walk cost, or best distinct aetheryte hop when cheaper.</summary>
     private static float TourCost(
         Vector3 from,
         Vector3 to,
-        IReadOnlyList<Vector3> aetherytePositions,
+        IReadOnlyList<AethernetData> aetherytes,
         float teleportCost,
         out bool viaAethernet)
     {
-        float direct = Vector3.Distance(from, to);
-        viaAethernet = false;
-        if (aetherytePositions.Count == 0)
+        if (TryBestAethernetHop(from, to, aetherytes, teleportCost, out _, out _, out float viaCost))
         {
-            return direct;
+            viaAethernet = true;
+            return viaCost;
+        }
+
+        viaAethernet = false;
+        return Vector3.Distance(from, to);
+    }
+
+    private static bool TryBestAethernetHop(
+        Vector3 from,
+        Vector3 to,
+        IReadOnlyList<AethernetData> aetherytes,
+        float teleportCost,
+        out AethernetData departure,
+        out AethernetData arrival,
+        out float viaCost)
+    {
+        departure = null!;
+        arrival = null!;
+        viaCost = float.MaxValue;
+
+        float direct = Vector3.Distance(from, to);
+        if (aetherytes.Count < 2)
+        {
+            return false;
         }
 
         float bestVia = float.MaxValue;
-        foreach (Vector3 shardA in aetherytePositions)
+        AethernetData? bestDep = null;
+        AethernetData? bestArr = null;
+
+        foreach (AethernetData shardA in aetherytes)
         {
-            float toA = Vector3.Distance(from, shardA);
-            foreach (Vector3 shardB in aetherytePositions)
+            float toA = Vector3.Distance(from, shardA.Position);
+            foreach (AethernetData shardB in aetherytes)
             {
-                float via = toA + teleportCost + Vector3.Distance(shardB, to);
+                if (shardA.Id == shardB.Id)
+                {
+                    continue;
+                }
+
+                float via = toA + teleportCost + Vector3.Distance(shardB.Position, to);
                 if (via < bestVia)
                 {
                     bestVia = via;
+                    bestDep = shardA;
+                    bestArr = shardB;
                 }
             }
         }
 
-        if (bestVia < direct)
+        if (bestDep == null || bestArr == null || bestVia >= direct)
         {
-            viaAethernet = true;
-            return bestVia;
+            return false;
         }
 
-        return direct;
+        departure = bestDep;
+        arrival = bestArr;
+        viaCost = bestVia;
+        return true;
     }
 
     private void MaybeBindLiveCarrot(CarrotData authored)
@@ -624,6 +804,24 @@ public sealed class CarrotHunterService
             .FirstOrDefault(o => Vector3.Distance(position, o.Position) <= BunnySearchRadius);
     }
 
+    private void ClearHop()
+    {
+        hopDeparture = null;
+        hopArrival = null;
+        activeTeleportChain = null;
+    }
+
+    private void MaybeMount(Vector3 destination)
+    {
+        MountWait.TryCastIfNeeded(
+            conditions,
+            objects,
+            destination,
+            automatorConfig.ShouldAutoMount,
+            automatorConfig.PreferredMountId,
+            zones.GetZone().IsInBasecamp());
+    }
+
     private void ClearCurrent()
     {
         currentAuthored = null;
@@ -631,6 +829,7 @@ public sealed class CarrotHunterService
         currentTargetPosition = Vector3.Zero;
         itemUseIssued = false;
         waitingForBunnySince = DateTime.MinValue;
+        ClearHop();
     }
 
     private void Teardown()

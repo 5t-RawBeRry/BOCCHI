@@ -1,26 +1,8 @@
-# 4.0.2.19
-
-### New
-- Carrot Hunt: full South and North Horn tours on the authored map (nearest next), not nearby-only waiting.
-- Carrot Hunt can use aethernet shards when that is faster than walking straight.
-- Start Hunt and Start Carrot Hunt sit side by side on the Treasure panel (Carrot Hunt is always ready; no enable toggle).
-- Treasure Hunt rebuilds your route from where you are after Treasure Sight, after each coffer, and when empty spots are skipped.
-- Treasure Hunt: if you get stuck on terrain, BOCCHI steps aside before skipping that coffer (#156).
-- Settings pages use small titled sections so related options are easier to find.
+# 4.0.2.20
 
 ### Fixes
-- Pot chest farming opens Magic Pot coffers only (not overlapping bronze/silver chests on the same spot).
-- Prefer pot FATEs / Farm pot chests actually run Magic Pot FATEs, even if those FATEs were unchecked under Allowed FATEs.
-- North Horn’s A Beast Unleashed should path into the blue registration area instead of stopping outside.
-- “Use BOCCHI AI” and Dependencies text clarify it only turns on the BossMod / BMR autorotation preset (targeting and movement), not a job rotation or the old ai:on command.
-- After a Magic Pot chest appears, BOCCHI opens it before Returning for Treasure Sight or camp.
-- Illegal Mode can still start an auto treasure hunt without Treasure Sight (uses the built-in coffer map).
-- Treasure Hunt skips empty coffer spots once you are close enough that the coffer should be visible.
-- South Horn’s coffer map now matches North Horn’s style, so hard-to-reach spots are included.
-- Default hunt max level is 50, so North Horn’s full coffer set is included.
-- North Horn carrot pads use knowledge levels based on nearby coffers (they were all treated as level 1 before).
-- Buffs and UI options appear in a clearer order again.
-- Under Automate buffs, the individual buff choices sit underneath and stay greyed out until automation is on.
-- Reward icons and tracker history options live under UI settings (fewer separate settings pages).
-- Demiatma and soul shard drop icons are labeled as South Horn; field notes cover both horns.
-- Removed unused range settings; BOCCHI uses fixed sensible distances.
+- Leaving base camp no longer walks around to the far side of the aetheryte before teleporting (#158).
+- Carrot Hunt teleports when that is faster than walking (for example base camp to the middle island).
+- Carrot Hunt checks empty carrot pads from farther away instead of walking onto every estimate.
+- Carrot Hunt remounts after using a Fortune Carrot when moving to the next pad.
+- Treasure Hunt no longer gets stuck forever on a coffer it cannot open — it skips that spot and continues (#162).

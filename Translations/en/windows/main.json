@@ -227,7 +227,9 @@
       "pathing": "Walking to carrot",
       "using_item": "Using Fortune Carrot",
       "waiting_for_bunny": "Waiting for bunny chest",
-      "opening_bunny": "Opening bunny chest"
+      "opening_bunny": "Opening bunny chest",
+      "approaching_aetheryte": "Walking to aetheryte",
+      "teleporting": "Teleporting via aethernet"
     }
   }
 }

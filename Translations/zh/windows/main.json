@@ -227,7 +227,9 @@
       "pathing": "走向胡萝卜",
       "using_item": "使用幸运胡萝卜",
       "waiting_for_bunny": "等待兔子宝箱",
-      "opening_bunny": "开启兔子宝箱"
+      "opening_bunny": "开启兔子宝箱",
+      "approaching_aetheryte": "走向以太之光",
+      "teleporting": "以太网络传送中"
     }
   }
 }

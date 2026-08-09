@@ -80,7 +80,10 @@ public class TreasureHunterService
     /// <summary>Minimum distance improvement toward the destination that counts as progress.</summary>
     private const float StuckProgressThreshold = 1.5f;
 
-    private const float StuckDetectionMinDistance = 8f;
+    /// <summary>
+    /// Walk-stuck recovery ignores distances inside interact range; outside that, a long stall can skip (#162).
+    /// </summary>
+    private const float StuckDetectionMinDistance = OpenTreasureCofferChain.MaxInteractRange;
 
     /// <summary>Reprioritize when a live remaining coffer is this close and much nearer than the current target.</summary>
     private const float NearbyLiveReprioritizeRange = 60f;
@@ -891,6 +894,37 @@ public class TreasureHunterService
         }
 
         Vector3 layoutDestination = layoutTreasure.First(t => t.Id == step.NodeId).Position;
+
+        // Finished open attempt: succeed, or skip the pad on failure (#162).
+        if (activeChain != null)
+        {
+            if (!activeChain.IsCompleted)
+            {
+                return false;
+            }
+
+            bool openOk = activeChain.IsCompletedSuccessfully
+                          && (activeChain.Result?.IsSuccess ?? false);
+            activeChain = null;
+
+            IGameObject? afterOpen = FindTreasureForLayout(layoutDestination, step.NodeId);
+            if (openOk
+                || (afterOpen != null && OpenTreasureCofferChain.IsOpenedOrLooted(afterOpen)))
+            {
+                vnav.Stop();
+                ResetStuckWatch();
+                return true;
+            }
+
+            log.Warning(
+                "Treasure hunt: could not open coffer {NodeId} — skipping and recalculating",
+                step.NodeId);
+            checkedNodeIds.Add(step.NodeId);
+            LastCheckedNodeId = step.NodeId;
+            ResetStuckWatch();
+            RecalculateRoute();
+            return false;
+        }
 
         // Presence: don't require IsTargetable (often false until inside interact range).
         IGameObject? present = FindTreasureForLayout(layoutDestination, step.NodeId);

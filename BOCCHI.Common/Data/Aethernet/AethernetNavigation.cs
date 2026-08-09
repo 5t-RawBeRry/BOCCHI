@@ -59,24 +59,23 @@ public static class AethernetNavigation
 
     private static Vector3 GetRingPosition(Vector3 crystal, Vector3 interactOrHint, float radius, Vector3? from = null)
     {
-        // Already in the idle / Lifestream band: stay on the player's side (#158) instead of
-        // walking around to the authored Destination (often "behind" the base aetheryte).
+        // Prefer the player's side of the crystal when we know where they are (#158).
         Vector3 dir;
-        if (from is { } nearPlayer
-            && nearPlayer.Distance2D(crystal) <= radius + EdgeClearance + PathfindArrivalRadius + 1f)
+        if (from is { } player)
         {
-            dir = nearPlayer - crystal;
+            dir = player - crystal;
             dir.Y = 0f;
         }
         else
         {
             dir = interactOrHint - crystal;
             dir.Y = 0f;
-            if (dir.LengthSquared() < 0.25f && from is { } player)
-            {
-                dir = player - crystal;
-                dir.Y = 0f;
-            }
+        }
+
+        if (dir.LengthSquared() < 0.25f)
+        {
+            dir = interactOrHint - crystal;
+            dir.Y = 0f;
         }
 
         if (dir.LengthSquared() < 0.25f)

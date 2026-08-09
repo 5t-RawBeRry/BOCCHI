@@ -227,7 +227,9 @@
       "pathing": "당근으로 이동",
       "using_item": "포춘 캐럿 사용",
       "waiting_for_bunny": "버니 상자 대기",
-      "opening_bunny": "버니 상자 열기"
+      "opening_bunny": "버니 상자 열기",
+      "approaching_aetheryte": "에테라이트로 이동",
+      "teleporting": "에테르네트 텔레포트"
     }
   }
 }

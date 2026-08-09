@@ -227,7 +227,9 @@
       "pathing": "ニンジンへ移動中",
       "using_item": "フォーチュンキャロット使用",
       "waiting_for_bunny": "バニーチェスト待ち",
-      "opening_bunny": "バニーチェスト開封中"
+      "opening_bunny": "バニーチェスト開封中",
+      "approaching_aetheryte": "エーテルへ移動中",
+      "teleporting": "イーサネット転送中"
     }
   }
 }
