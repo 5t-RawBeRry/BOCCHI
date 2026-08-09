@@ -10,4 +10,4 @@
 - Base camp aetheryte approach stays on your side and closes into teleport range (#158).
 - A Beast Unleashed uses the authored registration area again.
 - FATEs dismount when you enter the event (same as CEs).
-- Illegal Mode leaves a non-pot FATE when a CE opens (no longer sticks to the earlier FATE).
+- Illegal Mode switches to a CE if one opens while you are still traveling to a non-pot FATE (finishes the FATE if you are already in it).

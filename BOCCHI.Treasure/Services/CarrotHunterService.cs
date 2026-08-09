@@ -57,7 +57,6 @@ public sealed class CarrotHunterService
 
     private readonly HashSet<int> finishedAuthoredIds = [];
 
-    /// <summary>Live chewed-carrot object ids already used at the current authored pad (double spawns).</summary>
     private readonly HashSet<ulong> usedLiveCarrotIdsAtPad = [];
 
     private readonly List<CarrotData> tour = [];
@@ -773,7 +772,6 @@ public sealed class CarrotHunterService
 
         if (currentAuthored is { } authored)
         {
-            // Tight radius so we only stay for a true same-pad double spawn.
             Carrot? next = FindUnusedLiveCarrotNear(authored, CarrotHuntDistances.SamePadRecheckRadiusSq);
             if (next != null)
             {

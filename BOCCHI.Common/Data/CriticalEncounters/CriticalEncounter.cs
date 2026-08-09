@@ -93,19 +93,17 @@ public class CriticalEncounter(
         Progress = ev.Progress;
         StartTimestamp = ev.StartTimestamp;
 
-        if (AreaShape == ActivityAreaShape.Square && !float.IsNaN(fallbackPosition.X))
+        // Keep authored staging when we have it (elevated / square CEs); otherwise refresh live.
+        if (!float.IsNaN(fallbackPosition.X))
         {
             Position = fallbackPosition;
             return;
         }
 
-        if (float.IsNaN(fallbackPosition.X))
+        Vector3 live = TryReadLayoutPosition(ev);
+        if (!float.IsNaN(live.X))
         {
-            Vector3 live = TryReadLayoutPosition(ev);
-            if (!float.IsNaN(live.X))
-            {
-                Position = live;
-            }
+            Position = live;
         }
     }
 

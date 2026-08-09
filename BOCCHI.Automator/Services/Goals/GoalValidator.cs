@@ -16,6 +16,7 @@ public class GoalValidator
     ICriticalEncounterRepository criticalEncounterRepository,
     ICriticalEncounterContext criticalEncounterContext,
     IFateRepository fateRepository,
+    IFateContext fateContext,
     IZoneProvider zones,
     AutomatorConfig automatorConfig,
     FatesConfig fatesConfig,
@@ -130,19 +131,19 @@ public class GoalValidator
             return false;
         }
 
-        // Live pot FATE — stay until it despawns. Chest farm starts then (not between waves / on min-remaining).
-        // Pots also keep priority over CEs once committed (prefer-pot / pot-chest farming).
+        // Live pot — stay until despawn (chest farm starts then). Keep pot goals over CEs.
         if (isPot)
         {
             return true;
         }
 
-        // Choosing prefers CEs, but GoalMemory used to stick on an earlier FATE. Drop non-pot
-        // FATE goals when a Register/Warmup CE becomes startable so we can switch.
-        if (!potsOnly && startableCriticalEncounters.FindStartable() is { } ce)
+        // Yield to a CE only while still traveling; finish the FATE once registered in it.
+        if (!potsOnly
+            && fateContext.GetFateId() != id
+            && startableCriticalEncounters.FindStartable() is { } ce)
         {
             logger.Info(
-                "Invalidating FATE {FateId} — startable CE {CeId} ({CeName})",
+                "Invalidating FATE {FateId} (still pathing) — startable CE {CeId} ({CeName})",
                 id.Value,
                 ce.Id.Value,
                 ce.Name);

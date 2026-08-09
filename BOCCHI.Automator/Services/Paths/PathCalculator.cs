@@ -137,29 +137,13 @@ public class PathCalculator
         }
 
         List<PathStep> steps = await traverser.FindPath(player.Position, pathGoal);
-        int aetheryteRewrites = 0;
         List<PathStep> resolvedSteps = steps
-            .Select(step =>
-            {
-                PathStep resolved = AethernetNavigation.ResolveAetherytePathStep(step, zone, player.Position);
-                if (!ReferenceEquals(resolved, step)
-                    && step.PathStepData is Pathfind(var before, _)
-                    && resolved.PathStepData is Pathfind(var after, _))
-                {
-                    aetheryteRewrites++;
-                    logger.Debug(
-                        "Aetheryte approach rewrite {Before:F0} → stand-off {After:F0}",
-                        before,
-                        after);
-                }
-
-                return resolved;
-            })
+            .Select(step => AethernetNavigation.ResolveAetherytePathStep(step, zone, player.Position))
             .ToList();
 
         if (potPrepositionStandOff is { } standOff)
         {
-            // Replace approach offsets with the random stand-off so bots don't stack on pot center.
+            // Random stand-off so bots don't stack on pot center.
             resolvedSteps = resolvedSteps
                 .Select(step => step.PathStepData is Pathfind ? PathStep.Pathfind(standOff) : step)
                 .ToList();
@@ -175,11 +159,10 @@ public class PathCalculator
         }
 
         logger.Info(
-            "Path planned: {Count} step(s) toward {Pos:F0} ({Dist:F0}y){AetheryteNote}",
+            "Path planned: {Count} step(s) toward {Pos:F0} ({Dist:F0}y)",
             resolvedSteps.Count,
             arrivalCheck,
-            distanceToGoal,
-            aetheryteRewrites > 0 ? $"; {aetheryteRewrites} aetheryte stand-off rewrite(s)" : string.Empty);
+            distanceToGoal);
 
         return new(resolvedSteps);
     }

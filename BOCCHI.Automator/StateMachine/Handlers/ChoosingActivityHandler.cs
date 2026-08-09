@@ -275,5 +275,4 @@ public class ChoosingActivityHandler
         !PotsOnly
         && automatorContext.IsCompletionist
         && !fieldNotes.ShouldPursueFate(fateId);
-
 }

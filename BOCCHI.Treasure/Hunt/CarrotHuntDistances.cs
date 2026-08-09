@@ -8,7 +8,7 @@ public static class CarrotHuntDistances
 
     public const float MatchRadiusSq = MatchRadius * MatchRadius;
 
-    /// <summary>After opening a bunny, look for another chewed carrot this close before leaving the pad.</summary>
+    /// <summary>Same-pad double-spawn recheck after opening a bunny.</summary>
     public const float SamePadRecheckRadius = 20f;
 
     public const float SamePadRecheckRadiusSq = SamePadRecheckRadius * SamePadRecheckRadius;
