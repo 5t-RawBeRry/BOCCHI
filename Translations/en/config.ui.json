@@ -46,16 +46,16 @@
       "tooltip": "Show active FATEs and Critical Encounters in the main window."
     },
     "show_demiatma_drops": {
-      "label": "Show demiatma drops",
-      "tooltip": "Show demiatma icons on FATEs and CEs. Green border = you still need it; red = you already have 3."
+      "label": "Show demiatma drops (South Horn)",
+      "tooltip": "South Horn only. Show demiatma icons on FATEs and CEs. Green border = you still need it; red = you already have 3."
     },
     "show_note_drops": {
       "label": "Show field note drops",
-      "tooltip": "Show field note icons on FATEs and CEs that drop them."
+      "tooltip": "Show field note icons on FATEs and CEs that drop them (South Horn and North Horn)."
     },
     "show_soul_shard_drops": {
-      "label": "Show soul shard drops",
-      "tooltip": "Show phantom job soul shard icons on CEs that drop them."
+      "label": "Show soul shard drops (South Horn)",
+      "tooltip": "South Horn only. Show phantom job soul shard icons on CEs that drop them."
     },
     "show_buff_section": {
       "label": "Show Apply Buffs button",
