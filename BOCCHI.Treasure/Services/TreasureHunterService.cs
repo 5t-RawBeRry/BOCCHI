@@ -973,7 +973,7 @@ public class TreasureHunterService
         ResetStuckWatch();
         activeChain = chainManager.Manage(
             chains.Create($"TreasureHunt::Open({step.NodeId})")
-                .Then<OpenTreasureCofferChain, Vector3>(present.Position)
+                .Then<OpenTreasureCofferChain, TreasureOpenTarget>(present.Position)
         );
 
         return false;

@@ -8,6 +8,9 @@
 - Settings pages use small titled sections so related options are easier to find.
 
 ### Fixes
+- Pot chest farming opens Magic Pot coffers by object id, so overlapping bronze/silver coffers are not opened by mistake.
+- Prefer pot FATEs / Farm pot chests actually run Magic Pot FATEs (they no longer stay skipped under Allowed FATEs after reload).
+- North Horn’s A Beast Unleashed paths into the blue square instead of stopping outside (authored center; ignore far-off markers).
 - “Use BOCCHI AI” and Dependencies text clarify it only turns on the BossMod / BMR autorotation preset (targeting and movement), not a job rotation or the old ai:on command.
 - After a Magic Pot chest appears, BOCCHI opens it before Returning for Treasure Sight or camp.
 - Illegal Mode can still start an auto treasure hunt without Treasure Sight (uses the built-in coffer map).

@@ -17,7 +17,6 @@ using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
 using Ocelot.States.Score;
 using System.Numerics;
-using DalamudObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
@@ -606,7 +605,8 @@ public class FarmingPotChestsHandler
     {
         activeChain = chainManager.Manage(
             chains.Create("PotChestFarm::Open")
-                .Then<OpenTreasureCofferChain, Vector3>(position)
+                .Then<OpenTreasureCofferChain, TreasureOpenTarget>(
+                    new TreasureOpenTarget(position, PotTreasureIds.RevealCofferBaseIds))
         );
     }
 
@@ -706,16 +706,17 @@ public class FarmingPotChestsHandler
 
     private IEnumerable<IGameObject> GetValidChests()
     {
-        return objects.Where(o => o is
-        {
-            ObjectKind: DalamudObjectKind.Treasure,
-            IsDead: false
-        } && o.IsValid());
+        // Only Magic Pot reveal coffer BaseIds — layout bronze/silver can sit on the same spot.
+        return objects.Where(o =>
+            o.IsValid()
+            && !o.IsDead
+            && PotTreasureIds.RevealCofferBaseIds.Contains(o.BaseId));
     }
 
     private IGameObject? FindChestNear(Vector3 position)
     {
         return GetValidChests()
+            .OrderBy(o => Vector3.DistanceSquared(NormalizeY(o.Position), NormalizeY(position)))
             .FirstOrDefault(o => Vector3.Distance(NormalizeY(o.Position), NormalizeY(position)) <= ChestSearchRadius);
     }
 
@@ -725,20 +726,8 @@ public class FarmingPotChestsHandler
         float bestDist = float.MaxValue;
         Vector3 from = NormalizeY(origin);
 
-        foreach (IGameObject obj in objects)
+        foreach (IGameObject obj in GetValidChests())
         {
-            if (!obj.IsValid() || obj.IsDead)
-            {
-                continue;
-            }
-
-            bool isRevealBase = PotTreasureIds.RevealCofferBaseIds.Contains(obj.BaseId);
-            bool isTreasure = obj.ObjectKind == DalamudObjectKind.Treasure;
-            if (!isRevealBase && !isTreasure)
-            {
-                continue;
-            }
-
             Vector3 pos = NormalizeY(obj.Position);
             float dist = Vector3.Distance(from, pos);
             if (dist > RevealSearchRadius || dist >= bestDist)

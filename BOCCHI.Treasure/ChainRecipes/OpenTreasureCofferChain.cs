@@ -19,6 +19,12 @@ using TreasureState = FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.Treas
 
 namespace BOCCHI.Treasure.ChainRecipes;
 
+/// <summary>Where to open a coffer; optional BaseId filter avoids overlapping non-pot chests.</summary>
+public readonly record struct TreasureOpenTarget(Vector3 Position, IReadOnlyList<uint>? PreferredBaseIds = null)
+{
+    public static implicit operator TreasureOpenTarget(Vector3 position) => new(position);
+}
+
 /// <summary>
 ///     Open a treasure coffer using the same interact rules as Pandora's AutoOpenChests.
 /// </summary>
@@ -29,7 +35,7 @@ public class OpenTreasureCofferChain
     IPlayer player,
     ICondition conditions,
     IVNavmeshIpc vnav
-) : ChainRecipe<Vector3>(chains)
+) : ChainRecipe<TreasureOpenTarget>(chains)
 {
     public const float PathArrivalRange = 1.0f;
 
@@ -42,7 +48,7 @@ public class OpenTreasureCofferChain
 
     public override string Name => "Open Treasure Coffer";
 
-    protected override IChain Compose(IChain chain, Vector3 targetPosition)
+    protected override IChain Compose(IChain chain, TreasureOpenTarget target)
     {
         var pathState = new PathState();
 
@@ -51,14 +57,14 @@ public class OpenTreasureCofferChain
             .UseStepMiddleware<LogStepMiddleware>()
             .UseStepMiddleware<RunOnMainThreadMiddleware>()
             .WaitUntil(
-                _ => ValueTask.FromResult(TryInteract(targetPosition, pathState)),
+                _ => ValueTask.FromResult(TryInteract(target, pathState)),
                 TimeSpan.FromSeconds(45),
                 TimeSpan.FromMilliseconds(200),
                 "OpenTreasureCofferChain::Interact"
             );
     }
 
-    private bool TryInteract(Vector3 targetPosition, PathState pathState)
+    private bool TryInteract(TreasureOpenTarget target, PathState pathState)
     {
         // Match Pandora's ChestThrottle cadence.
         if (!EzThrottler.Throttle("ChestInteract", 200))
@@ -71,7 +77,7 @@ public class OpenTreasureCofferChain
             return false;
         }
 
-        IGameObject? chest = GetChestAt(targetPosition);
+        IGameObject? chest = GetChestAt(target);
         if (chest == null)
         {
             return false;
@@ -163,14 +169,41 @@ public class OpenTreasureCofferChain
         return false;
     }
 
-    private IGameObject? GetChestAt(Vector3 position)
+    private IGameObject? GetChestAt(TreasureOpenTarget target)
     {
-        // Prefer nearest live Treasure near the snapshot (no BaseId filter — same as Pandora).
         const float SearchRadius = 6f;
-        return objects
-            .Where(o => o is { ObjectKind: DalamudObjectKind.Treasure, IsDead: false } && o.IsValid())
+        Vector3 position = target.Position;
+        IReadOnlyList<uint>? preferred = target.PreferredBaseIds;
+
+        IEnumerable<IGameObject> candidates = objects.Where(o =>
+            o.IsValid()
+            && !o.IsDead
+            && Vector3.Distance(position, o.Position) <= SearchRadius
+            && MatchesOpenFilter(o, preferred));
+
+        return candidates
             .OrderBy(o => Vector3.DistanceSquared(position, o.Position))
-            .FirstOrDefault(o => Vector3.Distance(position, o.Position) <= SearchRadius);
+            .FirstOrDefault();
+    }
+
+    private static bool MatchesOpenFilter(IGameObject obj, IReadOnlyList<uint>? preferredBaseIds)
+    {
+        if (preferredBaseIds is { Count: > 0 })
+        {
+            // Pot farm: only Magic Pot reveal coffers (overlap with bronze/silver layout coffers).
+            for (int i = 0; i < preferredBaseIds.Count; i++)
+            {
+                if (obj.BaseId == preferredBaseIds[i])
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Normal treasure hunt: any live Treasure object (Pandora-style).
+        return obj.ObjectKind == DalamudObjectKind.Treasure;
     }
 
     private sealed class PathState
