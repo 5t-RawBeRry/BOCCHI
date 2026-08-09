@@ -7,7 +7,7 @@
   "fields": {
     "disabled_fate_ids": {
       "label": "許可する FATE",
-      "tooltip": "チェックを外すとその FATE をスキップします。",
+      "tooltip": "チェックを外すとその FATE をスキップします。マジックポットFATEを優先 / 宝箱回収がオンなら、ポットはここがオフでも実行されます。",
       "empty": "このゾーンに表示する FATE がありません。"
     }
   }

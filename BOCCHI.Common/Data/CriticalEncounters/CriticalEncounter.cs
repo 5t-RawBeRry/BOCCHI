@@ -4,6 +4,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using FFXIVClientStructs.FFXIV.Client.LayoutEngine;
 using FFXIVClientStructs.Interop;
 using FFXIVClientStructs.STD;
+using Ocelot.Extensions;
 using System.Numerics;
 
 namespace BOCCHI.Common.Data.CriticalEncounters;
@@ -73,25 +74,39 @@ public class CriticalEncounter(
 
     private static Vector3 ResolvePosition(DynamicEvent ev, Vector3 fallbackPosition, ActivityAreaShape shape)
     {
-        // Square CEs: live LGB is usually the blue-zone center; authored staging can sit off-square.
+        Vector3 live = TryReadLayoutPosition(ev);
+        bool hasLive = !float.IsNaN(live.X);
+        bool hasAuthored = !float.IsNaN(fallbackPosition.X);
+
+        // Square CEs (e.g. A Beast Unleashed): live LGB can be an entrance / marker outside the
+        // blue registration box. Prefer authored; only trust live when it is near that center.
         if (shape == ActivityAreaShape.Square)
         {
-            Vector3 live = TryReadLayoutPosition(ev);
-            if (!float.IsNaN(live.X))
+            if (hasAuthored && hasLive && live.Distance2D(fallbackPosition) <= MaxSquareLiveDrift)
             {
                 return live;
             }
+
+            if (hasAuthored)
+            {
+                return fallbackPosition;
+            }
+
+            return hasLive ? live : fallbackPosition;
         }
 
         // Authored staging points win for circular CEs — live LGB markers can sit under elevated CEs
         // (e.g. Accept No Imitators on the tower: live at base, player at y=56).
-        if (!float.IsNaN(fallbackPosition.X))
+        if (hasAuthored)
         {
             return fallbackPosition;
         }
 
-        return TryReadLayoutPosition(ev);
+        return hasLive ? live : fallbackPosition;
     }
+
+    /// <summary>How far a square CE’s live LGB may sit from authored before we ignore it.</summary>
+    private const float MaxSquareLiveDrift = 30f;
 
     public void Update(DynamicEvent ev)
     {
@@ -99,7 +114,27 @@ public class CriticalEncounter(
         Progress = ev.Progress;
         StartTimestamp = ev.StartTimestamp;
 
-        if (AreaShape == ActivityAreaShape.Square || float.IsNaN(fallbackPosition.X))
+        if (AreaShape == ActivityAreaShape.Square)
+        {
+            Vector3 live = TryReadLayoutPosition(ev);
+            if (float.IsNaN(live.X))
+            {
+                return;
+            }
+
+            if (float.IsNaN(fallbackPosition.X) || live.Distance2D(fallbackPosition) <= MaxSquareLiveDrift)
+            {
+                Position = live;
+            }
+            else
+            {
+                Position = fallbackPosition;
+            }
+
+            return;
+        }
+
+        if (float.IsNaN(fallbackPosition.X))
         {
             Vector3 live = TryReadLayoutPosition(ev);
             if (!float.IsNaN(live.X))

@@ -7,7 +7,7 @@
   "fields": {
     "disabled_fate_ids": {
       "label": "Allowed FATEs",
-      "tooltip": "Uncheck a FATE to skip it.",
+      "tooltip": "Uncheck a FATE to skip it. Prefer pot FATEs / Farm pot chests still run Magic Pot FATEs even if those are unchecked here.",
       "empty": "No FATEs listed for this zone."
     }
   }

@@ -43,6 +43,7 @@ public class Automator
     IChatGui chat,
     PotsConfig potsConfig,
     AutomatorConfig automatorConfig,
+    FatesConfig fatesConfig,
     UIConfig uiConfig,
     AutoRotationController autoRotation,
     IAutomationModeGuard modeGuard,
@@ -239,6 +240,10 @@ public class Automator
         }
 
         autoRotation.Tick();
+
+        fatesConfig.EnsurePotFatesAllowedWhenPreferred(
+            automatorConfig.PreferPotFates,
+            automatorConfig.ShouldFarmPotChests);
 
         // Mid-route cancel (vnav stop / emergency) — don't replan until mode is toggled.
         if (memory.TryRemember<NavigationInterruptedMemory>(out NavigationInterruptedMemory _))

@@ -69,9 +69,23 @@ public class WaitingForCriticalEncounterHandler
             return StatePriority.Never;
         }
 
-        // Already arrived — keep Waiting even if authored center / circle vs blue zone flickers.
+        // Already arrived — keep Waiting unless we drifted outside the blue zone (wrong LGB / early stop).
         if (hasWaitLatch)
         {
+            if (objects.LocalPlayer is { } latchedPlayer)
+            {
+                float latchedRadius = NavigationConstants.CriticalEncounterRedRadius(ce.Radius);
+                if (!NavigationConstants.IsInsideCriticalEncounterWaitArea(
+                        ce.Position,
+                        latchedRadius,
+                        ce.AreaShape,
+                        latchedPlayer.Position))
+                {
+                    memory.Forget<WaitingForCriticalEncounterMemory>();
+                    return StatePriority.Never;
+                }
+            }
+
             return StatePriority.VeryHigh;
         }
 

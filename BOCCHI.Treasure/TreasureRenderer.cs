@@ -85,6 +85,16 @@ public class TreasureRenderer
             {
                 hunter.Toggle();
             }
+
+            // Idle: Start Hunt | Start Carrot Hunt on one row.
+            if (!carrotHunter.Running && carrotHunter.IsVnavAvailable && carrotHunter.IsVnavReady)
+            {
+                ImGui.SameLine();
+                if (ImGui.Button(translator.T(".treasure.start_carrot_hunt")))
+                {
+                    carrotHunter.Toggle();
+                }
+            }
         }
         else
         {
@@ -117,6 +127,24 @@ public class TreasureRenderer
 
     private void DrawCarrotHuntPanel()
     {
+        bool startsSharedWithHuntRow = !hunter.Running
+                                       && !carrotHunter.Running
+                                       && !hunter.ManagedByPotsTreasure
+                                       && !hunter.ManagedByIllegalModeFiller
+                                       && hunter.IsVnavAvailable
+                                       && hunter.IsVnavReady
+                                       && carrotHunter.IsVnavAvailable
+                                       && carrotHunter.IsVnavReady;
+
+        bool showCarrotStatus = carrotHunter.Running || carrotHunter.Elapsed > TimeSpan.Zero;
+        bool showUseCarrot = showCarrotStatus || carrotHunter.FortuneCarrotsRemaining > 0;
+
+        // Both idle: start buttons already sit on the hunt row — skip empty Carrot section.
+        if (startsSharedWithHuntRow && !showCarrotStatus && !showUseCarrot)
+        {
+            return;
+        }
+
         ImGui.Separator();
         ui.Text(translator.T(".treasure.carrot_hunt_title"));
 
@@ -134,7 +162,7 @@ public class TreasureRenderer
 
         if (!carrotHunter.Running)
         {
-            if (ImGui.Button(translator.T(".treasure.start_carrot_hunt")))
+            if (!startsSharedWithHuntRow && ImGui.Button(translator.T(".treasure.start_carrot_hunt")))
             {
                 carrotHunter.Toggle();
             }
@@ -144,7 +172,7 @@ public class TreasureRenderer
             carrotHunter.Toggle();
         }
 
-        if (carrotHunter.Running || carrotHunter.Elapsed > TimeSpan.Zero)
+        if (showCarrotStatus)
         {
             ui.LabelledValue(translator.T(".treasure.elapsed"), $"{carrotHunter.Elapsed:mm\\:ss}");
             ui.LabelledValue(
@@ -155,8 +183,7 @@ public class TreasureRenderer
                 carrotHunter.FortuneCarrotsRemaining.ToString());
         }
 
-        bool showUseCarrot = carrotHunter.Running || carrotHunter.Elapsed > TimeSpan.Zero;
-        if (showUseCarrot || carrotHunter.FortuneCarrotsRemaining > 0)
+        if (showUseCarrot)
         {
             ImGui.BeginDisabled(carrotHunter.FortuneCarrotsRemaining <= 0);
             if (ImGui.Button(translator.T(".treasure.use_fortune_carrot")))

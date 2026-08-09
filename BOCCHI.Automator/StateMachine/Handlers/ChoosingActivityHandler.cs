@@ -152,7 +152,11 @@ public class ChoosingActivityHandler
                     continue;
                 }
             }
-            else if (!fatesConfig.IsFateEnabled(fate.Id.Value))
+            else if (!fatesConfig.IsFateEnabledForIllegalMode(
+                         fate.Id.Value,
+                         isPot,
+                         automatorConfig.PreferPotFates,
+                         automatorConfig.ShouldFarmPotChests))
             {
                 continue;
             }

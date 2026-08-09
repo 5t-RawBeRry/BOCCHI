@@ -22,7 +22,11 @@ public class FateScorer
     {
         FateScore score = new();
 
-        if (!automatorConfig.ShouldDoFates || !config.IsFateEnabled(fate.Id.Value))
+        if (!automatorConfig.ShouldDoFates || !config.IsFateEnabledForIllegalMode(
+                fate.Id.Value,
+                zones.GetZone().IsPotFate(fate.Id.Value),
+                automatorConfig.PreferPotFates,
+                automatorConfig.ShouldFarmPotChests))
         {
             return score;
         }
@@ -61,7 +65,11 @@ public class FateScorer
 
         foreach (Fate fate in fates)
         {
-            if (!config.IsFateEnabled(fate.Id.Value))
+            if (!config.IsFateEnabledForIllegalMode(
+                    fate.Id.Value,
+                    zones.GetZone().IsPotFate(fate.Id.Value),
+                    automatorConfig.PreferPotFates,
+                    automatorConfig.ShouldFarmPotChests))
             {
                 continue;
             }

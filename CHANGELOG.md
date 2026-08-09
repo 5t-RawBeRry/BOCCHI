@@ -1,9 +1,8 @@
-# 4.0.2.19
-
 ### New
 - Carrot Hunt: full South and North Horn tours on the authored map (nearest next), not nearby-only waiting.
 - Carrot Hunt can use aethernet shards when that is faster than walking straight.
 - Start Carrot Hunt is always on the Treasure panel (ready to run; no enable toggle).
+- Treasure Hunt and Carrot Hunt start buttons sit on one row.
 - Treasure Hunt rebuilds your route from where you are after Treasure Sight, after each coffer, and when empty spots are skipped.
 - Treasure Hunt: if you get stuck on terrain, BOCCHI steps aside before skipping that coffer (#156).
 - Settings pages use small titled sections so related options are easier to find.

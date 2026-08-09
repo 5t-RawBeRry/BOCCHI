@@ -107,7 +107,12 @@ public class GoalValidator
                 return false;
             }
         }
-        else if (!automatorConfig.ShouldDoFates || !fatesConfig.IsFateEnabled(id.Value))
+        else if (!automatorConfig.ShouldDoFates
+                 || !fatesConfig.IsFateEnabledForIllegalMode(
+                     id.Value,
+                     isPot,
+                     automatorConfig.PreferPotFates,
+                     automatorConfig.ShouldFarmPotChests))
         {
             return false;
         }

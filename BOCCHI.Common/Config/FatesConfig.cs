@@ -9,19 +9,46 @@ namespace BOCCHI.Common.Config;
 [ConfigGroup("automation", GroupOrder = 0, Order = 2)]
 public class FatesConfig : IAutoConfig
 {
+    /// <summary>South / North Horn Magic Pot FATE ids (Persistent / Pleading / Daylight / Pot of Bother).</summary>
+    public static readonly uint[] PotFateIds = [1976, 1977, 2072, 2073];
+
     [DisabledFateIds(Order = 0, Section = "allowlist")]
     public HashSet<uint> DisabledFateIds { get; set; } =
     [
-        // South Horn
-        1965, // The Winged Terror
-        1976, // Persistent Pots
-        1977, // Pleading Pots
-        // North Horn
-        2072, // Daylight Pottery
-        2073 // In a Pot of Bother
+        // South Horn — dangerous / usually skipped by default
+        1965 // The Winged Terror
     ];
 
     public bool IsFateEnabled(uint fateId) => !DisabledFateIds.Contains(fateId);
+
+    /// <summary>
+    ///     Prefer pot FATEs / farm pot chests imply Magic Pot FATEs are allowed for Illegal Mode,
+    ///     even if they were left unchecked under Allowed FATEs.
+    /// </summary>
+    public bool IsFateEnabledForIllegalMode(uint fateId, bool isPotFate, bool preferPotFates, bool shouldFarmPotChests)
+    {
+        if (IsFateEnabled(fateId))
+        {
+            return true;
+        }
+
+        return isPotFate && (preferPotFates || shouldFarmPotChests);
+    }
+
+    /// <summary>Keep Allowed FATEs checkboxes in sync when Prefer / Farm pots is on.</summary>
+    public void EnsurePotFatesAllowedWhenPreferred(bool preferPotFates, bool shouldFarmPotChests)
+    {
+        if (!preferPotFates && !shouldFarmPotChests)
+        {
+            return;
+        }
+
+        DisabledFateIds ??= [];
+        foreach (uint id in PotFateIds)
+        {
+            DisabledFateIds.Remove(id);
+        }
+    }
 
     /// <summary>
     ///     Pot fallback cutoffs only apply when pot farming is on AND the predicted next pot FATE is enabled.
@@ -43,6 +70,10 @@ public class FatesConfig : IAutoConfig
             return false;
         }
 
-        return IsFateEnabled(predictedNextPotFateId);
+        return IsFateEnabledForIllegalMode(
+            predictedNextPotFateId,
+            isPotFate: true,
+            preferPotFates,
+            shouldFarmPotChests);
     }
 }
