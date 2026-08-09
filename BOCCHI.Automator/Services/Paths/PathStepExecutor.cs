@@ -8,6 +8,7 @@ using Dalamud.Plugin.Services;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Chain.Recipes;
+using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
 
 namespace BOCCHI.Automator.Services.Paths;
@@ -41,11 +42,15 @@ public class PathStepExecutor
 
     private IChain BuildPathfindChain(System.Numerics.Vector3 destination, float range)
     {
+        // Aetheryte stand-offs sit on a ring; floor-snap often jumps to the opposite pad.
+        bool nearAetheryte = zones.GetZone().EnumerateAetherytes()
+            .Any(a => destination.Distance2D(a.Position) <= a.GetIdleOuterRadius() + 3f);
+
         return chains.Create($"{PathStepSoftStop.Prefix}Pathfind({destination:f2}, {range:f2})")
             .Then<PathfindToChain, PathfinderConfig>(new(destination)
             {
                 DistanceThreshold = range > 0f ? range : 2f,
-                ShouldSnapToFloor = true,
+                ShouldSnapToFloor = !nearAetheryte,
                 WhileMoving = () => MountWait.TryCastIfNeeded(
                     conditions,
                     objects,

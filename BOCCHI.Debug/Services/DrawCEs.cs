@@ -20,18 +20,22 @@ public class DrawCEs(IOverlayRenderer overlay, ICriticalEncounterRepository ces,
             float padded = ce.Radius;
             float yellow = NavigationConstants.CriticalEncounterYellowRadius(padded);
             float red = NavigationConstants.CriticalEncounterRedRadius(padded);
+            // Cyan = preferred stand / path target. Red = registration edge (in-zone).
+            float stand = NavigationConstants.CriticalEncounterStandRadius(red, ce.AreaShape);
 
             if (ce.AreaShape == ActivityAreaShape.Square)
             {
                 StrokeSquare(ce.Position, padded, Color.Green);
                 StrokeSquare(ce.Position, yellow, new(1f, 1f, 0f));
                 StrokeSquare(ce.Position, red, Color.Red);
+                StrokeSquare(ce.Position, stand, new(0f, 1f, 1f));
             }
             else
             {
                 overlay.StrokeCircle(ce.Position, padded, Color.Green);
                 overlay.StrokeCircle(ce.Position, yellow, new(1f, 1f, 0f));
                 overlay.StrokeCircle(ce.Position, red, Color.Red);
+                overlay.StrokeCircle(ce.Position, stand, new(0f, 1f, 1f));
             }
         }
 

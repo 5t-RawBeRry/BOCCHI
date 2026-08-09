@@ -149,19 +149,27 @@ public class PathfindingHandler
                     }
                     else if (result.IsCanceled)
                     {
-                        PauseForManualPathing("Path step canceled — pausing navigation until Illegal Mode is toggled");
+                        // Soft-stop / CE wait handoff / combat cancel — keep the goal and replan.
+                        // Soft-pausing here left Illegal Mode idle until toggled.
+                        ReplanAfterPathCancel("Path step canceled");
                         return;
                     }
                     else
                     {
                         logger.Warning("Path step failed: {Error}", result.ErrorMessage ?? "unknown");
                         pathfinder.Stop();
-                        path.DequeuePathStep();
+
+                        // Keep Teleport — dequeuing skips the hop and leaves you stuck outside
+                        // the pad (or walking the long way). Approach retries next tick.
+                        if (path.GetNextPathStep()?.Kind != PathStepKind.Teleport)
+                        {
+                            path.DequeuePathStep();
+                        }
                     }
                 }
                 else if (currentPathTask.IsCanceled)
                 {
-                    PauseForManualPathing("Path step canceled — pausing navigation until Illegal Mode is toggled");
+                    ReplanAfterPathCancel("Path step task canceled");
                     return;
                 }
                 else
@@ -282,6 +290,17 @@ public class PathfindingHandler
     private static string TeleportOnlyMessage(string where) =>
         $"Stop after return and teleport: {where} — paused so you can walk the rest "
         + "(Illegal Mode → Stop after return and teleport; toggle Illegal Mode to resume)";
+
+    private void ReplanAfterPathCancel(string reason)
+    {
+        logger.Info("{Reason} — dropping route for replan", reason);
+        pathfinder.Stop();
+        currentPathTask = null;
+        pendingPauseReason = null;
+        memory.Forget<GoalPathStepMemory>();
+        memory.Forget<BaseTeleportDelayMemory>();
+        // GoalMemory kept — Automator.Update rebuilds GoalPathStepMemory.
+    }
 
     private void PauseForManualPathing(string reason)
     {

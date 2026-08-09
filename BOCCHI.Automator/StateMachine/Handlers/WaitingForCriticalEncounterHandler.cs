@@ -111,8 +111,10 @@ public class WaitingForCriticalEncounterHandler
     public override void Enter()
     {
         base.Enter();
-        StopNavigation();
+        // Drop the route latch before canceling chains so PathfindingHandler does not
+        // treat the cancel as a soft-pause while GoalPathStepMemory is still present.
         memory.Forget<GoalPathStepMemory>();
+        StopNavigation();
 
         if (TryGetGoalEncounter(out CriticalEncounter ce))
         {

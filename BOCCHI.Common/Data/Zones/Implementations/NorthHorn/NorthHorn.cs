@@ -116,7 +116,7 @@ public class NorthHorn
         new(2076, new(95f, 10f, 470f), 30f), // Shoreline Showdown
         new(2080, new(-90f, 67.47852f, 865.9999f), 30f), // Territorial Dispute
         new(2084, new(140f, 37f, -708f), 30f), // Thunderregnum
-        new(2077, new(330f, 0f, -250f), 30f) // Waved Away
+        new(2077, new(330f, 0f, -250f), 30f, SinkingSanctuary.Id) // Waved Away
     ];
 
     public override List<ActivityData> GetPotFateData() =>
@@ -128,12 +128,12 @@ public class NorthHorn
     public override List<ActivityData> GetCriticalEncounterData() =>
     [
         new(56, new(230f, 15f, 355f), 25f, AreaShape: ActivityAreaShape.Square), // A Beast Unleashed (map 26.1, 28.6)
-        new(63, new(500f, 56f, -310f), 20f), // Accept No Imitators
+        new(63, new(500f, 56f, -310f), 27f), // Accept No Imitators (red ≈ registration rim)
         new(62, new(-82f, 12f, 485f), 20f), // Ahead of the Competition
         new(59, new(807f, 61f, -562f), 20f), // Appalling Behavior
         new(53, new(-688f, 90f, 150f), 20f), // Cursed Resurgence
         new(57, new(224f, 52f, -860f), 20f), // Dark Artistry
-        new(50, new(-215f, 18f, -65f), 20f), // Doubled Trouble
+        new(50, new(-215f, 18f, -65f), 27f), // Doubled Trouble (map 17.2, 20.2; red = stone rim)
         new(58, new(-390f, 68f, 700f), 20f), // Familiar Tactics
         new(52, new(659f, 132f, 659f), 20f, TheCrownOfKarnak.Id), // Forbidden Folios
         new(54, new(765f, 70f, 0f), 20f), // Imbalanced Diet

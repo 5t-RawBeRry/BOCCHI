@@ -25,6 +25,6 @@ public class DirectWalkCalculator : IGraphCandidateCalculator
             AllowFlying = false
         });
 
-        return new(path.Distance, [PathStep.Pathfind(approach)]);
+        return new(path.Distance, [PathStep.Pathfind(approach, NavigationConstants.EventArrivalRadius)]);
     }
 }

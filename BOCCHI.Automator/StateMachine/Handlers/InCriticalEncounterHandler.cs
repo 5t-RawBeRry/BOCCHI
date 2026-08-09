@@ -11,7 +11,6 @@ using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
 using Ocelot.Actions;
-using Ocelot.Extensions;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
@@ -41,8 +40,7 @@ public class InCriticalEncounterHandler
             return StatePriority.VeryHigh;
         }
 
-        // Player EventId can lag or stay unset while already fighting CE enemies — still enter
-        // so BOCCHI AI CE enables (Waiting must not own the whole Battle).
+        // EventId can lag while fighting — still enter so CE combat AI enables.
         return TryGetCommittedBattleEncounter(out _) ? StatePriority.VeryHigh : StatePriority.Never;
     }
 
@@ -114,16 +112,14 @@ public class InCriticalEncounterHandler
             return false;
         }
 
-        // Already handed off into InCritical — stay committed for this CE Battle even when
-        // EventId / wait-area geometry lag (Unbridled "Return when CE started").
+        // Stay committed after enter when EventId / wait-area lag.
         if (memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _))
         {
             ce = encounter;
             return true;
         }
 
-        // Waiting already decided to hand off — take the CE even if authored wait-area
-        // geometry doesn't match the live blue zone (otherwise AI never enables).
+        // Waiting handed off — take CE even if wait-area geometry mismatches.
         if (memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory wait)
             && wait.IsFor(encounter.Id)
             && CriticalEncounterBattleHandoff.IsReady(wait, encounter.Id, context, conditions))

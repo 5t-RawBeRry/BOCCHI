@@ -40,10 +40,21 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
         Node departure = resolved.Value.Departure;
         float walkToDepartureCost = resolved.Value.WalkCost;
 
-        // Same inbound shard as current = no-op teleport; just walk.
+        // Same inbound shard = no teleport. Short hop: walk straight. Long hop: go via the shard
+        // first — never emit a fake "cheap" cross-map Pathfind (looked like it refused to TP).
         if (IsSameAetheryte(departure, inbound, inboundMeta))
         {
-            return BuildWalkOnly(start, goal, walkToDepartureCost + walkToGoalFromInbound.Cost);
+            float direct = start.Distance2D(goal.Position);
+            if (direct <= NavigationConstants.MaxDirectWalkDistance)
+            {
+                return BuildWalkOnly(start, goal, walkToDepartureCost + walkToGoalFromInbound.Cost);
+            }
+
+            return BuildViaShardWalk(
+                start,
+                goal,
+                departure,
+                walkToDepartureCost + walkToGoalFromInbound.Cost);
         }
 
         // Field → base camp via shard loses to Return; leave to ReturnTeleportWalk.
@@ -121,14 +132,35 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
         new(
             cost,
             [
-                // Destination is already offset via GetEventPosition — don't also give vnav a 20y arrival.
-                PathStep.Pathfind(NavigationApproach.ResolveActivityApproach(goal, start))
+                PathStep.Pathfind(
+                    NavigationApproach.ResolveActivityApproach(goal, start),
+                    NavigationConstants.EventArrivalRadius)
             ]);
 
-    /// <summary>
-    ///     Pathfind (mountable) to departure aetheryte, then Teleport, then Pathfind to the goal.
-    ///     Without the departure Pathfind, mid-map hops walk on foot via AetheryteApproach.
-    /// </summary>
+    /// <summary>Same shard but far: walk to the pad, then to the activity (no Lifestream hop).</summary>
+    private static TraversalCandidate BuildViaShardWalk(
+        Vector3 start,
+        Node goal,
+        Node departure,
+        float cost)
+    {
+        List<PathStep> steps = [];
+        Vector3 standOff = departure.GetCampStandOffPosition(start);
+        float ready = DefaultLifestreamReadyRadius();
+        if (start.Distance2D(departure.Position) > ready
+            && start.Distance2D(standOff) > AethernetNavigation.PathfindArrivalRadius + 0.5f)
+        {
+            steps.Add(PathStep.Pathfind(standOff, AethernetNavigation.PathfindArrivalRadius));
+        }
+
+        Vector3 fromPad = departure.GetInteractPosition();
+        steps.Add(PathStep.Pathfind(
+            NavigationApproach.ResolveActivityApproach(goal, fromPad),
+            NavigationConstants.EventArrivalRadius));
+        return new(cost, steps);
+    }
+
+    /// <summary>Pathfind to departure aetheryte, Teleport, then Pathfind to the goal.</summary>
     private static List<PathStep> BuildTeleportSteps(
         Node departure,
         uint aetheryteId,
@@ -138,8 +170,8 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
     {
         List<PathStep> steps = [];
 
-        // Skip the Pathfind step only when already inside Lifestream range; Approach closes the last yards.
-        float ready = MathF.Max(2f, AethernetData.DefaultDeadRadius) + AethernetNavigation.PathfindArrivalRadius;
+        // Skip Pathfind only when already inside Lifestream (magenta); stand-off is on that ring.
+        float ready = DefaultLifestreamReadyRadius();
         if (start.Distance2D(departure.Position) > ready)
         {
             Vector3 standOff = departure.GetCampStandOffPosition(start);
@@ -150,7 +182,12 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
         }
 
         steps.Add(PathStep.Teleport(aetheryteId));
-        steps.Add(PathStep.Pathfind(NavigationApproach.ResolveActivityApproach(goal, inbound.Position)));
+        steps.Add(PathStep.Pathfind(
+            NavigationApproach.ResolveActivityApproach(goal, inbound.Position),
+            NavigationConstants.EventArrivalRadius));
         return steps;
     }
+
+    private static float DefaultLifestreamReadyRadius() =>
+        MathF.Max(2f, AethernetData.DefaultDeadRadius) + AethernetNavigation.PathfindArrivalRadius;
 }

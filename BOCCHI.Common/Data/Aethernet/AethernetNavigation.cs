@@ -8,7 +8,7 @@ namespace BOCCHI.Common.Data.Aethernet;
 
 public static class AethernetNavigation
 {
-    /// <summary>Soft stop while closing on aetheryte rings.</summary>
+    /// <summary>Arrival radius while closing on aetheryte rings.</summary>
     public const float PathfindArrivalRadius = 0.5f;
 
     public const float EdgeClearance = AethernetData.LifestreamEdgeClearance;
@@ -35,33 +35,37 @@ public static class AethernetNavigation
     public static float GetIdleWaitRadius(this AethernetData data) =>
         data.GetBodyRadius() + (EdgeClearance * 0.5f);
 
+    /// <summary>
+    ///     Approach-side point on the magenta Lifestream ring (ready to teleport).
+    ///     Idle wandering uses <see cref="GetIdleWaitPosition"/> / cyan candidates instead.
+    /// </summary>
     public static Vector3 GetCampStandOffPosition(this AethernetData data, Vector3? from = null)
-        => GetRingPosition(data.Position, data.GetInteractPosition(), data.GetIdleOuterRadius(), from);
+        => GetRingPosition(data.Position, data.GetInteractPosition(), data.GetBodyRadius(), from);
 
     public static Vector3 GetCampStandOffPosition(this Node node, Vector3? from = null)
-        => GetRingPosition(node.Position, node.GetInteractPosition(), DefaultIdleOuterRadius, from);
+        => GetRingPosition(node.Position, node.GetInteractPosition(), DefaultBodyRadius, from);
 
     /// <summary>Prefer authored dead radius when the node maps to a zone shard.</summary>
     public static Vector3 GetCampStandOffPosition(this Node node, IZone zone, Vector3? from = null)
     {
-        float outer = DefaultIdleOuterRadius;
+        float body = DefaultBodyRadius;
         if (node.Metadata is TeleportNodeMetadata { AetheryteId: var id }
             && zone.FindAetheryte(id) is { } data)
         {
-            outer = data.GetIdleOuterRadius();
+            body = data.GetBodyRadius();
         }
 
-        return GetRingPosition(node.Position, node.GetInteractPosition(), outer, from);
+        return GetRingPosition(node.Position, node.GetInteractPosition(), body, from);
     }
 
-    private static float DefaultIdleOuterRadius =>
-        MathF.Max(2f, AethernetData.DefaultDeadRadius) + EdgeClearance;
+    private static float DefaultBodyRadius => MathF.Max(2f, AethernetData.DefaultDeadRadius);
 
     public static Vector3 GetIdleWaitPosition(this AethernetData data, Vector3? from = null)
         => GetRingPosition(data.Position, data.GetInteractPosition(), data.GetIdleWaitRadius(), from);
 
     private static Vector3 GetRingPosition(Vector3 crystal, Vector3 interactOrHint, float radius, Vector3? from = null)
     {
+        // Prefer the approach side (player). Destination is only a fallback facing.
         Vector3 dir = FlatOffset(from ?? interactOrHint, crystal);
         if (dir.LengthSquared() < 0.25f)
         {
@@ -73,11 +77,9 @@ public static class AethernetNavigation
             dir = new Vector3(1f, 0f, 0f);
         }
 
-        // Don't path through the crystal when Destination sits inside the body disk.
-        float hintDist = interactOrHint.Distance2D(crystal);
-        float standOff = hintDist > 0.5f && hintDist < radius ? hintDist : radius;
-
-        Vector3 onRing = crystal + Vector3.Normalize(dir) * standOff;
+        // Always the outer ring on that side. Shrinking to Destination distance put the
+        // target inside the crystal; floor-snap then dragged it to the far-side pad.
+        Vector3 onRing = crystal + Vector3.Normalize(dir) * MathF.Max(radius, 0.5f);
         return new Vector3(onRing.X, crystal.Y, onRing.Z);
     }
 

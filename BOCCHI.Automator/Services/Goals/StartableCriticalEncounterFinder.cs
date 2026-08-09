@@ -35,7 +35,7 @@ public class StartableCriticalEncounterFinder
             automatorConfig.PreferPotFates,
             automatorConfig.ShouldFarmPotChests);
 
-        // Register + Warmup — Warmup-only used to leave Choosing stuck with a visible CE.
+        // Include Warmup — Warmup-only used to leave Choosing stuck with a visible CE.
         foreach (CriticalEncounter ce in criticalEncounterRepository.SnapshotWithoutForkedTower())
         {
             if (!ce.IsPreparing() || !criticalEncountersConfig.IsCriticalEncounterEnabled(ce.Id.Value))

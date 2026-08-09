@@ -53,8 +53,6 @@ public class Automator
 {
     private IStateMachine<AutomatorState>? stateMachine;
 
-    private bool pausedOutsideZone;
-
     private IStateMachine<AutomatorState> StateMachine => stateMachine ??= stateMachineFactory();
 
     public bool Enabled => context.IsIllegalMode;
@@ -70,7 +68,7 @@ public class Automator
     public bool SuspendedForTreasure { get; private set; }
 
     public AutomatorState? CurrentState =>
-        IsActive && !pausedOutsideZone && !SuspendedForTreasure ? StateMachine.State : null;
+        IsActive && !SuspendedForTreasure ? StateMachine.State : null;
 
     public void OnStop() => StopAutomation();
 
@@ -177,13 +175,12 @@ public class Automator
         }
 
         memory.Forget<NavigationInterruptedMemory>();
-        pausedOutsideZone = false;
         autoRotation.PrepareForIllegalMode();
     }
 
     public void RefreshPathfinding()
     {
-        if (!IsActive || pausedOutsideZone || SuspendedForTreasure)
+        if (!IsActive || SuspendedForTreasure)
         {
             return;
         }
@@ -205,7 +202,7 @@ public class Automator
 
     public void Render()
     {
-        if (!IsActive || pausedOutsideZone || SuspendedForTreasure)
+        if (!IsActive || SuspendedForTreasure)
         {
             return;
         }
@@ -220,23 +217,11 @@ public class Automator
             return;
         }
 
-        // Zone lock: never cast Return / path outside Occult Crescent (PvP, cities, etc.).
+        // Zone lock: never keep automating outside Occult Crescent (and don't auto-resume on return).
         if (!zones.GetZone().IsOccultCrescentZone())
         {
-            if (!pausedOutsideZone)
-            {
-                logger.Info("Left Occult Crescent — pausing automator (zone lock)");
-                PauseOutsideZone();
-                pausedOutsideZone = true;
-            }
-
+            DisableDueToLeavingOccultCrescent();
             return;
-        }
-
-        if (pausedOutsideZone)
-        {
-            pausedOutsideZone = false;
-            logger.Info("Re-entered Occult Crescent — automator resumed");
         }
 
         autoRotation.Tick();
@@ -283,31 +268,36 @@ public class Automator
         StateMachine.Update();
     }
 
-    private void PauseOutsideZone() => StopAutomation(resetPausedFlag: false);
-
-    private void StopAutomation(bool resetPausedFlag = true)
+    private void DisableDueToLeavingOccultCrescent()
     {
-        if (resetPausedFlag)
+        string offMessage = context.RunMode switch
         {
-            pausedOutsideZone = false;
+            AutomatorRunMode.PotsAndTreasure => ".automation.pots_treasure.off_left_zone",
+            AutomatorRunMode.Completionist => ".completionist.mode_off_left_zone",
+            _ => ".automation.automator.illegal_mode_off_left_zone",
+        };
+
+        logger.Info("Left Occult Crescent — turning off {Mode}", context.RunMode);
+
+        if (context.IsCompletionist)
+        {
+            automatorConfig.EnableCompletionistMode = false;
         }
 
+        context.SetRunMode(AutomatorRunMode.Off);
+        BocchiChat.Print(chat, uiConfig, translator.T(offMessage));
+        ApplyRunModeSideEffects(turningOn: false);
+    }
+
+    private void StopAutomation()
+    {
         SuspendedForTreasure = false;
         memory.Wipe();
         manager.CancelAll();
         AethernetTeleport.AbortIfBusy(lifestream);
         pathfinder.Stop();
         vnav.Stop();
-        if (resetPausedFlag)
-        {
-            // Mode off / plugin stop — delete ephemeral BOCCHI AI preset.
-            autoRotation.TeardownForIllegalMode();
-        }
-        else
-        {
-            // Zone pause — deactivate only; recreate isn't needed until activity resumes.
-            autoRotation.DisableForTravel();
-        }
+        autoRotation.TeardownForIllegalMode();
 
         if (stateMachine != null)
         {

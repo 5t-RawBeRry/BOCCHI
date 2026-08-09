@@ -229,7 +229,7 @@ public sealed class CarrotHunterService
 
         itemUseIssued = false;
         BeginRouteToCurrentAuthored();
-        log.Information(
+        log.Debug(
             "Carrot hunt: next authored {Id} at {Pos:F0} via {Phase}",
             currentAuthored!.Id,
             currentAuthored.Position,
@@ -259,7 +259,7 @@ public sealed class CarrotHunterService
             // Already at the arrival aetheryte — walk the last stretch.
             if (AetheryteApproach.IsAlreadyAtAetheryte(arrival, player.Position))
             {
-                log.Information(
+                log.Debug(
                     "Carrot hunt: already at arrival aetheryte {Id} — walking to authored {AuthoredId}",
                     arrival.Id,
                     authored.Id);
@@ -269,7 +269,7 @@ public sealed class CarrotHunterService
 
             hopDeparture = departure;
             hopArrival = arrival;
-            log.Information(
+            log.Debug(
                 "Carrot hunt: aethernet hop {From} → {To} toward authored {Id}",
                 departure.Id,
                 arrival.Id,
@@ -303,7 +303,7 @@ public sealed class CarrotHunterService
         if (zone.IsWithinLifestreamRange(player.Position)
             || player.Position.Distance2D(standOff) <= AethernetNavigation.PathfindArrivalRadius + 0.35f)
         {
-            log.Information(
+            log.Debug(
                 "Carrot hunt: at departure aetheryte {Id} (dist to stand-off {Dist:F1}y) — teleporting",
                 departure.Id,
                 player.Position.Distance2D(standOff));
@@ -325,7 +325,7 @@ public sealed class CarrotHunterService
         if (hopArrival is { } arrival
             && AetheryteApproach.IsAlreadyAtAetheryte(arrival, player.Position))
         {
-            log.Information("Carrot hunt: arrived at aetheryte {Id} — resuming path to carrot", arrival.Id);
+            log.Debug("Carrot hunt: arrived at aetheryte {Id} — resuming path to carrot", arrival.Id);
             activeTeleportChain = null;
             ClearHop();
             Phase = CarrotHuntPhase.Pathing;
@@ -360,7 +360,7 @@ public sealed class CarrotHunterService
                 return;
             }
 
-            log.Information(
+            log.Debug(
                 "Carrot hunt: aethernet teleport to {Id} succeeded",
                 hopArrival?.Id ?? 0);
             ClearHop();
@@ -370,7 +370,7 @@ public sealed class CarrotHunterService
 
         vnav.Stop();
         uint placeNameId = hopArrival?.Id ?? departure.Id;
-        log.Information("Carrot hunt: starting Lifestream teleport to PlaceNameId {Id}", placeNameId);
+        log.Debug("Carrot hunt: starting Lifestream teleport to PlaceNameId {Id}", placeNameId);
         activeTeleportChain = chainManager.Manage(
             chains.Create($"CarrotHunt::Teleport({placeNameId})")
                 .Then<AethernetTeleportChain, uint>(placeNameId));
@@ -388,7 +388,7 @@ public sealed class CarrotHunterService
         MaybeBindLiveCarrot(authored);
         if (currentLiveCarrotId is { } boundId && beforeBind != boundId)
         {
-            log.Information(
+            log.Debug(
                 "Carrot hunt: bound live carrot {ObjId} for authored {Id}",
                 boundId,
                 authored.Id);
@@ -423,7 +423,7 @@ public sealed class CarrotHunterService
         if (currentLiveCarrotId != null
             && (distTarget <= CarrotHuntDistances.UseRadius || IsStuckNearTarget(distTarget)))
         {
-            log.Information(
+            log.Debug(
                 "Carrot hunt: in use range of authored {Id} ({Dist:F1}y) — using Fortune Carrot",
                 authored.Id,
                 distTarget);

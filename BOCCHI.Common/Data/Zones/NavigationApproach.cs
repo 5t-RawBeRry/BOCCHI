@@ -31,16 +31,21 @@ public static class NavigationConstants
     public const float CriticalEncounterYellowInset = 2f;
 
     /// <summary>
-    ///     Fraction of combat (red) size that counts as safely inside for wait / arrival.
-    ///     Using 1.0 (or a flat 22y floor) stopped bots on the blue-zone edge.
+    ///     Square CEs: fraction of half-extent that counts as inside (rim was still outside the blue box).
     /// </summary>
-    public const float CriticalEncounterWaitInnerRatio = 0.7f;
+    public const float CriticalEncounterSquareWaitInnerRatio = 0.7f;
 
-    /// <summary>Travel stand-off: inner fraction of combat (red) radius.</summary>
-    public const float CriticalEncounterApproachMinRatio = 0.3f;
+    /// <summary>Circle CEs: inside red = in the registration zone (stop pulling inward).</summary>
+    public const float CriticalEncounterCircleWaitInnerRatio = 1f;
 
-    /// <summary>Travel stand-off: outer fraction of combat (red) radius (must stay &lt; wait inner).</summary>
-    public const float CriticalEncounterApproachMaxRatio = 0.5f;
+    /// <summary>Circle CEs: cyan stand ring (path target while waiting), as a fraction of red.</summary>
+    public const float CriticalEncounterCircleStandRatio = 0.7f;
+
+    /// <summary>Circle travel stand-off around the cyan ring.</summary>
+    public const float CriticalEncounterApproachMinRatio = 0.6f;
+
+    /// <summary>Circle travel stand-off outer (≤ stand ratio).</summary>
+    public const float CriticalEncounterApproachMaxRatio = 0.75f;
 
     /// <summary>Square CEs: max Chebyshev stand-off from center as a fraction of half-extent.</summary>
     public const float CriticalEncounterSquareApproachMaxRatio = 0.25f;
@@ -61,6 +66,34 @@ public static class NavigationConstants
     public static float CriticalEncounterYellowRadius(float paddedRadius) =>
         MathF.Max(0f, paddedRadius - CriticalEncounterYellowInset);
 
+    /// <summary>Inside-zone size (red for circles; tighter hold for squares).</summary>
+    public static float CriticalEncounterWaitHoldRadius(float combatRadius, ActivityAreaShape shape)
+    {
+        if (combatRadius <= 0f)
+        {
+            return EventArrivalRadius;
+        }
+
+        float ratio = shape == ActivityAreaShape.Square
+            ? CriticalEncounterSquareWaitInnerRatio
+            : CriticalEncounterCircleWaitInnerRatio;
+        return combatRadius * ratio;
+    }
+
+    /// <summary>Cyan debug / preferred stand size (inside red).</summary>
+    public static float CriticalEncounterStandRadius(float combatRadius, ActivityAreaShape shape)
+    {
+        if (combatRadius <= 0f)
+        {
+            return EventArrivalRadius;
+        }
+
+        float ratio = shape == ActivityAreaShape.Square
+            ? CriticalEncounterSquareWaitInnerRatio
+            : CriticalEncounterCircleStandRatio;
+        return combatRadius * ratio;
+    }
+
     /// <summary>
     ///     True when <paramref name="point"/> is safely inside the CE registration area.
     ///     <paramref name="combatRadius"/> is authored combat size (circle radius or square half-extent).
@@ -71,12 +104,7 @@ public static class NavigationConstants
         ActivityAreaShape shape,
         Vector3 point)
     {
-        if (combatRadius <= 0f)
-        {
-            return point.Distance2D(center) <= EventArrivalRadius;
-        }
-
-        float hold = combatRadius * CriticalEncounterWaitInnerRatio;
+        float hold = CriticalEncounterWaitHoldRadius(combatRadius, shape);
 
         if (shape == ActivityAreaShape.Square)
         {

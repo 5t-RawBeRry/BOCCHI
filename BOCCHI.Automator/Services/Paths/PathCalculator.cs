@@ -1,6 +1,5 @@
 using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Config;
-using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.Paths;
@@ -91,7 +90,7 @@ public class PathCalculator
                 .FirstOrDefault(a => a.Id == ceGoalForRadius.id.Value);
             ceCombatRadius = authored?.CombatRadius ?? 0f;
             ceShape = authored?.AreaShape ?? ActivityAreaShape.Circle;
-            logger.Info(
+            logger.Debug(
                 "CE {Id} path goal at {Pos:F0} ({Shape}, combat radius {Radius:F0})",
                 ceGoalForRadius.id.Value,
                 pathGoal.Position,
@@ -110,7 +109,7 @@ public class PathCalculator
 
         if (insideCeWait)
         {
-            logger.Info("Inside CE wait area at {Pos:F0} — no travel steps", arrivalCheck);
+            logger.Debug("Inside CE wait area at {Pos:F0} — no travel steps", arrivalCheck);
             return [];
         }
 

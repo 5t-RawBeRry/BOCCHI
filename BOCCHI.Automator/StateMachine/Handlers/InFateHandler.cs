@@ -44,14 +44,12 @@ public class InFateHandler
     public override void Enter()
     {
         base.Enter();
-        // Latch until the FATE goal ends — prevents travel replan / edge stutter with BOCCHI AI.
+        // Latch until the FATE ends — avoids travel replan / edge stutter.
         memory.TryAdd(new SuspendTravelForActivityMemory());
         memory.Forget<GoalPathStepMemory>();
         pathfinder.Stop();
         autoRotation.EnableForFate();
-        logger.Info(
-            "Entered FATE {Id} — travel suspended, dismount on mount",
-            context.GetFateId()?.Value.ToString() ?? "?");
+        logger.Info("Entered FATE {Id} — travel suspended", context.GetFateId()?.Value.ToString() ?? "?");
     }
 
     public override void Handle()

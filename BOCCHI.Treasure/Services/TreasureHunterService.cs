@@ -169,17 +169,16 @@ public class TreasureHunterService
             steps.AddRange(pathPlanner.FindPath(player.Position, validNodes, preferStart).GetAwaiter().GetResult());
             pathPlanner = null;
             StepIndex = 0;
-            // Treasure Sight once per session start.
+            // Treasure Sight once per session start (not on mid-hunt replans).
             if (!sessionStartSightArmed)
             {
                 pendingStartSight = config.CastTreasureSightDuringHunt
                                     && SupportJobTreasureSight.CanCast(supportJobs);
                 sessionStartSightArmed = true;
                 log.Info(
-                    "Treasure hunt: session start Sight {Armed} ({StepCount} step(s), Every-N counter={Counter})",
+                    "Treasure hunt: session start Sight {Armed} ({StepCount} step(s))",
                     pendingStartSight ? "armed" : "skipped",
-                    steps.Count,
-                    locationsSinceLastSight);
+                    steps.Count);
             }
 
             if (steps.Count == 0)
@@ -349,9 +348,8 @@ public class TreasureHunterService
         planningRoute = true;
 
         log.Info(
-            "Treasure hunt route recalculation requested; {CheckedCount} checked nodes excluded (Sight counter kept at {SightCounter})",
-            checkedNodeIds.Count,
-            locationsSinceLastSight);
+            "Treasure hunt route recalculation requested; {CheckedCount} checked nodes excluded",
+            checkedNodeIds.Count);
         return true;
     }
 
@@ -828,7 +826,7 @@ public class TreasureHunterService
 
             checkedNodeIds.Add(nodeId);
             trimmed++;
-            log.Info("Treasure Sight: trimming empty pad {NodeId} within tether range", nodeId);
+            log.Debug("Treasure Sight: trimming empty pad {NodeId} within tether range", nodeId);
         }
 
         return trimmed;

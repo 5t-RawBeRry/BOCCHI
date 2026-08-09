@@ -70,9 +70,7 @@ public class GoalValidator
             return false;
         }
 
-        // During Battle, prefer the player's CE event id. If we had already reached the CE wait
-        // area before it started — or we are mid-fight with travel suspended — keep the goal so
-        // we do not path out when EventId is slow/missing.
+        // Battle: keep goal when EventId matches, we waited here, travel is suspended, or still pathing in.
         if (criticalEncounterContext.GetCriticalEncounterId() == id)
         {
             return true;
@@ -90,7 +88,6 @@ public class GoalValidator
             return true;
         }
 
-        // Still pathing into the CE when Battle flips — keep the goal (don't abort → FATE).
         if (memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _))
         {
             return true;

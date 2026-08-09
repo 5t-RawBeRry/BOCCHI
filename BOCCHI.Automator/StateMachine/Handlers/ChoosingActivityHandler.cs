@@ -67,14 +67,13 @@ public class ChoosingActivityHandler
             return StatePriority.Never;
         }
 
-        // Finish camp survey / pending map hunt before picking the next CE/FATE.
         if (memory.TryRemember<AutomaticTreasureSurveyMemory>(out AutomaticTreasureSurveyMemory survey)
             && survey.IsBusy)
         {
             return StatePriority.Never;
         }
 
-        // Only claim Choosing when Handle can actually start something (avoids pot-cutoff softlock).
+        // Only claim Choosing when something can actually start (avoids pot-cutoff softlock).
         bool hasCriticalEncounter = !PotsOnly && startableCriticalEncounters.FindStartable() != null;
         if (!hasCriticalEncounter
             && FindStartableFate() == null
