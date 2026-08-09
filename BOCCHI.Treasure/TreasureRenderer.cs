@@ -117,11 +117,6 @@ public class TreasureRenderer
 
     private void DrawCarrotHuntPanel()
     {
-        if (!config.EnableCarrotHunt)
-        {
-            return;
-        }
-
         ImGui.Separator();
         ui.Text(translator.T(".treasure.carrot_hunt_title"));
 

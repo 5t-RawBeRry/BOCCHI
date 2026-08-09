@@ -16,10 +16,16 @@ namespace BOCCHI.Common.UI;
 public class EventDropIconRenderer(
     IDataManager data,
     ITextureProvider textures,
-    EventDropConfig config,
+    UIConfig config,
     ITranslator<MainWindow> translator)
 {
     public const float IconBoxSize = 50f;
+
+    public static float ListRowExtra(bool showDrops) =>
+        showDrops ? IconBoxSize + 4f : 0f;
+
+    public static float ListMaxHeight(bool showDrops) =>
+        showDrops ? 240f : 120f;
 
     public bool WouldRender(EventDropInfo drops) =>
         (drops.Demiatma is not null && config.ShowDemiatmaDrops)

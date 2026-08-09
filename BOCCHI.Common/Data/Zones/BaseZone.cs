@@ -55,8 +55,7 @@ public abstract class BaseZone
             return false;
         }
 
-        const float campRadius = 80f;
-        return player.Position.Distance2D(GetAetherytePosition()) <= campRadius;
+        return player.Position.Distance2D(GetAetherytePosition()) <= NavigationConstants.CampRadius;
     }
 
     public abstract AethernetData GetMainAetheryte();
@@ -81,7 +80,7 @@ public abstract class BaseZone
 
     public virtual List<PotChestData> GetRerollPotChestData() => [];
 
-    // Authored carrot points for a future full-zone tour (nearby MVP uses live objects only).
+    // Authored chewed-carrot pads for Carrot Hunt (nearest-neighbor tour).
     public virtual List<CarrotData> GetCarrotData() => [];
 
     public virtual BuffZone? GetBuffZone() => null;
@@ -102,7 +101,7 @@ public abstract class BaseZone
         // used by some CE event objects, so require proximity to an aetheryte / shard
         // (or the authored camp buff point) rather than the main camp only.
         Vector3 playerPos = player.Position;
-        const float playerRange = 60f;
+        const float playerRange = KnowledgeCrystalData.NearbySearchRange;
         const float aetheryteRange = 100f;
         float playerRangeSq = playerRange * playerRange;
         float aetheryteRangeSq = aetheryteRange * aetheryteRange;

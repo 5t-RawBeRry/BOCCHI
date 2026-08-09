@@ -1,6 +1,16 @@
 {
   "label": "一般",
   "tooltip": "FATE、CE、マジックポット、トリアージ、マウント、BOCCHI AI、デジョン、修理。",
+  "sections": {
+    "activities": "アクティビティ",
+    "combat": "戦闘",
+    "travel": "移動",
+    "jobs": "ファントムジョブ",
+    "triage": "トリアージ",
+    "treasure": "トレジャーサイト",
+    "delays": "待機",
+    "repair": "修理"
+  },
   "fields": {
     "should_do_fates": {
       "label": "FATE をやる",

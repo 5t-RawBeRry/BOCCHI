@@ -1,6 +1,13 @@
 {
   "label": "몹 파머",
   "tooltip": "어떤 적을 잡을지, 어떻게 끌어올지 설정합니다.",
+  "sections": {
+    "targets": "대상",
+    "pulls": "끌어오기",
+    "home": "전투 후",
+    "buffs": "전투의 종",
+    "debug": "디버그"
+  },
   "fields": {
     "should_handle_targeting": {
       "label": "적 자동 타겟",

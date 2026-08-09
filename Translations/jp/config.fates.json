@@ -1,6 +1,9 @@
 {
   "label": "FATE",
   "tooltip": "不正モードがやってよい FATE です。",
+  "sections": {
+    "allowlist": "許可する FATE"
+  },
   "fields": {
     "disabled_fate_ids": {
       "label": "許可する FATE",

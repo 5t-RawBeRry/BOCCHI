@@ -1,6 +1,13 @@
 {
   "label": "Mob Farmer",
   "tooltip": "Choose which enemies to farm and how pulls work.",
+  "sections": {
+    "targets": "Targets",
+    "pulls": "Pulls",
+    "home": "After combat",
+    "buffs": "Battle Bell",
+    "debug": "Debug"
+  },
   "fields": {
     "should_handle_targeting": {
       "label": "Auto-target enemies",

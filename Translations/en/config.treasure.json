@@ -1,6 +1,12 @@
 {
   "label": "Treasure Hunter",
   "tooltip": "Coffer lines on the map and Treasure Hunt routes.",
+  "sections": {
+    "radar": "Radar",
+    "completion": "When hunt ends",
+    "hunt": "Hunt",
+    "ninja_hide": "Ninja Hide"
+  },
   "fields": {
     "draw_line_to_bronze_chests": {
       "label": "Lines to bronze coffers",
@@ -39,14 +45,6 @@
       "label": "Treasure Sight every N coffers",
       "tooltip": "After the first cast, cast Treasure Sight again every this many coffers. Raise it to dismount and swap jobs less often in busy areas."
     },
-    "hunt_teleport_cost": {
-      "label": "Prefer aethernet less / more",
-      "tooltip": "Higher = the route avoids aethernet teleports more often. Lower = teleports are used more freely."
-    },
-    "hunt_detection_range": {
-      "label": "Open range",
-      "tooltip": "How close you must be (yalms) before trying to open a coffer."
-    },
     "hunt_max_level": {
       "label": "Max coffer level",
       "tooltip": "Skip coffers above this level on the hunt route."
@@ -57,15 +55,7 @@
     },
     "enable_automatic_treasure_hunt_during_illegal_mode": {
       "label": "Auto treasure hunt in Illegal Mode",
-      "tooltip": "After a CE or FATE (and after Triage Mode, if it ran): Return to camp, use Treasure Sight if you know it, then start a treasure hunt if coffers remain."
-    },
-    "enable_coffer_observation_submission": {
-      "label": "Share coffer opens (live routes)",
-      "tooltip": "Anonymously send where you open coffers so live hunt routes can be built. When enough spots are confirmed, hunts prefer those; otherwise the built-in map is used."
-    },
-    "enable_pot_cycle_sync": {
-      "label": "Share pot timers with other BOCCHI users (anonymous)",
-      "tooltip": "When you see a Magic Pot FATE, anonymously share its spawn time so other BOCCHI users on the same instance can predict the next pot without waiting to see one themselves."
+      "tooltip": "After a CE or FATE in Illegal Mode or Completionist (and after Triage Mode, if it ran): Return to camp and use Treasure Sight when you know it. Then start a treasure hunt if coffers remain — or hunt from the built-in map if you do not have Treasure Sight yet."
     },
     "use_ninja_hide_on_dangerous_routes": {
       "label": "Ninja Hide near strong enemies",
@@ -86,14 +76,6 @@
     "knowledge_threat_exit_distance": {
       "label": "Keep Hide until farther than (yalms)",
       "tooltip": "Once Hide is on, keep it until enemies are farther than this. Use a larger value than “Start Hide” so it does not flicker on and off."
-    },
-    "enable_carrot_hunt": {
-      "label": "Enable Carrot Hunt",
-      "tooltip": "Show Carrot Hunt on the Treasure panel. Walks to nearby chewed carrots, uses a Fortune Carrot automatically, then opens the bunny gold chest. Stops other automation while it runs. You can also press Use Fortune Carrot by hand if it gets stuck."
-    },
-    "carrot_hunt_detection_range": {
-      "label": "Carrot Hunt range (yalms)",
-      "tooltip": "Only go after chewed carrots within this distance. Stay near a carrot area — it does not tour the whole zone yet."
     }
   }
 }

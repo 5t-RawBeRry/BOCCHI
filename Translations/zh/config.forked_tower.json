@@ -1,6 +1,9 @@
 {
   "label": "两歧塔",
   "tooltip": "新月岛南部两歧塔的辅助功能。新月岛北部支持将在之后加入。",
+  "sections": {
+    "helpers": "辅助"
+  },
   "fields": {
     "draw_potential_trap_positions": {
       "label": "显示可能的陷阱位置",

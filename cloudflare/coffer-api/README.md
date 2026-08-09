@@ -5,7 +5,7 @@ Payload shape matches AOCC (`POST /api/v1/observations`) so the plugin URL can p
 
 Unlike AOCC’s pot-reveal-only filter, this API accepts **any positive coffer `dataId`** in Occult Crescent territories (**1252** South Horn, **1346** North Horn).
 
-Also hosts **pot-cycle sync** (`/api/v1/pot-cycles`) so BOCCHI clients can share Magic Pot spawn anchors per instance.
+Also hosts **pot-cycle sync** (`/api/v1/pot-cycles`) so BOCCHI clients can share Magic Pot spawn anchors per instance, and **carrot location sync** (`/api/v1/carrot-locations`) for crowdsourced chewed-carrot pads used for mesh-baked Carrot Hunt paths.
 
 ## Local setup
 
@@ -19,6 +19,8 @@ npm run dev
 - `GET http://localhost:8787/health`
 - `POST http://localhost:8787/api/v1/observations`
 - `GET http://localhost:8787/api/v1/candidates?territoryId=1252` (accepted catalog for hunt routing)
+- `POST http://localhost:8787/api/v1/carrot-locations`
+- `GET http://localhost:8787/api/v1/carrot-locations?territoryId=1252` (accepted carrot pads)
 - `POST http://localhost:8787/api/v1/pot-cycles`
 - `GET http://localhost:8787/api/v1/pot-cycles?instanceKey=...`
 
@@ -49,3 +51,5 @@ npx wrangler secret put ADMIN_TOKEN
 Submissions are opt-in. Stored fields are territory, coffer data id, world coordinates, coffer type label, anonymous installation hash, plugin version, and observed time. No character or account names.
 
 Pot-cycle rows store an instance fingerprint hash, territory, datacenter id, pot fate id, spawn unix time, installation hash, plugin version, and observed time — still no character or account names.
+
+Carrot location rows store territory, world coordinates, object base id (`2010139`), anonymous installation hash, plugin version, and observed time. Candidates auto-accept after three distinct installations within ~1.5 yalms.

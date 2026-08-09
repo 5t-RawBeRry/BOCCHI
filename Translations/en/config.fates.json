@@ -1,6 +1,9 @@
 {
   "label": "FATEs",
   "tooltip": "Which FATEs Illegal Mode is allowed to do.",
+  "sections": {
+    "allowlist": "Allowed FATEs"
+  },
   "fields": {
     "disabled_fate_ids": {
       "label": "Allowed FATEs",

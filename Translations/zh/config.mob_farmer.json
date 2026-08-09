@@ -1,6 +1,13 @@
 {
   "label": "刷怪",
   "tooltip": "选择要刷的敌人，以及拉怪方式。",
+  "sections": {
+    "targets": "目标",
+    "pulls": "拉怪",
+    "home": "战斗后",
+    "buffs": "战斗之铃",
+    "debug": "调试"
+  },
   "fields": {
     "should_handle_targeting": {
       "label": "自动选取目标",

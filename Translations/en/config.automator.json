@@ -1,6 +1,16 @@
 {
   "label": "General",
   "tooltip": "FATEs, Critical Encounters, pots, mounting, BOCCHI AI, Triage Mode, Return, and repair.",
+  "sections": {
+    "activities": "Activities",
+    "combat": "Combat",
+    "travel": "Travel",
+    "jobs": "Phantom jobs",
+    "triage": "Triage",
+    "treasure": "Treasure Sight",
+    "delays": "Delays",
+    "repair": "Repair"
+  },
   "fields": {
     "should_do_fates": {
       "label": "Do FATEs",

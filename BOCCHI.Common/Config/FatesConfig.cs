@@ -9,7 +9,7 @@ namespace BOCCHI.Common.Config;
 [ConfigGroup("automation", GroupOrder = 0, Order = 2)]
 public class FatesConfig : IAutoConfig
 {
-    [DisabledFateIds(Order = 0)]
+    [DisabledFateIds(Order = 0, Section = "allowlist")]
     public HashSet<uint> DisabledFateIds { get; set; } =
     [
         // South Horn

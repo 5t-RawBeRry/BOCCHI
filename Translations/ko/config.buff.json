@@ -1,6 +1,10 @@
 {
   "label": "버프",
   "tooltip": "서포트 잡 버프를 자동으로 유지합니다.",
+  "sections": {
+    "automation": "자동화",
+    "which": "어떤 버프"
+  },
   "fields": {
     "should_automate_buffs": {
       "label": "버프 자동화",
@@ -29,10 +33,6 @@
     "reapply_threshold": {
       "label": "남은 (분) 이하에서 다시 걸기",
       "tooltip": "남은 시간이 이 분 이하가 되면 버프를 다시 겁니다."
-    },
-    "knowledge_crystal_distance": {
-      "label": "이보다 멀면 크리스탈로 걷기",
-      "tooltip": "불법 모드 자동 버프에만 해당: 지식 크리스탈에서 이 거리(얄름)보다 멀면 쓰기 전에 다가갑니다. 메인 화면의 「버프 적용」/ /bocchi buff는 걸어가지 않습니다 — 원 안에 직접 서 있어야 합니다."
     }
   }
 }

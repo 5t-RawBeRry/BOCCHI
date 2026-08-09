@@ -1,6 +1,10 @@
 {
   "label": "Buffs",
   "tooltip": "Keep phantom job buffs up automatically.",
+  "sections": {
+    "automation": "Automation",
+    "which": "Which buffs"
+  },
   "fields": {
     "should_automate_buffs": {
       "label": "Automate buffs",
@@ -29,10 +33,6 @@
     "reapply_threshold": {
       "label": "Refresh when under (minutes left)",
       "tooltip": "Recast a buff when this many minutes or fewer remain."
-    },
-    "knowledge_crystal_distance": {
-      "label": "Walk to crystal if farther than",
-      "tooltip": "For automated Illegal Mode buffs only: if you are farther than this (yalms) from a knowledge crystal, walk closer before casting. The Apply Buffs button / /bocchi buff never walks — stand in the circle yourself."
     }
   }
 }

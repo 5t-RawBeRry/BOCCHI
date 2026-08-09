@@ -1,6 +1,9 @@
 {
   "label": "紧急遭遇战",
   "tooltip": "违规模式允许执行哪些紧急遭遇战。",
+  "sections": {
+    "allowlist": "允许的紧急遭遇战"
+  },
   "fields": {
     "disabled_critical_encounter_ids": {
       "label": "允许的紧急遭遇战",

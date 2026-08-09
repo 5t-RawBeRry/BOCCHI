@@ -1,6 +1,10 @@
 {
   "label": "魔法罐计时",
   "tooltip": "何时动身前往魔法罐、何时放弃剩余时间过短的魔法罐，以及刷新宝箱。离开新月岛或更换分线会清除下一罐预测。",
+  "sections": {
+    "timing": "计时",
+    "chests": "宝箱"
+  },
   "fields": {
     "min_pot_fate_minutes_remaining": {
       "label": "剩余不足（分钟）则跳过魔法罐",

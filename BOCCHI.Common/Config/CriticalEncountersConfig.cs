@@ -8,7 +8,7 @@ namespace BOCCHI.Common.Config;
 [ConfigGroup("automation", GroupOrder = 0, Order = 3)]
 public class CriticalEncountersConfig : IAutoConfig
 {
-    [DisabledCriticalEncounterIds(Order = 0)]
+    [DisabledCriticalEncounterIds(Order = 0, Section = "allowlist")]
     public HashSet<uint> DisabledCriticalEncounterIds { get; set; } = [];
 
     public bool IsCriticalEncounterEnabled(uint criticalEncounterId) =>

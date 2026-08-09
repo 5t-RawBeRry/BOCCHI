@@ -1,6 +1,12 @@
 {
   "label": "寻宝",
   "tooltip": "地图上的宝箱连线与寻宝路线。",
+  "sections": {
+    "radar": "雷达",
+    "completion": "寻宝结束时",
+    "hunt": "寻宝",
+    "ninja_hide": "忍者隐遁"
+  },
   "fields": {
     "draw_line_to_bronze_chests": {
       "label": "连线到青铜宝箱",
@@ -39,14 +45,6 @@
       "label": "每隔 N 个宝箱使用魔寻宝",
       "tooltip": "首次使用后，每经过这么多个宝箱再使用一次魔寻宝。调高可减少在人多区域下坐骑与切换职业的次数。"
     },
-    "hunt_teleport_cost": {
-      "label": "少用／多用以太网",
-      "tooltip": "越高＝路线越少使用以太网传送。越低＝更自由地使用传送。"
-    },
-    "hunt_detection_range": {
-      "label": "开启距离",
-      "tooltip": "需要多近（米）才会尝试开启宝箱。"
-    },
     "hunt_max_level": {
       "label": "宝箱最高等级",
       "tooltip": "跳过寻宝路线上高于该等级的宝箱。"
@@ -57,15 +55,7 @@
     },
     "enable_automatic_treasure_hunt_during_illegal_mode": {
       "label": "违规模式中自动寻宝",
-      "tooltip": "紧急遭遇战或危命任务结束后（若跑过急救模式则在其后）：返回营地，若会魔寻宝则使用，若仍有宝箱则开始寻宝。"
-    },
-    "enable_coffer_observation_submission": {
-      "label": "分享开箱位置（实时路线）",
-      "tooltip": "匿名发送你开启宝箱的位置，用于生成实时寻宝路线。确认点足够后优先使用；否则使用内置地图。"
-    },
-    "enable_pot_cycle_sync": {
-      "label": "与其他 BOCCHI 用户匿名共享魔法罐计时",
-      "tooltip": "看到魔法罐危命任务时匿名分享出现时间，让同一副本里的其他 BOCCHI 用户无需亲自看到也能预测下一场魔法罐。"
+      "tooltip": "紧急遭遇战或危命任务结束后（违规模式或收集模式；若跑过急救模式则在其后）：若会魔寻宝则返回营地并使用；若仍有宝箱则开始寻宝；若尚未学会魔寻宝则按内置地图寻宝。"
     },
     "use_ninja_hide_on_dangerous_routes": {
       "label": "强敌附近使用忍者隐遁",
@@ -86,14 +76,6 @@
     "knowledge_threat_exit_distance": {
       "label": "远于该距离前保持隐遁（米）",
       "tooltip": "隐遁生效后，直到敌人远于该距离才解除。请设为大于“开始隐遁”的值，以免反复开关。"
-    },
-    "enable_carrot_hunt": {
-      "label": "启用胡萝卜狩猎",
-      "tooltip": "在寻宝面板显示胡萝卜狩猎。走到附近被啃过的胡萝卜，自动使用幸运胡萝卜，然后打开兔子金箱。运行时会停止其他自动化。卡住时也可点“使用幸运胡萝卜”。"
-    },
-    "carrot_hunt_detection_range": {
-      "label": "胡萝卜狩猎范围（米）",
-      "tooltip": "只前往该距离内被啃过的胡萝卜。面向附近聚集，不是全区巡回。"
     }
   }
 }

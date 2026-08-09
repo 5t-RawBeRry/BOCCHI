@@ -1,6 +1,9 @@
 {
   "label": "돌발",
   "tooltip": "불법 모드가 해도 되는 돌발입니다.",
+  "sections": {
+    "allowlist": "허용할 돌발"
+  },
   "fields": {
     "disabled_fate_ids": {
       "label": "허용할 돌발",

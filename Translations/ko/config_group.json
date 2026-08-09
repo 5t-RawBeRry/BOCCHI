@@ -11,9 +11,6 @@
   "ux": {
     "label": "UI"
   },
-  "trackers": {
-    "label": "추적기"
-  },
   "forked_tower": {
     "label": "포크드 타워"
   },

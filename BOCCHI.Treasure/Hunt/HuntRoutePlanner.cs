@@ -16,24 +16,26 @@ public interface IHuntRoutePlanner
     Task<List<HuntPathfinderStep>> FindPath(Vector3 start, List<uint> nodes, uint? preferStartNode = null);
 }
 
+/// <summary>
+///     Open-path TSP via nearest-neighbor (W3Schools greedy): from the player / preferred
+///     coffer, always visit the cheapest remaining node next. Re-solved on every FindPath.
+/// </summary>
 public abstract class HuntRoutePlanner
 (
     ZoneId zoneId,
     IDalamudPluginInterface plugin,
-    IPluginLog log,
-    float teleportCost = 50f
+    IPluginLog log
 ) : IHuntRoutePlanner
 {
-    private HuntNodeDataSchema data = new();
+    /// <summary>
+    ///     Extra yalm-equivalent cost for an aethernet hop when comparing walk vs teleport routes.
+    /// </summary>
+    public const float AethernetHopCost = 50f;
 
-    private List<uint>? canonicalOrder;
+    private HuntNodeDataSchema data = new();
 
     public HuntPathfinderState State { get; private set; } = HuntPathfinderState.None;
 
-    /// <summary>
-    ///     Resume the fixed zone route from the nearest remaining coffer to <paramref name="start"/>,
-    ///     wrapping so nodes earlier in the canonical tour are still visited.
-    /// </summary>
     public Task<List<HuntPathfinderStep>> FindPath(Vector3 start, List<uint> nodes, uint? preferStartNode = null)
     {
         if (State != HuntPathfinderState.FileLoaded && State != HuntPathfinderState.PathfindingDone)
@@ -43,12 +45,7 @@ public abstract class HuntRoutePlanner
 
         State = HuntPathfinderState.Pathfinding;
 
-        EnsureCanonicalOrder();
-
-        List<uint> remaining = canonicalOrder!
-            .Where(nodes.Contains)
-            .ToList();
-
+        List<uint> remaining = nodes.Distinct().ToList();
         if (remaining.Count == 0)
         {
             State = HuntPathfinderState.PathfindingDone;
@@ -60,9 +57,15 @@ public abstract class HuntRoutePlanner
             : remaining
                 .OrderBy(id => Vector3.DistanceSquared(start, GetNodePosition(id)))
                 .First();
-        int startIndex = remaining.IndexOf(startNode);
-        // Wrap: suffix then prefix — suffix-only permanently skipped earlier coffers.
-        List<uint> tour = remaining.Skip(startIndex).Concat(remaining.Take(startIndex)).ToList();
+
+        Dictionary<uint, Dictionary<uint, (float Cost, List<HuntPathfinderStep> Steps)>> graph =
+            BuildCostGraph(remaining);
+        List<uint> tour = SolveTspNearestNeighbor(startNode, remaining, graph);
+
+        log.Info(
+            "Treasure hunt nearest-neighbor route: {Count} remaining coffers (start {Start})",
+            tour.Count,
+            startNode);
 
         List<HuntPathfinderStep> steps = [HuntPathfinderStep.WalkToDestination(tour[0])];
         for (int i = 0; i < tour.Count - 1; i++)
@@ -76,13 +79,7 @@ public abstract class HuntRoutePlanner
         return Task.FromResult(steps);
     }
 
-    /// <summary>Stable seed for the canonical TSP (base camp / main aetheryte).</summary>
-    protected abstract Vector3 GetRouteSeedPosition();
-
     protected abstract Vector3 GetNodePosition(uint nodeId);
-
-    /// <summary>All layout coffer IDs that participate in the zone route.</summary>
-    protected abstract IReadOnlyList<uint> GetAllRouteNodes();
 
     protected void LoadFile(string filename)
     {
@@ -97,33 +94,7 @@ public abstract class HuntRoutePlanner
 
         string json = File.ReadAllText(file);
         data = JsonSerializer.Deserialize<HuntNodeDataSchema>(json) ?? new HuntNodeDataSchema();
-        canonicalOrder = null;
         State = HuntPathfinderState.FileLoaded;
-    }
-
-    private void EnsureCanonicalOrder()
-    {
-        if (canonicalOrder is { Count: > 0 })
-        {
-            return;
-        }
-
-        List<uint> allNodes = GetAllRouteNodes().Distinct().ToList();
-        if (allNodes.Count == 0)
-        {
-            canonicalOrder = [];
-            return;
-        }
-
-        Vector3 seed = GetRouteSeedPosition();
-        uint startNode = allNodes
-            .OrderBy(id => Vector3.DistanceSquared(seed, GetNodePosition(id)))
-            .First();
-
-        Dictionary<uint, Dictionary<uint, (float Cost, List<HuntPathfinderStep> Steps)>> graph =
-            BuildCostGraph(allNodes);
-        canonicalOrder = SolveTspNearestInsertion(startNode, allNodes, graph);
-        log.Info($"Treasure hunt canonical route: {canonicalOrder.Count} coffers (seed near base)");
     }
 
     /// <summary>Walk or aethernet only — never mid-route Return.</summary>
@@ -153,7 +124,7 @@ public abstract class HuntRoutePlanner
                     continue;
                 }
 
-                float cost = fromShard.Distance + teleportCost + to.Distance;
+                float cost = fromShard.Distance + AethernetHopCost + to.Distance;
                 if (cost < bestCost)
                 {
                     bestCost = cost;
@@ -198,15 +169,24 @@ public abstract class HuntRoutePlanner
         return graph;
     }
 
-    private static List<uint> SolveTspNearestInsertion(
+    /// <summary>
+    ///     W3Schools greedy TSP: from the current node, always append the nearest unvisited neighbor.
+    ///     Open path — does not return to the start.
+    /// </summary>
+    private static List<uint> SolveTspNearestNeighbor(
         uint start,
         List<uint> nodes,
         Dictionary<uint, Dictionary<uint, (float Cost, List<HuntPathfinderStep> Steps)>> graph
     )
     {
-        if (nodes.Count <= 1)
+        if (nodes.Count == 0)
         {
-            return nodes.Count == 0 ? [] : [start];
+            return [];
+        }
+
+        if (nodes.Count == 1)
+        {
+            return [start];
         }
 
         List<uint> route = [start];
@@ -214,48 +194,27 @@ public abstract class HuntRoutePlanner
 
         while (unvisited.Count > 0)
         {
-            float bestInsertionCost = float.MaxValue;
-            int bestIndex = -1;
-            uint bestNode = 0;
+            uint last = route[^1];
+            uint? nearest = null;
+            float minCost = float.MaxValue;
 
-            foreach (uint nodeToInsert in unvisited)
+            foreach (uint candidate in unvisited)
             {
-                for (int i = 0; i < route.Count; i++)
+                float cost = graph[last][candidate].Cost;
+                if (cost < minCost)
                 {
-                    uint from = route[i];
-                    if (i == route.Count - 1)
-                    {
-                        float costAtEnd = graph[from][nodeToInsert].Cost;
-                        if (costAtEnd < bestInsertionCost)
-                        {
-                            bestInsertionCost = costAtEnd;
-                            bestIndex = route.Count;
-                            bestNode = nodeToInsert;
-                        }
-                    }
-                    else
-                    {
-                        uint to = route[i + 1];
-                        float addedCost = graph[from][nodeToInsert].Cost
-                                          + graph[nodeToInsert][to].Cost
-                                          - graph[from][to].Cost;
-                        if (addedCost < bestInsertionCost)
-                        {
-                            bestInsertionCost = addedCost;
-                            bestIndex = i + 1;
-                            bestNode = nodeToInsert;
-                        }
-                    }
+                    minCost = cost;
+                    nearest = candidate;
                 }
             }
 
-            if (bestIndex == -1)
+            if (nearest is not uint next)
             {
                 break;
             }
 
-            route.Insert(bestIndex, bestNode);
-            unvisited.Remove(bestNode);
+            route.Add(next);
+            unvisited.Remove(next);
         }
 
         return route;

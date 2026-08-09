@@ -11,9 +11,6 @@
   "ux": {
     "label": "UI"
   },
-  "trackers": {
-    "label": "Trackers"
-  },
   "forked_tower": {
     "label": "Forked Tower"
   },

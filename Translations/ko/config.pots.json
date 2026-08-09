@@ -1,6 +1,10 @@
 {
   "label": "항아리 타이밍",
   "tooltip": "항아리로 떠날 시점, 짧은 항아리 포기, 리롤 상자. 다음 항아리 예측은 오컬트 크레센트에서 나가거나 인스턴스를 바꾸면 초기화됩니다.",
+  "sections": {
+    "timing": "타이밍",
+    "chests": "상자"
+  },
   "fields": {
     "min_pot_fate_minutes_remaining": {
       "label": "남은 (분) 미만 항아리는 건너뛰기",

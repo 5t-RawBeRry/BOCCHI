@@ -1,6 +1,10 @@
 {
   "label": "Pot timing",
   "tooltip": "When to leave for pots, when to abandon short pots, and reroll chests. The next-pot prediction clears if you leave Occult Crescent or change instance.",
+  "sections": {
+    "timing": "Timing",
+    "chests": "Chests"
+  },
   "fields": {
     "min_pot_fate_minutes_remaining": {
       "label": "Skip pots with under (minutes left)",

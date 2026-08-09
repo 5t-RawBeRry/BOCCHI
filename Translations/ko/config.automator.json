@@ -1,6 +1,16 @@
 {
   "label": "일반",
   "tooltip": "돌발, 비상 조우, 항아리, 탈것, BOCCHI AI, 트리아지 모드, 귀환, 수리.",
+  "sections": {
+    "activities": "활동",
+    "combat": "전투",
+    "travel": "이동",
+    "jobs": "서포트 잡",
+    "triage": "트리아지",
+    "treasure": "마기 보물 탐색",
+    "delays": "대기",
+    "repair": "수리"
+  },
   "fields": {
     "should_do_fates": {
       "label": "돌발 수행",

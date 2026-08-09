@@ -210,6 +210,8 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         cfg.MobFarmerConfig.Mobs ??= [];
         SanitizeAutomatorConfig(cfg.AutomatorConfig);
         SanitizeTreasureConfig(cfg.TreasureConfig);
+        SanitizeBuffConfig(cfg.BuffConfig);
+        SanitizeUIConfig(cfg.UIConfig);
     }
 
     /// <summary>
@@ -226,20 +228,18 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
 
     private static void SanitizeTreasureConfig(TreasureConfig treasure)
     {
-        if (!float.IsFinite(treasure.HuntTeleportCost))
-        {
-            treasure.HuntTeleportCost = 50f;
-        }
-
-        treasure.HuntTeleportCost = Math.Clamp(treasure.HuntTeleportCost, 10f, 500f);
-
-        if (!float.IsFinite(treasure.HuntDetectionRange) || treasure.HuntDetectionRange < 10f)
-        {
-            treasure.HuntDetectionRange = 75f;
-        }
-
-        treasure.HuntDetectionRange = Math.Clamp(treasure.HuntDetectionRange, 10f, 100f);
         treasure.TreasureSightEveryNLocations = Math.Clamp(treasure.TreasureSightEveryNLocations, 1, 50);
         treasure.HuntMaxLevel = Math.Clamp(treasure.HuntMaxLevel, 1, 50);
+    }
+
+    private static void SanitizeBuffConfig(BuffConfig buff)
+    {
+        buff.ReapplyThreshold = Math.Clamp(buff.ReapplyThreshold, 0, 25);
+    }
+
+    private static void SanitizeUIConfig(UIConfig ui)
+    {
+        ui.TrackedDuration = Math.Clamp(ui.TrackedDuration, 1, 180);
+        ui.GraphBucketSize = Math.Clamp(ui.GraphBucketSize, 1, 60);
     }
 }

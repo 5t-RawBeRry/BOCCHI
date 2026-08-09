@@ -1,6 +1,9 @@
 {
   "label": "Critical Encounters",
   "tooltip": "Which Critical Encounters Illegal Mode is allowed to do.",
+  "sections": {
+    "allowlist": "Allowed Critical Encounters"
+  },
   "fields": {
     "disabled_critical_encounter_ids": {
       "label": "Allowed Critical Encounters",

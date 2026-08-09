@@ -67,8 +67,7 @@ public class ChoosingActivityHandler
             return StatePriority.Never;
         }
 
-        // Finish camp survey before picking the next CE/FATE.
-        // (filler clears the latch if Treasure Sight is unavailable).
+        // Finish camp survey / pending map hunt before picking the next CE/FATE.
         if (memory.TryRemember<AutomaticTreasureSurveyMemory>(out AutomaticTreasureSurveyMemory survey)
             && survey.IsBusy)
         {

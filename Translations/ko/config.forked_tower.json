@@ -1,6 +1,9 @@
 {
   "label": "포크드 타워",
   "tooltip": "남쪽 뿔 포크드 타워 보조입니다. 북쪽 뿔 지원은 나중에 추가됩니다.",
+  "sections": {
+    "helpers": "보조"
+  },
   "fields": {
     "draw_potential_trap_positions": {
       "label": "함정 예상 위치 표시",

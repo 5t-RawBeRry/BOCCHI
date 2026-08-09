@@ -1,6 +1,13 @@
 {
   "label": "UI",
-  "tooltip": "언어, 메인 창에 보일 내용, 보상 아이콘입니다.",
+  "tooltip": "언어, 메인 창에 보일 내용, 보상 아이콘, 추적기 그래프입니다.",
+  "sections": {
+    "general": "일반",
+    "trackers": "추적기",
+    "events": "이벤트",
+    "panels": "메인 창",
+    "chat": "채팅"
+  },
   "fields": {
     "language": {
       "label": "언어",
@@ -26,9 +33,29 @@
       "label": "화폐 그래프 표시",
       "tooltip": "추적기 아래에 화폐 그래프를 표시합니다."
     },
+    "tracked_duration": {
+      "label": "기록 길이(분)",
+      "tooltip": "추적기가 남겨 두는 과거 데이터의 분 수입니다."
+    },
+    "graph_bucket_size": {
+      "label": "그래프 간격(초)",
+      "tooltip": "그래프의 각 막대/점이 나타내는 초 수입니다."
+    },
     "show_world_section": {
       "label": "돌발·비상 조우 목록 표시",
       "tooltip": "메인 창에 진행 중인 돌발과 비상 조우를 표시합니다."
+    },
+    "show_demiatma_drops": {
+      "label": "데미아트마 드롭 표시",
+      "tooltip": "돌발/비상 조우에 데미아트마 아이콘을 표시합니다. 초록 테두리 = 아직 필요, 빨강 = 이미 3개."
+    },
+    "show_note_drops": {
+      "label": "필드 노트 드롭 표시",
+      "tooltip": "필드 노트가 나오는 돌발/비상 조우에 아이콘을 표시합니다."
+    },
+    "show_soul_shard_drops": {
+      "label": "소울 샤드 드롭 표시",
+      "tooltip": "서포트 잡 소울 샤드가 나오는 비상 조우에 아이콘을 표시합니다."
     },
     "show_buff_section": {
       "label": "버프 적용 버튼 표시",
@@ -52,7 +79,7 @@
     },
     "show_treasure_section": {
       "label": "트레저 헌터 섹션 표시",
-      "tooltip": "메인 창에 트레저 헌터 상태와 조작을 표시합니다."
+      "tooltip": "메인 창에 트레저 헌터와 캐럿 헌트 상태·조작을 표시합니다."
     },
     "show_bocchi_chat_prefix": {
       "label": "BOCCHI 채팅 메시지 표시",

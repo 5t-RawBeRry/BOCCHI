@@ -1,6 +1,9 @@
 {
   "label": "クリティカルエンカウント",
   "tooltip": "不正モードがやってよいクリティカルエンカウントです。",
+  "sections": {
+    "allowlist": "許可するクリティカルエンカウント"
+  },
   "fields": {
     "disabled_critical_encounter_ids": {
       "label": "許可するクリティカルエンカウント",

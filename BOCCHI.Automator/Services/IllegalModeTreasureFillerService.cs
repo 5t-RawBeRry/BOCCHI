@@ -93,9 +93,15 @@ public class IllegalModeTreasureFillerService
             return;
         }
 
+        if (survey.PendingMapHunt)
+        {
+            TryStartPendingMapHunt(survey);
+            return;
+        }
+
         if (ShouldStartHunt(survey))
         {
-            EnterHuntPhase();
+            EnterHuntPhase(fromSurvey: true);
         }
     }
 
@@ -117,23 +123,29 @@ public class IllegalModeTreasureFillerService
             return;
         }
 
-        // TriageLatchService owns raise latch; wait until it finishes before Sight.
+        // TriageLatchService owns raise latch; wait until it finishes before Sight / map hunt.
         if (TriageSession.IsActive(memory))
         {
             return;
         }
 
-        LatchSurvey(survey, "activity completed");
+        LatchPostActivityHunt(survey, "activity completed");
     }
 
-    private void LatchSurvey(AutomaticTreasureSurveyMemory survey, string reason)
+    private void LatchPostActivityHunt(AutomaticTreasureSurveyMemory survey, string reason)
     {
         if (!SupportJobTreasureSight.CanCast(supportJobs))
         {
+            survey.PendingSurvey = false;
+            survey.WaitingForSurveyResult = false;
+            survey.SurveyWaitDeadlineUtc = DateTime.MinValue;
+            survey.PendingMapHunt = true;
             LogSightUnavailableOnce();
+            logger.Info("Illegal Mode: latched map treasure hunt without Treasure Sight ({Reason})", reason);
             return;
         }
 
+        survey.PendingMapHunt = false;
         survey.PendingSurvey = true;
         survey.WaitingForSurveyResult = false;
         survey.MinAcceptedRevision = tracker.SurveyRevision;
@@ -149,15 +161,15 @@ public class IllegalModeTreasureFillerService
             return;
         }
 
-        if (!survey.IsBusy)
+        if (survey.PendingSurvey || survey.WaitingForSurveyResult)
         {
-            return;
+            survey.PendingSurvey = false;
+            survey.WaitingForSurveyResult = false;
+            survey.SurveyWaitDeadlineUtc = DateTime.MinValue;
+            survey.PendingMapHunt = true;
+            LogSightUnavailableOnce();
+            logger.Info("Illegal Mode: Treasure Sight became unavailable — falling back to map hunt");
         }
-
-        survey.PendingSurvey = false;
-        survey.WaitingForSurveyResult = false;
-        survey.SurveyWaitDeadlineUtc = DateTime.MinValue;
-        LogSightUnavailableOnce();
     }
 
     private void LogSightUnavailableOnce()
@@ -169,8 +181,24 @@ public class IllegalModeTreasureFillerService
 
         loggedSightUnavailable = true;
         logger.Info(
-            "Illegal Mode: Treasure Sight unavailable (Freelancer below level {Level}) — skipping auto survey/hunt until unlocked",
+            "Illegal Mode: Treasure Sight unavailable (Freelancer below level {Level}) — using built-in coffer map",
             SupportJobTreasureSight.RequiredFreelancerLevel);
+    }
+
+    private void TryStartPendingMapHunt(AutomaticTreasureSurveyMemory survey)
+    {
+        if (!hunter.IsVnavAvailable || TriageSession.IsActive(memory))
+        {
+            return;
+        }
+
+        if (automator.CurrentState is not (AutomatorState.Idle or null))
+        {
+            return;
+        }
+
+        survey.PendingMapHunt = false;
+        EnterHuntPhase(fromSurvey: false);
     }
 
     private void TryApplySurveyResult(AutomaticTreasureSurveyMemory survey)
@@ -207,17 +235,18 @@ public class IllegalModeTreasureFillerService
             "Illegal Mode: survey found {Silver} silver, {Bronze} bronze — starting hunt",
             silver,
             bronze);
-        EnterHuntPhase();
+        EnterHuntPhase(fromSurvey: true);
     }
 
     private void OnFillerHuntEnded(AutomaticTreasureSurveyMemory survey)
     {
-        // After a route, require a fresh Sight on the next idle.
+        // After a route, wait for the next activity before surveying / hunting again.
         survey.PendingSurvey = false;
         survey.WaitingForSurveyResult = false;
+        survey.PendingMapHunt = false;
         survey.MinAcceptedRevision = tracker.SurveyRevision;
         automator.SetSuspendedForTreasure(false);
-        logger.Info("Illegal Mode: treasure hunt ended — fresh survey required next idle");
+        logger.Info("Illegal Mode: treasure hunt ended — will fill again after next activity");
     }
 
     private bool ShouldStartHunt(AutomaticTreasureSurveyMemory survey)
@@ -240,12 +269,21 @@ public class IllegalModeTreasureFillerService
         return automator.CurrentState is AutomatorState.Idle or null;
     }
 
-    private void EnterHuntPhase()
+    private void EnterHuntPhase(bool fromSurvey)
     {
         automator.SetSuspendedForTreasure(true);
 
         if (!hunter.IsVnavReady)
         {
+            if (!fromSurvey)
+            {
+                // Keep retrying the map hunt once navmesh is ready.
+                if (memory.TryRemember(out AutomaticTreasureSurveyMemory survey))
+                {
+                    survey.PendingMapHunt = true;
+                }
+            }
+
             return;
         }
 
@@ -254,10 +292,18 @@ public class IllegalModeTreasureFillerService
             hunter.ManagedByIllegalModeFiller = true;
             hunter.StartManaged();
             hadFillerHunt = true;
-            logger.Info(
-                "Illegal Mode: started automatic treasure hunt (survey {Silver} silver, {Bronze} bronze)",
-                tracker.SilverChests,
-                tracker.BronzeChests);
+            if (fromSurvey && tracker.CountInitialised)
+            {
+                logger.Info(
+                    "Illegal Mode: started automatic treasure hunt (survey {Silver} silver, {Bronze} bronze)",
+                    tracker.SilverChests,
+                    tracker.BronzeChests);
+            }
+            else
+            {
+                logger.Info("Illegal Mode: started automatic treasure hunt from built-in map (no Treasure Sight)");
+            }
+
             return;
         }
 

@@ -15,7 +15,7 @@ public interface IExperienceTracker
 
 public class ExperienceTracker
 (
-    TrackerConfig config,
+    UIConfig config,
     ISupportJobFactory supportJobs
 ) : IExperienceTracker, IOnUpdate
 {

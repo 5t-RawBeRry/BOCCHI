@@ -1,6 +1,13 @@
 {
   "label": "UI",
-  "tooltip": "言語、メインウィンドウに出すもの、報酬アイコンです。",
+  "tooltip": "言語、メインウィンドウに出すもの、報酬アイコン、トラッカーのグラフです。",
+  "sections": {
+    "general": "一般",
+    "trackers": "トラッカー",
+    "events": "イベント",
+    "panels": "メインウィンドウ",
+    "chat": "チャット"
+  },
   "fields": {
     "language": {
       "label": "言語",
@@ -26,9 +33,29 @@
       "label": "通貨グラフを表示",
       "tooltip": "トラッカーの下に通貨グラフを表示します。"
     },
+    "tracked_duration": {
+      "label": "履歴の長さ（分）",
+      "tooltip": "トラッカーが保持する過去データの分数です。"
+    },
+    "graph_bucket_size": {
+      "label": "グラフの刻み（秒）",
+      "tooltip": "グラフの各棒／点がカバーする秒数です。"
+    },
     "show_world_section": {
       "label": "FATE・CE 一覧を表示",
       "tooltip": "メインウィンドウに進行中の FATE とクリティカルエンカウントを表示します。"
+    },
+    "show_demiatma_drops": {
+      "label": "デミアートマを表示",
+      "tooltip": "FATE/CE にデミアートマアイコンを表示します。緑枠＝まだ必要、赤＝3個所持済み。"
+    },
+    "show_note_drops": {
+      "label": "探査記録を表示",
+      "tooltip": "探査記録が落ちる FATE/CE にアイコンを表示します。"
+    },
+    "show_soul_shard_drops": {
+      "label": "ソウルシャードを表示",
+      "tooltip": "サポートジョブのソウルシャードが落ちる CE にアイコンを表示します。"
     },
     "show_buff_section": {
       "label": "バフ付与ボタンを表示",
@@ -52,7 +79,7 @@
     },
     "show_treasure_section": {
       "label": "トレジャーハンターセクションを表示",
-      "tooltip": "メインウィンドウにトレジャーハンターの状態と操作を表示します。"
+      "tooltip": "メインウィンドウにトレジャーハンターとキャロットハントの状態と操作を表示します。"
     },
     "show_bocchi_chat_prefix": {
       "label": "BOCCHI チャットメッセージを表示",

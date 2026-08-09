@@ -54,11 +54,13 @@ public class TreasureHunterService
     IClientState client,
     IAutomationModeGuard modeGuard,
     IMp3SoundPlayer sounds,
-    CofferObservationCatalogService cofferCatalog,
     NinjaHideAssist ninjaHide
 ) : ITreasureHunter, IOnUpdate, IOnStop
 {
     private const float ChestSearchRadius = 25f;
+
+    /// <summary>Start open attempts once this close to the coffer (yalms).</summary>
+    private const float CofferOpenAttemptRadius = 75f;
 
     /// <summary>
     /// Wider layout↔live match when spawns drift from layout (e.g. Moldering 2048 ~40y).
@@ -66,19 +68,11 @@ public class TreasureHunterService
     /// </summary>
     private const float ChestDriftSearchRadius = 50f;
 
-    /// <summary>Match layout coffers to crowdsourced centroids (API cluster radius is 1.5).</summary>
-    private const float CrowdsourcedMatchRadius = 3.5f;
-
-    private const float CrowdsourcedMatchRadiusSq = CrowdsourcedMatchRadius * CrowdsourcedMatchRadius;
-
-    /// <summary>
-    /// Only treat a node as empty once we're essentially on top of the layout point.
-    /// A larger radius (e.g. 10y) skipped chests while still outside interact range.
-    /// </summary>
-    private const float EmptySkipRadius = 2f;
-
     /// <summary>How long to wait for WideText after casting Treasure Sight.</summary>
     private static readonly TimeSpan SightCountWait = TimeSpan.FromSeconds(8);
+
+    /// <summary>First stuck recovery: lateral nudge around blocking geometry (#156).</summary>
+    private static readonly TimeSpan StuckNudgeTimeout = TimeSpan.FromSeconds(12);
 
     /// <summary>How long to tolerate no progress toward a coffer before skipping that node.</summary>
     private static readonly TimeSpan StuckNodeTimeout = TimeSpan.FromSeconds(30);
@@ -103,7 +97,6 @@ public class TreasureHunterService
 
     private IHuntRoutePlanner? pathPlanner;
     private bool planningRoute;
-    private bool usingCrowdsourcedRoute;
     private bool pendingStartSight;
     private bool waitingForSightCounts;
     private DateTime sightCastUtc = DateTime.MinValue;
@@ -113,6 +106,8 @@ public class TreasureHunterService
     private uint? stuckWatchNodeId;
     private float stuckWatchBestDistance = float.MaxValue;
     private DateTime stuckWatchLastProgressUtc = DateTime.MinValue;
+    private DateTime stuckWatchStartedUtc = DateTime.MinValue;
+    private bool stuckNudgeIssued;
 
     /// <summary>Hysteresis: Hide required until threats leave exit distance.</summary>
     private bool ninjaHideRequired;
@@ -221,6 +216,18 @@ public class TreasureHunterService
                 LastCheckedNodeId = completed.NodeId;
                 checkedNodeIds.Add(completed.NodeId);
                 locationsSinceLastSight++;
+                walkViaStepIndex = -1;
+                walkVias.Clear();
+                walkViaIndex = 0;
+                StepDistance = 0f;
+                // Fresh nearest-neighbor from here after every open / empty skip completion.
+                RecalculateRoute();
+                if (activeChain is { IsCompleted: true })
+                {
+                    activeChain = null;
+                }
+
+                return;
             }
 
             StepIndex++;
@@ -339,7 +346,6 @@ public class TreasureHunterService
         waitingForSightCounts = false;
         sightCastUtc = DateTime.MinValue;
         locationsSinceLastSight = 0;
-        usingCrowdsourcedRoute = false;
         ninjaHideRequired = false;
         checkedNodeIds.Clear();
         ResetStuckWatch();
@@ -350,7 +356,6 @@ public class TreasureHunterService
             maxLevelOverrideForNextRun = null;
         }
 
-        cofferCatalog.EnsureFreshForHunt();
         pathPlanner = CreatePathPlanner();
         if (pathPlanner == null || pathPlanner.State != HuntPathfinderState.FileLoaded)
         {
@@ -481,7 +486,16 @@ public class TreasureHunterService
             return false;
         }
 
-        if (now - stuckWatchLastProgressUtc < StuckNodeTimeout)
+        // #156: try a lateral nudge around geometry before giving up on the node.
+        if (!stuckNudgeIssued && now - stuckWatchStartedUtc >= StuckNudgeTimeout)
+        {
+            stuckNudgeIssued = true;
+            stuckWatchLastProgressUtc = now;
+            TryIssueStuckNudge(step);
+            return true;
+        }
+
+        if (now - stuckWatchStartedUtc < StuckNodeTimeout)
         {
             return false;
         }
@@ -495,11 +509,35 @@ public class TreasureHunterService
         return RecalculateRoute();
     }
 
+    private void TryIssueStuckNudge(HuntPathfinderStep step)
+    {
+        TreasureLayoutDatum layout = layoutTreasure.FirstOrDefault(t => t.Id == step.NodeId);
+        Vector3 dest = layout.Id == step.NodeId ? layout.Position : player.Position;
+        Vector3 toDest = dest - player.Position;
+        toDest.Y = 0f;
+        if (toDest.LengthSquared() < 0.25f)
+        {
+            toDest = new Vector3(1f, 0f, 0f);
+        }
+
+        Vector3 forward = Vector3.Normalize(toDest);
+        Vector3 lateral = new(-forward.Z, 0f, forward.X);
+        Vector3 nudge = player.Position + (lateral * 8f);
+        nudge = new Vector3(nudge.X, player.Position.Y, nudge.Z);
+
+        log.Info("Treasure hunt stuck near {NodeId} — nudging sideways around geometry (#156)", step.NodeId);
+        pathfinder.Stop();
+        vnav.Stop();
+        vnav.PathfindAndMoveCloseTo(nudge, false, 1.5f);
+    }
+
     private void StartStuckWatch(uint nodeId, float distance, DateTime now)
     {
         stuckWatchNodeId = nodeId;
         stuckWatchBestDistance = distance;
         stuckWatchLastProgressUtc = now;
+        stuckWatchStartedUtc = now;
+        stuckNudgeIssued = false;
     }
 
     private void ResetStuckWatch()
@@ -507,6 +545,8 @@ public class TreasureHunterService
         stuckWatchNodeId = null;
         stuckWatchBestDistance = float.MaxValue;
         stuckWatchLastProgressUtc = DateTime.MinValue;
+        stuckWatchStartedUtc = DateTime.MinValue;
+        stuckNudgeIssued = false;
     }
 
     /// <summary>
@@ -724,9 +764,48 @@ public class TreasureHunterService
             return true;
         }
 
-        // TODO: Optimize Treasure Hunt — when Sight reports remaining coffers, trim/rebuild the
-        // route (drop known-empty nodes / prefer live) instead of only aborting on zero counts.
-        return false;
+        int trimmed = TrimNearbyEmptyNodesAfterSight();
+        log.Info(
+            "Treasure Sight refresh: {Bronze} bronze / {Silver} silver remaining; trimmed {Trimmed} nearby empty pad(s)",
+            tracker.BronzeChests,
+            tracker.SilverChests,
+            trimmed);
+        RecalculateRoute();
+        return true;
+    }
+
+    /// <summary>
+    /// After Sight, drop remaining layout nodes that are already in tether range with no live coffer
+    /// so we do not walk onto known empties before the next hop.
+    /// </summary>
+    private int TrimNearbyEmptyNodesAfterSight()
+    {
+        int trimmed = 0;
+        foreach (uint nodeId in GetValidNodesForNextPlan().ToList())
+        {
+            TreasureLayoutDatum spot = layoutTreasure.FirstOrDefault(t => t.Id == nodeId);
+            if (spot.Id != nodeId)
+            {
+                continue;
+            }
+
+            float dist = player.Position.Distance2D(spot.Position);
+            if (dist > ChestSearchRadius)
+            {
+                continue;
+            }
+
+            if (FindTreasureForLayout(spot.Position, nodeId) != null)
+            {
+                continue;
+            }
+
+            checkedNodeIds.Add(nodeId);
+            trimmed++;
+            log.Info("Treasure Sight: trimming empty pad {NodeId} within tether range", nodeId);
+        }
+
+        return trimmed;
     }
 
     private bool ShouldAbortForNoChests()
@@ -848,7 +927,7 @@ public class TreasureHunterService
             return false;
         }
 
-        if (StepDistance > config.HuntDetectionRange)
+        if (StepDistance > CofferOpenAttemptRadius)
         {
             return false;
         }
@@ -860,14 +939,20 @@ public class TreasureHunterService
             return true;
         }
 
-        // Empty / unspawned: only skip once we're on the layout point with no live coffer nearby.
+        // Empty / unspawned: once within normal tether range with no object-table match, skip + replan.
         if (present == null)
         {
-            if (StepDistance <= EmptySkipRadius && !vnav.IsRunning())
+            float distToLayout = player.Position.Distance2D(layoutDestination);
+            if (distToLayout <= ChestSearchRadius)
             {
-                vnav.Stop();
+                log.Info(
+                    "Treasure hunt: no live coffer at layout {NodeId} within tether range — skipping and recalculating",
+                    step.NodeId);
+                checkedNodeIds.Add(step.NodeId);
+                LastCheckedNodeId = step.NodeId;
                 ResetStuckWatch();
-                return true;
+                RecalculateRoute();
+                return false;
             }
 
             return false;
@@ -1203,19 +1288,6 @@ public class TreasureHunterService
     private List<uint> GetValidNodes(int maxLevel)
     {
         List<TreasureData> treasureData = zones.GetZone().GetTreasureData();
-        if (usingCrowdsourcedRoute)
-        {
-            // Layout list already matched crowdsourced centroids; level-gate via authored when known.
-            return layoutTreasure
-                .Where(t =>
-                {
-                    TreasureData? authored = treasureData.FirstOrDefault(d => d.Matches(t.Id, t.Position));
-                    return authored == null || authored.Level <= maxLevel;
-                })
-                .Select(t => t.Id)
-                .ToList();
-        }
-
         if (treasureData.Exists(d => d.Position.HasValue))
         {
             return layoutTreasure
@@ -1286,15 +1358,12 @@ public class TreasureHunterService
 
             List<TreasureData> treasureData = zones.GetZone().GetTreasureData();
             bool hasPositionData = treasureData.Exists(d => d.Position.HasValue);
-            IReadOnlyList<CrowdsourcedCofferCandidate> liveSpots = cofferCatalog.GetAcceptedForCurrentZone();
-            bool preferCrowdsourced = liveSpots.Count > 0;
-            usingCrowdsourcedRoute = false;
 
             foreach(ILayoutInstance* instance in mapPtr.Value->Values)
             {
                 Transform* transform = instance->GetTransformImpl();
                 Vector3 position = transform->Translation;
-                if (position.Y <= -10f && !hasPositionData && !preferCrowdsourced)
+                if (position.Y <= -10f && !hasPositionData)
                 {
                     continue;
                 }
@@ -1306,54 +1375,12 @@ public class TreasureHunterService
                     continue;
                 }
 
-                if (preferCrowdsourced)
-                {
-                    if (!liveSpots.Any(c => Vector3.DistanceSquared(c.Position, position) <= CrowdsourcedMatchRadiusSq))
-                    {
-                        continue;
-                    }
-                }
-                else if (hasPositionData && !treasureData.Any(d => d.Matches(treasureRowId, position)))
+                if (hasPositionData && !treasureData.Any(d => d.Matches(treasureRowId, position)))
                 {
                     continue;
                 }
 
                 layoutTreasure.Add(new(treasureRowId, position, sgbId));
-            }
-
-            if (preferCrowdsourced && layoutTreasure.Count == 0)
-            {
-                log.Info(
-                    "Crowdsourced catalog has {Count} spot(s) but none matched layout — falling back to authored map",
-                    liveSpots.Count);
-                foreach(ILayoutInstance* instance in mapPtr.Value->Values)
-                {
-                    Transform* transform = instance->GetTransformImpl();
-                    Vector3 position = transform->Translation;
-                    if (position.Y <= -10f && !hasPositionData)
-                    {
-                        continue;
-                    }
-
-                    uint treasureRowId = Unsafe.Read<uint>((byte*)instance + 0x30);
-                    uint sgbId = data.GetExcelSheet<TreasureSheet>().GetRow(treasureRowId).SGB.RowId;
-                    if (sgbId != 1596 && sgbId != 1597)
-                    {
-                        continue;
-                    }
-
-                    if (hasPositionData && !treasureData.Any(d => d.Matches(treasureRowId, position)))
-                    {
-                        continue;
-                    }
-
-                    layoutTreasure.Add(new(treasureRowId, position, sgbId));
-                }
-            }
-            else if (preferCrowdsourced)
-            {
-                usingCrowdsourcedRoute = true;
-                log.Info("Treasure hunt using {Count} crowdsourced layout match(es)", layoutTreasure.Count);
             }
         }
 
@@ -1370,9 +1397,7 @@ public class TreasureHunterService
             zone.ZoneId,
             plugin,
             layoutTreasure,
-            zone.GetMainAetheryte().GetInteractPosition(),
-            log,
-            config.HuntTeleportCost
+            log
         );
     }
 
@@ -1518,7 +1543,6 @@ public class TreasureHunterService
 
         layoutTreasure.Clear();
         pathPlanner = null;
-        usingCrowdsourcedRoute = false;
 
         if (wasStandalone || wasIllegalFiller)
         {

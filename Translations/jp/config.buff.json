@@ -1,6 +1,10 @@
 {
   "label": "バフ",
   "tooltip": "サポートジョブのバフを自動で維持します。",
+  "sections": {
+    "automation": "自動化",
+    "which": "どのバフ"
+  },
   "fields": {
     "should_automate_buffs": {
       "label": "バフを自動化",
@@ -29,10 +33,6 @@
     "reapply_threshold": {
       "label": "残り（分）以下でかけ直す",
       "tooltip": "残り時間がこの分数以下になったら、バフをかけ直します。"
-    },
-    "knowledge_crystal_distance": {
-      "label": "これより遠いとクリスタルへ歩く",
-      "tooltip": "自動化時にナレッジクリスタルからこの距離（ヤルム）より離れていると、唱える前に近づきます。メイン画面の「バフを付与」では近づきません — 円内に立っておく必要があります。"
     }
   }
 }

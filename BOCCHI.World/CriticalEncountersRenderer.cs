@@ -19,7 +19,6 @@ public class CriticalEncountersRenderer
     IZoneProvider zones,
     ForkedTowerConfig forkedTowerConfig,
     UIConfig uiConfig,
-    EventDropConfig eventDropConfig,
     EventDropIconRenderer eventDrops,
     IBrandingService branding,
     IUIService ui,
@@ -46,11 +45,9 @@ public class CriticalEncountersRenderer
         }
 
         ZoneId zoneId = zones.GetZone().ZoneId;
-        bool showDrops = zones.GetZone().IsOccultCrescentZone() && eventDropConfig.AnyEnabled;
-        float dropExtra = showDrops
-            ? EventDropIconRenderer.IconBoxSize + 4f
-            : 0f;
-        float maxHeight = dropExtra > 0f ? 240f : 120f;
+        bool showDrops = zones.GetZone().IsOccultCrescentZone() && uiConfig.AnyEventDropsEnabled;
+        float dropExtra = EventDropIconRenderer.ListRowExtra(showDrops);
+        float maxHeight = EventDropIconRenderer.ListMaxHeight(showDrops);
 
         using ImGuiSectionHelper.BoundedListScope list =
             ImGuiSectionHelper.BoundedList("##ce_list", snapshots.Count, maxHeight, dropExtra);

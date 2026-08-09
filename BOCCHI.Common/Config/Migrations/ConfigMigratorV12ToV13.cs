@@ -1,0 +1,37 @@
+using Newtonsoft.Json.Linq;
+
+namespace BOCCHI.Common.Config.Migrations;
+
+/// <summary>Move Carrot Hunt toggles out of TreasureConfig into CarrotConfig.</summary>
+public class ConfigMigratorV12ToV13 : IMigrator
+{
+    public int FromVersion => 12;
+
+    public int ToVersion => 13;
+
+    public JObject Migrate(JObject oldConfig)
+    {
+        JObject result = (JObject)oldConfig.DeepClone();
+        result["Version"] = ToVersion;
+
+        JObject carrot = result["CarrotConfig"] as JObject
+                         ?? new JObject { ["$type"] = "BOCCHI.Common.Config.CarrotConfig, BOCCHI.Common" };
+
+        if (result["TreasureConfig"] is JObject treasure)
+        {
+            if (carrot["CarrotHuntDetectionRange"] == null
+                && treasure["CarrotHuntDetectionRange"] is JToken range)
+            {
+                carrot["CarrotHuntDetectionRange"] = range.DeepClone();
+            }
+
+            // EnableCarrotHunt was removed later — Start Carrot Hunt is always on the main UI.
+            treasure.Remove("EnableCarrotHunt");
+            treasure.Remove("CarrotHuntDetectionRange");
+        }
+
+        carrot.Remove("EnableCarrotHunt");
+        result["CarrotConfig"] = carrot;
+        return result;
+    }
+}

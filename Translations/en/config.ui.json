@@ -1,6 +1,13 @@
 {
   "label": "UI",
-  "tooltip": "Language, what shows in the main window, and reward icons.",
+  "tooltip": "Language, what shows in the main window, reward icons, and tracker graphs.",
+  "sections": {
+    "general": "General",
+    "trackers": "Trackers",
+    "events": "Events",
+    "panels": "Main window",
+    "chat": "Chat"
+  },
   "fields": {
     "language": {
       "label": "Language",
@@ -26,9 +33,29 @@
       "label": "Show currency graph",
       "tooltip": "Show the currency graph under the tracker."
     },
+    "tracked_duration": {
+      "label": "History length (minutes)",
+      "tooltip": "How many minutes of past data the trackers keep."
+    },
+    "graph_bucket_size": {
+      "label": "Graph step size (seconds)",
+      "tooltip": "Each bar/point on the graph covers this many seconds."
+    },
     "show_world_section": {
       "label": "Show FATEs & CEs list",
       "tooltip": "Show active FATEs and Critical Encounters in the main window."
+    },
+    "show_demiatma_drops": {
+      "label": "Show demiatma drops",
+      "tooltip": "Show demiatma icons on FATEs and CEs. Green border = you still need it; red = you already have 3."
+    },
+    "show_note_drops": {
+      "label": "Show field note drops",
+      "tooltip": "Show field note icons on FATEs and CEs that drop them."
+    },
+    "show_soul_shard_drops": {
+      "label": "Show soul shard drops",
+      "tooltip": "Show phantom job soul shard icons on CEs that drop them."
     },
     "show_buff_section": {
       "label": "Show Apply Buffs button",
@@ -52,7 +79,7 @@
     },
     "show_treasure_section": {
       "label": "Show Treasure Hunter section",
-      "tooltip": "Show Treasure Hunter status and controls in the main window."
+      "tooltip": "Show Treasure Hunter and Carrot Hunt status and controls in the main window."
     },
     "show_bocchi_chat_prefix": {
       "label": "Show BOCCHI chat messages",

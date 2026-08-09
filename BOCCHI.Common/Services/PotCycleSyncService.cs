@@ -1,5 +1,4 @@
-﻿using BOCCHI.Common.Config;
-using BOCCHI.Common.Data.Fates;
+﻿using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Zones;
 using Dalamud.Plugin;
 using Ocelot.Lifecycle;
@@ -14,13 +13,12 @@ using System.Text.Json.Serialization;
 namespace BOCCHI.Common.Services;
 
 /// <summary>
-///     Opt-in anonymous pot-cycle sync for the BOCCHI Worker.
+///     Anonymous pot-cycle sync for the BOCCHI Worker.
 ///     Fingerprints the instance from any active FATE (Linker-style), uploads local pot anchors,
 ///     and fetches shared anchors when the local tracker has none yet.
 /// </summary>
 public sealed class PotCycleSyncService
 (
-    TreasureConfig config,
     IZoneProvider zones,
     IPotCycleTracker potCycles,
     IFateRepository fates,
@@ -73,12 +71,6 @@ public sealed class PotCycleSyncService
 
     public void Update()
     {
-        if (!config.EnablePotCycleSync)
-        {
-            ResetSession();
-            return;
-        }
-
         IZone zone = zones.GetZone();
         if (!zone.IsOccultCrescentZone())
         {
@@ -346,7 +338,7 @@ public sealed class PotCycleSyncService
             return;
         }
 
-        // Drop sync fingerprint only — keep pot timers so "next pot" survives leaving OC / toggling sync.
+        // Drop sync fingerprint only — keep pot timers so "next pot" survives leaving OC.
         fingerprintTerritory = 0;
         instanceKey = null;
         fingerprintFateId = 0;

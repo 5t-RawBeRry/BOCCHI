@@ -5,14 +5,12 @@ namespace BOCCHI.Config;
 
 public class Configuration : IConfiguration
 {
-    public const int CurrentVersion = 12;
+    public const int CurrentVersion = 19;
 
     [ConfigHidden] public int Version { get; set; } = CurrentVersion;
 
     /// <summary>Plugin assembly version last acknowledged via the What’s new popup (not config schema).</summary>
     [ConfigHidden] public string LastSeenPluginVersion { get; set; } = "";
-
-    public TrackerConfig TrackerConfig { get; set; } = new();
 
     public UIConfig UIConfig { get; set; } = new();
 
@@ -31,8 +29,6 @@ public class Configuration : IConfiguration
     public CriticalEncountersConfig CriticalEncountersConfig { get; set; } = new();
 
     public TreasureConfig TreasureConfig { get; set; } = new();
-
-    public EventDropConfig EventDropConfig { get; set; } = new();
 
     public ForkedTowerConfig ForkedTowerConfig { get; set; } = new();
 

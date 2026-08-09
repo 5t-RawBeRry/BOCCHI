@@ -1,6 +1,9 @@
 {
   "label": "危命任务",
   "tooltip": "违规模式允许执行哪些危命任务。",
+  "sections": {
+    "allowlist": "允许的危命任务"
+  },
   "fields": {
     "disabled_fate_ids": {
       "label": "允许的危命任务",

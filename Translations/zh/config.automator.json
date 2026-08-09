@@ -1,6 +1,16 @@
 {
   "label": "常规",
   "tooltip": "危命任务、紧急遭遇战、魔法罐、坐骑、BOCCHI AI、急救模式、返回和修理。",
+  "sections": {
+    "activities": "活动",
+    "combat": "战斗",
+    "travel": "赶路",
+    "jobs": "辅助职业",
+    "triage": "急救",
+    "treasure": "魔寻宝",
+    "delays": "等待",
+    "repair": "修理"
+  },
   "fields": {
     "should_do_fates": {
       "label": "执行危命任务",

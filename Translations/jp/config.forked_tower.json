@@ -1,6 +1,9 @@
 {
   "label": "フォークタワー",
   "tooltip": "南征編フォークタワー向けの補助です。北征編対応は後日です。",
+  "sections": {
+    "helpers": "補助"
+  },
   "fields": {
     "draw_potential_trap_positions": {
       "label": "トラップ候補を表示",

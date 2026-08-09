@@ -1,4 +1,3 @@
-using System.Numerics;
 using System.Text.RegularExpressions;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
@@ -25,7 +24,6 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
     private readonly TimeSpan parseWideTextCooldown = TimeSpan.FromSeconds(5);
     private readonly IPlayer player;
     private readonly IZoneProvider zones;
-    private readonly CofferObservationSubmissionService observations;
 
     private DateTime lastParseWideText = DateTime.MinValue;
     private List<TreasureCoffer> treasures = [];
@@ -35,8 +33,7 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
         IAddonLifecycle addonLifecycle,
         IDataManager data,
         IZoneProvider zones,
-        IPlayer player,
-        CofferObservationSubmissionService observations
+        IPlayer player
     )
     {
         this.objects = objects;
@@ -44,7 +41,6 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
         this.data = data;
         this.zones = zones;
         this.player = player;
-        this.observations = observations;
         addonLifecycle.RegisterListener(AddonEvent.PostDraw, "_WideText", OnWideTextPostDraw);
     }
 
@@ -92,14 +88,6 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
             {
                 continue;
             }
-
-            Vector3 position = treasure.GetPosition();
-            observations.Submit(
-                treasure.Id,
-                position.X,
-                position.Y,
-                position.Z,
-                treasure.GetCofferType().ToString());
 
             if (treasure.GetCofferType() == CofferType.Bronze)
             {

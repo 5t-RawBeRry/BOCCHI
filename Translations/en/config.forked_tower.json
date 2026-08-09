@@ -1,6 +1,9 @@
 {
   "label": "Forked Tower",
   "tooltip": "Helpers for South Horn Forked Tower. North Horn support comes later.",
+  "sections": {
+    "helpers": "Helpers"
+  },
   "fields": {
     "draw_potential_trap_positions": {
       "label": "Show possible trap spots",

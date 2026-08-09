@@ -11,30 +11,20 @@ public class TreasureHuntPathfinder : HuntRoutePlanner
 {
     private readonly List<TreasureLayoutDatum> treasure;
 
-    private readonly Vector3 routeSeed;
-
     public TreasureHuntPathfinder(
         ZoneId zoneId,
         IDalamudPluginInterface plugin,
         List<TreasureLayoutDatum> treasure,
-        Vector3 routeSeed,
-        IPluginLog log,
-        float teleportCost
-    ) : base(zoneId, plugin, log, teleportCost)
+        IPluginLog log
+    ) : base(zoneId, plugin, log)
     {
         this.treasure = treasure;
-        this.routeSeed = routeSeed;
         LoadFile("precomputed_treasure_hunt_data.json");
     }
-
-    protected override Vector3 GetRouteSeedPosition() => routeSeed;
 
     protected override Vector3 GetNodePosition(uint nodeId)
     {
         TreasureLayoutDatum match = treasure.First(t => t.Id == nodeId);
         return match.Position;
     }
-
-    protected override IReadOnlyList<uint> GetAllRouteNodes() =>
-        treasure.Select(t => t.Id).ToList();
 }

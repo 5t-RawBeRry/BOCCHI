@@ -18,7 +18,7 @@ public interface ICurrencyTracker
     float[] GetSilverHistory(TimeSpan sampleDuration);
 }
 
-public class CurrencyTracker(TrackerConfig config, IGameGui gui) : ICurrencyTracker, IOnUpdate
+public class CurrencyTracker(UIConfig config, IGameGui gui) : ICurrencyTracker, IOnUpdate
 {
     private readonly DeltaRateTracker goldTracker = new(() => TimeSpan.FromMinutes(config.TrackedDuration));
 

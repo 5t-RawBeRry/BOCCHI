@@ -1,6 +1,13 @@
 {
   "label": "モブファーム",
   "tooltip": "狩る敵と、群れの集め方を設定します。",
+  "sections": {
+    "targets": "ターゲット",
+    "pulls": "釣り",
+    "home": "戦闘後",
+    "buffs": "バトルベル",
+    "debug": "デバッグ"
+  },
   "fields": {
     "should_handle_targeting": {
       "label": "敵を自動でターゲット",

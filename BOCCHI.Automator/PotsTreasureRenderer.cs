@@ -23,7 +23,6 @@ public class PotsTreasureRenderer
     ITreasureHunter hunter,
     TreasureConfig treasureConfig,
     UIConfig uiConfig,
-    EventDropConfig eventDropConfig,
     EventDropIconRenderer eventDrops,
     IFateRepository fates,
     IActivityNavigation navigation,
@@ -156,11 +155,9 @@ public class PotsTreasureRenderer
             return;
         }
 
-        bool showDrops = eventDropConfig.AnyEnabled;
-        float dropExtra = showDrops
-            ? EventDropIconRenderer.IconBoxSize + 4f
-            : 0f;
-        float maxHeight = dropExtra > 0f ? 240f : 120f;
+        bool showDrops = uiConfig.AnyEventDropsEnabled;
+        float dropExtra = EventDropIconRenderer.ListRowExtra(showDrops);
+        float maxHeight = EventDropIconRenderer.ListMaxHeight(showDrops);
 
         using ImGuiSectionHelper.BoundedListScope list =
             ImGuiSectionHelper.BoundedList("##pots_treasure_fates", potFates.Count, maxHeight, dropExtra);

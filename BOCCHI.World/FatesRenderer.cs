@@ -18,7 +18,6 @@ public class FatesRenderer
     IActivityNavigation navigation,
     IZoneProvider zones,
     UIConfig uiConfig,
-    EventDropConfig eventDropConfig,
     EventDropIconRenderer eventDrops,
     IBrandingService branding,
     IUIService ui,
@@ -39,11 +38,9 @@ public class FatesRenderer
         }
 
         ZoneId zoneId = zones.GetZone().ZoneId;
-        bool showDrops = zones.GetZone().IsOccultCrescentZone() && eventDropConfig.AnyEnabled;
-        float dropExtra = showDrops
-            ? EventDropIconRenderer.IconBoxSize + 4f
-            : 0f;
-        float maxHeight = dropExtra > 0f ? 240f : 120f;
+        bool showDrops = zones.GetZone().IsOccultCrescentZone() && uiConfig.AnyEventDropsEnabled;
+        float dropExtra = EventDropIconRenderer.ListRowExtra(showDrops);
+        float maxHeight = EventDropIconRenderer.ListMaxHeight(showDrops);
 
         using ImGuiSectionHelper.BoundedListScope list =
             ImGuiSectionHelper.BoundedList("##fates_list", snapshots.Count, maxHeight, dropExtra);

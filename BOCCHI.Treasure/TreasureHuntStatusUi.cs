@@ -101,7 +101,7 @@ public static class TreasureHuntStatusUi
         {
             ui.LabelledValue(
                 translator.T(".treasure.distance_to_chest"),
-                $"{hunter.StepDistance:F2}/{config.HuntDetectionRange:F2}");
+                $"{hunter.StepDistance:F2}");
         }
     }
 }
