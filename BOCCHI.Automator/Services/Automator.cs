@@ -263,7 +263,9 @@ public class Automator
                     TryStartPotChestFarm(fateGoal.id);
                 }
 
-                logger.Info("Goal no longer valid — aborting pathfinding");
+                logger.Info(
+                    "Goal no longer valid ({Goal}) — aborting pathfinding",
+                    DescribeGoal(goal.Goal));
                 memory.Forget<GoalMemory>();
                 IllegalModeActivityWork.ForgetTravelLatches(memory);
                 SoftStopPathfinding();
@@ -400,4 +402,12 @@ public class Automator
         logger.Info("Starting pot chest farm for fate {FateId} with {Count} chest positions", fateId.Value, positions.Count);
         memory.TryAdd(PotChestFarmMemory.CreateBlind(fateId, positions));
     }
+
+    private static string DescribeGoal(IGoal goal) =>
+        goal.GoalType switch
+        {
+            FateGoal(var id) => $"FATE {id.Value}",
+            CriticalEncounterGoal(var id) => $"CE {id.Value}",
+            var _ => goal.Describe()
+        };
 }

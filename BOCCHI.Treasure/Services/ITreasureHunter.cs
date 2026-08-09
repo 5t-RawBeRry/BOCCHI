@@ -20,6 +20,12 @@ public interface ITreasureHunter
 
     int StepCount { get; }
 
+    /// <summary>Coffers checked (opened / skipped) this session.</summary>
+    int CheckedCofferCount { get; }
+
+    /// <summary>Walk-to-coffer steps still in the current plan.</summary>
+    int RemainingCofferCount { get; }
+
     float StepDistance { get; }
 
     TimeSpan Elapsed { get; }

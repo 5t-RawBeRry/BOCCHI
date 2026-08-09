@@ -32,7 +32,7 @@ public class CriticalEncounter(
 
     public readonly ActivityAreaShape AreaShape = areaShape;
 
-    public Vector3 Position { get; private set; } = ResolvePosition(ev, fallbackPosition, areaShape);
+    public Vector3 Position { get; private set; } = ResolvePosition(ev, fallbackPosition);
 
     public DynamicEventState State { get; private set; } = ev.State;
 
@@ -72,31 +72,13 @@ public class CriticalEncounter(
         return new(position.X, position.Y, position.Z);
     }
 
-    private static Vector3 ResolvePosition(DynamicEvent ev, Vector3 fallbackPosition, ActivityAreaShape shape)
+    private static Vector3 ResolvePosition(DynamicEvent ev, Vector3 fallbackPosition)
     {
         Vector3 live = TryReadLayoutPosition(ev);
         bool hasLive = !float.IsNaN(live.X);
         bool hasAuthored = !float.IsNaN(fallbackPosition.X);
 
-        // Square CEs (e.g. A Beast Unleashed): live LGB can be an entrance / marker outside the
-        // blue registration box. Prefer authored; only trust live when it is near that center.
-        if (shape == ActivityAreaShape.Square)
-        {
-            if (hasAuthored && hasLive && live.Distance2D(fallbackPosition) <= MaxSquareLiveDrift)
-            {
-                return live;
-            }
-
-            if (hasAuthored)
-            {
-                return fallbackPosition;
-            }
-
-            return hasLive ? live : fallbackPosition;
-        }
-
-        // Authored staging points win for circular CEs — live LGB markers can sit under elevated CEs
-        // (e.g. Accept No Imitators on the tower: live at base, player at y=56).
+        // Prefer authored — live LGB is often an entrance marker or under elevated CEs.
         if (hasAuthored)
         {
             return fallbackPosition;
@@ -105,32 +87,15 @@ public class CriticalEncounter(
         return hasLive ? live : fallbackPosition;
     }
 
-    /// <summary>How far a square CE’s live LGB may sit from authored before we ignore it.</summary>
-    private const float MaxSquareLiveDrift = 30f;
-
     public void Update(DynamicEvent ev)
     {
         State = ev.State;
         Progress = ev.Progress;
         StartTimestamp = ev.StartTimestamp;
 
-        if (AreaShape == ActivityAreaShape.Square)
+        if (AreaShape == ActivityAreaShape.Square && !float.IsNaN(fallbackPosition.X))
         {
-            Vector3 live = TryReadLayoutPosition(ev);
-            if (float.IsNaN(live.X))
-            {
-                return;
-            }
-
-            if (float.IsNaN(fallbackPosition.X) || live.Distance2D(fallbackPosition) <= MaxSquareLiveDrift)
-            {
-                Position = live;
-            }
-            else
-            {
-                Position = fallbackPosition;
-            }
-
+            Position = fallbackPosition;
             return;
         }
 

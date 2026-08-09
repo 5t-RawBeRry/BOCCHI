@@ -12,6 +12,7 @@ using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
 using Ocelot.Actions;
 using Ocelot.Extensions;
+using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
 using Ocelot.States.Score;
@@ -29,7 +30,8 @@ public class InCriticalEncounterHandler
     AutoRotationController autoRotation,
     IPlayer playerState,
     AutomatorConfig config,
-    ITargetManager targetManager
+    ITargetManager targetManager,
+    ILogger<InCriticalEncounterHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InCriticalEncounter)
 {
     public override StatePriority GetScore()
@@ -52,6 +54,15 @@ public class InCriticalEncounterHandler
         memory.Forget<GoalPathStepMemory>();
         pathfinder.Stop();
         autoRotation.EnableForCriticalEncounter();
+        ushort? ceId = context.GetCriticalEncounterId()?.Value;
+        if (ceId == null
+            && memory.TryRemember<GoalMemory>(out GoalMemory goal)
+            && goal.Goal.GoalType is CriticalEncounterGoal ceGoal)
+        {
+            ceId = ceGoal.id.Value;
+        }
+
+        logger.Info("Entered CE {Id} — travel suspended", ceId?.ToString() ?? "?");
     }
 
     public override void Handle()

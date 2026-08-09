@@ -10,7 +10,7 @@ using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
 using Ocelot.Actions;
-using Ocelot.Extensions;
+using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
 using Ocelot.States.Score;
@@ -27,11 +27,10 @@ public class InFateHandler
     AutoRotationController autoRotation,
     IPlayer playerState,
     AutomatorConfig config,
-    ITargetManager targetManager
+    ITargetManager targetManager,
+    ILogger<InFateHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InFate)
 {
-    private const float DismountDistance = 20f;
-
     public override StatePriority GetScore()
     {
         if (!memory.TryRemember<GoalMemory>(out GoalMemory goal) || goal.Goal.GoalType is not FateGoal fateGoal)
@@ -50,6 +49,9 @@ public class InFateHandler
         memory.Forget<GoalPathStepMemory>();
         pathfinder.Stop();
         autoRotation.EnableForFate();
+        logger.Info(
+            "Entered FATE {Id} — travel suspended, dismount on mount",
+            context.GetFateId()?.Value.ToString() ?? "?");
     }
 
     public override void Handle()
@@ -59,20 +61,17 @@ public class InFateHandler
             return;
         }
 
-        List<IBattleNpc> fateTargets = context.GetTargets().ToList();
-        InitialCombatApproachMemory<FateId> approach = GetApproachMemory(context.GetFateId());
-
-        // Stay mounted until within range of a FATE target (or already in combat).
         if (conditions[ConditionFlag.Mounted]
-            && (conditions[ConditionFlag.InCombat]
-                || (fateTargets.FirstOrDefault() is { } nearest
-                    && player.Position.Distance2D(nearest.Position) - nearest.HitboxRadius <= DismountDistance))
             && EzThrottler.Throttle("InFate::Unmount")
             && Actions.Unmount.CanCast())
         {
+            logger.Debug("In FATE — dismounting");
             Actions.Unmount.Cast();
             pathfinder.Stop();
         }
+
+        List<IBattleNpc> fateTargets = context.GetTargets().ToList();
+        InitialCombatApproachMemory<FateId> approach = GetApproachMemory(context.GetFateId());
 
         if (CombatActivityHandler.HandleTargets(
                 player,

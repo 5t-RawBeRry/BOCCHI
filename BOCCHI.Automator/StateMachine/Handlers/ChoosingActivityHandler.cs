@@ -1,5 +1,6 @@
 using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services;
+using BOCCHI.Automator.Services.Goals;
 using BOCCHI.Buff.Services;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.CriticalEncounters;
@@ -17,7 +18,6 @@ public class ChoosingActivityHandler
 (
     IAutomatorMemory memory,
     IAutomatorContext automatorContext,
-    ICriticalEncounterRepository criticalEncounterRepository,
     IFateRepository fateRepository,
     IGoalFactory goalFactory,
     IBuffProvider buffs,
@@ -25,11 +25,11 @@ public class ChoosingActivityHandler
     AutomatorConfig automatorConfig,
     FatesConfig fatesConfig,
     PotsConfig potsConfig,
-    CriticalEncountersConfig criticalEncountersConfig,
     IFateScorer fateScorer,
     IPotCycleTracker potCycle,
     IZoneProvider zones,
     IFieldNoteTracker fieldNotes,
+    IStartableCriticalEncounterFinder startableCriticalEncounters,
     ILogger<ChoosingActivityHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.ChoosingActivity)
 {
@@ -75,7 +75,7 @@ public class ChoosingActivityHandler
         }
 
         // Only claim Choosing when Handle can actually start something (avoids pot-cutoff softlock).
-        bool hasCriticalEncounter = !PotsOnly && FindStartableCriticalEncounter() != null;
+        bool hasCriticalEncounter = !PotsOnly && startableCriticalEncounters.FindStartable() != null;
         if (!hasCriticalEncounter
             && FindStartableFate() == null
             && !CanPrepositionToPot(out _))
@@ -90,7 +90,7 @@ public class ChoosingActivityHandler
     {
         if (!PotsOnly)
         {
-            CriticalEncounter? criticalEncounter = FindStartableCriticalEncounter();
+            CriticalEncounter? criticalEncounter = startableCriticalEncounters.FindStartable();
             if (criticalEncounter != null)
             {
                 IGoal goal = goalFactory.CriticalEncounter(criticalEncounter.Id);
@@ -276,55 +276,4 @@ public class ChoosingActivityHandler
         && automatorContext.IsCompletionist
         && !fieldNotes.ShouldPursueFate(fateId);
 
-    private bool CompletionistBlocksCriticalEncounter(uint encounterId) =>
-        !PotsOnly
-        && automatorContext.IsCompletionist
-        && !fieldNotes.ShouldPursueCriticalEncounter(encounterId);
-
-    private CriticalEncounter? FindStartableCriticalEncounter()
-    {
-        if (PotsOnly || !automatorConfig.ShouldDoCriticalEncounters)
-        {
-            return null;
-        }
-
-        DateTimeOffset now = DateTimeOffset.UtcNow;
-        PotCycleSnapshot cycle = potCycle.Snapshot;
-        bool potFarming = fatesConfig.IsPotFallbackGatingEnabled(
-            (uint)cycle.PredictedNextPotFateId,
-            automatorConfig.ShouldDoFates,
-            automatorConfig.PreferPotFates,
-            automatorConfig.ShouldFarmPotChests);
-
-        // Register + Warmup — Warmup-only used to leave Choosing stuck with a visible CE.
-        foreach (CriticalEncounter ce in criticalEncounterRepository.SnapshotWithoutForkedTower())
-        {
-            if (!ce.IsPreparing() || !criticalEncountersConfig.IsCriticalEncounterEnabled(ce.Id.Value))
-            {
-                continue;
-            }
-
-            if (CompletionistBlocksCriticalEncounter(ce.Id.Value))
-            {
-                continue;
-            }
-
-            PotFallbackStartDecision decision = PotFallbackWindow.Evaluate(
-                cycle,
-                now,
-                TimeSpan.FromMinutes(Math.Max(0, potsConfig.CeFallbackCutoffMinutes)),
-                potsConfig.PotSpawnLeadMinutes,
-                potFarming,
-                "CE");
-            if (!decision.AllowStart)
-            {
-                logger.Debug(decision.Reason);
-                continue;
-            }
-
-            return ce;
-        }
-
-        return null;
-    }
 }

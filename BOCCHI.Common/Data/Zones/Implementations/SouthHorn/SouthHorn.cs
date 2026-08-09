@@ -24,8 +24,8 @@ public class SouthHorn
         Id = 4927,
         BaseId = 2014664,
         Position = new(830.75f, 72.98f, -695.98f),
-        Destination = new(834.5f, 73f, -698.75f),
-        DeadRadius = 3f
+        Destination = new(833.0f, 73f, -697.7f),
+        DeadRadius = 3.5f
     };
 
     private static readonly AethernetData TheWanderersHaven = new()

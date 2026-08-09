@@ -13,7 +13,7 @@ namespace BOCCHI.Treasure;
 /// <summary>Shared hunt progress / Discord resume UX (last coffer id + map flag).</summary>
 public static class TreasureHuntStatusUi
 {
-    /// <summary>1-based step display shared by status chip and panels.</summary>
+    /// <summary>1-based coffer progress for the session (counts up as pads are checked).</summary>
     public static string FormatProgress(ITreasureHunter hunter, ITranslator<MainWindow> translator)
     {
         if (hunter.WaitingForSafeWindow)
@@ -21,12 +21,19 @@ public static class TreasureHuntStatusUi
             return translator.T(".treasure.waiting_safe_window");
         }
 
-        if (hunter.StepCount <= 0)
+        int total = hunter.CheckedCofferCount + hunter.RemainingCofferCount;
+        if (total <= 0)
         {
             return hunter.Paused ? translator.T(".treasure.paused") : string.Empty;
         }
 
-        string progress = $"{hunter.StepIndex + 1}/{hunter.StepCount}";
+        int current = hunter.CheckedCofferCount;
+        if (hunter.GetCurrentStep()?.Type == HuntPathfinderStepType.WalkToNode)
+        {
+            current = Math.Min(current + 1, total);
+        }
+
+        string progress = $"{current}/{total}";
         if (hunter.Paused)
         {
             progress = $"{progress} ({translator.T(".treasure.paused")})";
@@ -52,7 +59,8 @@ public static class TreasureHuntStatusUi
             return;
         }
 
-        if (hunter.StepCount <= 0)
+        int total = hunter.CheckedCofferCount + hunter.RemainingCofferCount;
+        if (total <= 0 && hunter.StepCount <= 0)
         {
             return;
         }

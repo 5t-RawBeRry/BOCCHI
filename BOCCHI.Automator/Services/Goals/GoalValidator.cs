@@ -7,6 +7,7 @@ using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
+using Ocelot.Services.Logger;
 
 namespace BOCCHI.Automator.Services.Goals;
 
@@ -23,7 +24,9 @@ public class GoalValidator
     IPotCycleTracker potCycle,
     IAutomatorContext automatorContext,
     IAutomatorMemory memory,
-    IFieldNoteTracker fieldNotes
+    IFieldNoteTracker fieldNotes,
+    IStartableCriticalEncounterFinder startableCriticalEncounters,
+    ILogger<GoalValidator> logger
 ) : IGoalValidator
 {
     public bool Validate(IGoal goal)
@@ -128,9 +131,22 @@ public class GoalValidator
         }
 
         // Live pot FATE — stay until it despawns. Chest farm starts then (not between waves / on min-remaining).
+        // Pots also keep priority over CEs once committed (prefer-pot / pot-chest farming).
         if (isPot)
         {
             return true;
+        }
+
+        // Choosing prefers CEs, but GoalMemory used to stick on an earlier FATE. Drop non-pot
+        // FATE goals when a Register/Warmup CE becomes startable so we can switch.
+        if (!potsOnly && startableCriticalEncounters.FindStartable() is { } ce)
+        {
+            logger.Info(
+                "Invalidating FATE {FateId} — startable CE {CeId} ({CeName})",
+                id.Value,
+                ce.Id.Value,
+                ce.Name);
+            return false;
         }
 
         if (!PassesCompletionistFate(id.Value, potsOnly))

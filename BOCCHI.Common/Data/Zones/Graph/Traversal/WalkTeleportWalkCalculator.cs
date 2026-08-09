@@ -138,10 +138,8 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
     {
         List<PathStep> steps = [];
 
-        // Already Lifestream-ready (or in the idle band): Teleport's AetheryteApproach closes in.
-        // Don't path around to the Dest-side stand-off (#158).
-        float body = MathF.Max(2f, AethernetData.DefaultDeadRadius);
-        float ready = body + AethernetNavigation.EdgeClearance + AethernetNavigation.PathfindArrivalRadius;
+        // Skip the Pathfind step only when already inside Lifestream range; Approach closes the last yards.
+        float ready = MathF.Max(2f, AethernetData.DefaultDeadRadius) + AethernetNavigation.PathfindArrivalRadius;
         if (start.Distance2D(departure.Position) > ready)
         {
             Vector3 standOff = departure.GetCampStandOffPosition(start);

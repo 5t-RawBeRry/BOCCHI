@@ -8,7 +8,7 @@ namespace BOCCHI.Common.Data.Aethernet;
 
 public static class AethernetNavigation
 {
-    /// <summary>Soft vnav stop while closing on aetheryte rings.</summary>
+    /// <summary>Soft stop while closing on aetheryte rings.</summary>
     public const float PathfindArrivalRadius = 0.5f;
 
     public const float EdgeClearance = AethernetData.LifestreamEdgeClearance;
@@ -36,46 +36,36 @@ public static class AethernetNavigation
         data.GetBodyRadius() + (EdgeClearance * 0.5f);
 
     public static Vector3 GetCampStandOffPosition(this AethernetData data, Vector3? from = null)
-        => GetRingPosition(data.Position, data.GetInteractPosition(), data.GetBodyRadius(), from);
+        => GetRingPosition(data.Position, data.GetInteractPosition(), data.GetIdleOuterRadius(), from);
 
     public static Vector3 GetCampStandOffPosition(this Node node, Vector3? from = null)
-        => GetRingPosition(node.Position, node.GetInteractPosition(), MathF.Max(2f, AethernetData.DefaultDeadRadius), from);
+        => GetRingPosition(node.Position, node.GetInteractPosition(), DefaultIdleOuterRadius, from);
 
-    /// <summary>Prefer authored <see cref="AethernetData.DeadRadius"/> when the node maps to a zone shard.</summary>
+    /// <summary>Prefer authored dead radius when the node maps to a zone shard.</summary>
     public static Vector3 GetCampStandOffPosition(this Node node, IZone zone, Vector3? from = null)
     {
-        float body = MathF.Max(2f, AethernetData.DefaultDeadRadius);
+        float outer = DefaultIdleOuterRadius;
         if (node.Metadata is TeleportNodeMetadata { AetheryteId: var id }
             && zone.FindAetheryte(id) is { } data)
         {
-            body = data.GetBodyRadius();
+            outer = data.GetIdleOuterRadius();
         }
 
-        return GetRingPosition(node.Position, node.GetInteractPosition(), body, from);
+        return GetRingPosition(node.Position, node.GetInteractPosition(), outer, from);
     }
+
+    private static float DefaultIdleOuterRadius =>
+        MathF.Max(2f, AethernetData.DefaultDeadRadius) + EdgeClearance;
 
     public static Vector3 GetIdleWaitPosition(this AethernetData data, Vector3? from = null)
         => GetRingPosition(data.Position, data.GetInteractPosition(), data.GetIdleWaitRadius(), from);
 
     private static Vector3 GetRingPosition(Vector3 crystal, Vector3 interactOrHint, float radius, Vector3? from = null)
     {
-        // Prefer the player's side of the crystal when we know where they are (#158).
-        Vector3 dir;
-        if (from is { } player)
-        {
-            dir = player - crystal;
-            dir.Y = 0f;
-        }
-        else
-        {
-            dir = interactOrHint - crystal;
-            dir.Y = 0f;
-        }
-
+        Vector3 dir = FlatOffset(from ?? interactOrHint, crystal);
         if (dir.LengthSquared() < 0.25f)
         {
-            dir = interactOrHint - crystal;
-            dir.Y = 0f;
+            dir = FlatOffset(interactOrHint, crystal);
         }
 
         if (dir.LengthSquared() < 0.25f)
@@ -83,13 +73,19 @@ public static class AethernetNavigation
             dir = new Vector3(1f, 0f, 0f);
         }
 
-        // Field shards often author Destination inside the body disk. Do not push past that pad
-        // along the ray (that ran into / through the crystal). Cap at the hint distance.
+        // Don't path through the crystal when Destination sits inside the body disk.
         float hintDist = interactOrHint.Distance2D(crystal);
-        float standOff = hintDist > 0.5f ? MathF.Min(radius, hintDist) : radius;
+        float standOff = hintDist > 0.5f && hintDist < radius ? hintDist : radius;
 
         Vector3 onRing = crystal + Vector3.Normalize(dir) * standOff;
         return new Vector3(onRing.X, crystal.Y, onRing.Z);
+    }
+
+    private static Vector3 FlatOffset(Vector3 point, Vector3 origin)
+    {
+        Vector3 d = point - origin;
+        d.Y = 0f;
+        return d;
     }
 
     public static IEnumerable<AethernetData> EnumerateAetherytes(this IZone zone) => zone.GetAetherytes();
@@ -116,7 +112,7 @@ public static class AethernetNavigation
             });
     }
 
-    /// <summary>Idle wait spots spread through the magenta→cyan band.</summary>
+    /// <summary>Idle wait spots on the approach side of the crystal (avoid walking around it).</summary>
     public static IEnumerable<Vector3> GetIdleWaitCandidates(this IZone zone, Vector3 from)
     {
         AethernetData? nearest = NearestAetheryte(zone, from);
@@ -134,13 +130,20 @@ public static class AethernetNavigation
 
         yield return nearest.GetIdleWaitPosition(from);
 
-        const int steps = 12;
+        Vector3 crystal = nearest.Position;
+        Vector3 approach = FlatOffset(from, crystal);
+        if (approach.LengthSquared() < 0.25f)
+        {
+            approach = new Vector3(1f, 0f, 0f);
+        }
+
+        float baseAngle = MathF.Atan2(approach.Z, approach.X);
+        const int steps = 5;
         for (int i = 0; i < steps; i++)
         {
             float bandT = ((i % 3) + 1) / 4f;
             float radius = inner + ((outer - inner) * bandT);
-            float angle = i * 2f * MathF.PI / steps;
-            Vector3 crystal = nearest.Position;
+            float angle = baseAngle + ((i - (steps / 2)) * (MathF.PI / 6f));
             yield return crystal + new Vector3(
                 MathF.Cos(angle) * radius,
                 0f,

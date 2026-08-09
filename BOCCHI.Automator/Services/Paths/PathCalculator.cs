@@ -23,7 +23,6 @@ public class PathCalculator
     IObjectTable objects,
     IZoneProvider zones,
     IFateRepository fates,
-    ICriticalEncounterRepository criticalEncounters,
     IFateContext fateContext,
     AutomatorConfig config,
     ILogger<PathCalculator> logger
@@ -64,8 +63,7 @@ public class PathCalculator
             return [];
         }
 
-        // Prefer live FATE center when available. Square CEs prefer live LGB center;
-        // circular CEs keep authored graph staging (live markers can sit under elevated CEs).
+        // Prefer live FATE center when available; CEs keep authored graph staging.
         Node pathGoal = goalNode;
         Vector3? potPrepositionStandOff = null;
         if (goal.GoalType is FateGoal liveFateGoal
@@ -76,18 +74,6 @@ public class PathCalculator
                 Id = goalNode.Id,
                 Type = goalNode.Type,
                 Position = liveFate.Position,
-                Metadata = goalNode.Metadata
-            };
-        }
-        else if (goal.GoalType is CriticalEncounterGoal liveCeGoal
-                 && criticalEncounters.Snapshot()
-                     .FirstOrDefault(c => c.Id.Value == liveCeGoal.id.Value) is { AreaShape: ActivityAreaShape.Square } liveCe)
-        {
-            pathGoal = new Node
-            {
-                Id = goalNode.Id,
-                Type = goalNode.Type,
-                Position = liveCe.Position,
                 Metadata = goalNode.Metadata
             };
         }
@@ -105,30 +91,37 @@ public class PathCalculator
                 .FirstOrDefault(a => a.Id == ceGoalForRadius.id.Value);
             ceCombatRadius = authored?.CombatRadius ?? 0f;
             ceShape = authored?.AreaShape ?? ActivityAreaShape.Circle;
+            logger.Info(
+                "CE {Id} path goal at {Pos:F0} ({Shape}, combat radius {Radius:F0})",
+                ceGoalForRadius.id.Value,
+                pathGoal.Position,
+                ceShape,
+                ceCombatRadius);
         }
 
         Vector3 arrivalCheck = potPrepositionStandOff ?? pathGoal.Position;
         float distanceToGoal = player.Position.Distance2D(arrivalCheck);
-        if (ceCombatRadius > 0f)
+        bool insideCeWait = ceCombatRadius > 0f
+                            && NavigationConstants.IsInsideCriticalEncounterWaitArea(
+                                arrivalCheck,
+                                ceCombatRadius,
+                                ceShape,
+                                player.Position);
+
+        if (insideCeWait)
         {
-            if (NavigationConstants.IsInsideCriticalEncounterWaitArea(
-                    arrivalCheck,
-                    ceCombatRadius,
-                    ceShape,
-                    player.Position))
-            {
-                logger.Debug("Inside CE wait area.");
-                return [];
-            }
+            logger.Info("Inside CE wait area at {Pos:F0} — no travel steps", arrivalCheck);
+            return [];
         }
-        else if (distanceToGoal <= NavigationConstants.EventArrivalRadius)
+
+        if (ceCombatRadius <= 0f && distanceToGoal <= NavigationConstants.EventArrivalRadius)
         {
-            logger.Debug("Too close to destination.");
+            logger.Debug("Too close to destination ({Dist:F1}y).", distanceToGoal);
             return [];
         }
 
         GraphTraverser traverser = new(graph, pathfinder, logger);
-        // Teleport-first: from camp this is usually instant (no vnav). DirectWalk only for short hops.
+        // Teleport-first: from camp this is usually instant. DirectWalk only for short hops.
         traverser.AddCalculator(new WalkTeleportWalkCalculator());
         traverser.AddCalculator(new DirectWalkCalculator());
 
@@ -136,13 +129,7 @@ public class PathCalculator
         float distToCamp = graph.GetBaseCampAetheryteNode() is { } camp
             ? player.Position.Distance2D(camp.Position)
             : float.MaxValue;
-        bool nearCriticalEncounter = ceCombatRadius > 0f
-                                     && NavigationConstants.IsInsideCriticalEncounterWaitArea(
-                                         arrivalCheck,
-                                         ceCombatRadius,
-                                         ceShape,
-                                         player.Position);
-        if (!nearCriticalEncounter
+        if (!insideCeWait
             && distanceToGoal > NavigationConstants.MaxDirectWalkDistance
             && distanceToGoal >= distToCamp * 0.5f)
         {
@@ -150,8 +137,24 @@ public class PathCalculator
         }
 
         List<PathStep> steps = await traverser.FindPath(player.Position, pathGoal);
+        int aetheryteRewrites = 0;
         List<PathStep> resolvedSteps = steps
-            .Select(step => AethernetNavigation.ResolveAetherytePathStep(step, zone, player.Position))
+            .Select(step =>
+            {
+                PathStep resolved = AethernetNavigation.ResolveAetherytePathStep(step, zone, player.Position);
+                if (!ReferenceEquals(resolved, step)
+                    && step.PathStepData is Pathfind(var before, _)
+                    && resolved.PathStepData is Pathfind(var after, _))
+                {
+                    aetheryteRewrites++;
+                    logger.Debug(
+                        "Aetheryte approach rewrite {Before:F0} → stand-off {After:F0}",
+                        before,
+                        after);
+                }
+
+                return resolved;
+            })
             .ToList();
 
         if (potPrepositionStandOff is { } standOff)
@@ -170,6 +173,13 @@ public class PathCalculator
                 .ToList();
             logger.Debug("TeleportOnlyTravel: {Count} step(s) after dropping pathfinds", resolvedSteps.Count);
         }
+
+        logger.Info(
+            "Path planned: {Count} step(s) toward {Pos:F0} ({Dist:F0}y){AetheryteNote}",
+            resolvedSteps.Count,
+            arrivalCheck,
+            distanceToGoal,
+            aetheryteRewrites > 0 ? $"; {aetheryteRewrites} aetheryte stand-off rewrite(s)" : string.Empty);
 
         return new(resolvedSteps);
     }

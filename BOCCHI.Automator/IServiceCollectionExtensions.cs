@@ -38,6 +38,7 @@ public static class IServiceCollectionExtensions
 
         services.AddSingleton<IGoalFactory, GoalFactory>();
         services.AddSingleton<IGoalValidator, GoalValidator>();
+        services.AddSingleton<IStartableCriticalEncounterFinder, StartableCriticalEncounterFinder>();
         services.AddSingleton<AutoRotationController>();
 
         services.AddSingleton<IPathCalculator, PathCalculator>();

@@ -80,9 +80,7 @@ public class TreasureHunterService
     /// <summary>Minimum distance improvement toward the destination that counts as progress.</summary>
     private const float StuckProgressThreshold = 1.5f;
 
-    /// <summary>
-    /// Walk-stuck recovery ignores distances inside interact range; outside that, a long stall can skip (#162).
-    /// </summary>
+    /// <summary>Below this distance, walk-stuck recovery does not run (open / empty-skip owns it).</summary>
     private const float StuckDetectionMinDistance = OpenTreasureCofferChain.MaxInteractRange;
 
     /// <summary>Reprioritize when a live remaining coffer is this close and much nearer than the current target.</summary>
@@ -102,6 +100,7 @@ public class TreasureHunterService
     private bool planningRoute;
     private bool pendingStartSight;
     private bool waitingForSightCounts;
+    private bool sessionStartSightArmed;
     private DateTime sightCastUtc = DateTime.MinValue;
     private int locationsSinceLastSight;
     private HashSet<uint> excludedNodeIdsForNextRun = [];
@@ -170,7 +169,19 @@ public class TreasureHunterService
             steps.AddRange(pathPlanner.FindPath(player.Position, validNodes, preferStart).GetAwaiter().GetResult());
             pathPlanner = null;
             StepIndex = 0;
-            pendingStartSight = config.CastTreasureSightDuringHunt && SupportJobTreasureSight.CanCast(supportJobs);
+            // Treasure Sight once per session start.
+            if (!sessionStartSightArmed)
+            {
+                pendingStartSight = config.CastTreasureSightDuringHunt
+                                    && SupportJobTreasureSight.CanCast(supportJobs);
+                sessionStartSightArmed = true;
+                log.Info(
+                    "Treasure hunt: session start Sight {Armed} ({StepCount} step(s), Every-N counter={Counter})",
+                    pendingStartSight ? "armed" : "skipped",
+                    steps.Count,
+                    locationsSinceLastSight);
+            }
+
             if (steps.Count == 0)
             {
                 log.Warning(
@@ -261,6 +272,10 @@ public class TreasureHunterService
 
     public int StepCount => steps.Count;
 
+    public int CheckedCofferCount => checkedNodeIds.Count;
+
+    public int RemainingCofferCount => steps.Count(s => s.Type == HuntPathfinderStepType.WalkToNode);
+
     public float StepDistance { get; private set; }
 
     public TimeSpan Elapsed => stopwatch.Elapsed;
@@ -329,11 +344,14 @@ public class TreasureHunterService
         pendingStartSight = false;
         waitingForSightCounts = false;
         sightCastUtc = DateTime.MinValue;
-        locationsSinceLastSight = 0;
+        // Preserve Every-N Sight counter across replans.
         pathPlanner = planner;
         planningRoute = true;
 
-        log.Info("Treasure hunt route recalculation requested; {CheckedCount} checked nodes excluded", checkedNodeIds.Count);
+        log.Info(
+            "Treasure hunt route recalculation requested; {CheckedCount} checked nodes excluded (Sight counter kept at {SightCounter})",
+            checkedNodeIds.Count,
+            locationsSinceLastSight);
         return true;
     }
 
@@ -347,6 +365,7 @@ public class TreasureHunterService
         layoutTreasure.Clear();
         pendingStartSight = false;
         waitingForSightCounts = false;
+        sessionStartSightArmed = false;
         sightCastUtc = DateTime.MinValue;
         locationsSinceLastSight = 0;
         ninjaHideRequired = false;
@@ -719,6 +738,10 @@ public class TreasureHunterService
         sightCastUtc = DateTime.UtcNow;
         locationsSinceLastSight = 0;
 
+        log.Info(
+            "Treasure hunt: casting Treasure Sight ({Reason})",
+            dueForStart ? "session start" : $"every {config.TreasureSightEveryNLocations} locations");
+
         activeChain = chainManager.Manage(
             chains.Create("TreasureHunt::TreasureSight")
                 .Then<HuntTreasureSightChain>()
@@ -895,7 +918,7 @@ public class TreasureHunterService
 
         Vector3 layoutDestination = layoutTreasure.First(t => t.Id == step.NodeId).Position;
 
-        // Finished open attempt: succeed, or skip the pad on failure (#162).
+        // Open finished: succeed, or skip the pad on failure.
         if (activeChain != null)
         {
             if (!activeChain.IsCompleted)
@@ -1551,6 +1574,7 @@ public class TreasureHunterService
         planningRoute = false;
         pendingStartSight = false;
         waitingForSightCounts = false;
+        sessionStartSightArmed = false;
         sightCastUtc = DateTime.MinValue;
         locationsSinceLastSight = 0;
         ninjaHideRequired = false;

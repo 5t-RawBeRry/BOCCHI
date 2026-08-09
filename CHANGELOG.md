@@ -1,8 +1,13 @@
-# 4.0.2.20
+# 4.0.2.21
 
 ### Fixes
-- Leaving base camp no longer walks around to the far side of the aetheryte before teleporting (#158).
-- Carrot Hunt teleports when that is faster than walking (for example base camp to the middle island).
-- Carrot Hunt checks empty carrot pads from farther away instead of walking onto every estimate.
-- Carrot Hunt remounts after using a Fortune Carrot when moving to the next pad.
-- Treasure Hunt no longer gets stuck forever on a coffer it cannot open — it skips that spot and continues (#162).
+- Carrot Hunt teleports via aethernet when that is faster than walking.
+- Carrot Hunt dismounts near carrots it cannot path onto (e.g. corners) and uses them from there.
+- Carrot Hunt stays for a second chewed carrot at the same pad (double spawn) before moving on.
+- Treasure Hunt no longer spams Treasure Sight or freezes when cast-during-hunt is on.
+- Treasure Hunt skips a coffer it cannot open and continues (#162).
+- Treasure Hunt progress counts up as coffers are checked (it looked like a countdown after each replan).
+- Base camp aetheryte approach stays on your side and closes into teleport range (#158).
+- A Beast Unleashed uses the authored registration area again.
+- FATEs dismount when you enter the event (same as CEs).
+- Illegal Mode leaves a non-pot FATE when a CE opens (no longer sticks to the earlier FATE).
