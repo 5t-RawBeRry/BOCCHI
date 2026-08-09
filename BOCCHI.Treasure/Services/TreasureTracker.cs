@@ -51,22 +51,25 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
 
     public void Update()
     {
-        Dictionary<uint, IGameObject> worldTreasures = objects
-            .Where(o => o is { ObjectKind: ObjectKind.Treasure })
-            .ToDictionary(o => o.BaseId, o => o);
+        // Key by GameObjectId — BaseId is shared by every bronze/silver of that type,
+        // so a dictionary on BaseId kept only one coffer and dropped the rest (no radar line).
+        Dictionary<ulong, IGameObject> worldTreasures = objects
+            .Where(o => o is { ObjectKind: ObjectKind.Treasure, IsDead: false } && o.IsValid())
+            .GroupBy(o => o.GameObjectId)
+            .ToDictionary(g => g.Key, g => g.First());
 
-        HashSet<uint> knownIds = treasures.Select(t => t.Id).ToHashSet();
+        HashSet<ulong> knownIds = treasures.Select(t => t.GameObjectId).ToHashSet();
 
-        for(int i = treasures.Count - 1; i >= 0; i--)
+        for (int i = treasures.Count - 1; i >= 0; i--)
         {
             TreasureCoffer treasure = treasures[i];
-            if (!worldTreasures.ContainsKey(treasure.Id) || !treasure.IsValid())
+            if (!worldTreasures.ContainsKey(treasure.GameObjectId) || !treasure.IsValid())
             {
                 treasures.RemoveAt(i);
             }
         }
 
-        foreach((uint objectId, IGameObject obj) in worldTreasures)
+        foreach ((ulong objectId, IGameObject obj) in worldTreasures)
         {
             if (knownIds.Contains(objectId))
             {

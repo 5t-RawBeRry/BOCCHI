@@ -49,6 +49,7 @@ public class IllegalModeTreasureFillerService
 
         if (!zones.GetZone().IsOccultCrescentZone())
         {
+            ResetSession();
             return;
         }
 

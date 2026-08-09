@@ -1,3 +1,4 @@
+using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.SupportJobs;
@@ -25,6 +26,8 @@ using Ocelot.Ipc.VNavmesh;
 using Ocelot.Lifecycle;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
+using Ocelot.Services.Translation;
+using Ocelot.Windows;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -54,19 +57,17 @@ public class TreasureHunterService
     IClientState client,
     IAutomationModeGuard modeGuard,
     IMp3SoundPlayer sounds,
-    NinjaHideAssist ninjaHide
+    NinjaHideAssist ninjaHide,
+    IChatGui chat,
+    UIConfig uiConfig,
+    ITranslator<MainWindow> translator
 ) : ITreasureHunter, IOnUpdate, IOnStop
 {
+    /// <summary>Tight layout↔live match (pad vs object).</summary>
     private const float ChestSearchRadius = 25f;
 
     /// <summary>Start open attempts once this close to the coffer (yalms).</summary>
     private const float CofferOpenAttemptRadius = 75f;
-
-    /// <summary>
-    /// Wider layout↔live match when spawns drift from layout (e.g. Moldering 2048 ~40y).
-    /// Only accepted when this layout is the nearest node to the live coffer.
-    /// </summary>
-    private const float ChestDriftSearchRadius = 50f;
 
     /// <summary>How long to wait for WideText after casting Treasure Sight.</summary>
     private static readonly TimeSpan SightCountWait = TimeSpan.FromSeconds(8);
@@ -82,11 +83,6 @@ public class TreasureHunterService
 
     /// <summary>Below this distance, walk-stuck recovery does not run (open / empty-skip owns it).</summary>
     private const float StuckDetectionMinDistance = OpenTreasureCofferChain.MaxInteractRange;
-
-    /// <summary>Reprioritize when a live remaining coffer is this close and much nearer than the current target.</summary>
-    private const float NearbyLiveReprioritizeRange = 60f;
-
-    private const float NearbyLiveReprioritizeMinCurrentDistance = 80f;
 
     private readonly List<TreasureLayoutDatum> layoutTreasure = [];
     private readonly List<HuntPathfinderStep> steps = [];
@@ -110,6 +106,8 @@ public class TreasureHunterService
     private DateTime stuckWatchLastProgressUtc = DateTime.MinValue;
     private DateTime stuckWatchStartedUtc = DateTime.MinValue;
     private bool stuckNudgeIssued;
+    private uint? emptyPadCandidateNodeId;
+    private DateTime emptyPadCandidateSinceUtc = DateTime.MinValue;
 
     /// <summary>Hysteresis: Hide required until threats leave exit distance.</summary>
     private bool ninjaHideRequired;
@@ -124,14 +122,20 @@ public class TreasureHunterService
 
     public void Update()
     {
-        if (!Running || Paused)
+        if (!Running)
         {
             return;
         }
 
+        // Zone lock even while paused — leaving OC must fully stop (no resume on return).
         if (!zones.GetZone().IsOccultCrescentZone())
         {
-            Teardown();
+            StopDueToLeavingOccultCrescent();
+            return;
+        }
+
+        if (Paused)
+        {
             return;
         }
 
@@ -343,6 +347,7 @@ public class TreasureHunterService
         pendingStartSight = false;
         waitingForSightCounts = false;
         sightCastUtc = DateTime.MinValue;
+        ClearEmptyPadCandidate();
         // Preserve Every-N Sight counter across replans.
         pathPlanner = planner;
         planningRoute = true;
@@ -368,6 +373,7 @@ public class TreasureHunterService
         locationsSinceLastSight = 0;
         ninjaHideRequired = false;
         checkedNodeIds.Clear();
+        ClearEmptyPadCandidate();
         ResetStuckWatch();
         if (!ManagedByPotsTreasure)
         {
@@ -593,7 +599,7 @@ public class TreasureHunterService
             }
 
             float distToPlayer = player.Position.Distance2D(present.Position);
-            if (distToPlayer > NearbyLiveReprioritizeRange)
+            if (distToPlayer > HuntDistances.NearbyLiveDivertRange)
             {
                 continue;
             }
@@ -634,7 +640,7 @@ public class TreasureHunterService
         }
 
         float currentDist = StepDistance;
-        if (currentDist < NearbyLiveReprioritizeMinCurrentDistance)
+        if (currentDist < HuntDistances.NearbyLiveDivertMinCurrentDistance)
         {
             return false;
         }
@@ -799,7 +805,7 @@ public class TreasureHunterService
     }
 
     /// <summary>
-    /// After Sight, drop remaining layout nodes that are already in tether range with no live coffer
+    /// After Sight, drop remaining layout nodes the object table already proves empty
     /// so we do not walk onto known empties before the next hop.
     /// </summary>
     private int TrimNearbyEmptyNodesAfterSight()
@@ -813,20 +819,14 @@ public class TreasureHunterService
                 continue;
             }
 
-            float dist = player.Position.Distance2D(spot.Position);
-            if (dist > ChestSearchRadius)
-            {
-                continue;
-            }
-
-            if (FindTreasureForLayout(spot.Position, nodeId) != null)
+            if (!IsLayoutPadEmpty(spot.Position, nodeId) || !CanTrustEmptyPad(spot.Position))
             {
                 continue;
             }
 
             checkedNodeIds.Add(nodeId);
             trimmed++;
-            log.Debug("Treasure Sight: trimming empty pad {NodeId} within tether range", nodeId);
+            log.Debug("Treasure Sight: trimming empty pad {NodeId} (object-table trust)", nodeId);
         }
 
         return trimmed;
@@ -948,22 +948,42 @@ public class TreasureHunterService
         }
 
         // Presence: don't require IsTargetable (often false until inside interact range).
-        IGameObject? present = FindTreasureForLayout(layoutDestination, step.NodeId);
+        IGameObject? present = FindTreasureForLayout(layoutDestination, step.NodeId)
+                               ?? FindUnopenedTreasureNear(layoutDestination, HuntDistances.MatchRadius);
 
-        // Stick to layout while far when spawn matches; switch to live when close or when layout drifted.
-        Vector3 destination = layoutDestination;
-        if (present != null)
-        {
-            float layoutToLive = layoutDestination.Distance2D(present.Position);
-            float distToLayout = player.Position.Distance2D(layoutDestination);
-            if (layoutToLive > 5f || distToLayout <= OpenTreasureCofferChain.MaxInteractRange * 2f)
-            {
-                destination = present.Position;
-            }
-        }
+        // Prefer live object position when the coffer is already in the object table (same source Umbra markers use).
+        Vector3 destination = present?.Position ?? layoutDestination;
 
         float dist2d = player.Position.Distance2D(destination);
         StepDistance = dist2d;
+
+        // Empty / unspawned (Umbra-style object table): once the area is streamed and no
+        // unopened Treasure sits on the pad, leave without walking onto the spot.
+        if (present == null)
+        {
+            if (CanTrustEmptyPad(layoutDestination) && ConfirmEmptyPad(step.NodeId))
+            {
+                log.Info(
+                    "Treasure hunt: no live coffer at layout {NodeId} — skipping and recalculating",
+                    step.NodeId);
+                checkedNodeIds.Add(step.NodeId);
+                LastCheckedNodeId = step.NodeId;
+                ClearEmptyPadCandidate();
+                ResetStuckWatch();
+                RecalculateRoute();
+                return false;
+            }
+
+            if (!vnav.IsRunning() && dist2d > OpenTreasureCofferChain.PreferredOpenDistance)
+            {
+                vnav.PathfindAndMoveCloseTo(destination, false, OpenTreasureCofferChain.PathArrivalRange);
+            }
+
+            MaybeMount(destination);
+            return false;
+        }
+
+        ClearEmptyPadCandidate();
 
         if (!vnav.IsRunning() && dist2d > OpenTreasureCofferChain.PreferredOpenDistance)
         {
@@ -987,30 +1007,11 @@ public class TreasureHunterService
             return false;
         }
 
-        if (present != null && OpenTreasureCofferChain.IsOpenedOrLooted(present))
+        if (OpenTreasureCofferChain.IsOpenedOrLooted(present))
         {
             vnav.Stop();
             ResetStuckWatch();
             return true;
-        }
-
-        // Empty / unspawned: once within normal tether range with no object-table match, skip + replan.
-        if (present == null)
-        {
-            float distToLayout = player.Position.Distance2D(layoutDestination);
-            if (distToLayout <= ChestSearchRadius)
-            {
-                log.Info(
-                    "Treasure hunt: no live coffer at layout {NodeId} within tether range — skipping and recalculating",
-                    step.NodeId);
-                checkedNodeIds.Add(step.NodeId);
-                LastCheckedNodeId = step.NodeId;
-                ResetStuckWatch();
-                RecalculateRoute();
-                return false;
-            }
-
-            return false;
         }
 
         float dist3d = Vector3.Distance(player.Position, present.Position);
@@ -1198,21 +1199,14 @@ public class TreasureHunterService
             return;
         }
 
-        if (!automatorConfig.ShouldAutoMount)
-        {
-            return;
-        }
-
-        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
-        {
-            return;
-        }
-
-        if (player.Position.Distance(destination) > NavigationConstants.MountMinDistance
-            && !zones.GetZone().IsInBasecamp())
-        {
-            MountWait.TryCast(automatorConfig.PreferredMountId);
-        }
+        // Shared skip (between-areas / aetheryte still targeted) — avoids post-TP "Invalid target."
+        MountWait.TryCastIfNeeded(
+            conditions,
+            objects,
+            destination,
+            automatorConfig.ShouldAutoMount,
+            automatorConfig.PreferredMountId,
+            inBaseCamp: false);
     }
 
     /// <summary>
@@ -1287,6 +1281,47 @@ public class TreasureHunterService
         }
     }
 
+    private bool IsLayoutPadEmpty(Vector3 layoutDestination, uint nodeId)
+    {
+        return FindTreasureForLayout(layoutDestination, nodeId) == null
+               && FindUnopenedTreasureNear(layoutDestination, HuntDistances.MatchRadius) == null;
+    }
+
+    /// <summary>
+    /// True when the client should already know whether a coffer is on this pad:
+    /// player close enough, or any Treasure already streamed near the pad (Umbra source).
+    /// </summary>
+    private bool CanTrustEmptyPad(Vector3 layoutDestination)
+    {
+        if (player.Position.Distance2D(layoutDestination) <= HuntDistances.EmptyPadSkipRadius)
+        {
+            return true;
+        }
+
+        return objects.Any(o => o is { ObjectKind: ObjectKind.Treasure, IsDead: false }
+                                && o.IsValid()
+                                && layoutDestination.Distance2D(o.Position) <= HuntDistances.EmptyPadRegionTrustRadius);
+    }
+
+    private bool ConfirmEmptyPad(uint nodeId)
+    {
+        DateTime now = DateTime.UtcNow;
+        if (emptyPadCandidateNodeId != nodeId)
+        {
+            emptyPadCandidateNodeId = nodeId;
+            emptyPadCandidateSinceUtc = now;
+            return false;
+        }
+
+        return now - emptyPadCandidateSinceUtc >= HuntDistances.EmptyPadConfirmDelay;
+    }
+
+    private void ClearEmptyPadCandidate()
+    {
+        emptyPadCandidateNodeId = null;
+        emptyPadCandidateSinceUtc = DateTime.MinValue;
+    }
+
     private IGameObject? FindTreasureNear(Vector3 layoutDestination, float radius)
     {
         return objects
@@ -1297,8 +1332,19 @@ public class TreasureHunterService
             .FirstOrDefault();
     }
 
+    private IGameObject? FindUnopenedTreasureNear(Vector3 layoutDestination, float radius)
+    {
+        return objects
+            .Where(o => o is { ObjectKind: ObjectKind.Treasure, IsDead: false }
+                        && o.IsValid()
+                        && layoutDestination.Distance2D(o.Position) <= radius
+                        && !OpenTreasureCofferChain.IsOpenedOrLooted(o))
+            .OrderBy(o => layoutDestination.Distance2D(o.Position))
+            .FirstOrDefault();
+    }
+
     /// <summary>
-    /// Live coffer for a layout node, including drifted spawns — only if this layout is nearest to that object.
+    /// Live coffer for a layout node, including drifted spawns.
     /// </summary>
     private IGameObject? FindTreasureForLayout(Vector3 layoutDestination, uint nodeId)
     {
@@ -1308,7 +1354,7 @@ public class TreasureHunterService
             return close;
         }
 
-        IGameObject? drifted = FindTreasureNear(layoutDestination, ChestDriftSearchRadius);
+        IGameObject? drifted = FindTreasureNear(layoutDestination, HuntDistances.MatchRadius);
         if (drifted == null)
         {
             return null;
@@ -1317,7 +1363,22 @@ public class TreasureHunterService
         TreasureLayoutDatum nearest = layoutTreasure
             .OrderBy(t => t.Position.Distance2D(drifted.Position))
             .FirstOrDefault();
-        return nearest.Id == nodeId ? drifted : null;
+        if (nearest.Id == nodeId)
+        {
+            return drifted;
+        }
+
+        // Pads can sit close together — don't drop a coffer that is still clearly on this layout.
+        float toThis = layoutDestination.Distance2D(drifted.Position);
+        float toNearest = nearest.Id != 0
+            ? nearest.Position.Distance2D(drifted.Position)
+            : float.MaxValue;
+        if (toThis <= ChestSearchRadius || toThis <= toNearest + 8f)
+        {
+            return drifted;
+        }
+
+        return null;
     }
 
     private bool IsUnsafeTreasureWindow()
@@ -1561,6 +1622,20 @@ public class TreasureHunterService
         sounds.Play(config.HuntCompleteSound);
     }
 
+    private void StopDueToLeavingOccultCrescent()
+    {
+        bool announceStandalone = !ManagedByPotsTreasure && !ManagedByIllegalModeFiller;
+        log.Info(
+            "Left Occult Crescent — stopping treasure hunt (pots={Pots}, filler={Filler})",
+            ManagedByPotsTreasure,
+            ManagedByIllegalModeFiller);
+        Teardown();
+        if (announceStandalone)
+        {
+            BocchiChat.Print(chat, uiConfig, translator.T(".treasure.off_left_zone"));
+        }
+    }
+
     private void Teardown()
     {
         bool wasManagedByPotsTreasure = ManagedByPotsTreasure;
@@ -1576,6 +1651,7 @@ public class TreasureHunterService
         sightCastUtc = DateTime.MinValue;
         locationsSinceLastSight = 0;
         ninjaHideRequired = false;
+        ClearEmptyPadCandidate();
         ninjaHide.RestorePreviousGearsetIfNeeded();
         walkViaStepIndex = -1;
         walkViaIndex = 0;
@@ -1583,7 +1659,7 @@ public class TreasureHunterService
 
         SoftStopMovement();
 
-        stopwatch.Stop();
+        stopwatch.Reset();
         StepIndex = 0;
         StepDistance = 0f;
         LastCheckedNodeId = null;

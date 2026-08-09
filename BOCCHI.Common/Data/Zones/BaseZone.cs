@@ -163,7 +163,7 @@ public abstract class BaseZone
     {
         ActivityData? activity = GetCriticalEncounterData().FirstOrDefault(a => a.Id == eventId);
         return activity?.CombatRadius is { } radius
-            ? radius + NavigationConstants.CriticalEncounterRadiusPadding
+            ? NavigationConstants.CriticalEncounterPaddedRadius(radius, activity.AreaShape)
             : 0f;
     }
 

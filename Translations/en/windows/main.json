@@ -151,7 +151,8 @@
       "not_engaged": "Not fighting",
       "engaged": "Fighting",
       "selected_mobs": "Selected enemies",
-      "configure_mobs": "Pick enemies in /bocchi config → Mob Farmer."
+      "configure_mobs": "Pick enemies in /bocchi config → Mob Farmer.",
+      "off_left_zone": "[BOCCHI] Left Occult Crescent — Mob Farmer Off"
     },
     "pots_treasure": {
       "start": "Start Pots & Treasure",
@@ -200,6 +201,8 @@
     "pause_hunt": "Pause",
     "resume_hunt": "Resume",
     "stop_hunt": "Stop Hunt",
+    "off_left_zone": "[BOCCHI] Left Occult Crescent — Treasure Hunt Off",
+    "carrot_hunt_off_left_zone": "[BOCCHI] Left Occult Crescent — Carrot Hunt Off",
     "paused": "Paused",
     "waiting_safe_window": "Waiting for safe weather",
     "waiting_safe_window_detail": "Treasure Hunt is paused for Ashkin or unsafe weather on South Horn. It resumes automatically when the window ends (or turn off Skip unsafe treasure windows in Treasure settings).",
@@ -211,6 +214,7 @@
     "recalculate_route_tooltip": "Recalculate the treasure hunt route from your current position",
     "managed_by_pots": "Hunt is controlled by Pots & Treasure — start or stop it there.",
     "managed_by_illegal_mode": "Hunt is controlled by Illegal Mode (runs between activities).",
+    "managed_by_carrot": "Carrot Hunt is running — stop it below before starting a coffer hunt.",
     "distance_to_chest": "Distance to chest",
     "nearby_title": "Nearby treasures",
     "none_nearby": "No treasures nearby.",
@@ -232,7 +236,8 @@
       "waiting_for_bunny": "Waiting for bunny chest",
       "opening_bunny": "Opening bunny chest",
       "approaching_aetheryte": "Walking to aetheryte",
-      "teleporting": "Teleporting via aethernet"
+      "teleporting": "Teleporting via aethernet",
+      "returning": "Returning to base camp"
     }
   }
 }

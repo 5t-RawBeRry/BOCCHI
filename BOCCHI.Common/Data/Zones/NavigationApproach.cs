@@ -31,15 +31,22 @@ public static class NavigationConstants
     public const float CriticalEncounterYellowInset = 2f;
 
     /// <summary>
-    ///     Square CEs: fraction of half-extent that counts as inside (rim was still outside the blue box).
+    ///     Square CEs: inside red = in the registration zone (same as circles).
+    ///     Authored half-extent should match the game blue box; do not shrink again here.
     /// </summary>
-    public const float CriticalEncounterSquareWaitInnerRatio = 0.7f;
+    public const float CriticalEncounterSquareWaitInnerRatio = 1f;
 
     /// <summary>Circle CEs: inside red = in the registration zone (stop pulling inward).</summary>
     public const float CriticalEncounterCircleWaitInnerRatio = 1f;
 
+    /// <summary>Square CEs: cyan stand (path target) as a fraction of red half-extent.</summary>
+    public const float CriticalEncounterSquareStandRatio = 0.7f;
+
     /// <summary>Circle CEs: cyan stand ring (path target while waiting), as a fraction of red.</summary>
     public const float CriticalEncounterCircleStandRatio = 0.7f;
+
+    /// <summary>Debug green pad beyond red for square CEs (same idea as circle pad).</summary>
+    public const float CriticalEncounterSquareRadiusPadding = 7f;
 
     /// <summary>Circle travel stand-off around the cyan ring.</summary>
     public const float CriticalEncounterApproachMinRatio = 0.6f;
@@ -59,8 +66,15 @@ public static class NavigationConstants
     public const float MountMinDistance = 20f;
 
     /// <summary>Red debug / combat radius from padded <c>ce.Radius</c>.</summary>
-    public static float CriticalEncounterRedRadius(float paddedRadius) =>
-        MathF.Max(0f, paddedRadius - CriticalEncounterRadiusPadding);
+    public static float CriticalEncounterRedRadius(
+        float paddedRadius,
+        ActivityAreaShape shape = ActivityAreaShape.Circle)
+    {
+        float pad = shape == ActivityAreaShape.Square
+            ? CriticalEncounterSquareRadiusPadding
+            : CriticalEncounterRadiusPadding;
+        return MathF.Max(0f, paddedRadius - pad);
+    }
 
     /// <summary>Yellow debug radius from padded <c>ce.Radius</c>.</summary>
     public static float CriticalEncounterYellowRadius(float paddedRadius) =>
@@ -89,9 +103,18 @@ public static class NavigationConstants
         }
 
         float ratio = shape == ActivityAreaShape.Square
-            ? CriticalEncounterSquareWaitInnerRatio
+            ? CriticalEncounterSquareStandRatio
             : CriticalEncounterCircleStandRatio;
         return combatRadius * ratio;
+    }
+
+    /// <summary>Padded outer (green) size from authored combat radius.</summary>
+    public static float CriticalEncounterPaddedRadius(float combatRadius, ActivityAreaShape shape)
+    {
+        float pad = shape == ActivityAreaShape.Square
+            ? CriticalEncounterSquareRadiusPadding
+            : CriticalEncounterRadiusPadding;
+        return combatRadius + pad;
     }
 
     /// <summary>

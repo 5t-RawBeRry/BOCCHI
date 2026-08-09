@@ -151,7 +151,8 @@
       "not_engaged": "戦闘していません",
       "engaged": "戦闘中",
       "selected_mobs": "選択中の敵",
-      "configure_mobs": "敵は /bocchi config → モブファーム で選んでください。"
+      "configure_mobs": "敵は /bocchi config → モブファーム で選んでください。",
+      "off_left_zone": "[BOCCHI] オカルトクレセントを離れたためモブファーム オフ"
     },
     "pots_treasure": {
       "start": "ポット＆トレジャーを開始",
@@ -200,6 +201,8 @@
     "pause_hunt": "一時停止",
     "resume_hunt": "再開",
     "stop_hunt": "ハント停止",
+    "off_left_zone": "[BOCCHI] オカルトクレセントを離れたためトレジャーハント オフ",
+    "carrot_hunt_off_left_zone": "[BOCCHI] オカルトクレセントを離れたためキャロットハント オフ",
     "paused": "一時停止中",
     "waiting_safe_window": "安全な天候待ち",
     "waiting_safe_window_detail": "南の角のアシキン時間帯または危険な天候のため、トレジャーハントを一時停止しています。窓が終わると自動再開します（トレジャー設定の「危険な天候ウィンドウをスキップ」をオフにもできます）。",
@@ -211,6 +214,7 @@
     "recalculate_route_tooltip": "現在地からトレジャーハントのルートを再計算します",
     "managed_by_pots": "ハントはポット＆トレジャーが管理しています — 開始／停止はそちらから行ってください。",
     "managed_by_illegal_mode": "ハントは不正モードが管理しています（活動の合間に実行）。",
+    "managed_by_carrot": "キャロットハント実行中 — 下で停止してからトレジャーハントを開始してください。",
     "distance_to_chest": "宝箱までの距離",
     "nearby_title": "近くの宝箱",
     "none_nearby": "近くに宝箱はありません。",
@@ -232,7 +236,8 @@
       "waiting_for_bunny": "バニーチェスト待ち",
       "opening_bunny": "バニーチェスト開封中",
       "approaching_aetheryte": "エーテルへ移動中",
-      "teleporting": "イーサネット転送中"
+      "teleporting": "イーサネット転送中",
+      "returning": "ベースキャンプへデジョン中"
     }
   }
 }

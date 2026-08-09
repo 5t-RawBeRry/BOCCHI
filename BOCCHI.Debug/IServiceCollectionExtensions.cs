@@ -21,6 +21,10 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<IWindow>(sp => sp.GetRequiredService<DebugWindow>());
 
         services.AddSingleton<DrawCEs>();
+
+#if DEBUG
+        // Dev convenience: open main/config/debug once on load. Not for Release.
         services.AddSingleton<OpenWindows>();
+#endif
     }
 }

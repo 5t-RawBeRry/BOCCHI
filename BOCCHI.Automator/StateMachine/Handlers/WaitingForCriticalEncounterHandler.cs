@@ -69,12 +69,12 @@ public class WaitingForCriticalEncounterHandler
             return StatePriority.Never;
         }
 
-        // Already arrived — keep Waiting unless we drifted outside the blue zone (wrong LGB / early stop).
+        // Already arrived — keep Waiting unless we drifted outside the red zone.
         if (hasWaitLatch)
         {
             if (objects.LocalPlayer is { } latchedPlayer)
             {
-                float latchedRadius = NavigationConstants.CriticalEncounterRedRadius(ce.Radius);
+                float latchedRadius = NavigationConstants.CriticalEncounterRedRadius(ce.Radius, ce.AreaShape);
                 if (!NavigationConstants.IsInsideCriticalEncounterWaitArea(
                         ce.Position,
                         latchedRadius,
@@ -94,7 +94,7 @@ public class WaitingForCriticalEncounterHandler
             return StatePriority.Never;
         }
 
-        float combatRadius = NavigationConstants.CriticalEncounterRedRadius(ce.Radius);
+        float combatRadius = NavigationConstants.CriticalEncounterRedRadius(ce.Radius, ce.AreaShape);
         if (!NavigationConstants.IsInsideCriticalEncounterWaitArea(
                 ce.Position,
                 combatRadius,
@@ -104,7 +104,7 @@ public class WaitingForCriticalEncounterHandler
             return StatePriority.Never;
         }
 
-        // Beat Pathfinding (High) once near the CE.
+        // Beat Pathfinding (High) once inside the red registration ring.
         return StatePriority.VeryHigh;
     }
 
@@ -149,7 +149,9 @@ public class WaitingForCriticalEncounterHandler
             return;
         }
 
-        StopNavigation();
+        // Enter already soft-stopped PathStep chains; only keep vnav quiet while holding.
+        pathfinder.Stop();
+        vnav.Stop();
 
         if (!config.StayMountedWhileWaitingForCe
             && conditions[ConditionFlag.Mounted]

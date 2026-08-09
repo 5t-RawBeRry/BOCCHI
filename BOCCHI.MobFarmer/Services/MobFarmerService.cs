@@ -1,10 +1,16 @@
+using BOCCHI.Common;
+using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using BOCCHI.MobFarmer.Data;
+using Dalamud.Plugin.Services;
 using Ocelot.Lifecycle;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
+using Ocelot.Services.Translation;
 using Ocelot.States;
 using Ocelot.States.Flow;
+using Ocelot.Windows;
 using System.Numerics;
 
 namespace BOCCHI.MobFarmer.Services;
@@ -15,6 +21,10 @@ public class MobFarmerService
     Func<IStateMachine<FarmerPhase>> stateMachineFactory,
     IPathfinder pathfinder,
     IPlayer player,
+    IZoneProvider zones,
+    IChatGui chat,
+    UIConfig uiConfig,
+    ITranslator<MainWindow> translator,
     IAutomationModeGuard modeGuard
 ) : IMobFarmer, IOnUpdate, IOnStop
 {
@@ -38,13 +48,7 @@ public class MobFarmerService
     {
         if (Running)
         {
-            Running = false;
-            if (StateMachine is FlowStateMachine<FarmerPhase> flowOff)
-            {
-                flowOff.Reset();
-            }
-
-            pathfinder.Stop();
+            StopInternal();
             return;
         }
 
@@ -78,8 +82,26 @@ public class MobFarmerService
             return;
         }
 
+        if (!zones.GetZone().IsOccultCrescentZone())
+        {
+            StopInternal();
+            BocchiChat.Print(chat, uiConfig, translator.T(".automation.mob_farmer.off_left_zone"));
+            return;
+        }
+
         // Always tick the phase machine while running — even with an empty scan list —
         // so Fighting can return to Waiting after the last mob dies/despawns.
         StateMachine.Update();
+    }
+
+    private void StopInternal()
+    {
+        Running = false;
+        if (StateMachine is FlowStateMachine<FarmerPhase> flowOff)
+        {
+            flowOff.Reset();
+        }
+
+        pathfinder.Stop();
     }
 }

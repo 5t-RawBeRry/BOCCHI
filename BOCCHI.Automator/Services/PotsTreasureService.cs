@@ -152,17 +152,19 @@ public class PotsTreasureService
             return;
         }
 
+        // Leave OC: Automator.Update also turns the mode off; do not Toggle here (race flips it back on).
+        if (!zones.GetZone().IsOccultCrescentZone())
+        {
+            SoftPauseMovement();
+            return;
+        }
+
         hunter.ManagedByPotsTreasure = true;
         CaptureFinishedTreasureHunt();
 
         if (Paused)
         {
             SoftPauseMovement();
-            return;
-        }
-
-        if (!zones.GetZone().IsOccultCrescentZone())
-        {
             return;
         }
 

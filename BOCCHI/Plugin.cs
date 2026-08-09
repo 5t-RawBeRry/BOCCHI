@@ -41,10 +41,8 @@ using Ocelot.Windows;
 using System.Reflection;
 using BOCCHI.Services.MOTD;
 using BOCCHI.Services.Shopping;
-using Ocelot.Lifecycle;
-#if DEBUG
 using BOCCHI.Debug;
-#endif
+using Ocelot.Lifecycle;
 
 namespace BOCCHI;
 
@@ -122,10 +120,7 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.LoadTreasureModule();
 
         services.AddBocchiCommands();
-
-#if DEBUG
         services.LoadDebugModule();
-#endif
     }
 
     private static void BootstrapOcelotModules(IServiceCollection services)

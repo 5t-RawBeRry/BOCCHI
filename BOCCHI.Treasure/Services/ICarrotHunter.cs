@@ -8,7 +8,8 @@ public enum CarrotHuntPhase
     WaitingForBunny = 3,
     OpeningBunny = 4,
     ApproachingAetheryte = 5,
-    Teleporting = 6
+    Teleporting = 6,
+    Returning = 7
 }
 
 public interface ICarrotHunter

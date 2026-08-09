@@ -212,15 +212,21 @@ public class Automator
 
     public void Update()
     {
-        if (!IsActive || SuspendedForTreasure)
+        if (!IsActive)
         {
             return;
         }
 
-        // Zone lock: never keep automating outside Occult Crescent (and don't auto-resume on return).
+        // Zone lock even while suspended for treasure — leaving OC must fully turn the mode off
+        // (Pots & Treasure hunt phase sets SuspendedForTreasure, which used to skip this).
         if (!zones.GetZone().IsOccultCrescentZone())
         {
             DisableDueToLeavingOccultCrescent();
+            return;
+        }
+
+        if (SuspendedForTreasure)
+        {
             return;
         }
 

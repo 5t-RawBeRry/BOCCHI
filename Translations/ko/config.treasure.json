@@ -26,7 +26,7 @@
     },
     "return_to_base_camp_after_hunt": {
       "label": "헌트 후 귀환",
-      "tooltip": "경로의 마지막 상자 뒤, 베이스캠프로 귀환합니다."
+      "tooltip": "트레저 헌트의 마지막 상자 뒤, 또는 캐럿 헌트 경로가 끝난 뒤 베이스캠프로 귀환합니다."
     },
     "play_sound_on_hunt_complete": {
       "label": "헌트 끝나면 소리 재생",

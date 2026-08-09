@@ -127,7 +127,8 @@ public class NorthHorn
 
     public override List<ActivityData> GetCriticalEncounterData() =>
     [
-        new(56, new(230f, 15f, 355f), 25f, AreaShape: ActivityAreaShape.Square), // A Beast Unleashed (map 26.1, 28.6)
+        // Center from in-game stand on the blue box; half-extent = registration (not hazard platform).
+        new(56, new(237.91f, 15f, 351.69f), 16f, AreaShape: ActivityAreaShape.Square), // A Beast Unleashed
         new(63, new(500f, 56f, -310f), 27f), // Accept No Imitators (red ≈ registration rim)
         new(62, new(-82f, 12f, 485f), 20f), // Ahead of the Competition
         new(59, new(807f, 61f, -562f), 20f), // Appalling Behavior

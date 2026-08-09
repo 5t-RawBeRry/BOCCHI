@@ -26,7 +26,7 @@
     },
     "return_to_base_camp_after_hunt": {
       "label": "Return after hunt",
-      "tooltip": "Cast Return to base camp after the last coffer on the route."
+      "tooltip": "Cast Return to base camp after Treasure Hunt finishes the last coffer, or after Carrot Hunt finishes its route."
     },
     "play_sound_on_hunt_complete": {
       "label": "Play sound when hunt finishes",

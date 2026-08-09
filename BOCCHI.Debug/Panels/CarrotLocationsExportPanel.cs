@@ -251,7 +251,7 @@ public sealed class CarrotLocationsExportPanel
     private static CarrotData? FindNearestAuthored(Vector3 position, List<CarrotData> authored)
     {
         CarrotData? best = null;
-        float bestDistSq = CarrotHuntDistances.MatchRadiusSq;
+        float bestDistSq = HuntDistances.MatchRadiusSq;
         foreach (CarrotData pad in authored)
         {
             float distSq = Vector3.DistanceSquared(position, pad.Position);

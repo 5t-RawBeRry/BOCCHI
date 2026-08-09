@@ -1,5 +1,6 @@
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
+using BOCCHI.Debug;
 using Dalamud.Plugin.Services;
 using Ocelot.Rotation.Services.BossMod;
 using Ocelot.Services.Commands;
@@ -10,6 +11,7 @@ namespace BOCCHI.Commands;
 
 public class DebugCommand
 (
+    IDebugWindow debugWindow,
     BossModRotationService bossModRotation,
     IPlayer player,
     IChatGui chat,
@@ -21,13 +23,11 @@ public class DebugCommand
 
     public override List<string> Aliases => [];
 
-    public override bool Hidden => true;
-
     public override void Execute(CommandContext context)
     {
         if (context.Args.Length == 0)
         {
-            chat.PrintError("Usage: /bocchi debug ai-preset");
+            debugWindow.Toggle();
             return;
         }
 
@@ -37,8 +37,17 @@ public class DebugCommand
             case "make-ai-preset":
                 MakeAiPreset();
                 break;
+            case "open":
+                debugWindow.IsOpen = true;
+                break;
+            case "close":
+                debugWindow.IsOpen = false;
+                break;
+            case "toggle":
+                debugWindow.Toggle();
+                break;
             default:
-                chat.PrintError("Unknown argument. Try: ai-preset");
+                chat.PrintError("Usage: /bocchi debug [open|close|toggle|ai-preset]");
                 break;
         }
     }

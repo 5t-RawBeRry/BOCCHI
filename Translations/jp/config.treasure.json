@@ -26,7 +26,7 @@
     },
     "return_to_base_camp_after_hunt": {
       "label": "ハント後にデジョン",
-      "tooltip": "ルート上の最後の宝箱のあと、ベースキャンプへデジョンします。"
+      "tooltip": "トレジャーハントの最後の宝箱のあと、またはキャロットハントのルート完了後に、ベースキャンプへデジョンします。"
     },
     "play_sound_on_hunt_complete": {
       "label": "ハント完了時に音を鳴らす",

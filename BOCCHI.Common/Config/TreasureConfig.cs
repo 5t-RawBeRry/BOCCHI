@@ -36,7 +36,7 @@ public class TreasureConfig : IAutoConfig
     [Checkbox(Order = 7, Section = "hunt")]
     public bool CastTreasureSightDuringHunt { get; set; } = true;
 
-    /// <summary>Recast Treasure Sight every N coffer stops after the opening cast.</summary>
+    /// <summary>Recast Treasure Sight every N coffers after the opening cast.</summary>
     [IntRange(1, 50, Order = 8, Section = "hunt")]
     public int TreasureSightEveryNLocations { get; set; } = 10;
 

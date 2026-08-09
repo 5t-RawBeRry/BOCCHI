@@ -79,6 +79,13 @@ public class TreasureRenderer
             return;
         }
 
+        // Carrot Hunt owns the section — don't offer Start Hunt beside an active carrot run.
+        if (carrotHunter.Running)
+        {
+            ImGui.TextWrapped(translator.T(".treasure.managed_by_carrot"));
+            return;
+        }
+
         if (!hunter.Running)
         {
             if (ImGui.Button(translator.T(".treasure.start_hunt")))
@@ -87,7 +94,7 @@ public class TreasureRenderer
             }
 
             // Idle: Start Hunt | Start Carrot Hunt on one row.
-            if (!carrotHunter.Running && carrotHunter.IsVnavAvailable && carrotHunter.IsVnavReady)
+            if (carrotHunter.IsVnavAvailable && carrotHunter.IsVnavReady)
             {
                 ImGui.SameLine();
                 if (ImGui.Button(translator.T(".treasure.start_carrot_hunt")))
@@ -95,42 +102,41 @@ public class TreasureRenderer
                     carrotHunter.Toggle();
                 }
             }
+
+            return;
         }
-        else
+
+        if (hunter.Paused)
         {
-            if (hunter.Paused)
+            if (ImGui.Button(translator.T(".treasure.resume_hunt")))
             {
-                if (ImGui.Button(translator.T(".treasure.resume_hunt")))
-                {
-                    hunter.Resume();
-                }
-            }
-            else if (ImGui.Button(translator.T(".treasure.pause_hunt")))
-            {
-                hunter.Pause();
-            }
-
-            ImGui.SameLine();
-            if (ImGui.Button(translator.T(".treasure.stop_hunt")))
-            {
-                hunter.Toggle();
+                hunter.Resume();
             }
         }
-
-        if (hunter.Elapsed > TimeSpan.Zero)
+        else if (ImGui.Button(translator.T(".treasure.pause_hunt")))
         {
-            ui.LabelledValue(translator.T(".treasure.elapsed"), $"{hunter.Elapsed:mm\\:ss}");
+            hunter.Pause();
         }
 
+        ImGui.SameLine();
+        if (ImGui.Button(translator.T(".treasure.stop_hunt")))
+        {
+            hunter.Toggle();
+        }
+
+        ui.LabelledValue(translator.T(".treasure.elapsed"), $"{hunter.Elapsed:mm\\:ss}");
         TreasureHuntStatusUi.DrawProgress(hunter, ui, translator, config);
     }
 
     private void DrawCarrotHuntPanel()
     {
-        bool startsSharedWithHuntRow = !hunter.Running
-                                       && !carrotHunter.Running
-                                       && !hunter.ManagedByPotsTreasure
-                                       && !hunter.ManagedByIllegalModeFiller
+        // Mirror Start Hunt hiding while Carrot runs — don't offer Carrot while a coffer hunt owns the section.
+        if (hunter.Running || hunter.ManagedByPotsTreasure || hunter.ManagedByIllegalModeFiller)
+        {
+            return;
+        }
+
+        bool startsSharedWithHuntRow = !carrotHunter.Running
                                        && hunter.IsVnavAvailable
                                        && hunter.IsVnavReady
                                        && carrotHunter.IsVnavAvailable
@@ -160,14 +166,15 @@ public class TreasureRenderer
             return;
         }
 
-        if (!carrotHunter.Running)
+        if (carrotHunter.Running)
         {
-            if (!startsSharedWithHuntRow && ImGui.Button(translator.T(".treasure.start_carrot_hunt")))
+            if (ImGui.Button(translator.T(".treasure.stop_carrot_hunt")))
             {
                 carrotHunter.Toggle();
             }
         }
-        else if (ImGui.Button(translator.T(".treasure.stop_carrot_hunt")))
+        else if (!startsSharedWithHuntRow
+                 && ImGui.Button(translator.T(".treasure.start_carrot_hunt")))
         {
             carrotHunter.Toggle();
         }

@@ -19,7 +19,7 @@ public class DrawCEs(IOverlayRenderer overlay, ICriticalEncounterRepository ces,
         {
             float padded = ce.Radius;
             float yellow = NavigationConstants.CriticalEncounterYellowRadius(padded);
-            float red = NavigationConstants.CriticalEncounterRedRadius(padded);
+            float red = NavigationConstants.CriticalEncounterRedRadius(padded, ce.AreaShape);
             // Cyan = preferred stand / path target. Red = registration edge (in-zone).
             float stand = NavigationConstants.CriticalEncounterStandRadius(red, ce.AreaShape);
 

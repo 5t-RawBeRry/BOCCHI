@@ -1,5 +1,6 @@
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Services;
 using Dalamud.Plugin.Services;
 using Ocelot.Rotation.Services.BossMod;
 using Ocelot.Services.PlayerState;
@@ -12,7 +13,9 @@ public class AutoRotationController(
     AutomatorConfig config,
     UIConfig uiConfig,
     IPlayer player,
-    IChatGui chat
+    IChatGui chat,
+    ICriticalEncounterContext criticalEncounters,
+    IFateContext fates
 )
 {
     public void PrepareForIllegalMode()
@@ -26,6 +29,9 @@ public class AutoRotationController(
         {
             PrintNotReady();
         }
+
+        // Hot reload mid-CE/FATE: Enter may have already run (or EventId lags). Arm AI now.
+        SyncActivityAi();
     }
 
     public void TeardownForIllegalMode()
@@ -75,7 +81,24 @@ public class AutoRotationController(
             return;
         }
 
+        // Pathfinding Enter disables AI; if EventId already says we're in the CE/FATE,
+        // re-arm so a plugin reload mid-fight does not leave the preset inactive.
+        SyncActivityAi();
         bossMod.Refresh();
+    }
+
+    private void SyncActivityAi()
+    {
+        if (criticalEncounters.IsInCriticalEncounter())
+        {
+            bossMod.EnableForActivity(BocchiAiActivity.CriticalEncounter);
+            return;
+        }
+
+        if (fates.IsInFate())
+        {
+            bossMod.EnableForActivity(BocchiAiActivity.Fate);
+        }
     }
 
     private void PrintNotReady()

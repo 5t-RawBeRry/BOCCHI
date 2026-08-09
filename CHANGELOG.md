@@ -1,20 +1,26 @@
 # 4.0.2.21
 
+### New
+- Carrot Hunt routes like Treasure Hunt: aethernet and Return when cheaper, replan after each pad, and peel off for a chewed carrot next to you.
+- Carrot Hunt can Return to base camp when the route finishes (same setting as Treasure Hunt).
+- `/bocchi debug` toggles the debug window.
+
 ### Fixes
-- Carrot Hunt teleports via aethernet when that is faster than walking.
-- Carrot Hunt dismounts near carrots it cannot path onto (e.g. corners) and uses them from there.
-- Carrot Hunt stays for a second chewed carrot at the same pad (double spawn) before moving on.
-- Treasure Hunt no longer spams Treasure Sight or freezes when cast-during-hunt is on.
-- Treasure Hunt skips a coffer it cannot open and continues (#162).
-- Treasure Hunt progress counts up as coffers are checked (it looked like a countdown after each replan).
-- Base camp aetheryte approach stays on your side and closes into teleport range (#158).
-- Aetheryte approach no longer floor-snaps to the far side of the crystal.
-- Aetheryte approach stops on the magenta (teleport) ring, not the outer cyan idle ring.
-- Leaving camp to teleport walks into the magenta ring instead of idling outside cyan.
-- Travel no longer soft-pauses Illegal Mode when a path step is canceled mid-route (it replans instead).
-- Long same-shard trips go via the aetheryte pad instead of a fake “cheap” cross-map walk (e.g. Waved Away).
-- A Beast Unleashed uses the authored registration area again.
-- Circular CE debug: red = registration edge, cyan = stand/wait spot inside it; Accept No Imitators / Doubled Trouble radii match the rim better.
-- FATEs dismount when you enter the event, same as critical encounters.
-- Illegal Mode switches to a critical encounter if one opens while you are still traveling to a non-pot FATE (and finishes the FATE if you are already in it).
-- Leaving Occult Crescent turns Illegal Mode (and related modes) fully off instead of keeping them on to resume when you return.
+- Carrot Hunt walks in close enough to use Fortune Carrot / open bunny chests, dismounts at awkward pads, and stays for double spawns.
+- Carrot Hunt no longer Returns when a chewed carrot is right next to you.
+- Treasure Hunt no longer spams Treasure Sight or freezes with cast-during-hunt on.
+- Treasure Hunt skips coffers it cannot open and continues (#162).
+- Treasure Hunt progress counts up as coffers are checked (it looked like a countdown).
+- Treasure Hunt / radar: every live coffer shows again; empty pads skip sooner when the area is loaded; less likely to skip a pad that still has a chest.
+- Treasure Hunter UI hides Start Hunt while Carrot Hunt is running, and hides Carrot Hunt while a coffer hunt is running.
+- Aetheryte approach stays on your side and stops on the teleport ring (#158); camp idle waits inside the ring again.
+- Long same-shard trips use the aetheryte instead of a fake cross-map walk (e.g. Waved Away).
+- Travel canceled mid-route replans instead of soft-pausing Illegal Mode.
+- Illegal Mode switches to a critical encounter that opens while traveling to a non-pot FATE (and finishes a FATE you’re already in).
+- FATEs dismount on enter, same as critical encounters.
+- Leaving Occult Crescent turns all automation modes fully off (no auto-resume on return).
+- Reloading mid-CE and turning Illegal Mode back on re-enables BOCCHI AI for that fight.
+- A Beast Unleashed uses the correct registration area and arena center.
+- Pots & Treasure mounts when a treasure hunt starts from base camp.
+- No more “Invalid target” flash when mounting right after an aethernet teleport.
+- Treasure Nearby list no longer crashes on odd coffer ids that aren’t in the game sheet.

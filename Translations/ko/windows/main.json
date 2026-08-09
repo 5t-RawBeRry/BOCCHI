@@ -151,7 +151,8 @@
       "not_engaged": "전투 안 함",
       "engaged": "전투 중",
       "selected_mobs": "선택한 적",
-      "configure_mobs": "적은 /bocchi config → 몹 파머에서 고르세요."
+      "configure_mobs": "적은 /bocchi config → 몹 파머에서 고르세요.",
+      "off_left_zone": "[BOCCHI] 오컬트 크레센트를 떠나 몹 파머 꺼짐"
     },
     "pots_treasure": {
       "start": "항아리 & 트레저 시작",
@@ -200,6 +201,8 @@
     "pause_hunt": "일시 정지",
     "resume_hunt": "재개",
     "stop_hunt": "헌트 중지",
+    "off_left_zone": "[BOCCHI] 오컬트 크레센트를 떠나 트레저 헌트 꺼짐",
+    "carrot_hunt_off_left_zone": "[BOCCHI] 오컬트 크레센트를 떠나 캐럿 헌트 꺼짐",
     "paused": "일시 정지됨",
     "waiting_safe_window": "안전한 날씨 대기",
     "waiting_safe_window_detail": "사우스 혼의 애쉬킨 시간대 또는 위험한 날씨 때문에 트레저 헌트가 일시 정지됩니다. 창이 끝나면 자동으로 재개됩니다(트레저 설정의 위험 날씨 창 건너뛰기를 끌 수도 있습니다).",
@@ -211,6 +214,7 @@
     "recalculate_route_tooltip": "현재 위치에서 트레저 헌트 경로를 다시 계산합니다",
     "managed_by_pots": "헌트는 항아리 & 트레저가 관리합니다 — 시작/중지는 그쪽에서 하세요.",
     "managed_by_illegal_mode": "헌트는 불법 모드가 관리합니다 (활동 사이에 실행).",
+    "managed_by_carrot": "캐럿 헌트 실행 중 — 아래에서 중지한 뒤 트레저 헌트를 시작하세요.",
     "distance_to_chest": "상자까지 거리",
     "nearby_title": "주변 보물상자",
     "none_nearby": "주변에 보물상자가 없습니다.",
@@ -232,7 +236,8 @@
       "waiting_for_bunny": "버니 상자 대기",
       "opening_bunny": "버니 상자 열기",
       "approaching_aetheryte": "에테라이트로 이동",
-      "teleporting": "에테르네트 텔레포트"
+      "teleporting": "에테르네트 텔레포트",
+      "returning": "베이스캠프 귀환 중"
     }
   }
 }

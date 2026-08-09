@@ -17,8 +17,8 @@ public interface IHuntRoutePlanner
 }
 
 /// <summary>
-///     Open-path TSP via nearest-neighbor (W3Schools greedy): from the player / preferred
-///     coffer, always visit the cheapest remaining node next. Re-solved on every FindPath.
+///     Open-path nearest-neighbor TSP: from the player / preferred coffer, always visit
+///     the cheapest remaining node next. Re-solved on every FindPath.
 /// </summary>
 public abstract class HuntRoutePlanner
 (
@@ -32,7 +32,18 @@ public abstract class HuntRoutePlanner
     /// </summary>
     public const float AethernetHopCost = 50f;
 
+    /// <summary>
+    ///     Yalm-equivalent cost for casting Return (aligned with Illegal Mode's ReturnCost).
+    /// </summary>
+    public const float ReturnCost = 40f;
+
     private HuntNodeDataSchema data = new();
+
+    private HuntAethernet BaseCampAethernet => zoneId switch
+    {
+        ZoneId.NorthHorn => HuntAethernet.NorthHornBaseCamp,
+        _ => HuntAethernet.BaseCamp,
+    };
 
     public HuntPathfinderState State { get; private set; } = HuntPathfinderState.None;
 
@@ -74,7 +85,6 @@ public abstract class HuntRoutePlanner
             steps.AddRange(segment);
         }
 
-        PrintPath(steps);
         State = HuntPathfinderState.PathfindingDone;
         return Task.FromResult(steps);
     }
@@ -97,7 +107,7 @@ public abstract class HuntRoutePlanner
         State = HuntPathfinderState.FileLoaded;
     }
 
-    /// <summary>Walk or aethernet only — never mid-route Return.</summary>
+    /// <summary>Cheapest of walk, aethernet hop, or Return (+ optional aethernet from camp).</summary>
     protected (float Cost, List<HuntPathfinderStep> Steps) GetBestSteps(uint fromId, uint toId)
     {
         float bestCost = float.MaxValue;
@@ -138,6 +148,52 @@ public abstract class HuntRoutePlanner
             }
         }
 
+        HuntAethernet baseCamp = BaseCampAethernet;
+        if (data.AethernetToNodeDistances.TryGetValue(baseCamp, out List<HuntToNode>? fromBaseList))
+        {
+            HuntToNode walkFromBase = fromBaseList.FirstOrDefault(x => x.Id == toId);
+            if (walkFromBase.Id == toId)
+            {
+                float returnWalkCost = ReturnCost + walkFromBase.Distance;
+                if (returnWalkCost < bestCost)
+                {
+                    bestCost = returnWalkCost;
+                    bestSteps =
+                    [
+                        HuntPathfinderStep.ReturnToBaseCamp(),
+                        HuntPathfinderStep.WalkToDestination(toId)
+                    ];
+                }
+            }
+        }
+
+        // Return lands at base camp — optional aethernet hop from there to a closer shard.
+        foreach ((HuntAethernet aethernet, List<HuntToNode> list) in data.AethernetToNodeDistances)
+        {
+            if (aethernet == baseCamp)
+            {
+                continue;
+            }
+
+            HuntToNode to = list.FirstOrDefault(x => x.Id == toId);
+            if (to.Id != toId)
+            {
+                continue;
+            }
+
+            float cost = ReturnCost + AethernetHopCost + to.Distance;
+            if (cost < bestCost)
+            {
+                bestCost = cost;
+                bestSteps =
+                [
+                    HuntPathfinderStep.ReturnToBaseCamp(),
+                    HuntPathfinderStep.TeleportToAethernet(aethernet),
+                    HuntPathfinderStep.WalkToDestination(toId)
+                ];
+            }
+        }
+
         if (bestSteps.Count == 0)
         {
             // Fallback when bake data is missing a pair — walk via destination id only.
@@ -170,7 +226,7 @@ public abstract class HuntRoutePlanner
     }
 
     /// <summary>
-    ///     W3Schools greedy TSP: from the current node, always append the nearest unvisited neighbor.
+    ///     Nearest-neighbor TSP: from the current node, always append the cheapest unvisited neighbor.
     ///     Open path — does not return to the start.
     /// </summary>
     private static List<uint> SolveTspNearestNeighbor(
@@ -218,36 +274,6 @@ public abstract class HuntRoutePlanner
         }
 
         return route;
-    }
-
-    private void PrintPath(List<HuntPathfinderStep> steps)
-    {
-        log.Debug("== Treasure Hunt Steps ==");
-
-        int index = 1;
-        int treasureCount = 0;
-
-        foreach (HuntPathfinderStep step in steps)
-        {
-            string message = step.Type switch
-            {
-                HuntPathfinderStepType.WalkToNode => $"[{index}] Walk to Destination: {step.NodeId}",
-                HuntPathfinderStepType.WalkToAethernet => $"[{index}] Walk to Aethernet: {step.Aethernet}",
-                HuntPathfinderStepType.TeleportToAethernet => $"[{index}] Teleport to Aethernet: {step.Aethernet}",
-                HuntPathfinderStepType.ReturnToBaseCamp => $"[{index}] Return to Base Camp",
-                var _ => $"[{index}] Unknown Step Type"
-            };
-
-            if (step.Type == HuntPathfinderStepType.WalkToNode)
-            {
-                treasureCount++;
-            }
-
-            log.Debug(message);
-            index++;
-        }
-
-        log.Debug($"== Total treasures visited: {treasureCount} ==");
     }
 
     private static string GetDataFile(IDalamudPluginInterface plugin, ZoneId zoneId, string filename)

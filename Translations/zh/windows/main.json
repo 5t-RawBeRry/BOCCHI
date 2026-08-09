@@ -151,7 +151,8 @@
       "not_engaged": "未在战斗",
       "engaged": "战斗中",
       "selected_mobs": "已选敌人",
-      "configure_mobs": "请在 /bocchi config → 刷怪 中选择敌人。"
+      "configure_mobs": "请在 /bocchi config → 刷怪 中选择敌人。",
+      "off_left_zone": "[BOCCHI] 已离开神典石 — 刷怪已关闭"
     },
     "pots_treasure": {
       "start": "开始魔法罐与寻宝",
@@ -200,6 +201,8 @@
     "pause_hunt": "暂停",
     "resume_hunt": "继续",
     "stop_hunt": "停止寻宝",
+    "off_left_zone": "[BOCCHI] 已离开神典石 — 寻宝已关闭",
+    "carrot_hunt_off_left_zone": "[BOCCHI] 已离开神典石 — 胡萝卜狩猎已关闭",
     "paused": "已暂停",
     "waiting_safe_window": "等待安全天气",
     "waiting_safe_window_detail": "南角的灰灵时段或不安全天气期间，寻宝已暂停。窗口结束后会自动继续（也可在寻宝设置中关闭“跳过不安全的寻宝时段”）。",
@@ -211,6 +214,7 @@
     "recalculate_route_tooltip": "从当前位置重新规划寻宝路线",
     "managed_by_pots": "寻宝当前由“魔法罐与寻宝”控制 —— 请在该处开始或停止。",
     "managed_by_illegal_mode": "寻宝当前由违规模式控制（在活动之间运行）。",
+    "managed_by_carrot": "胡萝卜狩猎进行中 — 请先在下方停止后再开始寻宝。",
     "distance_to_chest": "距宝箱距离",
     "nearby_title": "附近的宝箱",
     "none_nearby": "附近没有宝箱。",
@@ -232,7 +236,8 @@
       "waiting_for_bunny": "等待兔子宝箱",
       "opening_bunny": "开启兔子宝箱",
       "approaching_aetheryte": "走向以太之光",
-      "teleporting": "以太网络传送中"
+      "teleporting": "以太网络传送中",
+      "returning": "返回调查队营地"
     }
   }
 }

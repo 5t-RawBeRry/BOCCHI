@@ -1,5 +1,6 @@
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using Ocelot.Actions;
 using Ocelot.Extensions;
 using System.Numerics;
@@ -37,6 +38,16 @@ public static class MountWait
             return true;
         }
 
+        // Right after aethernet / zone change the aetheryte is often still targeted and
+        // the client rejects Mount with "Invalid target."
+        if (conditions[ConditionFlag.BetweenAreas]
+            || conditions[ConditionFlag.BetweenAreas51]
+            || conditions[ConditionFlag.OccupiedInCutSceneEvent]
+            || conditions[ConditionFlag.Casting])
+        {
+            return true;
+        }
+
         if (objects.LocalPlayer is not { } player)
         {
             return true;
@@ -46,8 +57,16 @@ public static class MountWait
     }
 
     /// <param name="preferredMountId">Mount sheet row ID; 0 = Mount Roulette.</param>
-    public static void TryCast(uint preferredMountId = 0)
+    public static unsafe void TryCast(uint preferredMountId = 0)
     {
+        // Mount needs no target; leftover aetheryte/NPC target after Lifestream → "Invalid target."
+        TargetSystem* targets = TargetSystem.Instance();
+        if (targets != null)
+        {
+            targets->Target = null;
+            targets->SoftTarget = null;
+        }
+
         Ocelot.Actions.Action mount = Actions.Mount(preferredMountId);
         if (mount.CanCast())
         {

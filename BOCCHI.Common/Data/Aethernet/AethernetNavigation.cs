@@ -103,15 +103,11 @@ public static class AethernetNavigation
             });
     }
 
-    /// <summary>Idle can stop once within the cyan outer ring (or closer).</summary>
+    /// <summary>Idle can stop once at or inside the drawn cyan ring (no pad past it).</summary>
     public static bool IsWithinIdleWait(this IZone zone, Vector3 position)
     {
         return zone.EnumerateAetherytes()
-            .Any(aetheryte =>
-            {
-                float stopRadius = aetheryte.GetIdleOuterRadius() + PathfindArrivalRadius + 0.5f;
-                return position.Distance2D(aetheryte.Position) <= stopRadius;
-            });
+            .Any(aetheryte => position.Distance2D(aetheryte.Position) <= aetheryte.GetIdleOuterRadius());
     }
 
     /// <summary>Idle wait spots on the approach side of the crystal (avoid walking around it).</summary>
@@ -123,11 +119,12 @@ public static class AethernetNavigation
             yield break;
         }
 
+        // Keep targets inside cyan after PathfindArrivalRadius so idle does not stop outside the ring.
         float inner = nearest.GetBodyRadius() + 0.25f;
-        float outer = nearest.GetIdleOuterRadius();
+        float outer = nearest.GetIdleOuterRadius() - PathfindArrivalRadius;
         if (outer <= inner)
         {
-            outer = inner + EdgeClearance;
+            outer = inner + MathF.Max(0.5f, EdgeClearance - PathfindArrivalRadius);
         }
 
         yield return nearest.GetIdleWaitPosition(from);
@@ -148,7 +145,7 @@ public static class AethernetNavigation
             float angle = baseAngle + ((i - (steps / 2)) * (MathF.PI / 6f));
             yield return crystal + new Vector3(
                 MathF.Cos(angle) * radius,
-                0f,
+                crystal.Y,
                 MathF.Sin(angle) * radius);
         }
     }

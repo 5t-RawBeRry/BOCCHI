@@ -9,8 +9,6 @@ public sealed class Carrot(IGameObject obj)
 
     public ulong GameObjectId => obj.GameObjectId;
 
-    public IGameObject Object => obj;
-
     public bool IsValid() => obj is { IsDead: false } && obj.IsValid();
 
     public Vector3 GetPosition() => obj.Position;
