@@ -223,7 +223,7 @@
     "carrot_hunt_phase": "Phase",
     "fortune_carrots": "Fortune Carrots",
     "carrot_hunt_phases": {
-      "idle": "Waiting for a nearby chewed carrot",
+      "idle": "Touring chewed-carrot pads",
       "pathing": "Walking to carrot",
       "using_item": "Using Fortune Carrot",
       "waiting_for_bunny": "Waiting for bunny chest",

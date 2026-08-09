@@ -223,7 +223,7 @@
     "carrot_hunt_phase": "단계",
     "fortune_carrots": "포춘 캐럿",
     "carrot_hunt_phases": {
-      "idle": "근처 갉아 먹은 당근 대기",
+      "idle": "갉아 먹은 당근 순회 중",
       "pathing": "당근으로 이동",
       "using_item": "포춘 캐럿 사용",
       "waiting_for_bunny": "버니 상자 대기",

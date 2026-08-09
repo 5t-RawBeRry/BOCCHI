@@ -223,7 +223,7 @@
     "carrot_hunt_phase": "フェーズ",
     "fortune_carrots": "フォーチュンキャロット",
     "carrot_hunt_phases": {
-      "idle": "近くの噛まれたニンジン待ち",
+      "idle": "噛まれたニンジンを巡回中",
       "pathing": "ニンジンへ移動中",
       "using_item": "フォーチュンキャロット使用",
       "waiting_for_bunny": "バニーチェスト待ち",

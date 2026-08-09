@@ -223,7 +223,7 @@
     "carrot_hunt_phase": "阶段",
     "fortune_carrots": "幸运胡萝卜",
     "carrot_hunt_phases": {
-      "idle": "等待附近被啃过的胡萝卜",
+      "idle": "巡回被啃过的胡萝卜",
       "pathing": "走向胡萝卜",
       "using_item": "使用幸运胡萝卜",
       "waiting_for_bunny": "等待兔子宝箱",
