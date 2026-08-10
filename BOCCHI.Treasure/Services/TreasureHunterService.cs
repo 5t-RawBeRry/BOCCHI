@@ -63,9 +63,6 @@ public class TreasureHunterService
     ITranslator<MainWindow> translator
 ) : ITreasureHunter, IOnUpdate, IOnStop
 {
-    /// <summary>Tight layout↔live match (pad vs object).</summary>
-    private const float ChestSearchRadius = 25f;
-
     /// <summary>Start open attempts once this close to the coffer (yalms).</summary>
     private const float CofferOpenAttemptRadius = 75f;
 
@@ -201,7 +198,6 @@ public class TreasureHunterService
             return;
         }
 
-        // Divert before Sight — casting Sight used to block peeling off to a live coffer next to you.
         if (TryReprioritizeNearbyLiveCoffer())
         {
             return;
@@ -229,8 +225,7 @@ public class TreasureHunterService
             return;
         }
 
-        // Teleport/return handlers must observe completed chains before we clear them.
-        // Clearing first re-starts the same teleport forever.
+        // Observe completed teleport/return chains before clearing (else the hop restarts).
         if (TryAdvanceCurrentStep())
         {
             HuntPathfinderStep completed = steps[StepIndex];
@@ -243,7 +238,6 @@ public class TreasureHunterService
                 walkVias.Clear();
                 walkViaIndex = 0;
                 StepDistance = 0f;
-                // Fresh nearest-neighbor from here after every open / empty skip completion.
                 RecalculateRoute();
                 if (activeChain is { IsCompleted: true })
                 {
@@ -577,10 +571,7 @@ public class TreasureHunterService
         stuckNudgeIssued = false;
     }
 
-    /// <summary>
-    /// Live-first: pick a remaining layout node for the closest unopened coffer near the player
-    /// (layout-first matching walked past bronzes the Nearby list already showed).
-    /// </summary>
+    /// <summary>Closest remaining layout node for an unopened live coffer near the player.</summary>
     private uint? FindPreferredLiveNearbyNode(IReadOnlyList<uint> validNodes)
     {
         if (validNodes.Count == 0)
@@ -643,7 +634,6 @@ public class TreasureHunterService
                 continue;
             }
 
-            // 2D pad match — Y noise from cliffs was rejecting real pads.
             float dist2d = layout.Position.Distance2D(livePosition);
             float dist2dSq = dist2d * dist2d;
             if (dist2dSq > bestDistSq)
@@ -658,10 +648,7 @@ public class TreasureHunterService
         return bestId;
     }
 
-    /// <summary>
-    /// Mid-route: if a live remaining coffer sits near the player while the current target is far
-    /// (or we are mid Return / aethernet), recalculate so FindPath starts on that coffer.
-    /// </summary>
+    /// <summary>Divert mid-route when a nearer live coffer remains (including Return / aethernet).</summary>
     private bool TryReprioritizeNearbyLiveCoffer()
     {
         if (planningRoute || pathPlanner != null || activeChain != null)
@@ -684,7 +671,6 @@ public class TreasureHunterService
             return false;
         }
 
-        // Use final coffer distance — StepDistance is often a via-point mid path-override.
         float currentDist;
         if (current.Type == HuntPathfinderStepType.WalkToNode)
         {
@@ -699,7 +685,6 @@ public class TreasureHunterService
             currentDist = float.MaxValue;
         }
 
-        // Any unchecked valid node — not only what's left in the current step list.
         List<uint> candidates = GetValidNodesForNextPlan();
         if (current.Type == HuntPathfinderStepType.WalkToNode)
         {
@@ -1007,18 +992,14 @@ public class TreasureHunterService
             return false;
         }
 
-        // Presence: don't require IsTargetable (often false until inside interact range).
         IGameObject? present = FindTreasureForLayout(layoutDestination, step.NodeId)
                                ?? FindUnopenedTreasureNear(layoutDestination, HuntDistances.MatchRadius);
 
-        // Prefer live object position when the coffer is already in the object table (same source Umbra markers use).
         Vector3 destination = present?.Position ?? layoutDestination;
 
         float dist2d = player.Position.Distance2D(destination);
         StepDistance = dist2d;
 
-        // Empty / unspawned (Umbra-style object table): once the area is streamed and no
-        // unopened Treasure sits on the pad, leave without walking onto the spot.
         if (present == null)
         {
             if (CanTrustEmptyPad(layoutDestination) && ConfirmEmptyPad(step.NodeId))
@@ -1347,10 +1328,7 @@ public class TreasureHunterService
                && FindUnopenedTreasureNear(layoutDestination, HuntDistances.MatchRadius) == null;
     }
 
-    /// <summary>
-    /// True when the client should already know whether a coffer is on this pad:
-    /// player close enough, or any Treasure already streamed near the pad (Umbra source).
-    /// </summary>
+    /// <summary>True when the object table should already know if this pad has a coffer.</summary>
     private bool CanTrustEmptyPad(Vector3 layoutDestination)
     {
         if (player.Position.Distance2D(layoutDestination) <= HuntDistances.EmptyPadSkipRadius)
@@ -1408,7 +1386,7 @@ public class TreasureHunterService
     /// </summary>
     private IGameObject? FindTreasureForLayout(Vector3 layoutDestination, uint nodeId)
     {
-        IGameObject? close = FindTreasureNear(layoutDestination, ChestSearchRadius);
+        IGameObject? close = FindTreasureNear(layoutDestination, HuntDistances.LayoutProximityRadius);
         if (close != null)
         {
             return close;
@@ -1433,7 +1411,7 @@ public class TreasureHunterService
         float toNearest = nearest.Id != 0
             ? nearest.Position.Distance2D(drifted.Position)
             : float.MaxValue;
-        if (toThis <= ChestSearchRadius || toThis <= toNearest + 8f)
+        if (toThis <= HuntDistances.LayoutProximityRadius || toThis <= toNearest + 8f)
         {
             return drifted;
         }
@@ -1546,7 +1524,7 @@ public class TreasureHunterService
 
                 uint treasureRowId = Unsafe.Read<uint>((byte*)instance + 0x30);
                 uint sgbId = data.GetExcelSheet<TreasureSheet>().GetRow(treasureRowId).SGB.RowId;
-                if (sgbId != 1596 && sgbId != 1597)
+                if (!TreasureCoffer.IsBronzeOrSilverSgb(sgbId))
                 {
                     continue;
                 }

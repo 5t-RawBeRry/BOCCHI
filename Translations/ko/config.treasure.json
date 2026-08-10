@@ -29,8 +29,8 @@
       "tooltip": "트레저 헌트의 마지막 상자 뒤, 또는 캐럿 헌트 경로가 끝난 뒤 베이스캠프로 귀환합니다."
     },
     "play_sound_on_hunt_complete": {
-      "label": "헌트 끝나면 소리 재생",
-      "tooltip": "트레저 헌트가 끝나면 MP3를 재생합니다."
+      "label": "트레저 헌트 끝나면 소리 재생",
+      "tooltip": "트레저 헌트가 끝나면 MP3를 재생합니다(캐럿 헌트는 사용하지 않음)."
     },
     "hunt_complete_sound": {
       "label": "헌트 완료 소리",

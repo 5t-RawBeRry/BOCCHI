@@ -29,8 +29,8 @@
       "tooltip": "Cast Return to base camp after Treasure Hunt finishes the last coffer, or after Carrot Hunt finishes its route."
     },
     "play_sound_on_hunt_complete": {
-      "label": "Play sound when hunt finishes",
-      "tooltip": "Play an MP3 when the treasure hunt finishes."
+      "label": "Play sound when Treasure Hunt finishes",
+      "tooltip": "Play an MP3 when Treasure Hunt finishes (Carrot Hunt does not use this)."
     },
     "hunt_complete_sound": {
       "label": "Hunt finished sound",

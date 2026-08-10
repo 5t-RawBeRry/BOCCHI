@@ -1,3 +1,5 @@
+using BOCCHI.Treasure.ChainRecipes;
+
 namespace BOCCHI.Treasure.Hunt;
 
 /// <summary>
@@ -10,15 +12,17 @@ public static class HuntDistances
 
     public const float MatchRadiusSq = MatchRadius * MatchRadius;
 
+    /// <summary>Tight layout↔live / authored level match (pad vs object).</summary>
+    public const float LayoutProximityRadius = 25f;
+
+    public const float LayoutProximityRadiusSq = LayoutProximityRadius * LayoutProximityRadius;
+
     /// <summary>Same-pad double-spawn recheck after opening a bunny.</summary>
     public const float SamePadRecheckRadius = 20f;
 
     public const float SamePadRecheckRadiusSq = SamePadRecheckRadius * SamePadRecheckRadius;
 
-    /// <summary>
-    /// Player within this of a pad with no live object ⇒ empty
-    /// (same object-table idea as Umbra).
-    /// </summary>
+    /// <summary>Player within this of a pad with no live object ⇒ treat as empty.</summary>
     public const float EmptyPadSkipRadius = 150f;
 
     /// <summary>
@@ -42,7 +46,8 @@ public static class HuntDistances
     public const float BunnyInteractRadius = UseRadius;
 
     /// <summary>Still try interact if slightly outside preferred open distance (coffer max interact).</summary>
-    public const float BunnyMaxInteractRadius = 2.75f; // keep aligned with OpenTreasureCofferChain.MaxInteractRange
+    /// <summary>Keep aligned with <see cref="OpenTreasureCofferChain.MaxInteractRange"/>.</summary>
+    public const float BunnyMaxInteractRadius = OpenTreasureCofferChain.MaxInteractRange;
 
     /// <summary>Dismount once this close to a carrot or bunny.</summary>
     public const float DismountRadius = 15f;

@@ -29,10 +29,16 @@ namespace BOCCHI.Treasure.Services
 {
     public class TreasureCoffer(IGameObject obj, IDataManager data)
     {
+        public const uint BronzeSgbId = 1596;
+
+        public const uint SilverSgbId = 1597;
+
         private TreasureFlags lastFlags = TreasureFlags.None;
 
         /// <summary>Treasure sheet row (shared by every bronze/silver of that type).</summary>
         public uint Id => obj.BaseId;
+
+        public static bool IsBronzeOrSilverSgb(uint sgbId) => sgbId is BronzeSgbId or SilverSgbId;
 
         /// <summary>Unique live instance id — use this to track multiple coffers of the same type.</summary>
         public ulong GameObjectId => obj.GameObjectId;
@@ -60,8 +66,7 @@ namespace BOCCHI.Treasure.Services
             return wasNotOpened && isNowOpened;
         }
 
-        // Do not require IsTargetable — coffers often stay non-targetable until you are close,
-        // and radar / nearby list should still show them (same as Umbra object-table markers).
+        // Don't require IsTargetable — often false until inside interact range.
         public bool IsValid() => obj.IsValid() && obj is { IsDead: false };
 
         public Vector3 GetPosition() => obj.Position;
@@ -82,8 +87,8 @@ namespace BOCCHI.Treasure.Services
         {
             return GetModelId() switch
             {
-                1597 => CofferType.Silver,
-                1596 => CofferType.Bronze,
+                SilverSgbId => CofferType.Silver,
+                BronzeSgbId => CofferType.Bronze,
                 var _ => CofferType.Unknown
             };
         }

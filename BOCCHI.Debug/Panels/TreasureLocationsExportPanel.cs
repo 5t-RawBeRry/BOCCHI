@@ -1,5 +1,7 @@
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph;
+using BOCCHI.Treasure.Hunt;
+using BOCCHI.Treasure.Services;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
@@ -15,10 +17,7 @@ using TreasureSheet = Lumina.Excel.Sheets.Treasure;
 
 namespace BOCCHI.Debug.Panels;
 
-/// <summary>
-///     Reads bronze/silver pads from the active layout and writes
-///     <c>treasure_locations.json</c> (carrot-export style catalog; no Worker).
-/// </summary>
+/// <summary>Exports bronze/silver layout pads to <c>treasure_locations.json</c>.</summary>
 public sealed class TreasureLocationsExportPanel
 (
     IZoneProvider zones,
@@ -30,10 +29,6 @@ public sealed class TreasureLocationsExportPanel
 ) : IDebugPanel
 {
     private const string Filename = "treasure_locations.json";
-
-    private const uint BronzeSgb = 1596;
-
-    private const uint SilverSgb = 1597;
 
     private static readonly JsonSerializerOptions WriteJson = new()
     {
@@ -78,8 +73,8 @@ public sealed class TreasureLocationsExportPanel
         }
 
         ui.LabelledValue("Layout spots", treasures.Count);
-        ui.LabelledValue("Bronze", treasures.Count(t => t.SgbId == BronzeSgb));
-        ui.LabelledValue("Silver", treasures.Count(t => t.SgbId == SilverSgb));
+        ui.LabelledValue("Bronze", treasures.Count(t => t.SgbId == TreasureCoffer.BronzeSgbId));
+        ui.LabelledValue("Silver", treasures.Count(t => t.SgbId == TreasureCoffer.SilverSgbId));
         ui.LabelledValue("Authored", authored.Count);
 
         if (treasures.Count > 0 && authored.Count > 0)
@@ -95,7 +90,7 @@ public sealed class TreasureLocationsExportPanel
                 RefreshFromLayout(zone);
                 lastError = null;
                 lastRefreshSummary =
-                    $"Loaded {treasures.Count} layout coffers ({treasures.Count(t => t.SgbId == BronzeSgb)} bronze / {treasures.Count(t => t.SgbId == SilverSgb)} silver).";
+                    $"Loaded {treasures.Count} layout coffers ({treasures.Count(t => t.SgbId == TreasureCoffer.BronzeSgbId)} bronze / {treasures.Count(t => t.SgbId == TreasureCoffer.SilverSgbId)} silver).";
             }
             catch (Exception ex)
             {
@@ -169,7 +164,7 @@ public sealed class TreasureLocationsExportPanel
             }
 
             uint sgbId = row.SGB.RowId;
-            if (sgbId is not (BronzeSgb or SilverSgb))
+            if (!TreasureCoffer.IsBronzeOrSilverSgb(sgbId))
             {
                 continue;
             }
@@ -219,32 +214,11 @@ public sealed class TreasureLocationsExportPanel
         };
 
         string json = JsonSerializer.Serialize(payload, WriteJson);
-        List<string> written = [];
-
-        string? pluginDir = plugin.AssemblyLocation.DirectoryName;
-        if (!string.IsNullOrEmpty(pluginDir))
-        {
-            string runtimePath = Path.Combine(pluginDir, "Data", zoneFolder, Filename);
-            Directory.CreateDirectory(Path.GetDirectoryName(runtimePath)!);
-            File.WriteAllText(runtimePath, json);
-            written.Add(runtimePath);
-        }
-
-        string? sourceRoot = TreasureDataPaths.FindRepoTreasureDataRoot(pluginDir);
-        if (sourceRoot != null)
-        {
-            string sourcePath = Path.Combine(sourceRoot, zoneFolder, Filename);
-            Directory.CreateDirectory(Path.GetDirectoryName(sourcePath)!);
-            File.WriteAllText(sourcePath, json);
-            written.Add(sourcePath);
-        }
-
-        if (written.Count == 0)
-        {
-            throw new InvalidOperationException("Could not resolve a Data folder to write into.");
-        }
-
-        return written;
+        return TreasureDataPaths.WriteZoneDataFile(
+            plugin.AssemblyLocation.DirectoryName,
+            zoneFolder,
+            Filename,
+            json);
     }
 
     private static int? FindAuthoredLevel(LayoutTreasure spot, List<TreasureData> authored)
@@ -256,7 +230,7 @@ public sealed class TreasureLocationsExportPanel
         }
 
         TreasureData? nearest = null;
-        float bestDistSq = 25f * 25f;
+        float bestDistSq = HuntDistances.LayoutProximityRadiusSq;
         foreach (TreasureData entry in authored)
         {
             if (entry.Position is not { } pos)

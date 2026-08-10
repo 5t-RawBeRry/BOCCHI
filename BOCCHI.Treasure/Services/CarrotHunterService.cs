@@ -276,12 +276,9 @@ public sealed class CarrotHunterService
         List<AethernetData> aetherytes = zone.GetAetherytes();
         AethernetData main = zone.GetMainAetheryte();
 
-        // Cost the hop to the live carrot when bound — authored pad can sit far from a
-        // drifted spawn, and Return (camp + 40) wrongly beat walking to a carrot next to you.
         Vector3 destination = currentTargetPosition;
         float localDist = player.Position.Distance2D(destination);
-        // Treasure never Returns for the player→first-coffer approach; keep Return for
-        // pad↔pad TourCost only. Also never Return when the target is already nearby.
+        // Keep Return for pad↔pad tour hops only — never when the target is already nearby.
         bool allowReturn = currentLiveCarrotId == null
             && localDist > HuntDistances.NearbyLiveDivertRange;
 
@@ -298,7 +295,6 @@ public sealed class CarrotHunterService
         switch (mode)
         {
             case HopMode.Return:
-                log.Debug("Carrot hunt: Return toward authored {Id}", authored.Id);
                 Phase = CarrotHuntPhase.Returning;
                 return;
 
@@ -306,31 +302,18 @@ public sealed class CarrotHunterService
                 hopDeparture = main;
                 hopArrival = arrival;
                 returnThenAethernet = true;
-                log.Debug(
-                    "Carrot hunt: Return then aethernet to {To} toward authored {Id}",
-                    arrival.Id,
-                    authored.Id);
                 Phase = CarrotHuntPhase.Returning;
                 return;
 
             case HopMode.Aethernet when departure != null && arrival != null:
                 if (AetheryteApproach.IsAlreadyAtAetheryte(arrival, player.Position))
                 {
-                    log.Debug(
-                        "Carrot hunt: already at arrival aetheryte {Id} — walking to authored {AuthoredId}",
-                        arrival.Id,
-                        authored.Id);
                     Phase = CarrotHuntPhase.Pathing;
                     return;
                 }
 
                 hopDeparture = departure;
                 hopArrival = arrival;
-                log.Debug(
-                    "Carrot hunt: aethernet hop {From} → {To} toward authored {Id}",
-                    departure.Id,
-                    arrival.Id,
-                    authored.Id);
 
                 if (AetheryteApproach.IsReadyForLifestream(zone, lifestream, player.Position)
                     && AetheryteApproach.IsAlreadyAtAetheryte(departure, player.Position))
@@ -356,7 +339,6 @@ public sealed class CarrotHunterService
             return;
         }
 
-        // Don't Return past a live chewed carrot — divert cancels the cast/chain.
         if (!returnThenStop && TryDivertToNearbyLiveCarrot())
         {
             return;
@@ -466,10 +448,6 @@ public sealed class CarrotHunterService
         if (zone.IsWithinLifestreamRange(player.Position)
             || player.Position.Distance2D(standOff) <= AethernetNavigation.PathfindArrivalRadius + 0.35f)
         {
-            log.Debug(
-                "Carrot hunt: at departure aetheryte {Id} (dist to stand-off {Dist:F1}y) — teleporting",
-                departure.Id,
-                player.Position.Distance2D(standOff));
             vnav.Stop();
             Phase = CarrotHuntPhase.Teleporting;
             return;
@@ -488,7 +466,6 @@ public sealed class CarrotHunterService
         if (hopArrival is { } arrival
             && AetheryteApproach.IsAlreadyAtAetheryte(arrival, player.Position))
         {
-            log.Debug("Carrot hunt: arrived at aetheryte {Id} — resuming path to carrot", arrival.Id);
             activeTeleportChain = null;
             ClearHop();
             Phase = CarrotHuntPhase.Pathing;
@@ -523,9 +500,6 @@ public sealed class CarrotHunterService
                 return;
             }
 
-            log.Debug(
-                "Carrot hunt: aethernet teleport to {Id} succeeded",
-                hopArrival?.Id ?? 0);
             ClearHop();
             Phase = CarrotHuntPhase.Pathing;
             return;
@@ -533,7 +507,6 @@ public sealed class CarrotHunterService
 
         vnav.Stop();
         uint placeNameId = hopArrival?.Id ?? departure.Id;
-        log.Debug("Carrot hunt: starting Lifestream teleport to PlaceNameId {Id}", placeNameId);
         activeTeleportChain = chainManager.Manage(
             chains.Create($"CarrotHunt::Teleport({placeNameId})")
                 .Then<AethernetTeleportChain, uint>(placeNameId));
@@ -552,18 +525,8 @@ public sealed class CarrotHunterService
             return;
         }
 
-        ulong? beforeBind = currentLiveCarrotId;
         MaybeBindLiveCarrot(authored);
-        if (currentLiveCarrotId is { } boundId && beforeBind != boundId)
-        {
-            log.Debug(
-                "Carrot hunt: bound live carrot {ObjId} for authored {Id}",
-                boundId,
-                authored.Id);
-        }
 
-        // Empty pad (Umbra-style object table): once the area is streamed and no unused
-        // chewed carrot sits on the pad, leave without walking onto the spot.
         if (currentLiveCarrotId == null
             && CanTrustEmptyCarrotPad(authored.Position)
             && ConfirmEmptyCarrotPad(authored.Id))
@@ -587,7 +550,6 @@ public sealed class CarrotHunterService
             ResetApproachProgress();
         }
 
-        // 2D for approach — chewed carrots often sit above the mesh (floating marker).
         float distTarget = player.Position.Distance2D(currentTargetPosition);
         if (MaybeDismountNear(distTarget))
         {
@@ -597,10 +559,6 @@ public sealed class CarrotHunterService
         if (currentLiveCarrotId != null
             && (distTarget <= HuntDistances.UseRadius || IsStuckNearTarget(distTarget)))
         {
-            log.Debug(
-                "Carrot hunt: in use range of authored {Id} ({Dist:F1}y 2D) — using Fortune Carrot",
-                authored.Id,
-                distTarget);
             vnav.Stop();
             Phase = CarrotHuntPhase.UsingItem;
             return;
@@ -770,10 +728,7 @@ public sealed class CarrotHunterService
         return false;
     }
 
-    /// <summary>
-    /// Treasure-style: re-solve nearest-neighbor TSP on remaining pads from the player
-    /// (optional preferred start = live nearby carrot pad), then begin the first hop.
-    /// </summary>
+    /// <summary>Re-solve nearest-neighbor tour on remaining pads, then begin the first hop.</summary>
     private void RecalculateAndAdvance(int? preferStartId = null)
     {
         ClearHop();
@@ -896,30 +851,19 @@ public sealed class CarrotHunterService
             Vector3 from = current.Position;
             int? nearestId = null;
             float best = float.MaxValue;
-            HopMode bestMode = HopMode.Direct;
             foreach (int id in unvisited)
             {
-                float d = TourCost(from, byId[id].Position, aetherytes, main, out HopMode mode);
+                float d = TourCost(from, byId[id].Position, aetherytes, main, out _);
                 if (d < best)
                 {
                     best = d;
                     nearestId = id;
-                    bestMode = mode;
                 }
             }
 
             if (nearestId is not int nextId)
             {
                 break;
-            }
-
-            if (bestMode != HopMode.Direct)
-            {
-                log.Debug(
-                    "Carrot hunt: hop to authored {Id} prefers {Mode} (cost {Cost:F1})",
-                    nextId,
-                    bestMode,
-                    best);
             }
 
             current = byId[nextId];
@@ -995,7 +939,6 @@ public sealed class CarrotHunterService
     {
         departure = null;
         arrival = null;
-        // 2D for walk cost — vertical noise was letting Return beat a nearby carrot.
         bestCost = from.Distance2D(to);
         HopMode bestMode = HopMode.Direct;
 
@@ -1070,10 +1013,7 @@ public sealed class CarrotHunterService
         }
     }
 
-    /// <summary>
-    /// Walk past a live chewed carrot on another authored pad → switch to that pad
-    /// (same idea as treasure hunt diverting to a nearby live coffer).
-    /// </summary>
+    /// <summary>Divert to a nearer live chewed carrot (same pad rebind or other-pad replan).</summary>
     private bool TryDivertToNearbyLiveCarrot()
     {
         if (currentAuthored is not { } current)
@@ -1124,7 +1064,6 @@ public sealed class CarrotHunterService
             return false;
         }
 
-        // Same pad: rebind to the live object (path was still aimed at authored/layout).
         if (bestPad.Id == current.Id)
         {
             if (currentLiveCarrotId == bestLive.GameObjectId)
@@ -1142,7 +1081,6 @@ public sealed class CarrotHunterService
             return true;
         }
 
-        // Different pad: only divert when it is clearly nearer than the current destination.
         if (bestDist + HuntDistances.NearbyLiveDivertClearAdvantage >= currentDist)
         {
             return false;
@@ -1154,13 +1092,12 @@ public sealed class CarrotHunterService
         }
 
         log.Information(
-            "Carrot hunt: diverting to live carrot on authored {NearbyId} at {NearbyDist:F1}y (was {CurrentId} at {CurrentDist:F1}y) — replanning TSP",
+            "Carrot hunt: diverting to live carrot on authored {NearbyId} at {NearbyDist:F1}y (was {CurrentId} at {CurrentDist:F1}y)",
             bestPad.Id,
             bestDist,
             current.Id,
             currentDist);
 
-        // Full nearest-neighbor replan starting on that pad (same as treasure RecalculateRoute).
         RecalculateAndAdvance(bestPad.Id);
         return true;
     }
@@ -1198,7 +1135,6 @@ public sealed class CarrotHunterService
             return true;
         }
 
-        // Any chewed carrot streamed near the pad ⇒ client has loaded that area.
         float trustSq = HuntDistances.EmptyPadRegionTrustRadiusSq;
         return carrots.Carrots.Any(c =>
             c.IsValid()

@@ -93,13 +93,23 @@ public class TreasureRenderer
                 hunter.Toggle();
             }
 
-            // Idle: Start Hunt | Start Carrot Hunt on one row.
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip(translator.T(".treasure.start_hunt_tooltip"));
+            }
+
+            // Idle: Start Treasure Hunt | Start Carrot Hunt on one row.
             if (carrotHunter.IsVnavAvailable && carrotHunter.IsVnavReady)
             {
                 ImGui.SameLine();
                 if (ImGui.Button(translator.T(".treasure.start_carrot_hunt")))
                 {
                     carrotHunter.Toggle();
+                }
+
+                if (ImGui.IsItemHovered())
+                {
+                    ImGui.SetTooltip(translator.T(".treasure.carrot_hunt_description"));
                 }
             }
 
@@ -130,9 +140,17 @@ public class TreasureRenderer
 
     private void DrawCarrotHuntPanel()
     {
-        // Mirror Start Hunt hiding while Carrot runs — don't offer Carrot while a coffer hunt owns the section.
-        if (hunter.Running || hunter.ManagedByPotsTreasure || hunter.ManagedByIllegalModeFiller)
+        if (hunter.ManagedByPotsTreasure || hunter.ManagedByIllegalModeFiller)
         {
+            return;
+        }
+
+        // Treasure Hunt owns the section — explain why Carrot Start is unavailable.
+        if (hunter.Running)
+        {
+            ImGui.Separator();
+            ui.Text(translator.T(".treasure.carrot_hunt_title"));
+            ImGui.TextWrapped(translator.T(".treasure.managed_by_treasure"));
             return;
         }
 
@@ -153,6 +171,7 @@ public class TreasureRenderer
 
         ImGui.Separator();
         ui.Text(translator.T(".treasure.carrot_hunt_title"));
+        ImGui.TextWrapped(translator.T(".treasure.carrot_hunt_description"));
 
         if (!carrotHunter.IsVnavAvailable)
         {

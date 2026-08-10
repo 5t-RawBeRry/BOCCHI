@@ -2,6 +2,7 @@ using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Treasure.Hunt;
+using BOCCHI.Treasure.Services;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
@@ -71,8 +72,8 @@ public sealed class TreasureHuntPrecomputePanel
 
         ImGui.SameLine();
         ui.LabelledValue("Spots", treasures.Count);
-        ui.LabelledValue("Bronze", treasures.Count(t => t.SgbId == 1596));
-        ui.LabelledValue("Silver", treasures.Count(t => t.SgbId == 1597));
+        ui.LabelledValue("Bronze", treasures.Count(t => t.SgbId == TreasureCoffer.BronzeSgbId));
+        ui.LabelledValue("Silver", treasures.Count(t => t.SgbId == TreasureCoffer.SilverSgbId));
         ui.LabelledValue("Aethernets", zone.GetAetherytes().Count);
 
         if (lastError != null)
@@ -241,7 +242,7 @@ public sealed class TreasureHuntPrecomputePanel
 
             uint treasureRowId = Unsafe.Read<uint>((byte*)instance + 0x30);
             uint sgbId = data.GetExcelSheet<TreasureSheet>().GetRow(treasureRowId).SGB.RowId;
-            if (sgbId != 1596 && sgbId != 1597)
+            if (!TreasureCoffer.IsBronzeOrSilverSgb(sgbId))
             {
                 continue;
             }
@@ -259,30 +260,11 @@ public sealed class TreasureHuntPrecomputePanel
 
     private List<string> WriteOutputs(ZoneId zoneId, string json)
     {
-        string zoneFolder = zoneId.TreasureDataFolder();
-
-        const string filename = "precomputed_treasure_hunt_data.json";
-        List<string> written = [];
-
-        string? pluginDir = plugin.AssemblyLocation.DirectoryName;
-        if (!string.IsNullOrEmpty(pluginDir))
-        {
-            string runtimePath = Path.Combine(pluginDir, "Data", zoneFolder, filename);
-            Directory.CreateDirectory(Path.GetDirectoryName(runtimePath)!);
-            File.WriteAllText(runtimePath, json);
-            written.Add(runtimePath);
-        }
-
-        string? sourceRoot = TreasureDataPaths.FindRepoTreasureDataRoot(pluginDir);
-        if (sourceRoot != null)
-        {
-            string sourcePath = Path.Combine(sourceRoot, zoneFolder, filename);
-            Directory.CreateDirectory(Path.GetDirectoryName(sourcePath)!);
-            File.WriteAllText(sourcePath, json);
-            written.Add(sourcePath);
-        }
-
-        return written;
+        return TreasureDataPaths.WriteZoneDataFile(
+            plugin.AssemblyLocation.DirectoryName,
+            zoneId.TreasureDataFolder(),
+            "precomputed_treasure_hunt_data.json",
+            json);
     }
 
     private static float PathLength(List<Vector3> path)

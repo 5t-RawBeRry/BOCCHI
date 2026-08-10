@@ -12,10 +12,7 @@ using System.Text.Json.Serialization;
 
 namespace BOCCHI.Debug.Panels;
 
-/// <summary>
-///     Pulls accepted carrot pads from the Worker catalog and writes
-///     <c>carrot_locations.json</c> once the zone has enough reports.
-/// </summary>
+/// <summary>Exports accepted Worker carrot pads to <c>carrot_locations.json</c>.</summary>
 public sealed class CarrotLocationsExportPanel
 (
     IZoneProvider zones,
@@ -220,32 +217,11 @@ public sealed class CarrotLocationsExportPanel
         };
 
         string json = JsonSerializer.Serialize(payload, WriteJson);
-        List<string> written = [];
-
-        string? pluginDir = plugin.AssemblyLocation.DirectoryName;
-        if (!string.IsNullOrEmpty(pluginDir))
-        {
-            string runtimePath = Path.Combine(pluginDir, "Data", zoneFolder, Filename);
-            Directory.CreateDirectory(Path.GetDirectoryName(runtimePath)!);
-            File.WriteAllText(runtimePath, json);
-            written.Add(runtimePath);
-        }
-
-        string? sourceRoot = TreasureDataPaths.FindRepoTreasureDataRoot(pluginDir);
-        if (sourceRoot != null)
-        {
-            string sourcePath = Path.Combine(sourceRoot, zoneFolder, Filename);
-            Directory.CreateDirectory(Path.GetDirectoryName(sourcePath)!);
-            File.WriteAllText(sourcePath, json);
-            written.Add(sourcePath);
-        }
-
-        if (written.Count == 0)
-        {
-            throw new InvalidOperationException("Could not resolve a Data folder to write into.");
-        }
-
-        return written;
+        return TreasureDataPaths.WriteZoneDataFile(
+            plugin.AssemblyLocation.DirectoryName,
+            zoneFolder,
+            Filename,
+            json);
     }
 
     private static CarrotData? FindNearestAuthored(Vector3 position, List<CarrotData> authored)
