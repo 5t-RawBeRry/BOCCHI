@@ -30,6 +30,8 @@ public sealed class TreasureLocationsExportPanel
 {
     private const string Filename = "treasure_locations.json";
 
+    private const string RouteFilename = "treasure_route.json";
+
     private static readonly JsonSerializerOptions WriteJson = new()
     {
         WriteIndented = true,
@@ -59,6 +61,9 @@ public sealed class TreasureLocationsExportPanel
 
         ui.Text(
             "Reads bronze/silver pads from the game layout, then writes treasure_locations.json.",
+            branding.DalamudGrey);
+        ui.Text(
+            "Write treasure_route.json builds a nearest-neighbor tour from base camp (2D; layout if refreshed, else authored).",
             branding.DalamudGrey);
         ui.Text("No Worker — layout already has exact coffer positions.", branding.DalamudGrey);
 
@@ -105,24 +110,42 @@ public sealed class TreasureLocationsExportPanel
             ui.Text($"Wrote {lastOutputPath}", branding.DalamudYellow);
         }
 
-        if (treasures.Count == 0)
-        {
-            return;
-        }
-
-        if (ImGui.Button("Write treasure_locations.json"))
+        if (treasures.Count > 0 && ImGui.Button("Write treasure_locations.json"))
         {
             try
             {
-                List<string> written = WriteJsonForZone(zone, treasures, authored);
+                List<string> written = WriteLocationsJson(zone, treasures, authored);
                 lastOutputPath = string.Join(" | ", written);
                 lastError = null;
-                log.Information("[TreasureLocationsExport] Wrote {Paths}", lastOutputPath);
+                log.Information("[TreasureLocationsExport] Wrote locations {Paths}", lastOutputPath);
             }
             catch (Exception ex)
             {
                 lastError = ex.Message;
-                log.Error(ex, "[TreasureLocationsExport] Write failed");
+                log.Error(ex, "[TreasureLocationsExport] Write locations failed");
+            }
+        }
+
+        if (ImGui.Button("Write treasure_route.json"))
+        {
+            try
+            {
+                List<RoutePad> pads = BuildRoutePads(zone, treasures, authored);
+                if (pads.Count == 0)
+                {
+                    throw new InvalidOperationException("No pads with positions to route.");
+                }
+
+                List<string> written = WriteRouteJson(zone, pads);
+                lastOutputPath = string.Join(" | ", written);
+                lastError = null;
+                lastRefreshSummary = $"Route: {pads.Count} pads (nearest-neighbor from base camp, 2D).";
+                log.Information("[TreasureLocationsExport] Wrote route {Paths}", lastOutputPath);
+            }
+            catch (Exception ex)
+            {
+                lastError = ex.Message;
+                log.Error(ex, "[TreasureLocationsExport] Write route failed");
             }
         }
     }
@@ -180,7 +203,7 @@ public sealed class TreasureLocationsExportPanel
         treasures.Sort((a, b) => a.DataId.CompareTo(b.DataId));
     }
 
-    private List<string> WriteJsonForZone(
+    private List<string> WriteLocationsJson(
         IZone zone,
         List<LayoutTreasure> spots,
         List<TreasureData> authored)
@@ -221,6 +244,104 @@ public sealed class TreasureLocationsExportPanel
             json);
     }
 
+    private List<string> WriteRouteJson(IZone zone, List<RoutePad> pads)
+    {
+        string zoneFolder = zone.ZoneId.TreasureDataFolder();
+        Vector3 camp = zone.GetMainAetheryte().Position;
+        List<RoutePad> ordered = BuildNearestNeighborTour(camp, pads);
+
+        List<RouteJsonEntry> route = [];
+        for (int i = 0; i < ordered.Count; i++)
+        {
+            RoutePad pad = ordered[i];
+            route.Add(new RouteJsonEntry
+            {
+                Order = i + 1,
+                DataId = pad.DataId,
+                X = pad.Position.X,
+                Y = pad.Position.Y,
+                Z = pad.Position.Z,
+                SgbId = pad.SgbId,
+                Level = pad.Level,
+            });
+        }
+
+        var payload = new TreasureRouteFile
+        {
+            SchemaVersion = 1,
+            TerritoryId = zone.TerritoryType,
+            Zone = zoneFolder,
+            GeneratedAtUtc = DateTime.UtcNow.ToString("O"),
+            Source = pads.Any(p => p.SgbId != null) ? "layout-nn-from-camp" : "authored-nn-from-camp",
+            Start = new RouteStartJson
+            {
+                Label = "BaseCamp",
+                X = camp.X,
+                Y = camp.Y,
+                Z = camp.Z,
+            },
+            Route = route,
+        };
+
+        string json = JsonSerializer.Serialize(payload, WriteJson);
+        return TreasureDataPaths.WriteZoneDataFile(
+            plugin.AssemblyLocation.DirectoryName,
+            zoneFolder,
+            RouteFilename,
+            json);
+    }
+
+    private static List<RoutePad> BuildRoutePads(
+        IZone zone,
+        List<LayoutTreasure> layout,
+        List<TreasureData> authored)
+    {
+        if (layout.Count > 0)
+        {
+            return layout.Select(t => new RoutePad(
+                t.DataId,
+                t.Position,
+                t.SgbId,
+                FindAuthoredLevel(t, authored))).ToList();
+        }
+
+        return authored
+            .Where(a => a.Position is { })
+            .Select(a => new RoutePad((uint)a.Id, a.Position!.Value, null, a.Level))
+            .ToList();
+    }
+
+    private static List<RoutePad> BuildNearestNeighborTour(Vector3 start, List<RoutePad> pads)
+    {
+        List<RoutePad> remaining = [.. pads];
+        List<RoutePad> tour = [];
+        Vector3 current = start;
+
+        while (remaining.Count > 0)
+        {
+            int bestIndex = 0;
+            float bestDist = float.MaxValue;
+            for (int i = 0; i < remaining.Count; i++)
+            {
+                float d = Vector3.DistanceSquared(
+                    new Vector3(current.X, 0f, current.Z),
+                    new Vector3(remaining[i].Position.X, 0f, remaining[i].Position.Z));
+                if (d < bestDist)
+                {
+                    bestDist = d;
+                    bestIndex = i;
+                }
+            }
+
+            RoutePad next = remaining[bestIndex];
+            remaining.RemoveAt(bestIndex);
+            tour.Add(next);
+            current = next.Position;
+        }
+
+        return tour;
+    }
+
     private static int? FindAuthoredLevel(LayoutTreasure spot, List<TreasureData> authored)
     {
         TreasureData? byId = authored.FirstOrDefault(a => a.Id == spot.DataId);
@@ -252,6 +373,8 @@ public sealed class TreasureLocationsExportPanel
     }
 
     private readonly record struct LayoutTreasure(uint DataId, Vector3 Position, uint SgbId);
+
+    private readonly record struct RoutePad(uint DataId, Vector3 Position, uint? SgbId, int? Level);
 
     private sealed class TreasureLocationsFile
     {
@@ -293,6 +416,70 @@ public sealed class TreasureLocationsExportPanel
 
         [JsonPropertyName("sgbId")]
         public uint SgbId { get; set; }
+
+        [JsonPropertyName("level")]
+        public int? Level { get; set; }
+    }
+
+    private sealed class TreasureRouteFile
+    {
+        [JsonPropertyName("schemaVersion")]
+        public int SchemaVersion { get; set; }
+
+        [JsonPropertyName("territoryId")]
+        public int TerritoryId { get; set; }
+
+        [JsonPropertyName("zone")]
+        public string Zone { get; set; } = "";
+
+        [JsonPropertyName("generatedAtUtc")]
+        public string GeneratedAtUtc { get; set; } = "";
+
+        [JsonPropertyName("source")]
+        public string Source { get; set; } = "";
+
+        [JsonPropertyName("start")]
+        public RouteStartJson Start { get; set; } = new();
+
+        [JsonPropertyName("route")]
+        public List<RouteJsonEntry> Route { get; set; } = [];
+    }
+
+    private sealed class RouteStartJson
+    {
+        [JsonPropertyName("label")]
+        public string Label { get; set; } = "";
+
+        [JsonPropertyName("x")]
+        public float X { get; set; }
+
+        [JsonPropertyName("y")]
+        public float Y { get; set; }
+
+        [JsonPropertyName("z")]
+        public float Z { get; set; }
+    }
+
+    private sealed class RouteJsonEntry
+    {
+        [JsonPropertyName("order")]
+        public int Order { get; set; }
+
+        [JsonPropertyName("dataId")]
+        public uint DataId { get; set; }
+
+        [JsonPropertyName("x")]
+        public float X { get; set; }
+
+        [JsonPropertyName("y")]
+        public float Y { get; set; }
+
+        [JsonPropertyName("z")]
+        public float Z { get; set; }
+
+        [JsonPropertyName("sgbId")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public uint? SgbId { get; set; }
 
         [JsonPropertyName("level")]
         public int? Level { get; set; }

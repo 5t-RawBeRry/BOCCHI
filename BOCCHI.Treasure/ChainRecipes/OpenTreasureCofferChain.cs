@@ -100,7 +100,14 @@ public class OpenTreasureCofferChain
             }
 
             float dist3d = Vector3.Distance(player.Position, chest.Position);
-            if (dist3d > PreferredOpenDistance || !gameObject->GetIsTargetable())
+            if (dist3d > MaxInteractRange)
+            {
+                EnsurePathing(chest.Position, pathState);
+                return false;
+            }
+
+            // Still outside Pandora's preferred 2y — keep pathing in.
+            if (dist3d > PreferredOpenDistance)
             {
                 EnsurePathing(chest.Position, pathState);
                 return false;
@@ -113,7 +120,8 @@ public class OpenTreasureCofferChain
 
             pathState.LastTarget = null;
 
-            // Pandora does not pre-target; InteractWithObject with default LoS check.
+            // Interact even when not targetable yet — some OC coffers stay non-targetable
+            // until InteractWithObject (waiting forever looked like "sees it but won't open").
             TargetSystem.Instance()->InteractWithObject(gameObject);
             return IsOpenedOrLooted(chest, tr);
         }

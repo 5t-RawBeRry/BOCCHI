@@ -43,31 +43,41 @@ public class TreasureConfig : IAutoConfig
     [IntRange(1, 50, Order = 9, Section = "hunt")]
     public int HuntMaxLevel { get; set; } = 50;
 
-    /// <summary>Pause treasure hunting during Ashkin / unsafe weather windows (South Horn).</summary>
+    /// <summary>Only visit silver coffers on Treasure Hunt (skip bronze pads).</summary>
     [Checkbox(Order = 10, Section = "hunt")]
+    public bool HuntSilverChestsOnly { get; set; } = false;
+
+    /// <summary>Pause treasure hunting during Ashkin / unsafe weather windows (South Horn).</summary>
+    [Checkbox(Order = 11, Section = "hunt")]
     public bool SkipUnsafeTreasureWindows { get; set; } = true;
 
     /// <summary>Illegal Mode / Completionist: after CE/FATE, Sight (if known) then hunt, or map hunt without Sight.</summary>
-    [Checkbox(Order = 11, Section = "hunt")]
+    [Checkbox(Order = 12, Section = "hunt")]
     public bool EnableAutomaticTreasureHuntDuringIllegalMode { get; set; } = false;
 
     /// <summary>Use real Ninja Hide near high-knowledge hostiles while hunting coffers.</summary>
-    [Checkbox(Order = 12, Section = "ninja_hide")]
+    [Checkbox(Order = 13, Section = "ninja_hide")]
     public bool UseNinjaHideOnDangerousRoutes { get; set; } = false;
 
     /// <summary>Gearset number (1-based) that equips Ninja. 0 = already on Ninja only.</summary>
-    [IntRange(0, 100, Order = 13, Section = "ninja_hide")]
+    [IntRange(0, 100, Order = 14, Section = "ninja_hide")]
     public int NinjaGearsetNumber { get; set; } = 0;
 
     /// <summary>Hide when mob knowledge ≥ player knowledge + this offset.</summary>
-    [IntRange(-5, 10, Order = 14, Section = "ninja_hide")]
+    [IntRange(-5, 10, Order = 15, Section = "ninja_hide")]
     public int KnowledgeHideOffset { get; set; } = 0;
 
     /// <summary>Start Hide when a knowledge threat is within this distance (yalms).</summary>
-    [FloatRange(5f, 40f, Order = 15, Section = "ninja_hide")]
+    [FloatRange(5f, 40f, Order = 16, Section = "ninja_hide")]
     public float KnowledgeThreatEnterDistance { get; set; } = 10f;
 
     /// <summary>Clear Hide requirement when threats are beyond this distance (yalms).</summary>
-    [FloatRange(10f, 60f, Order = 16, Section = "ninja_hide")]
+    [FloatRange(10f, 60f, Order = 17, Section = "ninja_hide")]
     public float KnowledgeThreatExitDistance { get; set; } = 20f;
+
+    /// <summary>
+    /// Last South Horn half started ("red" / "blue"). Next hunt starts on the other half.
+    /// </summary>
+    [ConfigHidden]
+    public string? LastSouthHornStartHalf { get; set; }
 }

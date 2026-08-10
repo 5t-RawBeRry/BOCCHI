@@ -1,4 +1,4 @@
-﻿using BOCCHI.Common.Data.Fates;
+using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Zones;
 using Dalamud.Plugin;
 using Ocelot.Lifecycle;
@@ -16,6 +16,7 @@ namespace BOCCHI.Common.Services;
 ///     Anonymous pot-cycle sync for the BOCCHI Worker.
 ///     Fingerprints the instance from any active FATE (Linker-style), uploads local pot anchors,
 ///     and fetches shared anchors when the local tracker has none yet.
+///     HTTP runs off the framework thread so sync never hitches the game.
 /// </summary>
 public sealed class PotCycleSyncService
 (
@@ -62,6 +63,14 @@ public sealed class PotCycleSyncService
 
     private DateTime nextFetchAttemptUtc = DateTime.MinValue;
 
+    private bool uploadInFlight;
+
+    private bool fetchInFlight;
+
+    private UploadOutcome? completedUpload;
+
+    private FetchOutcome? completedFetch;
+
     public UpdateLimit UpdateLimit =>
         new()
         {
@@ -71,6 +80,8 @@ public sealed class PotCycleSyncService
 
     public void Update()
     {
+        ApplyCompletedWork();
+
         IZone zone = zones.GetZone();
         if (!zone.IsOccultCrescentZone())
         {
@@ -92,13 +103,91 @@ public sealed class PotCycleSyncService
         }
 
         PotCycleSnapshot snap = potCycles.Snapshot;
-        TryUpload(snap, territory);
-        TryFetch(snap, territory);
+        StartUpload(snap, territory);
+        StartFetch(snap, territory);
     }
 
-    private void TryUpload(PotCycleSnapshot snap, ushort territory)
+    private void ApplyCompletedWork()
     {
-        if (snap.TerritoryTypeId != territory
+        UploadOutcome? upload = Interlocked.Exchange(ref completedUpload, null);
+        if (upload != null)
+        {
+            uploadInFlight = false;
+            if (upload.Success)
+            {
+                lastUploadedTerritory = upload.TerritoryId;
+                lastUploadedPotFateId = upload.PotFateId;
+                lastUploadedSpawnUnix = upload.SpawnUnix;
+                nextUploadAttemptUtc = DateTime.UtcNow;
+                logger.Info(
+                    "[PotCycleSync] uploaded pot={PotId} spawn={Spawn} key={KeyPrefix}…",
+                    upload.PotFateId,
+                    upload.SpawnUnix,
+                    upload.KeyPrefix);
+            }
+            else
+            {
+                nextUploadAttemptUtc = DateTime.UtcNow + RetryDelay;
+                if (upload.Error is { } uploadError)
+                {
+                    logger.Warn("[PotCycleSync] upload failed: {Message}", uploadError);
+                }
+                else
+                {
+                    logger.Warn("[PotCycleSync] upload rejected: {Status}", upload.Status ?? "?");
+                }
+            }
+        }
+
+        FetchOutcome? fetch = Interlocked.Exchange(ref completedFetch, null);
+        if (fetch == null)
+        {
+            return;
+        }
+
+        fetchInFlight = false;
+        if (!fetch.Success)
+        {
+            nextFetchAttemptUtc = DateTime.UtcNow + FetchRetryDelay;
+            if (fetch.Error is { } fetchError)
+            {
+                logger.Warn("[PotCycleSync] fetch failed: {Message}", fetchError);
+            }
+            else
+            {
+                logger.Warn("[PotCycleSync] fetch rejected: {Status}", fetch.Status ?? "?");
+            }
+
+            return;
+        }
+
+        lastFetchedInstanceKey = fetch.InstanceKey;
+        nextFetchAttemptUtc = DateTime.UtcNow;
+
+        if (!fetch.Found || fetch.PotFateId == 0 || fetch.SpawnUnix <= 0)
+        {
+            return;
+        }
+
+        if (fetch.ResponseTerritoryId != 0 && fetch.ResponseTerritoryId != fetch.RequestTerritoryId)
+        {
+            return;
+        }
+
+        DateTimeOffset spawnAt = DateTimeOffset.FromUnixTimeSeconds(fetch.SpawnUnix);
+        if (potCycles.TryApplyRemoteAnchor(fetch.PotFateId, spawnAt, fetch.RequestTerritoryId))
+        {
+            logger.Info(
+                "[PotCycleSync] applied remote pot={PotId} spawn={Spawn}",
+                fetch.PotFateId,
+                fetch.SpawnUnix);
+        }
+    }
+
+    private void StartUpload(PotCycleSnapshot snap, ushort territory)
+    {
+        if (uploadInFlight
+            || snap.TerritoryTypeId != territory
             || !snap.HasKnownAnchor
             || snap.IsRemoteAnchor
             || snap.AnchorPotFateId == 0
@@ -126,54 +215,53 @@ public sealed class PotCycleSyncService
             return;
         }
 
+        string key = instanceKey;
+        string json = JsonSerializer.Serialize(new
+        {
+            instanceKey = key,
+            territoryId = (int)territory,
+            datacenterId = (int)dc,
+            potFateId = snap.AnchorPotFateId,
+            spawnAtUnix = spawnUnix,
+            installationHash = InstallationId.GetHash(plugin),
+            pluginVersion = typeof(PotCycleSyncService).Assembly.GetName().Version?.ToString() ?? "0",
+            observedAtUtc = DateTime.UtcNow.ToString("O"),
+        });
+
+        uploadInFlight = true;
+        _ = UploadAsync(territory, snap.AnchorPotFateId, spawnUnix, key[..8], json);
+    }
+
+    private async Task UploadAsync(
+        ushort territory,
+        int potFateId,
+        long spawnUnix,
+        string keyPrefix,
+        string json)
+    {
         try
         {
-            string json = JsonSerializer.Serialize(new
-            {
-                instanceKey,
-                territoryId = (int)territory,
-                datacenterId = (int)dc,
-                potFateId = snap.AnchorPotFateId,
-                spawnAtUnix = spawnUnix,
-                installationHash = InstallationId.GetHash(plugin),
-                pluginVersion = typeof(PotCycleSyncService).Assembly.GetName().Version?.ToString() ?? "0",
-                observedAtUtc = DateTime.UtcNow.ToString("O"),
-            });
-
             using HttpRequestMessage request = new(HttpMethod.Post, ApiUrl)
             {
                 Content = new StringContent(json, Encoding.UTF8, "application/json"),
             };
 
-            HttpResponseMessage response = Http.Send(request);
-            if (response.IsSuccessStatusCode)
-            {
-                lastUploadedTerritory = territory;
-                lastUploadedPotFateId = snap.AnchorPotFateId;
-                lastUploadedSpawnUnix = spawnUnix;
-                nextUploadAttemptUtc = DateTime.UtcNow;
-                logger.Info(
-                    "[PotCycleSync] uploaded pot={PotId} spawn={Spawn} key={KeyPrefix}…",
-                    snap.AnchorPotFateId,
-                    spawnUnix,
-                    instanceKey[..8]);
-            }
-            else
-            {
-                logger.Warn("[PotCycleSync] upload rejected: {Status}", response.StatusCode);
-                nextUploadAttemptUtc = DateTime.UtcNow + RetryDelay;
-            }
+            using HttpResponseMessage response = await Http.SendAsync(request).ConfigureAwait(false);
+            Interlocked.Exchange(
+                ref completedUpload,
+                response.IsSuccessStatusCode
+                    ? UploadOutcome.Ok(territory, potFateId, spawnUnix, keyPrefix)
+                    : UploadOutcome.Rejected(response.StatusCode.ToString()));
         }
         catch (Exception ex)
         {
-            logger.Warn("[PotCycleSync] upload failed: {Message}", ex.Message);
-            nextUploadAttemptUtc = DateTime.UtcNow + RetryDelay;
+            Interlocked.Exchange(ref completedUpload, UploadOutcome.Failed(ex.Message));
         }
     }
 
-    private void TryFetch(PotCycleSnapshot snap, ushort territory)
+    private void StartFetch(PotCycleSnapshot snap, ushort territory)
     {
-        if (snap.HasKnownAnchor || instanceKey == null)
+        if (fetchInFlight || snap.HasKnownAnchor || instanceKey == null)
         {
             return;
         }
@@ -188,47 +276,42 @@ public sealed class PotCycleSyncService
             return;
         }
 
+        string key = instanceKey;
+        fetchInFlight = true;
+        _ = FetchAsync(key, territory);
+    }
+
+    private async Task FetchAsync(string instanceKeyValue, ushort territory)
+    {
         try
         {
-            string url = $"{ApiUrl}?instanceKey={Uri.EscapeDataString(instanceKey)}";
+            string url = $"{ApiUrl}?instanceKey={Uri.EscapeDataString(instanceKeyValue)}";
             using HttpRequestMessage request = new(HttpMethod.Get, url);
-            HttpResponseMessage response = Http.Send(request);
-            string body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            using HttpResponseMessage response = await Http.SendAsync(request).ConfigureAwait(false);
+            string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
-                logger.Warn("[PotCycleSync] fetch rejected: {Status}", response.StatusCode);
-                nextFetchAttemptUtc = DateTime.UtcNow + FetchRetryDelay;
+                Interlocked.Exchange(
+                    ref completedFetch,
+                    FetchOutcome.Rejected(response.StatusCode.ToString()));
                 return;
             }
 
             PotCycleApiResponse? parsed = JsonSerializer.Deserialize<PotCycleApiResponse>(body, JsonOptions);
-            lastFetchedInstanceKey = instanceKey;
-            nextFetchAttemptUtc = DateTime.UtcNow;
-
-            if (parsed is not { Found: true } || parsed.PotFateId == 0 || parsed.SpawnAtUnix <= 0)
-            {
-                return;
-            }
-
-            if (parsed.TerritoryId != 0 && parsed.TerritoryId != territory)
-            {
-                return;
-            }
-
-            DateTimeOffset spawnAt = DateTimeOffset.FromUnixTimeSeconds(parsed.SpawnAtUnix);
-            if (potCycles.TryApplyRemoteAnchor(parsed.PotFateId, spawnAt, territory))
-            {
-                logger.Info(
-                    "[PotCycleSync] applied remote pot={PotId} spawn={Spawn}",
-                    parsed.PotFateId,
-                    parsed.SpawnAtUnix);
-            }
+            Interlocked.Exchange(
+                ref completedFetch,
+                FetchOutcome.Ok(
+                    instanceKeyValue,
+                    territory,
+                    parsed is { Found: true },
+                    parsed?.TerritoryId ?? 0,
+                    parsed?.PotFateId ?? 0,
+                    parsed?.SpawnAtUnix ?? 0));
         }
         catch (Exception ex)
         {
-            logger.Warn("[PotCycleSync] fetch failed: {Message}", ex.Message);
-            nextFetchAttemptUtc = DateTime.UtcNow + FetchRetryDelay;
+            Interlocked.Exchange(ref completedFetch, FetchOutcome.Failed(ex.Message));
         }
     }
 
@@ -333,6 +416,94 @@ public sealed class PotCycleSyncService
         fingerprintStartEpoch = 0;
         lastFetchedInstanceKey = null;
         nextFetchAttemptUtc = DateTime.MinValue;
+    }
+
+    private sealed class UploadOutcome
+    {
+        public required bool Success { get; init; }
+
+        public ushort TerritoryId { get; init; }
+
+        public int PotFateId { get; init; }
+
+        public long SpawnUnix { get; init; }
+
+        public string KeyPrefix { get; init; } = "";
+
+        public string? Status { get; init; }
+
+        public string? Error { get; init; }
+
+        public static UploadOutcome Ok(ushort territory, int potFateId, long spawnUnix, string keyPrefix) => new()
+        {
+            Success = true,
+            TerritoryId = territory,
+            PotFateId = potFateId,
+            SpawnUnix = spawnUnix,
+            KeyPrefix = keyPrefix,
+        };
+
+        public static UploadOutcome Rejected(string status) => new()
+        {
+            Success = false,
+            Status = status,
+        };
+
+        public static UploadOutcome Failed(string error) => new()
+        {
+            Success = false,
+            Error = error,
+        };
+    }
+
+    private sealed class FetchOutcome
+    {
+        public required bool Success { get; init; }
+
+        public string InstanceKey { get; init; } = "";
+
+        public ushort RequestTerritoryId { get; init; }
+
+        public bool Found { get; init; }
+
+        public int ResponseTerritoryId { get; init; }
+
+        public int PotFateId { get; init; }
+
+        public long SpawnUnix { get; init; }
+
+        public string? Status { get; init; }
+
+        public string? Error { get; init; }
+
+        public static FetchOutcome Ok(
+            string instanceKey,
+            ushort requestTerritoryId,
+            bool found,
+            int responseTerritoryId,
+            int potFateId,
+            long spawnUnix) => new()
+        {
+            Success = true,
+            InstanceKey = instanceKey,
+            RequestTerritoryId = requestTerritoryId,
+            Found = found,
+            ResponseTerritoryId = responseTerritoryId,
+            PotFateId = potFateId,
+            SpawnUnix = spawnUnix,
+        };
+
+        public static FetchOutcome Rejected(string status) => new()
+        {
+            Success = false,
+            Status = status,
+        };
+
+        public static FetchOutcome Failed(string error) => new()
+        {
+            Success = false,
+            Error = error,
+        };
     }
 
     private sealed class PotCycleApiResponse

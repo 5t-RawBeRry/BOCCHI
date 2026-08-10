@@ -49,6 +49,10 @@
       "label": "상자 최대 레벨",
       "tooltip": "이 레벨보다 높은 상자는 헌트 경로에서 뺍니다."
     },
+    "hunt_silver_chests_only": {
+      "label": "백은 상자만",
+      "tooltip": "트레저 헌트는 백은 상자만 돌고 청동은 건너뜁니다."
+    },
     "skip_unsafe_treasure_windows": {
       "label": "위험 날씨 / 애쉬킨 건너뛰기",
       "tooltip": "남쪽 뿔에서 애쉬킨이나 그 밖의 위험한 날씨 구간에는 트레저 헌트를 잠시 멈춥니다."

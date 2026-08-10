@@ -1,12 +1,17 @@
-# 4.0.2.21
+# 4.0.2.22
 
 ### New
-- Carrot Hunt now covers all of North Horn (25 spots). It takes shortcuts with aethernet or Return when that is faster, can peel off for a chewed carrot next to you, and can Return to camp when the run finishes (same setting as Treasure Hunt).
+- Treasure Hunt option to visit silver coffers only (#163).
+- Treasure Hunt uses clearer North and South Horn routes: walks each area in order, and uses Return or aethernet between distant areas. On South Horn it Returns to base camp at start (if needed), casts Treasure Sight before pathing when that option is on, alternates which colored half it starts so you don’t open on the same half twice in a row, then finishes the other half after Return.
 
 ### Fixes
-- Carrot Hunt gets close enough to use Fortune Carrots and open bunny chests, handles two carrots on one pad, and no longer Returns past a carrot right next to you.
-- Treasure Hunt can peel off for a coffer that shows up Nearby (including while heading back to camp or using aethernet). Live coffers show on the radar again; empty spots are skipped sooner; fewer wrong skips; Treasure Sight is less spammy; coffers you can’t open are skipped so the hunt keeps going (#162).
-- You can’t run Treasure Hunt and Carrot Hunt at the same time — each hides the other’s Start button. The Nearby list no longer crashes on odd coffer types.
-- No more “Invalid target” when mounting after an aethernet hop. Automation won’t try to open coffers while you’re dead. Pots & Treasure mounts when a hunt starts from camp.
-- Walking up to an aetheryte stays on your side and stops on the teleport ring (#158). Long trips on the same shard use the aetheryte instead of a fake cross-map walk. Canceling travel mid-route plans a new path instead of leaving Illegal Mode stuck.
-- Illegal Mode can switch to a critical encounter that opens while you’re traveling to a normal FATE. You dismount when entering a FATE. Leaving Occult Crescent turns every mode fully off. Reloading mid-fight and turning Illegal Mode back on restores combat AI. A Beast Unleashed uses the right arena and sign-up spot.
+- Less hitching in Occult Crescent: carrot pad and pot-timer sync no longer freeze the game while talking to the server (#165).
+- Removed leftover debug rainbow rings around critical encounters and camp aetherytes.
+- Treasure Hunt peels off for live Nearby coffers more reliably — including when several are close, and when a pad was wrongly marked empty — then continues the route (closest first).
+- South Horn Treasure Hunt stays on the red or blue half after empty skips instead of jumping to the other half mid-route.
+- South Horn Treasure Hunt sticks to one colored half at a time (walks that half in order; Return only when switching halves). Nearby peel-off stays on the active half.
+- Treasure Hunt walks up to empty pads (~100 yalms, when coffers are loaded) before skipping them — it no longer marks distant pads empty just because another chest was loaded nearby.
+- Treasure Hunt tries to open coffers that stay non-targetable until you interact.
+- Radar lines no longer stick on coffers you already opened.
+- Carrot Hunt panel stays hidden while Treasure Hunt, Pots & Treasure, or Illegal Mode filler is running.
+- Illegal Mode no longer Returns to camp just because you were standing near a FATE/CE — it prefers a nearby aethernet when that is cheaper.

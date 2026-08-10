@@ -21,9 +21,10 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<IDebugWindow>(sp => sp.GetRequiredService<DebugWindow>());
         services.AddSingleton<IWindow>(sp => sp.GetRequiredService<DebugWindow>());
 
+#if DEBUG
+        // Dev-only overlays (CE/aetheryte radius rings). Never ship to players — left on in .21 by mistake.
         services.AddSingleton<DrawCEs>();
 
-#if DEBUG
         // Dev convenience: open main/config/debug once on load. Not for Release.
         services.AddSingleton<OpenWindows>();
 #endif

@@ -1,3 +1,4 @@
+using BOCCHI.Treasure.ChainRecipes;
 using BOCCHI.Treasure.Data;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
@@ -67,7 +68,11 @@ namespace BOCCHI.Treasure.Services
         }
 
         // Don't require IsTargetable — often false until inside interact range.
-        public bool IsValid() => obj.IsValid() && obj is { IsDead: false };
+        // Hide opened / faded coffers so radar doesn't keep drawing to ghosts.
+        public bool IsValid() =>
+            obj.IsValid()
+            && obj is { IsDead: false }
+            && !OpenTreasureCofferChain.IsOpenedOrLooted(obj);
 
         public Vector3 GetPosition() => obj.Position;
 

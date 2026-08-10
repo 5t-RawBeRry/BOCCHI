@@ -140,17 +140,9 @@ public class TreasureRenderer
 
     private void DrawCarrotHuntPanel()
     {
-        if (hunter.ManagedByPotsTreasure || hunter.ManagedByIllegalModeFiller)
+        // Hide while a coffer hunt owns the section (standalone, Pots, or Illegal filler).
+        if (hunter.Running || hunter.ManagedByPotsTreasure || hunter.ManagedByIllegalModeFiller)
         {
-            return;
-        }
-
-        // Treasure Hunt owns the section — explain why Carrot Start is unavailable.
-        if (hunter.Running)
-        {
-            ImGui.Separator();
-            ui.Text(translator.T(".treasure.carrot_hunt_title"));
-            ImGui.TextWrapped(translator.T(".treasure.managed_by_treasure"));
             return;
         }
 

@@ -17,6 +17,7 @@ namespace BOCCHI.Treasure.Services;
 /// <summary>
 ///     Anonymous chewed-carrot pad sync for the BOCCHI Worker.
 ///     Submits live carrot positions and caches the accepted catalog for mesh-bake / map work.
+///     HTTP runs off the framework thread so uploads never hitch the game.
 /// </summary>
 public sealed class CarrotLocationSyncService
 (
@@ -53,6 +54,14 @@ public sealed class CarrotLocationSyncService
 
     private ushort catalogTerritory;
 
+    private bool uploadInFlight;
+
+    private bool catalogInFlight;
+
+    private UploadOutcome? completedUpload;
+
+    private CatalogOutcome? completedCatalog;
+
     public IReadOnlyList<AcceptedCarrotLocation> AcceptedLocations { get; private set; } = [];
 
     /// <summary>After <see cref="CarrotTracker"/> (default Order 0).</summary>
@@ -67,6 +76,8 @@ public sealed class CarrotLocationSyncService
 
     public void Update()
     {
+        ApplyCompletedWork();
+
         IZone zone = zones.GetZone();
         if (!zone.IsOccultCrescentZone())
         {
@@ -75,8 +86,76 @@ public sealed class CarrotLocationSyncService
 
         ushort territory = zone.TerritoryType;
         EnqueueSightedCarrots(territory);
-        FlushQueue();
-        MaybeRefreshCatalog(territory);
+        StartNextUpload();
+        StartCatalogRefresh(territory);
+    }
+
+    private void ApplyCompletedWork()
+    {
+        UploadOutcome? upload = Interlocked.Exchange(ref completedUpload, null);
+        if (upload != null)
+        {
+            uploadInFlight = false;
+            if (upload.Success)
+            {
+                if (queue.Count > 0 && queue.Peek().Key == upload.Key)
+                {
+                    PendingSubmit done = queue.Dequeue();
+                    queuedKeys.Remove(done.Key);
+                    submittedKeys.Add(done.Key);
+                }
+
+                nextUploadAttemptUtc = DateTime.UtcNow;
+                logger.Info(
+                    "[CarrotLocationSync] uploaded territory={Territory} pos=({X:F2},{Y:F2},{Z:F2})",
+                    upload.TerritoryId,
+                    upload.X,
+                    upload.Y,
+                    upload.Z);
+            }
+            else
+            {
+                nextUploadAttemptUtc = DateTime.UtcNow + RetryDelay;
+                if (upload.Error is { } uploadError)
+                {
+                    logger.Warn("[CarrotLocationSync] upload failed: {Message}", uploadError);
+                }
+                else
+                {
+                    logger.Warn("[CarrotLocationSync] upload rejected: {Status}", upload.Status ?? "?");
+                }
+            }
+        }
+
+        CatalogOutcome? catalog = Interlocked.Exchange(ref completedCatalog, null);
+        if (catalog == null)
+        {
+            return;
+        }
+
+        catalogInFlight = false;
+        if (catalog.Success)
+        {
+            AcceptedLocations = catalog.Locations;
+            catalogTerritory = catalog.TerritoryId;
+            nextCatalogFetchUtc = DateTime.UtcNow + CatalogRefreshInterval;
+            logger.Info(
+                "[CarrotLocationSync] catalog territory={Territory} locations={Count}",
+                catalog.TerritoryId,
+                AcceptedLocations.Count);
+        }
+        else
+        {
+            nextCatalogFetchUtc = DateTime.UtcNow + RetryDelay;
+            if (catalog.Error is { } catalogError)
+            {
+                logger.Warn("[CarrotLocationSync] catalog failed: {Message}", catalogError);
+            }
+            else
+            {
+                logger.Warn("[CarrotLocationSync] catalog rejected: {Status}", catalog.Status ?? "?");
+            }
+        }
     }
 
     private void EnqueueSightedCarrots(ushort territory)
@@ -100,62 +179,59 @@ public sealed class CarrotLocationSyncService
         }
     }
 
-    private void FlushQueue()
+    private void StartNextUpload()
     {
-        if (queue.Count == 0 || DateTime.UtcNow < nextUploadAttemptUtc)
+        if (uploadInFlight || queue.Count == 0 || DateTime.UtcNow < nextUploadAttemptUtc)
         {
             return;
         }
 
         PendingSubmit pending = queue.Peek();
+        string json = JsonSerializer.Serialize(new
+        {
+            territoryId = (int)pending.TerritoryId,
+            worldX = pending.Position.X,
+            worldY = pending.Position.Y,
+            worldZ = pending.Position.Z,
+            objectBaseId = (int)OccultObjectType.Carrot,
+            installationHash = InstallationId.GetHash(plugin),
+            pluginVersion = typeof(CarrotLocationSyncService).Assembly.GetName().Version?.ToString() ?? "0",
+            observedAtUtc = DateTime.UtcNow.ToString("O"),
+        });
+
+        uploadInFlight = true;
+        _ = UploadAsync(pending, json);
+    }
+
+    private async Task UploadAsync(PendingSubmit pending, string json)
+    {
         try
         {
-            string json = JsonSerializer.Serialize(new
-            {
-                territoryId = (int)pending.TerritoryId,
-                worldX = pending.Position.X,
-                worldY = pending.Position.Y,
-                worldZ = pending.Position.Z,
-                objectBaseId = (int)OccultObjectType.Carrot,
-                installationHash = InstallationId.GetHash(plugin),
-                pluginVersion = typeof(CarrotLocationSyncService).Assembly.GetName().Version?.ToString() ?? "0",
-                observedAtUtc = DateTime.UtcNow.ToString("O"),
-            });
-
             using HttpRequestMessage request = new(HttpMethod.Post, ApiUrl)
             {
                 Content = new StringContent(json, Encoding.UTF8, "application/json"),
             };
 
-            HttpResponseMessage response = Http.Send(request);
-            if (response.IsSuccessStatusCode)
-            {
-                queue.Dequeue();
-                queuedKeys.Remove(pending.Key);
-                submittedKeys.Add(pending.Key);
-                nextUploadAttemptUtc = DateTime.UtcNow;
-                logger.Info(
-                    "[CarrotLocationSync] uploaded territory={Territory} pos=({X:F2},{Y:F2},{Z:F2})",
-                    pending.TerritoryId,
-                    pending.Position.X,
-                    pending.Position.Y,
-                    pending.Position.Z);
-            }
-            else
-            {
-                logger.Warn("[CarrotLocationSync] upload rejected: {Status}", response.StatusCode);
-                nextUploadAttemptUtc = DateTime.UtcNow + RetryDelay;
-            }
+            using HttpResponseMessage response = await Http.SendAsync(request).ConfigureAwait(false);
+            Interlocked.Exchange(
+                ref completedUpload,
+                response.IsSuccessStatusCode
+                    ? UploadOutcome.Ok(pending)
+                    : UploadOutcome.Rejected(pending, response.StatusCode.ToString()));
         }
         catch (Exception ex)
         {
-            logger.Warn("[CarrotLocationSync] upload failed: {Message}", ex.Message);
-            nextUploadAttemptUtc = DateTime.UtcNow + RetryDelay;
+            Interlocked.Exchange(ref completedUpload, UploadOutcome.Failed(pending, ex.Message));
         }
     }
 
-    private void MaybeRefreshCatalog(ushort territory)
+    private void StartCatalogRefresh(ushort territory)
     {
+        if (catalogInFlight)
+        {
+            return;
+        }
+
         if (catalogTerritory == territory
             && DateTime.UtcNow < nextCatalogFetchUtc
             && AcceptedLocations.Count > 0)
@@ -168,22 +244,29 @@ public sealed class CarrotLocationSyncService
             return;
         }
 
+        catalogInFlight = true;
+        _ = FetchCatalogAsync(territory);
+    }
+
+    private async Task FetchCatalogAsync(ushort territory)
+    {
         try
         {
             string url = $"{ApiUrl}?territoryId={territory}";
             using HttpRequestMessage request = new(HttpMethod.Get, url);
-            HttpResponseMessage response = Http.Send(request);
-            string body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            using HttpResponseMessage response = await Http.SendAsync(request).ConfigureAwait(false);
+            string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
-                logger.Warn("[CarrotLocationSync] catalog rejected: {Status}", response.StatusCode);
-                nextCatalogFetchUtc = DateTime.UtcNow + RetryDelay;
+                Interlocked.Exchange(
+                    ref completedCatalog,
+                    CatalogOutcome.Rejected(territory, response.StatusCode.ToString()));
                 return;
             }
 
             CarrotCatalogResponse? parsed = JsonSerializer.Deserialize<CarrotCatalogResponse>(body, JsonOptions);
-            AcceptedLocations = parsed?.Locations?
+            List<AcceptedCarrotLocation> locations = parsed?.Locations?
                 .Where(l => l.TerritoryId == territory && l.Position != null)
                 .Select(l => new AcceptedCarrotLocation(
                     l.CandidateId,
@@ -192,17 +275,11 @@ public sealed class CarrotLocationSyncService
                 .ToList()
                 ?? [];
 
-            catalogTerritory = territory;
-            nextCatalogFetchUtc = DateTime.UtcNow + CatalogRefreshInterval;
-            logger.Info(
-                "[CarrotLocationSync] catalog territory={Territory} locations={Count}",
-                territory,
-                AcceptedLocations.Count);
+            Interlocked.Exchange(ref completedCatalog, CatalogOutcome.Ok(territory, locations));
         }
         catch (Exception ex)
         {
-            logger.Warn("[CarrotLocationSync] catalog failed: {Message}", ex.Message);
-            nextCatalogFetchUtc = DateTime.UtcNow + RetryDelay;
+            Interlocked.Exchange(ref completedCatalog, CatalogOutcome.Failed(territory, ex.Message));
         }
     }
 
@@ -218,6 +295,91 @@ public sealed class CarrotLocationSyncService
     private readonly record struct PendingSubmit(ushort TerritoryId, Vector3 Position, string Key);
 
     public readonly record struct AcceptedCarrotLocation(int CandidateId, ushort TerritoryId, Vector3 Position);
+
+    private sealed class UploadOutcome
+    {
+        public required string Key { get; init; }
+
+        public required ushort TerritoryId { get; init; }
+
+        public required float X { get; init; }
+
+        public required float Y { get; init; }
+
+        public required float Z { get; init; }
+
+        public required bool Success { get; init; }
+
+        public string? Status { get; init; }
+
+        public string? Error { get; init; }
+
+        public static UploadOutcome Ok(PendingSubmit pending) => new()
+        {
+            Key = pending.Key,
+            TerritoryId = pending.TerritoryId,
+            X = pending.Position.X,
+            Y = pending.Position.Y,
+            Z = pending.Position.Z,
+            Success = true,
+        };
+
+        public static UploadOutcome Rejected(PendingSubmit pending, string status) => new()
+        {
+            Key = pending.Key,
+            TerritoryId = pending.TerritoryId,
+            X = pending.Position.X,
+            Y = pending.Position.Y,
+            Z = pending.Position.Z,
+            Success = false,
+            Status = status,
+        };
+
+        public static UploadOutcome Failed(PendingSubmit pending, string error) => new()
+        {
+            Key = pending.Key,
+            TerritoryId = pending.TerritoryId,
+            X = pending.Position.X,
+            Y = pending.Position.Y,
+            Z = pending.Position.Z,
+            Success = false,
+            Error = error,
+        };
+    }
+
+    private sealed class CatalogOutcome
+    {
+        public required ushort TerritoryId { get; init; }
+
+        public required bool Success { get; init; }
+
+        public IReadOnlyList<AcceptedCarrotLocation> Locations { get; init; } = [];
+
+        public string? Status { get; init; }
+
+        public string? Error { get; init; }
+
+        public static CatalogOutcome Ok(ushort territory, IReadOnlyList<AcceptedCarrotLocation> locations) => new()
+        {
+            TerritoryId = territory,
+            Success = true,
+            Locations = locations,
+        };
+
+        public static CatalogOutcome Rejected(ushort territory, string status) => new()
+        {
+            TerritoryId = territory,
+            Success = false,
+            Status = status,
+        };
+
+        public static CatalogOutcome Failed(ushort territory, string error) => new()
+        {
+            TerritoryId = territory,
+            Success = false,
+            Error = error,
+        };
+    }
 
     private sealed class CarrotCatalogResponse
     {

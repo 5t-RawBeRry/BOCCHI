@@ -80,25 +80,12 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
             return (baseCamp, start.Distance(baseCamp.Position));
         }
 
-        if (graph.TryGetNode(start, GraphSnapRadius, out Node node))
+        // Only snap when already on a teleport pad. Snapping to a nearby FATE/CE node and
+        // using that activity→shard graph edge inflated departure cost (often 100–300y) even
+        // when a field aethernet was close — Return (~40) then wrongly won.
+        if (graph.TryGetNode(start, GraphSnapRadius, out Node node) && node.IsTeleport())
         {
-            if (node.IsTeleport())
-            {
-                return (node, start.Distance(node.Position));
-            }
-
-            List<Edge> connectedTeleports = graph.GetEdges(node.Id)
-                .Where(e => graph.Nodes[e.To].IsTeleport())
-                .OrderBy(e => e.Cost)
-                .ToList();
-
-            if (connectedTeleports.Count == 0)
-            {
-                return null;
-            }
-
-            Edge walkToNearestAethernet = connectedTeleports.First();
-            return (graph.Nodes[walkToNearestAethernet.To], walkToNearestAethernet.Cost);
+            return (node, start.Distance(node.Position));
         }
 
         Node? nearest = graph.GetNearestTeleport(start);

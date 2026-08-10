@@ -22,14 +22,16 @@ public static class HuntDistances
 
     public const float SamePadRecheckRadiusSq = SamePadRecheckRadius * SamePadRecheckRadius;
 
-    /// <summary>Player within this of a pad with no live object ⇒ treat as empty.</summary>
-    public const float EmptyPadSkipRadius = 150f;
+    /// <summary>
+    /// Player within this of a pad with no live object ⇒ treat as empty.
+    /// ~100y matches when coffers stream in so absence can be trusted.
+    /// </summary>
+    public const float EmptyPadSkipRadius = 100f;
 
     /// <summary>
-    /// If any related object is streamed within this of the pad, the area is loaded
-    /// and absence at the pad can be trusted without walking closer.
+    /// Sight trim only: same range as <see cref="EmptyPadSkipRadius"/>.
     /// </summary>
-    public const float EmptyPadRegionTrustRadius = 200f;
+    public const float EmptyPadRegionTrustRadius = 100f;
 
     public const float EmptyPadRegionTrustRadiusSq = EmptyPadRegionTrustRadius * EmptyPadRegionTrustRadius;
 
@@ -45,7 +47,6 @@ public static class HuntDistances
     /// <summary>3D interact range for bunny chests (same as coffer open).</summary>
     public const float BunnyInteractRadius = UseRadius;
 
-    /// <summary>Still try interact if slightly outside preferred open distance (coffer max interact).</summary>
     /// <summary>Keep aligned with <see cref="OpenTreasureCofferChain.MaxInteractRange"/>.</summary>
     public const float BunnyMaxInteractRadius = OpenTreasureCofferChain.MaxInteractRange;
 
@@ -64,9 +65,10 @@ public static class HuntDistances
     public const float NearbyLiveDivertRange = MatchRadius;
 
     /// <summary>
-    /// Only divert off a walk target when that destination is at least this far (yalms, 2D).
+    /// Don't divert when already this close to the current walk goal (about to open).
+    /// Higher values made the hunt walk past Nearby coffers on the way to a mid-range pad.
     /// </summary>
-    public const float NearbyLiveDivertMinCurrentDistance = 80f;
+    public const float NearbyLiveDivertMinCurrentDistance = 25f;
 
     /// <summary>Live target must be at least this many yalms closer than the current destination.</summary>
     public const float NearbyLiveDivertClearAdvantage = 15f;

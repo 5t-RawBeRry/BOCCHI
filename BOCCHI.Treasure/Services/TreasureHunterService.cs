@@ -6,6 +6,7 @@ using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Common.Services;
 using BOCCHI.Treasure.ChainRecipes;
+using BOCCHI.Treasure.Data;
 using BOCCHI.Treasure.Hunt;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
@@ -21,6 +22,7 @@ using FFXIVClientStructs.STD;
 using Ocelot.Actions;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
+using Ocelot.Config;
 using Ocelot.Extensions;
 using Ocelot.Ipc.VNavmesh;
 using Ocelot.Lifecycle;
@@ -60,7 +62,8 @@ public class TreasureHunterService
     NinjaHideAssist ninjaHide,
     IChatGui chat,
     UIConfig uiConfig,
-    ITranslator<MainWindow> translator
+    ITranslator<MainWindow> translator,
+    IConfigSaver configSaver
 ) : ITreasureHunter, IOnUpdate, IOnStop
 {
     /// <summary>Start open attempts once this close to the coffer (yalms).</summary>
@@ -104,6 +107,18 @@ public class TreasureHunterService
     private bool stuckNudgeIssued;
     private uint? emptyPadCandidateNodeId;
     private DateTime emptyPadCandidateSinceUtc = DateTime.MinValue;
+
+    /// <summary>Force this pad as TSP start on the next plan (Nearby divert / reclaim).</summary>
+    private uint? pendingPreferStartNode;
+
+    /// <summary>South Horn red/blue (etc.): finish this half before switching after empty skips.</summary>
+    private string? authoredStickyHalf;
+
+    /// <summary>South Horn session start: prepend Return before first walk (cleared after first plan).</summary>
+    private bool pendingSessionCampReturn;
+
+    /// <summary>Node → half from the last loaded authored route (for divert while planner is null).</summary>
+    private readonly Dictionary<uint, string> authoredNodeHalves = [];
 
     /// <summary>Hysteresis: Hide required until threats leave exit distance.</summary>
     private bool ninjaHideRequired;
@@ -170,12 +185,90 @@ public class TreasureHunterService
 
             planningRoute = false;
             List<uint> validNodes = GetValidNodesForNextPlan();
+            if (pendingPreferStartNode is uint preferLatch
+                && !validNodes.Contains(preferLatch)
+                && layoutTreasure.Any(t => t.Id == preferLatch))
+            {
+                // Divert latch — pad may have been checked empty while still live.
+                checkedNodeIds.Remove(preferLatch);
+                validNodes.Insert(0, preferLatch);
+            }
+
             steps.Clear();
-            uint? preferStart = FindPreferredLiveNearbyNode(validNodes);
-            steps.AddRange(pathPlanner.FindPath(player.Position, validNodes, preferStart).GetAwaiter().GetResult());
+            List<uint> nearbyPrefix = FindAllLiveNearbyPreferNodes(validNodes);
+            if (pendingPreferStartNode is uint latch && validNodes.Contains(latch))
+            {
+                nearbyPrefix.Remove(latch);
+                nearbyPrefix.Insert(0, latch);
+            }
+
+            pendingPreferStartNode = null;
+            foreach (uint preferId in nearbyPrefix)
+            {
+                if (!validNodes.Contains(preferId))
+                {
+                    checkedNodeIds.Remove(preferId);
+                    validNodes.Add(preferId);
+                }
+            }
+
+            string? stickyHalf = authoredStickyHalf;
+            if (stickyHalf != null && !pathPlanner.HalfHasRemaining(stickyHalf, validNodes))
+            {
+                string? nextHalf = pathPlanner.TryGetAlternateHalf(stickyHalf, validNodes);
+                log.Info(
+                    "Treasure hunt finished sticky half {Half}; switching to {Next}",
+                    stickyHalf,
+                    nextHalf ?? "(none)");
+                authoredStickyHalf = stickyHalf = nextHalf;
+            }
+
+            // First plan / recovery: lock to last checked pad's half while it still has work.
+            if (stickyHalf == null && LastCheckedNodeId is uint lastId)
+            {
+                string? lastHalf = pathPlanner.TryGetNodeHalf(lastId);
+                if (lastHalf != null && pathPlanner.HalfHasRemaining(lastHalf, validNodes))
+                {
+                    stickyHalf = lastHalf;
+                }
+            }
+
+            // While sticky, Nearby peel-off only within that half (keeps red/blue intact).
+            if (stickyHalf != null)
+            {
+                string stickyNorm = stickyHalf;
+                nearbyPrefix = nearbyPrefix
+                    .Where(id => pathPlanner.TryGetNodeHalf(id) == stickyNorm)
+                    .ToList();
+            }
+
+            steps.AddRange(
+                pathPlanner
+                    .FindPath(player.Position, validNodes, nearbyPrefix, stickyHalf)
+                    .GetAwaiter()
+                    .GetResult());
+
+            if (pendingSessionCampReturn)
+            {
+                pendingSessionCampReturn = false;
+                if (steps.Count == 0 || steps[0].Type != HuntPathfinderStepType.ReturnToBaseCamp)
+                {
+                    steps.Insert(0, HuntPathfinderStep.ReturnToBaseCamp());
+                }
+
+                log.Info("Treasure hunt: prepended session-start Return to base camp");
+            }
+
+            if (pathPlanner.LastPrimaryHalf != null)
+            {
+                authoredStickyHalf = pathPlanner.LastPrimaryHalf;
+            }
+
+            RefreshAuthoredHalfCache(pathPlanner);
             pathPlanner = null;
             StepIndex = 0;
             // Treasure Sight once per session start (not on mid-hunt replans).
+            // Armed here so it runs after session-start Return (Sight defers during Return/TP).
             if (!sessionStartSightArmed)
             {
                 pendingStartSight = config.CastTreasureSightDuringHunt
@@ -372,6 +465,10 @@ public class TreasureHunterService
         sightCastUtc = DateTime.MinValue;
         locationsSinceLastSight = 0;
         ninjaHideRequired = false;
+        pendingPreferStartNode = null;
+        authoredStickyHalf = null;
+        pendingSessionCampReturn = false;
+        authoredNodeHalves.Clear();
         checkedNodeIds.Clear();
         ClearEmptyPadCandidate();
         ResetStuckWatch();
@@ -390,8 +487,32 @@ public class TreasureHunterService
             return;
         }
 
+        IZone zone = zones.GetZone();
+        if (zone.ZoneId == ZoneId.SouthHorn)
+        {
+            authoredStickyHalf = AlternateSouthHornStartHalf(config.LastSouthHornStartHalf);
+            config.LastSouthHornStartHalf = authoredStickyHalf;
+            configSaver.Save();
+            pendingSessionCampReturn = !zone.IsInBasecamp();
+            log.Info(
+                "Treasure hunt South Horn: start half {Half}; camp Return {Return}",
+                authoredStickyHalf,
+                pendingSessionCampReturn ? "pending" : "skip (already in camp)");
+        }
+
         Running = true;
         planningRoute = true;
+    }
+
+    private static string AlternateSouthHornStartHalf(string? lastStartHalf)
+    {
+        if (string.Equals(lastStartHalf, "red", StringComparison.OrdinalIgnoreCase))
+        {
+            return "blue";
+        }
+
+        // null / blue / anything else → red
+        return "red";
     }
 
     public void Pause()
@@ -571,63 +692,101 @@ public class TreasureHunterService
         stuckNudgeIssued = false;
     }
 
-    /// <summary>Closest remaining layout node for an unopened live coffer near the player.</summary>
-    private uint? FindPreferredLiveNearbyNode(IReadOnlyList<uint> validNodes)
+    /// <summary>
+    /// All remaining layout pads for live Nearby coffers, closest first (exclusive pad match).
+    /// </summary>
+    private List<uint> FindAllLiveNearbyPreferNodes(IReadOnlyList<uint> validNodes)
     {
         if (validNodes.Count == 0)
         {
-            return null;
+            return [];
         }
 
         HashSet<uint> valid = validNodes.ToHashSet();
-        uint? bestId = null;
-        float bestDist = float.MaxValue;
-
-        foreach (IGameObject obj in objects)
+        List<(TreasureCoffer Coffer, float Dist)> lives = [];
+        foreach (TreasureCoffer coffer in tracker.Treasures)
         {
-            if (obj is not { ObjectKind: ObjectKind.Treasure, IsDead: false } || !obj.IsValid())
+            if (!coffer.IsValid() || !MatchesLiveHuntFilter(coffer))
             {
                 continue;
             }
 
-            if (OpenTreasureCofferChain.IsOpenedOrLooted(obj))
+            float distToPlayer = player.Position.Distance2D(coffer.GetPosition());
+            if (distToPlayer > HuntDistances.NearbyLiveDivertRange)
             {
                 continue;
             }
 
-            float distToPlayer = player.Position.Distance2D(obj.Position);
-            if (distToPlayer > HuntDistances.NearbyLiveDivertRange || distToPlayer >= bestDist)
-            {
-                continue;
-            }
+            lives.Add((coffer, distToPlayer));
+        }
 
-            uint? nodeId = FindNearestValidLayoutNode(obj.Position, valid);
+        if (lives.Count == 0)
+        {
+            return [];
+        }
+
+        lives.Sort((a, b) => a.Dist.CompareTo(b.Dist));
+        HashSet<uint> claimedPads = [];
+        List<uint> result = [];
+        foreach ((TreasureCoffer coffer, float distToPlayer) in lives)
+        {
+            uint? nodeId = FindExclusiveLayoutNode(coffer.GetPosition(), valid, claimedPads);
             if (nodeId is not uint id)
             {
                 continue;
             }
 
-            bestDist = distToPlayer;
-            bestId = id;
-        }
-
-        if (bestId is uint preferred)
-        {
+            claimedPads.Add(id);
+            result.Add(id);
             log.Info(
-                "Treasure hunt preferring live nearby coffer {NodeId} at {Distance:F1}y",
-                preferred,
-                bestDist);
+                "Treasure hunt nearby peel candidate {NodeId} at {Distance:F1}y",
+                id,
+                distToPlayer);
         }
 
-        return bestId;
+        return result;
     }
 
-    private uint? FindNearestValidLayoutNode(Vector3 livePosition, HashSet<uint> validNodes)
+    private bool MatchesLiveHuntFilter(TreasureCoffer coffer)
+    {
+        CofferType type = coffer.GetCofferType();
+        if (type is not (CofferType.Bronze or CofferType.Silver))
+        {
+            return false;
+        }
+
+        return !config.HuntSilverChestsOnly || type == CofferType.Silver;
+    }
+
+    /// <summary>
+    /// Nearest unclaimed layout pad for a live coffer — try tight proximity first, then match radius.
+    /// </summary>
+    private uint? FindExclusiveLayoutNode(Vector3 livePosition, HashSet<uint> validNodes, HashSet<uint> claimedPads)
+    {
+        uint? tight = FindNearestUnclaimedLayoutNode(livePosition, validNodes, claimedPads, HuntDistances.LayoutProximityRadiusSq);
+        if (tight != null)
+        {
+            return tight;
+        }
+
+        return FindNearestUnclaimedLayoutNode(livePosition, validNodes, claimedPads, HuntDistances.MatchRadiusSq);
+    }
+
+    private uint? FindNearestUnclaimedLayoutNode(
+        Vector3 livePosition,
+        HashSet<uint> validNodes,
+        HashSet<uint> claimedPads,
+        float maxDistSq)
     {
         uint? bestId = null;
-        float bestDistSq = HuntDistances.MatchRadiusSq;
+        float bestDistSq = maxDistSq;
         foreach (uint nodeId in validNodes)
         {
+            if (claimedPads.Contains(nodeId))
+            {
+                continue;
+            }
+
             TreasureLayoutDatum layout = layoutTreasure.FirstOrDefault(t => t.Id == nodeId);
             if (layout.Id != nodeId)
             {
@@ -675,27 +834,28 @@ public class TreasureHunterService
         if (current.Type == HuntPathfinderStepType.WalkToNode)
         {
             currentDist = GetWalkNodeGoalDistance(current.NodeId);
-            if (currentDist < HuntDistances.NearbyLiveDivertMinCurrentDistance)
-            {
-                return false;
-            }
         }
         else
         {
             currentDist = float.MaxValue;
         }
 
-        List<uint> candidates = GetValidNodesForNextPlan();
-        if (current.Type == HuntPathfinderStepType.WalkToNode)
+        HashSet<uint> candidates = GetDivertCandidateNodes(current);
+        if (authoredStickyHalf != null)
         {
-            candidates.Remove(current.NodeId);
+            // Stay on the sticky half — don't peel across red/blue.
+            string sticky = authoredStickyHalf;
+            candidates.RemoveWhere(id =>
+                authoredNodeHalves.TryGetValue(id, out string? half) && half != sticky);
         }
 
-        uint? prefer = FindPreferredLiveNearbyNode(candidates);
-        if (prefer is not uint nearbyId)
+        List<uint> nearby = FindAllLiveNearbyPreferNodes(candidates.ToList());
+        if (nearby.Count == 0)
         {
             return false;
         }
+
+        uint nearbyId = nearby[0];
 
         TreasureLayoutDatum layout = layoutTreasure.FirstOrDefault(t => t.Id == nearbyId);
         if (layout.Id != nearbyId)
@@ -711,15 +871,34 @@ public class TreasureHunterService
         }
 
         float nearbyDist = player.Position.Distance2D(present.Position);
-        if (nearbyDist + HuntDistances.NearbyLiveDivertClearAdvantage >= currentDist)
+
+        bool currentIsLiveNearby = current.Type == HuntPathfinderStepType.WalkToNode
+                                   && IsWalkGoalLiveNearby(current.NodeId);
+
+        if (currentIsLiveNearby)
+        {
+            // Already walking to a live Nearby — only peel if another is clearly closer.
+            if (nearbyDist + 5f >= currentDist)
+            {
+                return false;
+            }
+        }
+        else if (nearbyDist + HuntDistances.NearbyLiveDivertClearAdvantage >= currentDist
+                 && currentDist <= HuntDistances.NearbyLiveDivertRange)
+        {
+            // Current goal is also "near" but empty/wrong pad — still require a clear win.
+            return false;
+        }
+        // else: current goal is far / not live Nearby → always peel to the live Nearby.
+
+        if (!EzThrottler.Throttle("TreasureHuntReprioritize", 1500))
         {
             return false;
         }
 
-        if (!EzThrottler.Throttle("TreasureHuntReprioritize", 3000))
-        {
-            return false;
-        }
+        // False empty-skip may have checked this pad while the coffer is still live.
+        checkedNodeIds.Remove(nearbyId);
+        pendingPreferStartNode = nearbyId;
 
         log.Info(
             "Treasure hunt diverting to live coffer {NearbyId} at {NearbyDist:F1}y (was {CurrentType} {CurrentId} at {CurrentDist:F1}y)",
@@ -728,7 +907,71 @@ public class TreasureHunterService
             current.Type,
             current.NodeId,
             currentDist > 1e6f ? -1f : currentDist);
-        return RecalculateRoute();
+
+        if (RecalculateRoute())
+        {
+            return true;
+        }
+
+        pendingPreferStartNode = null;
+        return false;
+    }
+
+    /// <summary>True when the walk goal still has an unopened live coffer within divert range of the player.</summary>
+    private bool IsWalkGoalLiveNearby(uint nodeId)
+    {
+        TreasureLayoutDatum layout = layoutTreasure.FirstOrDefault(t => t.Id == nodeId);
+        if (layout.Id != nodeId)
+        {
+            return false;
+        }
+
+        IGameObject? present = FindTreasureForLayout(layout.Position, nodeId)
+                               ?? FindUnopenedTreasureNear(layout.Position, HuntDistances.MatchRadius);
+        if (present == null || OpenTreasureCofferChain.IsOpenedOrLooted(present))
+        {
+            return false;
+        }
+
+        return player.Position.Distance2D(present.Position) <= HuntDistances.NearbyLiveDivertRange;
+    }
+
+    /// <summary>
+    /// Remaining route pads plus other matching layout pads (including already-checked),
+    /// so a live Nearby coffer can map to its real pad after a false empty skip.
+    /// </summary>
+    private HashSet<uint> GetDivertCandidateNodes(HuntPathfinderStep current)
+    {
+        HashSet<uint> ids = GetValidNodesForNextPlan().ToHashSet();
+        if (current.Type == HuntPathfinderStepType.WalkToNode)
+        {
+            ids.Remove(current.NodeId);
+        }
+
+        int maxLevel = maxLevelOverrideForNextRun ?? config.HuntMaxLevel;
+        List<TreasureData> authored = zones.GetZone().GetTreasureData();
+        foreach (TreasureLayoutDatum layout in layoutTreasure)
+        {
+            if (ids.Contains(layout.Id))
+            {
+                continue;
+            }
+
+            if (!MatchesHuntCofferFilter(layout.ModelId) || IsLayoutCofferOpened(layout.Id))
+            {
+                continue;
+            }
+
+            if (authored.Count > 0
+                && !authored.Any(d => d.Level <= maxLevel && d.Matches(layout.Id, layout.Position)))
+            {
+                continue;
+            }
+
+            ids.Add(layout.Id);
+        }
+
+        return ids;
     }
 
     private float GetWalkNodeGoalDistance(uint nodeId)
@@ -850,8 +1093,9 @@ public class TreasureHunterService
     }
 
     /// <summary>
-    /// After Sight, drop remaining layout nodes the object table already proves empty
-    /// so we do not walk onto known empties before the next hop.
+    /// After Sight, drop remaining layout nodes already empty and within walk-up range
+    /// so we do not detour onto pads the object table already proves vacant.
+    /// Distant empties are still walked to, then skipped by the normal empty-pad check.
     /// </summary>
     private int TrimNearbyEmptyNodesAfterSight()
     {
@@ -864,6 +1108,7 @@ public class TreasureHunterService
                 continue;
             }
 
+            // Only trim pads we are already next to — do not skip half the route from camp.
             if (!IsLayoutPadEmpty(spot.Position, nodeId) || !CanTrustEmptyPad(spot.Position))
             {
                 continue;
@@ -871,7 +1116,7 @@ public class TreasureHunterService
 
             checkedNodeIds.Add(nodeId);
             trimmed++;
-            log.Debug("Treasure Sight: trimming empty pad {NodeId} (object-table trust)", nodeId);
+            log.Debug("Treasure Sight: trimming empty pad {NodeId} (within skip range)", nodeId);
         }
 
         return trimmed;
@@ -884,7 +1129,14 @@ public class TreasureHunterService
             return false;
         }
 
-        if (tracker.BronzeChests + tracker.SilverChests > 0)
+        if (config.HuntSilverChestsOnly)
+        {
+            if (tracker.SilverChests > 0)
+            {
+                return false;
+            }
+        }
+        else if (tracker.BronzeChests + tracker.SilverChests > 0)
         {
             return false;
         }
@@ -1328,18 +1580,9 @@ public class TreasureHunterService
                && FindUnopenedTreasureNear(layoutDestination, HuntDistances.MatchRadius) == null;
     }
 
-    /// <summary>True when the object table should already know if this pad has a coffer.</summary>
-    private bool CanTrustEmptyPad(Vector3 layoutDestination)
-    {
-        if (player.Position.Distance2D(layoutDestination) <= HuntDistances.EmptyPadSkipRadius)
-        {
-            return true;
-        }
-
-        return objects.Any(o => o is { ObjectKind: ObjectKind.Treasure, IsDead: false }
-                                && o.IsValid()
-                                && layoutDestination.Distance2D(o.Position) <= HuntDistances.EmptyPadRegionTrustRadius);
-    }
+    /// <summary>True when the player is close enough to trust that this pad has no live coffer.</summary>
+    private bool CanTrustEmptyPad(Vector3 layoutDestination) =>
+        player.Position.Distance2D(layoutDestination) <= HuntDistances.EmptyPadSkipRadius;
 
     private bool ConfirmEmptyPad(uint nodeId)
     {
@@ -1445,6 +1688,7 @@ public class TreasureHunterService
         if (treasureData.Exists(d => d.Position.HasValue))
         {
             return layoutTreasure
+                .Where(t => MatchesHuntCofferFilter(t.ModelId))
                 .Where(t => treasureData.Any(d => d.Level <= maxLevel && d.Matches(t.Id, t.Position)))
                 .Select(t => t.Id)
                 .ToList();
@@ -1453,8 +1697,16 @@ public class TreasureHunterService
         return treasureData
             .Where(node => node.Level <= maxLevel)
             .Select(node => (uint)node.Id)
+            .Where(id =>
+            {
+                TreasureLayoutDatum layout = layoutTreasure.FirstOrDefault(t => t.Id == id);
+                return layout.Id == id && MatchesHuntCofferFilter(layout.ModelId);
+            })
             .ToList();
     }
+
+    private bool MatchesHuntCofferFilter(uint sgbId) =>
+        !config.HuntSilverChestsOnly || sgbId == TreasureCoffer.SilverSgbId;
 
     private List<uint> GetValidNodesForNextPlan()
     {
@@ -1547,12 +1799,31 @@ public class TreasureHunterService
         layoutTreasure.Sort((a, b) => a.Id.CompareTo(b.Id));
 
         IZone zone = zones.GetZone();
-        return new(
+        TreasureHuntPathfinder planner = new(
             zone.ZoneId,
             plugin,
             layoutTreasure,
             log
         );
+        RefreshAuthoredHalfCache(planner);
+        return planner;
+    }
+
+    private void RefreshAuthoredHalfCache(IHuntRoutePlanner planner)
+    {
+        authoredNodeHalves.Clear();
+        foreach (TreasureLayoutDatum layout in layoutTreasure)
+        {
+            if (planner.TryGetNodeHalf(layout.Id) is string half)
+            {
+                authoredNodeHalves[layout.Id] = half;
+            }
+        }
+
+        log.Info(
+            "Treasure hunt authored halves cached: {Count} pads, sticky={Sticky}",
+            authoredNodeHalves.Count,
+            authoredStickyHalf ?? "-");
     }
 
     private bool ShouldReturnAfterHunt()
@@ -1689,6 +1960,10 @@ public class TreasureHunterService
         sightCastUtc = DateTime.MinValue;
         locationsSinceLastSight = 0;
         ninjaHideRequired = false;
+        pendingPreferStartNode = null;
+        authoredStickyHalf = null;
+        pendingSessionCampReturn = false;
+        authoredNodeHalves.Clear();
         ClearEmptyPadCandidate();
         ninjaHide.RestorePreviousGearsetIfNeeded();
         walkViaStepIndex = -1;

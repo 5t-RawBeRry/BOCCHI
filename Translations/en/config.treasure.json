@@ -49,6 +49,10 @@
       "label": "Max coffer level",
       "tooltip": "Skip coffers above this level on the hunt route."
     },
+    "hunt_silver_chests_only": {
+      "label": "Silver coffers only",
+      "tooltip": "Treasure Hunt only visits silver coffers and skips bronze pads."
+    },
     "skip_unsafe_treasure_windows": {
       "label": "Skip dangerous weather / Ashkin",
       "tooltip": "Pause Treasure Hunt on South Horn during Ashkin or other unsafe weather windows."
