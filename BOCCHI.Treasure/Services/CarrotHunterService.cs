@@ -202,6 +202,12 @@ public sealed class CarrotHunterService
             return;
         }
 
+        if (conditions[ConditionFlag.Unconscious])
+        {
+            SoftStopWhileUnconscious();
+            return;
+        }
+
         switch (Phase)
         {
             case CarrotHuntPhase.Idle:
@@ -1137,7 +1143,7 @@ public sealed class CarrotHunterService
         }
 
         // Different pad: only divert when it is clearly nearer than the current destination.
-        if (bestDist >= currentDist * 0.5f)
+        if (bestDist + HuntDistances.NearbyLiveDivertClearAdvantage >= currentDist)
         {
             return false;
         }
@@ -1412,6 +1418,15 @@ public sealed class CarrotHunterService
         activeReturnChain = null;
         returnThenStop = false;
         returnThenAethernet = false;
+    }
+
+    private void SoftStopWhileUnconscious()
+    {
+        chainManager.CancelWhere(name => name.StartsWith("CarrotHunt", StringComparison.Ordinal));
+        activeReturnChain = null;
+        activeTeleportChain = null;
+        vnav.Stop();
+        pathfinder.Stop();
     }
 
     private void StopDueToLeavingOccultCrescent()

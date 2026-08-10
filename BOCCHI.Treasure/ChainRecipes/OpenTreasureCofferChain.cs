@@ -72,7 +72,8 @@ public class OpenTreasureCofferChain
             return false;
         }
 
-        if (conditions[ConditionFlag.BetweenAreas])
+        if (conditions[ConditionFlag.BetweenAreas]
+            || conditions[ConditionFlag.Unconscious])
         {
             return false;
         }

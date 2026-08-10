@@ -1,7 +1,6 @@
 ﻿using BOCCHI.Automator.Data;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
-using BOCCHI.Common.Services.Paths;
 using Dalamud.Game.ClientState.Conditions;
 using Ocelot.Chain;
 using Ocelot.Services.Pathfinding;
@@ -27,7 +26,8 @@ public class DeadHandler
         // Stop any in-flight Return so death prompts aren't auto-accepted.
         memory.Forget<ReturningStateMemory>();
         memory.Forget<GoalPathStepMemory>();
-        PathStepSoftStop.Cancel(chains);
+        // Cancel pot-chest / travel opens too — PathStep-only cancel left Interact spam while dead.
+        chains.CancelAll();
         pathfinder.Stop();
     }
 

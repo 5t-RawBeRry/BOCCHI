@@ -62,6 +62,11 @@ public class FarmingPotChestsHandler
 
     public override StatePriority GetScore()
     {
+        if (conditions[ConditionFlag.Unconscious])
+        {
+            return StatePriority.Never;
+        }
+
         if (memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _))
         {
             return StatePriority.Never;

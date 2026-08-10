@@ -54,11 +54,15 @@ public static class HuntDistances
 
     /// <summary>
     /// Mid-route divert / tour prefer: live unused target within this of the player.
+    /// Matches pad match radius so ~100y radar hits still divert.
     /// </summary>
-    public const float NearbyLiveDivertRange = 100f;
+    public const float NearbyLiveDivertRange = MatchRadius;
 
     /// <summary>
-    /// Only divert when the current destination is at least this far (yalms, 2D).
+    /// Only divert off a walk target when that destination is at least this far (yalms, 2D).
     /// </summary>
     public const float NearbyLiveDivertMinCurrentDistance = 80f;
+
+    /// <summary>Live target must be at least this many yalms closer than the current destination.</summary>
+    public const float NearbyLiveDivertClearAdvantage = 15f;
 }

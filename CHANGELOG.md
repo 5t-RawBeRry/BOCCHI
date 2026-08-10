@@ -3,11 +3,14 @@
 ### New
 - Carrot Hunt routes like Treasure Hunt: aethernet and Return when cheaper, replan after each pad, and peel off for a chewed carrot next to you.
 - Carrot Hunt can Return to base camp when the route finishes (same setting as Treasure Hunt).
+- North Horn Carrot Hunt has a full 25-pad map.
 - `/bocchi debug` toggles the debug window.
 
 ### Fixes
 - Carrot Hunt walks in close enough to use Fortune Carrot / open bunny chests, dismounts at awkward pads, and stays for double spawns.
 - Carrot Hunt no longer Returns when a chewed carrot is right next to you.
+- Treasure Hunt peels off for a live coffer within ~120 yalms even mid Return or aethernet (same idea as Carrot Hunt).
+- Treasure Hunt no longer walks past a bronze the Nearby list already shows (live-first divert; was stuck on via / far pad distance).
 - Treasure Hunt no longer spams Treasure Sight or freezes with cast-during-hunt on.
 - Treasure Hunt skips coffers it cannot open and continues (#162).
 - Treasure Hunt progress counts up as coffers are checked (it looked like a countdown).
@@ -23,4 +26,5 @@
 - A Beast Unleashed uses the correct registration area and arena center.
 - Pots & Treasure mounts when a treasure hunt starts from base camp.
 - No more “Invalid target” flash when mounting right after an aethernet teleport.
+- Automation no longer tries to open coffers while you are dead.
 - Treasure Nearby list no longer crashes on odd coffer ids that aren’t in the game sheet.
