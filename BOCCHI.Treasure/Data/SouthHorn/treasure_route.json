@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "territoryId": 1252,
   "zone": "SouthHorn",
-  "source": "map-overlay-26-red-42-blue-v8",
+  "source": "map-overlay-26-red-42-blue-v10",
   "segments": [
     {
       "id": "red-from-camp-west",
@@ -48,9 +48,9 @@
         1789,
         1806,
         1836,
+        1827,
         1805,
         1793,
-        1827,
         1828,
         1823,
         1854,

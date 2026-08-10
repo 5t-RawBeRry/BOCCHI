@@ -23,15 +23,17 @@ public static class HuntDistances
     public const float SamePadRecheckRadiusSq = SamePadRecheckRadius * SamePadRecheckRadius;
 
     /// <summary>
-    /// Player within this of a pad with no live object ⇒ treat as empty.
+    /// Player within this of a pad with no live object ⇒ treat as empty,
+    /// but only after walking in from outside this radius (see hunt service).
     /// ~100y matches when coffers stream in so absence can be trusted.
     /// </summary>
     public const float EmptyPadSkipRadius = 100f;
 
     /// <summary>
-    /// Sight trim only: same range as <see cref="EmptyPadSkipRadius"/>.
+    /// After Sight, only trim empties this close — not the full skip radius —
+    /// so a dense cluster is not wiped while standing in the middle of it.
     /// </summary>
-    public const float EmptyPadRegionTrustRadius = 100f;
+    public const float EmptyPadRegionTrustRadius = LayoutProximityRadius;
 
     public const float EmptyPadRegionTrustRadiusSq = EmptyPadRegionTrustRadius * EmptyPadRegionTrustRadius;
 
@@ -50,7 +52,7 @@ public static class HuntDistances
     /// <summary>Keep aligned with <see cref="OpenTreasureCofferChain.MaxInteractRange"/>.</summary>
     public const float BunnyMaxInteractRadius = OpenTreasureCofferChain.MaxInteractRange;
 
-    /// <summary>Dismount once this close to a carrot or bunny.</summary>
+    /// <summary>Dismount once this close before using a Fortune Carrot.</summary>
     public const float DismountRadius = 15f;
 
     /// <summary>If approach stalls within this range (2D), try using / opening from here.</summary>

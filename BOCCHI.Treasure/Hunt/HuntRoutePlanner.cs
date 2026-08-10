@@ -15,6 +15,9 @@ public interface IHuntRoutePlanner
 
     string? TryGetNodeHalf(uint nodeId);
 
+    /// <summary>Authored route order index (0-based), or null if not in treasure_route.json.</summary>
+    int? TryGetNodeOrderIndex(uint nodeId);
+
     bool HalfHasRemaining(string half, IReadOnlyList<uint> remainingNodes);
 
     /// <summary>Other tagged half that still has remaining pads, if any.</summary>
@@ -161,6 +164,19 @@ public abstract class HuntRoutePlanner
             if (entry.NodeId == nodeId)
             {
                 return entry.Half;
+            }
+        }
+
+        return null;
+    }
+
+    public int? TryGetNodeOrderIndex(uint nodeId)
+    {
+        for (int i = 0; i < authoredEntries.Count; i++)
+        {
+            if (authoredEntries[i].NodeId == nodeId)
+            {
+                return i;
             }
         }
 
@@ -361,13 +377,32 @@ public abstract class HuntRoutePlanner
                 .Where(e => e.Half == firstHalf)
                 .Select(e => e.NodeId)
                 .ToList();
-            tour.AddRange(orderedUnique
-                .Where(e => e.Half == otherHalf)
-                .Select(e => e.NodeId));
-            tour.AddRange(orderedUnique
-                .Where(e => e.Half == null)
-                .Select(e => e.NodeId));
+
+            // Sticky half: only that half this plan. The hunter switches sticky + Returns
+            // when the half is exhausted — do not append the other half into the same tour
+            // (that caused mid-route turnarounds into blue while still "on red").
+            if (normalizedSticky == null)
+            {
+                tour.AddRange(orderedUnique
+                    .Where(e => e.Half == otherHalf)
+                    .Select(e => e.NodeId));
+                tour.AddRange(orderedUnique
+                    .Where(e => e.Half == null)
+                    .Select(e => e.NodeId));
+            }
+
             return tour;
+        }
+
+        // Sticky half: only that color, even when the remaining set only has one half loaded.
+        // Returning the other half here used to flip camp starts (red → first blue).
+        if (NormalizeHalf(stickyHalf) is string stickyNorm)
+        {
+            LastPrimaryHalf = stickyNorm;
+            return orderedUnique
+                .Where(e => e.Half == stickyNorm)
+                .Select(e => e.NodeId)
+                .ToList();
         }
 
         // Single / no half: enter at nearest remaining, continue authored order with wrap.

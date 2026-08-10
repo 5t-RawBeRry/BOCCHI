@@ -1,5 +1,6 @@
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
+using ECommons.GameHelpers;
 using Ocelot.Actions;
 
 namespace BOCCHI.Common.Data.Zones;
@@ -8,10 +9,19 @@ namespace BOCCHI.Common.Data.Zones;
 public static class DismountAssist
 {
     /// <summary>
-    ///     If mounted (or mounting), try to dismount. Returns true when the caller should wait.
+    ///     If mounted, mounting, or still in the dismount jump/landing, try to dismount / wait.
+    ///     Returns true when the caller should wait (not act yet).
     /// </summary>
     public static bool TryDismount(ICondition conditions)
     {
+        // Dismount leaves a jump/landing beat — actions then fail with "while jumping".
+        // Prefer ECommons IsJumping (condition flags + Character->IsJumping) over full Player.IsBusy,
+        // which also treats moving / combat / casting as busy and would stall pathing callers.
+        if (Player.IsJumping)
+        {
+            return true;
+        }
+
         if (!conditions[ConditionFlag.Mounted] && !conditions[ConditionFlag.Mounting])
         {
             return false;

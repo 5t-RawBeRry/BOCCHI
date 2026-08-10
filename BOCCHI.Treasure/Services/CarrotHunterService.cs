@@ -14,7 +14,6 @@ using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
-using Ocelot.Actions;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Extensions;
@@ -658,12 +657,9 @@ public sealed class CarrotHunterService
 
         float dist2d = player.Position.Distance2D(bunny.Position);
         float dist3d = player.Position.Distance(bunny.Position);
-        if (MaybeDismountNear(dist2d))
-        {
-            return;
-        }
 
         // Path in until within Pandora-style open range (do not interact from 5–12y).
+        // Bunny coffers open while mounted — only Fortune Carrot use needs a dismount.
         if (dist3d > HuntDistances.BunnyInteractRadius
             && !(dist2d <= HuntDistances.StuckNearRadius && IsStuckNearTarget(dist2d)))
         {
@@ -688,6 +684,7 @@ public sealed class CarrotHunterService
         if (vnav.IsRunning())
         {
             vnav.Stop();
+            return;
         }
 
         if (!EzThrottler.Throttle("CarrotHunt::InteractBunny", 400))
@@ -1284,10 +1281,13 @@ public sealed class CarrotHunterService
 
     private bool MaybeDismountNear(float distance)
     {
-        if (distance > HuntDistances.DismountRadius
-            || (!conditions[ConditionFlag.Mounted]
-                && !conditions[ConditionFlag.Mounting]
-                && !player.IsMounted()))
+        if (distance > HuntDistances.DismountRadius)
+        {
+            return false;
+        }
+
+        // Fortune Carrot use requires being on foot (chests do not).
+        if (!DismountAssist.TryDismount(conditions))
         {
             return false;
         }
@@ -1295,11 +1295,6 @@ public sealed class CarrotHunterService
         if (vnav.IsRunning())
         {
             vnav.Stop();
-        }
-
-        if (EzThrottler.Throttle("CarrotHunt::Dismount", 500) && Actions.Dismount.CanCast())
-        {
-            Actions.Dismount.Cast();
         }
 
         return true;

@@ -28,6 +28,7 @@ public class PotsTreasureService
     IPotCycleTracker potCycle,
     IFateRepository fates,
     IZoneProvider zones,
+    IGoalFactory goalFactory,
     IAutomationModeGuard modeGuard,
     IChatGui chat,
     UIConfig uiConfig,
@@ -46,6 +47,9 @@ public class PotsTreasureService
     private DateTimeOffset forceTreasureUntil = DateTimeOffset.MinValue;
 
     private bool huntWasRunning;
+
+    /// <summary>Live pot FATE id we already handed to the automator this pot window.</summary>
+    private uint ensuredPotFateId;
 
     public bool Running => context.IsPotsAndTreasure;
 
@@ -191,6 +195,7 @@ public class PotsTreasureService
 
     private void EnterPotPhase()
     {
+        bool leavingHunt = Phase != PotsTreasurePhase.DoingPots || automator.SuspendedForTreasure;
         Phase = PotsTreasurePhase.DoingPots;
         automator.SetSuspendedForTreasure(false);
 
@@ -199,11 +204,59 @@ public class PotsTreasureService
             hunter.Pause();
             logger.Info("Pots & Treasure: paused hunt for pot window");
         }
+
+        // Hunt filler freezes the automator; when a pot pops we must hand it a FATE goal
+        // (ChoosingActivity alone can stay blocked by interrupt latches / empty score paths).
+        if (leavingHunt)
+        {
+            memory.Forget<NavigationInterruptedMemory>();
+            IllegalModeActivityWork.ForgetTravelLatches(memory);
+            automator.SoftStopPathfinding();
+            ensuredPotFateId = 0;
+        }
+
+        EnsureLivePotFateGoal();
+    }
+
+    private void EnsureLivePotFateGoal()
+    {
+        IZone zone = zones.GetZone();
+        Fate? pot = fates.Snapshot().FirstOrDefault(f => zone.IsPotFate(f.Id.Value));
+        if (pot == null)
+        {
+            ensuredPotFateId = 0;
+            return;
+        }
+
+        if (memory.TryRemember<GoalMemory>(out GoalMemory existing)
+            && existing.Goal.GoalType is FateGoal fateGoal
+            && fateGoal.id.Value == pot.Id.Value)
+        {
+            ensuredPotFateId = pot.Id.Value;
+            return;
+        }
+
+        if (ensuredPotFateId == pot.Id.Value
+            && memory.TryRemember<GoalMemory>(out GoalMemory _))
+        {
+            return;
+        }
+
+        memory.Forget<GoalMemory>();
+        memory.Forget<GoalPathStepMemory>();
+        memory.Forget<NavigationInterruptedMemory>();
+        memory.TryAdd(new GoalMemory(goalFactory.Fate(pot.Id)));
+        ensuredPotFateId = pot.Id.Value;
+        logger.Info(
+            "Pots & Treasure: targeting live pot FATE {Id} ({Name})",
+            pot.Id.Value,
+            pot.Name);
     }
 
     private void EnterHuntPhase()
     {
         Phase = PotsTreasurePhase.Hunting;
+        ensuredPotFateId = 0;
         automator.SetSuspendedForTreasure(true);
 
         if (!hunter.IsVnavReady)
@@ -229,7 +282,9 @@ public class PotsTreasureService
         {
             hunter.Resume();
             huntWasRunning = true;
-            logger.Info("Pots & Treasure: resumed treasure hunt");
+            // Rebuild the walk from the current authored step after pot vnav ownership.
+            hunter.RecalculateRoute();
+            logger.Info("Pots & Treasure: resumed treasure hunt where it left off");
         }
     }
 
@@ -332,5 +387,6 @@ public class PotsTreasureService
         nextTreasureHuntAt = DateTimeOffset.MinValue;
         forceTreasureUntil = DateTimeOffset.MinValue;
         huntWasRunning = false;
+        ensuredPotFateId = 0;
     }
 }

@@ -15,7 +15,6 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<IDebugPanel, AethernetDebugPanel>();
         services.AddSingleton<IDebugPanel, TreasureHuntPrecomputePanel>();
         services.AddSingleton<IDebugPanel, TreasureLocationsExportPanel>();
-        services.AddSingleton<IDebugPanel, CarrotLocationsExportPanel>();
 
         services.AddSingleton<DebugWindow>();
         services.AddSingleton<IDebugWindow>(sp => sp.GetRequiredService<DebugWindow>());

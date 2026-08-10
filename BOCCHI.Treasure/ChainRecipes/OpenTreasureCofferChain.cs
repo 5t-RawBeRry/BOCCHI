@@ -15,6 +15,7 @@ using System.Numerics;
 using DalamudObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 using TreasureFlags = FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.TreasureFlags;
 using TreasureState = FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.TreasureState;
+using CsObjectKind = FFXIVClientStructs.FFXIV.Client.Game.Object.ObjectKind;
 
 namespace BOCCHI.Treasure.ChainRecipes;
 
@@ -25,7 +26,8 @@ public readonly record struct TreasureOpenTarget(Vector3 Position, IReadOnlyList
 }
 
 /// <summary>
-///     Open a treasure coffer using the same interact rules as Pandora's AutoOpenChests.
+///     Open a treasure coffer. Interact rules match Pandora's AutoOpenChests;
+///     pathing is ours so automation can walk up first.
 /// </summary>
 public class OpenTreasureCofferChain
 (
@@ -36,14 +38,17 @@ public class OpenTreasureCofferChain
     IVNavmeshIpc vnav
 ) : ChainRecipe<TreasureOpenTarget>(chains)
 {
+    /// <summary>Path this close before relying on Pandora's ≤2y interact gate.</summary>
     public const float PathArrivalRange = 1.0f;
 
-    /// <summary>Pandora AutoOpenChests uses 3D distance ≤ 2y.</summary>
+    /// <summary>Pandora AutoOpenChests: only Interact when Distance ≤ 2.</summary>
     public const float PreferredOpenDistance = 2.0f;
 
-    public const float MaxInteractRange = 2.75f;
-
+    /// <summary>Alias used by callers / pot farm approach.</summary>
     public const float InteractDistance = PreferredOpenDistance;
+
+    /// <summary>Keep pathing toward a live coffer while outside Pandora range.</summary>
+    public const float MaxInteractRange = PreferredOpenDistance;
 
     public override string Name => "Open Treasure Coffer";
 
@@ -65,65 +70,63 @@ public class OpenTreasureCofferChain
 
     private bool TryInteract(TreasureOpenTarget target, PathState pathState)
     {
-        // Match Pandora's ChestThrottle cadence.
-        if (!EzThrottler.Throttle("ChestInteract", 200))
-        {
-            return false;
-        }
-
+        // Pandora: BetweenAreas bail; throttle 200ms on the interact attempt.
         if (conditions[ConditionFlag.BetweenAreas]
             || conditions[ConditionFlag.Unconscious])
         {
             return false;
         }
 
-        IGameObject? chest = GetChestAt(target);
-        if (chest == null)
+        IGameObject? nearby = FindLiveChestNear(target, searchRadius: 6f);
+        if (nearby == null)
         {
+            EnsurePathing(target.Position, pathState);
             return false;
         }
 
         unsafe
         {
-            GameObject* gameObject = (GameObject*)(void*)chest.Address;
-            FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure* tr =
-                (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
+            GameObject* gameObject = (GameObject*)(void*)nearby.Address;
+            var tr = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
 
-            if (IsOpenedOrLooted(chest, tr))
+            if (IsOpenedOrLooted(nearby, tr))
             {
+                if (vnav.IsRunning())
+                {
+                    vnav.Stop();
+                }
+
                 return true;
             }
 
-            if (tr->State is TreasureState.Opening)
-            {
-                return false;
-            }
+            float dist3d = Vector3.Distance(player.Position, nearby.Position);
 
-            float dist3d = Vector3.Distance(player.Position, chest.Position);
-            if (dist3d > MaxInteractRange)
-            {
-                EnsurePathing(chest.Position, pathState);
-                return false;
-            }
-
-            // Still outside Pandora's preferred 2y — keep pathing in.
+            // Not yet in Pandora's 2y window — keep walking in (automation-only; Pandora is passive).
             if (dist3d > PreferredOpenDistance)
             {
-                EnsurePathing(chest.Position, pathState);
+                EnsurePathing(nearby.Position, pathState);
                 return false;
             }
 
-            if (vnav.IsRunning())
+            if (vnav.IsRunning() || vnav.IsPathfinding())
             {
                 vnav.Stop();
             }
 
-            pathState.LastTarget = null;
+            // Pandora: require targetable before Interact — avoids "Too far away" spam while approaching.
+            if (!gameObject->GetIsTargetable())
+            {
+                return false;
+            }
 
-            // Interact even when not targetable yet — some OC coffers stay non-targetable
-            // until InteractWithObject (waiting forever looked like "sees it but won't open").
+            if (!EzThrottler.Throttle("ChestThrottle", 200))
+            {
+                return false;
+            }
+
+            // Pandora calls the single-arg overload (default LoS check).
             TargetSystem.Instance()->InteractWithObject(gameObject);
-            return IsOpenedOrLooted(chest, tr);
+            return IsOpenedOrLooted(nearby, tr);
         }
     }
 
@@ -133,7 +136,7 @@ public class OpenTreasureCofferChain
         bool drifted = pathState.LastTarget is not { } last
                        || Vector3.DistanceSquared(last, destination) > RepathDrift * RepathDrift;
 
-        if (!vnav.IsRunning() || drifted)
+        if ((!vnav.IsRunning() && !vnav.IsPathfinding()) || drifted)
         {
             pathState.LastTarget = destination;
             vnav.PathfindAndMoveCloseTo(destination, false, PathArrivalRange);
@@ -177,20 +180,64 @@ public class OpenTreasureCofferChain
         return false;
     }
 
-    private IGameObject? GetChestAt(TreasureOpenTarget target)
+    /// <summary>
+    /// Live coffer near the hunt/pot target. ObjectKind check matches Pandora (CS Treasure).
+    /// Targetable / ≤2y are applied at Interact time, not here — so we can still path in.
+    /// </summary>
+    private IGameObject? FindLiveChestNear(TreasureOpenTarget target, float searchRadius)
     {
-        const float SearchRadius = 6f;
         Vector3 position = target.Position;
         IReadOnlyList<uint>? preferred = target.PreferredBaseIds;
 
-        IEnumerable<IGameObject> candidates = objects.Where(o =>
-            o.IsValid()
-            && !o.IsDead
-            && Vector3.Distance(position, o.Position) <= SearchRadius
-            && MatchesOpenFilter(o, preferred));
+        return objects
+            .Where(o =>
+            {
+                if (!o.IsValid() || o.IsDead)
+                {
+                    return false;
+                }
 
-        return candidates
-            .OrderBy(o => Vector3.DistanceSquared(position, o.Position))
+                if (Vector3.Distance(position, o.Position) > searchRadius)
+                {
+                    return false;
+                }
+
+                if (!MatchesOpenFilter(o, preferred))
+                {
+                    return false;
+                }
+
+                unsafe
+                {
+                    var obj = (GameObject*)(void*)o.Address;
+                    if ((CsObjectKind)obj->ObjectKind != CsObjectKind.Treasure)
+                    {
+                        return false;
+                    }
+
+                    var tr = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)obj;
+                    if (tr->Flags.HasFlag(TreasureFlags.Opened)
+                        || tr->Flags.HasFlag(TreasureFlags.FadedOut))
+                    {
+                        return false;
+                    }
+
+                    Loot* loot = Loot.Instance();
+                    if (loot != null)
+                    {
+                        foreach (LootItem item in loot->Items)
+                        {
+                            if (item.ChestObjectId == o.GameObjectId)
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                }
+
+                return true;
+            })
+            .OrderBy(o => Vector3.DistanceSquared(player.Position, o.Position))
             .FirstOrDefault();
     }
 
@@ -198,7 +245,6 @@ public class OpenTreasureCofferChain
     {
         if (preferredBaseIds is { Count: > 0 })
         {
-            // Pot farm: only Magic Pot reveal coffers (overlap with bronze/silver layout coffers).
             for (int i = 0; i < preferredBaseIds.Count; i++)
             {
                 if (obj.BaseId == preferredBaseIds[i])
@@ -210,7 +256,6 @@ public class OpenTreasureCofferChain
             return false;
         }
 
-        // Normal treasure hunt: any live Treasure object (Pandora-style).
         return obj.ObjectKind == DalamudObjectKind.Treasure;
     }
 
