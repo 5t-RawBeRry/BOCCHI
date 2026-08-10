@@ -1272,7 +1272,6 @@ public sealed class CarrotHunterService
         }
 
         vnav.Stop();
-        // Fresh nearest-neighbor from here after every empty skip (treasure-style).
         RecalculateAndAdvance();
     }
 
@@ -1285,7 +1284,6 @@ public sealed class CarrotHunterService
         }
 
         vnav.Stop();
-        // Fresh nearest-neighbor from here after every pad (treasure-style).
         RecalculateAndAdvance();
     }
 

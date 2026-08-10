@@ -41,8 +41,8 @@ public static class HuntDistances
     /// <summary>3D interact range for bunny chests (same as coffer open).</summary>
     public const float BunnyInteractRadius = UseRadius;
 
-    /// <summary>Still try interact if slightly outside preferred open distance.</summary>
-    public const float BunnyMaxInteractRadius = 2.75f;
+    /// <summary>Still try interact if slightly outside preferred open distance (coffer max interact).</summary>
+    public const float BunnyMaxInteractRadius = 2.75f; // keep aligned with OpenTreasureCofferChain.MaxInteractRange
 
     /// <summary>Dismount once this close to a carrot or bunny.</summary>
     public const float DismountRadius = 15f;

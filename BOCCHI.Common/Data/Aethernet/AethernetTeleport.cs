@@ -1,6 +1,5 @@
 using BOCCHI.Common.Data.Zones;
 using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Chain.Middleware.Chain;
@@ -187,17 +186,7 @@ public static class AethernetTeleport
                         lifestream.Abort();
                     }
 
-                    // Lifestream leaves the crystal targeted; mount right after → "Invalid target."
-                    unsafe
-                    {
-                        TargetSystem* targets = TargetSystem.Instance();
-                        if (targets != null)
-                        {
-                            targets->Target = null;
-                            targets->SoftTarget = null;
-                        }
-                    }
-
+                    MountWait.ClearHardAndSoftTarget();
                     return StepResult.Success();
                 }, $"{chainName}::ClearTargetAfterArrive")
             .Wait(TimeSpan.FromMilliseconds(500));

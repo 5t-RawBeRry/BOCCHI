@@ -56,16 +56,23 @@ public static class MountWait
         return player.Position.Distance(destination) <= NavigationConstants.MountMinDistance;
     }
 
-    /// <param name="preferredMountId">Mount sheet row ID; 0 = Mount Roulette.</param>
-    public static unsafe void TryCast(uint preferredMountId = 0)
+    /// <summary>Drop hard/soft target (e.g. aetheryte after Lifestream so Mount is not “Invalid target”).</summary>
+    public static unsafe void ClearHardAndSoftTarget()
     {
-        // Mount needs no target; leftover aetheryte/NPC target after Lifestream → "Invalid target."
         TargetSystem* targets = TargetSystem.Instance();
-        if (targets != null)
+        if (targets == null)
         {
-            targets->Target = null;
-            targets->SoftTarget = null;
+            return;
         }
+
+        targets->Target = null;
+        targets->SoftTarget = null;
+    }
+
+    /// <param name="preferredMountId">Mount sheet row ID; 0 = Mount Roulette.</param>
+    public static void TryCast(uint preferredMountId = 0)
+    {
+        ClearHardAndSoftTarget();
 
         Ocelot.Actions.Action mount = Actions.Mount(preferredMountId);
         if (mount.CanCast())

@@ -103,7 +103,6 @@ public class TreasureHunterService
     private int? maxLevelOverrideForNextRun;
     private uint? stuckWatchNodeId;
     private float stuckWatchBestDistance = float.MaxValue;
-    private DateTime stuckWatchLastProgressUtc = DateTime.MinValue;
     private DateTime stuckWatchStartedUtc = DateTime.MinValue;
     private bool stuckNudgeIssued;
     private uint? emptyPadCandidateNodeId;
@@ -232,7 +231,7 @@ public class TreasureHunterService
 
         // Teleport/return handlers must observe completed chains before we clear them.
         // Clearing first re-starts the same teleport forever.
-        if (steps.Count > 0 && StepIndex < steps.Count && TryAdvanceCurrentStep())
+        if (TryAdvanceCurrentStep())
         {
             HuntPathfinderStep completed = steps[StepIndex];
             if (completed.Type == HuntPathfinderStepType.WalkToNode)
@@ -515,7 +514,6 @@ public class TreasureHunterService
         if (distance < stuckWatchBestDistance - StuckProgressThreshold)
         {
             stuckWatchBestDistance = distance;
-            stuckWatchLastProgressUtc = now;
             return false;
         }
 
@@ -523,7 +521,6 @@ public class TreasureHunterService
         if (!stuckNudgeIssued && now - stuckWatchStartedUtc >= StuckNudgeTimeout)
         {
             stuckNudgeIssued = true;
-            stuckWatchLastProgressUtc = now;
             TryIssueStuckNudge(step);
             return true;
         }
@@ -568,7 +565,6 @@ public class TreasureHunterService
     {
         stuckWatchNodeId = nodeId;
         stuckWatchBestDistance = distance;
-        stuckWatchLastProgressUtc = now;
         stuckWatchStartedUtc = now;
         stuckNudgeIssued = false;
     }
@@ -577,7 +573,6 @@ public class TreasureHunterService
     {
         stuckWatchNodeId = null;
         stuckWatchBestDistance = float.MaxValue;
-        stuckWatchLastProgressUtc = DateTime.MinValue;
         stuckWatchStartedUtc = DateTime.MinValue;
         stuckNudgeIssued = false;
     }
@@ -762,20 +757,6 @@ public class TreasureHunterService
         IGameObject? present = FindTreasureForLayout(layout.Position, nodeId);
         Vector3 destination = present?.Position ?? layout.Position;
         return player.Position.Distance2D(destination);
-    }
-
-    private List<uint> GetRemainingWalkNodeIds()
-    {
-        List<uint> ids = [];
-        for (int i = StepIndex; i < steps.Count; i++)
-        {
-            if (steps[i].Type == HuntPathfinderStepType.WalkToNode)
-            {
-                ids.Add(steps[i].NodeId);
-            }
-        }
-
-        return ids;
     }
 
     private bool TryBeginTreasureSight()
