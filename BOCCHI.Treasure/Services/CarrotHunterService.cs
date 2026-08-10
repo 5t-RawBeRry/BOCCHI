@@ -51,7 +51,8 @@ public sealed class CarrotHunterService
     IGameGui gui,
     IChatGui chat,
     IPluginLog log,
-    ITranslator<MainWindow> translator
+    ITranslator<MainWindow> translator,
+    PandoraAutoOpenHold pandoraAutoOpen
 ) : ICarrotHunter, IOnUpdate, IOnStop
 {
     private const float BunnySearchRadius = 10f;
@@ -154,6 +155,7 @@ public sealed class CarrotHunterService
         finishedAuthoredIds.Clear();
         ClearCurrent();
         stopwatch.Restart();
+        pandoraAutoOpen.Hold();
         RecalculateAndAdvance();
         log.Information(
             "Carrot hunt started (nearest-neighbor TSP, {Count} spots)",
@@ -1381,6 +1383,7 @@ public sealed class CarrotHunterService
         stopwatch.Reset();
         vnav.Stop();
         pathfinder.Stop();
+        pandoraAutoOpen.Release();
         log.Information("Carrot hunt stopped");
     }
 }

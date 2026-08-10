@@ -1,11 +1,13 @@
 using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services;
 using BOCCHI.Automator.Services.PotTreasure;
+using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Common.Services;
 using BOCCHI.Treasure.ChainRecipes;
+using BOCCHI.Treasure.Services;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
@@ -33,6 +35,8 @@ public class FarmingPotChestsHandler
     PotTreasureHintTracker hints,
     MagicalElixirAssist elixir,
     AutoRotationController autoRotation,
+    AutomatorConfig config,
+    PandoraAutoOpenHold pandoraAutoOpen,
     ILogger<FarmingPotChestsHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.FarmingPotChests)
 {
@@ -85,6 +89,7 @@ public class FarmingPotChestsHandler
         chainManager.CancelAll();
         pathfinder.Stop();
         activeChain = null;
+        pandoraAutoOpen.Hold();
     }
 
     public override void Exit(AutomatorState next)
@@ -94,6 +99,7 @@ public class FarmingPotChestsHandler
         pathfinder.Stop();
         activeChain = null;
         hints.Disarm();
+        pandoraAutoOpen.Release();
     }
 
     public override void Handle()
@@ -181,11 +187,7 @@ public class FarmingPotChestsHandler
         if (dist > CenterArrival)
         {
             farm.SettledAtUtc = DateTimeOffset.MinValue;
-            if (pathfinder.IsIdle())
-            {
-                pathfinder.PathfindAndMoveTo(new(farm.FateCenter));
-            }
-
+            EnsurePathing(farm.FateCenter);
             return;
         }
 
@@ -363,11 +365,7 @@ public class FarmingPotChestsHandler
         if (distance > OpenTreasureCofferChain.InteractDistance)
         {
             farm.SettledAtUtc = DateTimeOffset.MinValue;
-            if (pathfinder.IsIdle())
-            {
-                pathfinder.PathfindAndMoveTo(new(target));
-            }
-
+            EnsurePathing(target);
             return;
         }
 
@@ -430,11 +428,7 @@ public class FarmingPotChestsHandler
             float distance = player.Position.Distance(reveal.Position);
             if (distance > OpenTreasureCofferChain.InteractDistance)
             {
-                if (pathfinder.IsIdle())
-                {
-                    pathfinder.PathfindAndMoveTo(new(reveal.Position));
-                }
-
+                EnsurePathing(reveal.Position);
                 return;
             }
 
@@ -517,11 +511,7 @@ public class FarmingPotChestsHandler
 
             if (distance > OpenTreasureCofferChain.InteractDistance)
             {
-                if (pathfinder.IsIdle())
-                {
-                    pathfinder.PathfindAndMoveTo(new(chestPosition));
-                }
-
+                EnsurePathing(chestPosition);
                 return;
             }
 
@@ -540,11 +530,7 @@ public class FarmingPotChestsHandler
 
         if (distance > OpenTreasureCofferChain.InteractDistance)
         {
-            if (pathfinder.IsIdle())
-            {
-                pathfinder.PathfindAndMoveTo(new(pathTarget));
-            }
-
+            EnsurePathing(pathTarget);
             return;
         }
 
@@ -604,6 +590,16 @@ public class FarmingPotChestsHandler
             evt.Distance,
             farm.CandidateTotal);
         return true;
+    }
+
+    private void EnsurePathing(Vector3 destination)
+    {
+        if (pathfinder.IsIdle())
+        {
+            pathfinder.PathfindAndMoveTo(new(destination));
+        }
+
+        AutoMount.MaybeRemount(config, conditions, objects, destination, zones.GetZone().IsInBasecamp());
     }
 
     private void OpenChest(Vector3 position)

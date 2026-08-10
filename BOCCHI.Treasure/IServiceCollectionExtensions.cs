@@ -21,5 +21,6 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<TreasureRadarDrawer>();
         services.AddSingleton<OpenTreasureCofferChain>();
         services.AddSingleton<HuntTreasureSightChain>();
+        services.AddSingleton<PandoraAutoOpenHold>();
     }
 }

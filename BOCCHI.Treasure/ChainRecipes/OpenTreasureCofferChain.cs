@@ -70,68 +70,84 @@ public class OpenTreasureCofferChain
 
     private bool TryInteract(TreasureOpenTarget target, PathState pathState)
     {
-        // Pandora: BetweenAreas bail; throttle 200ms on the interact attempt.
         if (conditions[ConditionFlag.BetweenAreas]
             || conditions[ConditionFlag.Unconscious])
         {
             return false;
         }
 
-        IGameObject? nearby = FindLiveChestNear(target, searchRadius: 6f);
-        if (nearby == null)
+        // Include opened/looted — excluding them made the chain path forever after a successful open (#166).
+        IGameObject? nearby = FindMatchingTreasureNear(target, searchRadius: 6f);
+        if (nearby != null)
         {
-            EnsurePathing(target.Position, pathState);
-            return false;
-        }
+            pathState.SawChest = true;
 
-        unsafe
-        {
-            GameObject* gameObject = (GameObject*)(void*)nearby.Address;
-            var tr = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
-
-            if (IsOpenedOrLooted(nearby, tr))
+            unsafe
             {
-                if (vnav.IsRunning())
+                GameObject* gameObject = (GameObject*)(void*)nearby.Address;
+                var tr = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
+
+                if (IsOpenedOrLooted(nearby, tr))
                 {
-                    vnav.Stop();
+                    StopNav();
+                    return true;
                 }
 
-                return true;
+                float dist3d = Vector3.Distance(player.Position, nearby.Position);
+                if (dist3d > PreferredOpenDistance)
+                {
+                    EnsurePathing(nearby.Position, pathState);
+                    return false;
+                }
+
+                StopNav();
+
+                // Pandora: require targetable before Interact.
+                if (!gameObject->GetIsTargetable())
+                {
+                    return false;
+                }
+
+                if (!EzThrottler.Throttle("ChestThrottle", 200))
+                {
+                    return false;
+                }
+
+                pathState.InteractAttempted = true;
+                TargetSystem.Instance()->InteractWithObject(gameObject);
+                return IsOpenedOrLooted(nearby, tr);
             }
+        }
 
-            float dist3d = Vector3.Distance(player.Position, nearby.Position);
+        // Object gone after we saw / interacted — success (despawned open). Do not treat
+        // "standing on pad with no object yet" as done (pot reveals spawn after a short wait).
+        if (pathState.SawChest || pathState.InteractAttempted)
+        {
+            StopNav();
+            return true;
+        }
 
-            // Not yet in Pandora's 2y window — keep walking in (automation-only; Pandora is passive).
-            if (dist3d > PreferredOpenDistance)
-            {
-                EnsurePathing(nearby.Position, pathState);
-                return false;
-            }
+        EnsurePathing(target.Position, pathState);
+        return false;
+    }
 
-            if (vnav.IsRunning() || vnav.IsPathfinding())
-            {
-                vnav.Stop();
-            }
-
-            // Pandora: require targetable before Interact — avoids "Too far away" spam while approaching.
-            if (!gameObject->GetIsTargetable())
-            {
-                return false;
-            }
-
-            if (!EzThrottler.Throttle("ChestThrottle", 200))
-            {
-                return false;
-            }
-
-            // Pandora calls the single-arg overload (default LoS check).
-            TargetSystem.Instance()->InteractWithObject(gameObject);
-            return IsOpenedOrLooted(nearby, tr);
+    private void StopNav()
+    {
+        if (vnav.IsRunning() || vnav.IsPathfinding())
+        {
+            vnav.Stop();
         }
     }
 
     private void EnsurePathing(Vector3 destination, PathState pathState)
     {
+        // Already inside arrival — do not re-queue move-to every tick (vnav spam in #166).
+        if (Vector3.Distance(player.Position, destination) <= PathArrivalRange)
+        {
+            StopNav();
+            return;
+        }
+
         const float RepathDrift = 1.5f;
         bool drifted = pathState.LastTarget is not { } last
                        || Vector3.DistanceSquared(last, destination) > RepathDrift * RepathDrift;
@@ -181,10 +197,9 @@ public class OpenTreasureCofferChain
     }
 
     /// <summary>
-    /// Live coffer near the hunt/pot target. ObjectKind check matches Pandora (CS Treasure).
-    /// Targetable / ≤2y are applied at Interact time, not here — so we can still path in.
+    /// Matching Treasure near the hunt/pot target (opened/looted included so success can be detected).
     /// </summary>
-    private IGameObject? FindLiveChestNear(TreasureOpenTarget target, float searchRadius)
+    private IGameObject? FindMatchingTreasureNear(TreasureOpenTarget target, float searchRadius)
     {
         Vector3 position = target.Position;
         IReadOnlyList<uint>? preferred = target.PreferredBaseIds;
@@ -210,32 +225,8 @@ public class OpenTreasureCofferChain
                 unsafe
                 {
                     var obj = (GameObject*)(void*)o.Address;
-                    if ((CsObjectKind)obj->ObjectKind != CsObjectKind.Treasure)
-                    {
-                        return false;
-                    }
-
-                    var tr = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)obj;
-                    if (tr->Flags.HasFlag(TreasureFlags.Opened)
-                        || tr->Flags.HasFlag(TreasureFlags.FadedOut))
-                    {
-                        return false;
-                    }
-
-                    Loot* loot = Loot.Instance();
-                    if (loot != null)
-                    {
-                        foreach (LootItem item in loot->Items)
-                        {
-                            if (item.ChestObjectId == o.GameObjectId)
-                            {
-                                return false;
-                            }
-                        }
-                    }
+                    return (CsObjectKind)obj->ObjectKind == CsObjectKind.Treasure;
                 }
-
-                return true;
             })
             .OrderBy(o => Vector3.DistanceSquared(player.Position, o.Position))
             .FirstOrDefault();
@@ -262,5 +253,9 @@ public class OpenTreasureCofferChain
     private sealed class PathState
     {
         public Vector3? LastTarget;
+
+        public bool SawChest;
+
+        public bool InteractAttempted;
     }
 }

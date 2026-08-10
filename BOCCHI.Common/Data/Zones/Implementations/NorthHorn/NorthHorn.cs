@@ -134,7 +134,8 @@ public class NorthHorn
         new(59, new(807f, 61f, -562f), 20f), // Appalling Behavior
         new(53, new(-688f, 90f, 150f), 20f), // Cursed Resurgence
         new(57, new(224f, 52f, -860f), 20f), // Dark Artistry
-        new(50, new(-215f, 18f, -65f), 27f), // Doubled Trouble (map 17.2, 20.2; red = stone rim)
+        // LGB center (-215, 18, -65). Registration ~20y (stone rim was ~27 and left drop outside blue).
+        new(50, new(-215f, 18f, -65f), 20f), // Doubled Trouble
         new(58, new(-390f, 68f, 700f), 20f), // Familiar Tactics
         new(52, new(659f, 132f, 659f), 20f, TheCrownOfKarnak.Id), // Forbidden Folios
         new(54, new(765f, 70f, 0f), 20f), // Imbalanced Diet

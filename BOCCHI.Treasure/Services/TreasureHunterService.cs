@@ -63,7 +63,8 @@ public class TreasureHunterService
     IChatGui chat,
     UIConfig uiConfig,
     ITranslator<MainWindow> translator,
-    IConfigSaver configSaver
+    IConfigSaver configSaver,
+    PandoraAutoOpenHold pandoraAutoOpen
 ) : ITreasureHunter, IOnUpdate, IOnStop
 {
     /// <summary>Start open attempts once this close to the coffer (yalms).</summary>
@@ -552,6 +553,7 @@ public class TreasureHunterService
 
         Running = true;
         planningRoute = true;
+        pandoraAutoOpen.Hold();
     }
 
     private static string AlternateSouthHornStartHalf(string? lastStartHalf)
@@ -2279,6 +2281,7 @@ public class TreasureHunterService
 
         layoutTreasure.Clear();
         pathPlanner = null;
+        pandoraAutoOpen.Release();
 
         if (wasStandalone || wasIllegalFiller)
         {
