@@ -2,18 +2,18 @@
 
 ### New
 - Treasure Hunt option to visit silver coffers only (#163).
-- Clearer North and South Horn treasure routes (walk each area in order; Return or aethernet between distant areas).
-- South Horn: Return to camp at start if needed, Treasure Sight before pathing when enabled, alternate red/blue start half each session, finish one half then Return for the other — strict pad order with no Nearby detours.
-- Carrot pad positions are fully baked for South and North Horn (no more background carrot-location uploads).
+- Clearer North and South Horn treasure routes — each area in order, with Return or aethernet between distant spots.
+- South Horn Treasure Hunt: Return to camp at the start if needed, Treasure Sight when enabled, finish one color half then Return for the other, and alternate which half you start on each run.
+- Carrot spots are fully built in for South and North Horn.
 
 ### Fixes
-- Less hitching in Occult Crescent: pot-timer sync no longer freezes the game while talking to the server (#165).
-- Removed leftover debug rainbow rings around critical encounters and camp aetherytes (dev-only again).
-- South Horn sticky half and empty-skip behavior: stays on the active color, walks up before skipping empties, doesn’t open the wrong half’s chest, and keeps the full half planned when distant pads aren’t loaded yet.
-- South Horn blue route order around Lost Citadel (outside southern pad before the interior citadel pad).
-- North Horn Nearby peel finishes live coffers instead of walking toward them and abandoning around ~50 yalms.
-- Treasure Hunt opens coffers the same way Pandora does (within 2 yalms, only when targetable) so you should see fewer “Too far away” errors.
-- Pots & Treasure: pot FATE up pauses hunt and paths to the pot; after pots (and pot chests), hunt resumes where it left off.
-- Radar lines no longer stick on coffers you already opened.
+- Occult Crescent should hitch less while pot timers sync in the background (#165).
+- Leftover colorful debug rings around critical encounters and camp aetherytes no longer show in normal builds.
+- South Horn Treasure Hunt sticks to the active color, walks up before skipping empty pads, and no longer switches halves early when distant pads aren’t loaded yet.
+- South Horn blue route order around Lost Citadel (outside southern pad before the interior).
+- North Horn Treasure Hunt no longer walks toward a live coffer and then gives up around ~50 yalms.
+- Treasure Hunt opens coffers more reliably, with fewer “Too far away” errors — you can stay mounted.
+- Pots & Treasure: when a pot FATE is up, hunt pauses and paths to the pot; after pots (and pot chests), hunt resumes where it left off.
+- Map lines no longer stick on coffers you already opened.
 - Carrot Hunt panel stays hidden while Treasure Hunt, Pots & Treasure, or Illegal Mode filler is running.
-- Illegal Mode no longer Returns to camp just because you were standing near a FATE/CE — it prefers a nearby aethernet when that is cheaper.
+- Illegal Mode no longer Returns to camp just because you’re near a FATE or CE — it prefers a nearby aethernet when that’s cheaper.
