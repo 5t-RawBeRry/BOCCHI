@@ -35,11 +35,11 @@
     },
     "max_euclidean_distance": {
       "label": "최대 끌어오기 거리",
-      "tooltip": "이 거리(얄름)보다 먼 적은 무시합니다. 먼 특수 때문에 맵을 가로질러 끌려가는 일을 막습니다."
+      "tooltip": "이 거리(일름)보다 먼 적은 무시합니다. 먼 특수 때문에 맵을 가로질러 끌려가는 일을 막습니다."
     },
     "min_euclidean_distance_to_return_home": {
       "label": "이 거리보다 멀면 시작점으로",
-      "tooltip": "전투 후 시작점에서 이 거리(얄름)보다 멀리 있을 때만 돌아갑니다."
+      "tooltip": "전투 후 시작점에서 이 거리(일름)보다 멀리 있을 때만 돌아갑니다."
     },
     "return_to_start_in_waiting_phase": {
       "label": "전투 후 시작점으로 복귀",
@@ -51,7 +51,7 @@
     },
     "apply_battle_bell": {
       "label": "전투의 종 사용",
-      "tooltip": "끌어오기 전마다 풍수사로 바꿔 전투의 종을 쓰고(버프가 남아 있어도 재사용) 그다음 질주합니다. 아래 대기보다 쿨이 길 때만 건너뜁니다."
+      "tooltip": "끌어오기 전마다 서포트 풍수사로 바꿔 전투의 종을 쓰고(버프가 남아 있어도 재사용) 그다음 질주합니다. 아래 대기보다 쿨이 길 때만 건너뜁니다."
     },
     "maximum_battle_bell_wait_time": {
       "label": "전투의 종 최대 대기",
@@ -76,8 +76,8 @@
       "selected": "선택됨",
       "zone_filter": "지역",
       "zone_all": "전체 지역",
-      "zone_south_horn": "남쪽 뿔",
-      "zone_north_horn": "북쪽 뿔"
+      "zone_south_horn": "남부",
+      "zone_north_horn": "북부"
     }
   }
 }
