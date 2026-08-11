@@ -143,9 +143,10 @@ public static class AethernetNavigation
             float bandT = ((i % 3) + 1) / 4f;
             float radius = inner + ((outer - inner) * bandT);
             float angle = baseAngle + ((i - (steps / 2)) * (MathF.PI / 6f));
+            // Offset is XZ-only — using crystal.Y here doubled altitude (259→519) and broke vnav.
             yield return crystal + new Vector3(
                 MathF.Cos(angle) * radius,
-                crystal.Y,
+                0f,
                 MathF.Sin(angle) * radius);
         }
     }

@@ -124,13 +124,10 @@ public class PathCalculator
         traverser.AddCalculator(new WalkTeleportWalkCalculator());
         traverser.AddCalculator(new DirectWalkCalculator());
 
-        // Don't offer Return when already closer to the goal than to camp — that caused loops.
-        float distToCamp = graph.GetBaseCampAetheryteNode() is { } camp
-            ? player.Position.Distance2D(camp.Position)
-            : float.MaxValue;
-        if (!insideCeWait
-            && distanceToGoal > NavigationConstants.MaxDirectWalkDistance
-            && distanceToGoal >= distToCamp * 0.5f)
+        // Always consider Return on long trips. The old "closer than half camp" gate skipped
+        // Return when already near the inbound shard, so same-shard WalkTeleportWalk walked
+        // 500y+ to CEs like Lost on the Wind instead of Return → TP (#172).
+        if (!insideCeWait && distanceToGoal > NavigationConstants.MaxDirectWalkDistance)
         {
             traverser.AddCalculator(new ReturnTeleportWalkCalculator());
         }

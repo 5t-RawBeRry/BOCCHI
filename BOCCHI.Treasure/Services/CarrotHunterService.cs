@@ -59,6 +59,14 @@ public sealed class CarrotHunterService
 
     private static readonly TimeSpan BunnySpawnTimeout = TimeSpan.FromSeconds(20);
 
+    /// <summary>Lateral nudge around ramp/wall geometry when pathing stalls far from the pad.</summary>
+    private static readonly TimeSpan StuckNudgeTimeout = TimeSpan.FromSeconds(10);
+
+    /// <summary>Re-path to the pad after a nudge if still not progressing.</summary>
+    private static readonly TimeSpan StuckRepathTimeout = TimeSpan.FromSeconds(18);
+
+    private const float StuckProgressThreshold = 1.5f;
+
     private const string FinishedRouteMessage = "Carrot Hunt finished the authored route.";
 
     private const string OutOfCarrotsMessage = "Out of Fortune Carrots — stopping Carrot Hunt.";
@@ -104,6 +112,14 @@ public sealed class CarrotHunterService
     private int? emptyPadCandidateAuthoredId;
 
     private DateTime emptyPadCandidateSinceUtc = DateTime.MinValue;
+
+    private int? stuckWatchAuthoredId;
+
+    private float stuckWatchBestDistance = float.MaxValue;
+
+    private DateTime stuckWatchStartedUtc = DateTime.MinValue;
+
+    private bool stuckNudgeIssued;
 
     public bool Running { get; private set; }
 
@@ -560,8 +576,14 @@ public sealed class CarrotHunterService
         if (currentLiveCarrotId != null
             && (distTarget <= HuntDistances.UseRadius || IsStuckNearTarget(distTarget)))
         {
+            ResetFarStuckWatch();
             vnav.Stop();
             Phase = CarrotHuntPhase.UsingItem;
+            return;
+        }
+
+        if (TryRecoverFromStuckWalk(authored.Id, distTarget))
+        {
             return;
         }
 
@@ -741,9 +763,10 @@ public sealed class CarrotHunterService
         waitingForBunnySince = DateTime.MinValue;
         ClearEmptyPadCandidate();
         ResetApproachProgress();
+        ResetFarStuckWatch();
         usedLiveCarrotIdsAtPad.Clear();
 
-        int? prefer = preferStartId ?? FindPreferredLiveNearbyPadId();
+        int? prefer = preferStartId ?? FindPreferredNextPadId();
         RebuildTour(prefer);
         if (tour.Count == 0)
         {
@@ -769,6 +792,65 @@ public sealed class CarrotHunterService
             "Carrot hunt: nearest-neighbor replan ({Count} remaining, start {StartId})",
             tour.Count,
             currentAuthored?.Id ?? 0);
+    }
+
+    /// <summary>
+    /// Prefer finishing the local cluster (cave / citadel) before hopping to distant live carrots.
+    /// </summary>
+    private int? FindPreferredNextPadId()
+    {
+        if (FindClosestUnfinishedInCluster(
+                player.Position,
+                HuntDistances.LocalClusterRadius,
+                preferLive: true) is int localLive)
+        {
+            log.Information("Carrot hunt preferring local live pad {Id}", localLive);
+            return localLive;
+        }
+
+        if (FindClosestUnfinishedInCluster(
+                player.Position,
+                HuntDistances.LocalClusterRadius,
+                preferLive: false) is int localPad)
+        {
+            log.Information("Carrot hunt preferring local unfinished pad {Id}", localPad);
+            return localPad;
+        }
+
+        return FindPreferredLiveNearbyPadId();
+    }
+
+    private int? FindClosestUnfinishedInCluster(Vector3 from, float radius, bool preferLive)
+    {
+        int? bestId = null;
+        float bestDist = float.MaxValue;
+
+        foreach (CarrotData pad in zones.GetZone().GetCarrotData())
+        {
+            if (finishedAuthoredIds.Contains(pad.Id))
+            {
+                continue;
+            }
+
+            float dist = from.Distance2D(pad.Position);
+            if (dist > radius)
+            {
+                continue;
+            }
+
+            if (preferLive && FindUnusedLiveCarrotNear(pad, HuntDistances.MatchRadiusSq) == null)
+            {
+                continue;
+            }
+
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                bestId = pad.Id;
+            }
+        }
+
+        return bestId;
     }
 
     private int? FindPreferredLiveNearbyPadId()
@@ -848,18 +930,7 @@ public sealed class CarrotHunterService
         while (unvisited.Count > 0)
         {
             Vector3 from = current.Position;
-            int? nearestId = null;
-            float best = float.MaxValue;
-            foreach (int id in unvisited)
-            {
-                float d = TourCost(from, byId[id].Position, aetherytes, main, out _);
-                if (d < best)
-                {
-                    best = d;
-                    nearestId = id;
-                }
-            }
-
+            int? nearestId = PickNextTourPad(from, unvisited, byId, aetherytes, main);
             if (nearestId is not int nextId)
             {
                 break;
@@ -874,6 +945,51 @@ public sealed class CarrotHunterService
             "Carrot hunt nearest-neighbor tour: {Count} remaining (start {Start})",
             tour.Count,
             tour[0].Id);
+    }
+
+    /// <summary>Clear the local cluster on foot before Return / aethernet hops to distant pads.</summary>
+    private static int? PickNextTourPad(
+        Vector3 from,
+        HashSet<int> unvisited,
+        Dictionary<int, CarrotData> byId,
+        List<AethernetData> aetherytes,
+        AethernetData main)
+    {
+        int? localId = null;
+        float localBest = float.MaxValue;
+        foreach (int id in unvisited)
+        {
+            float localDist = from.Distance2D(byId[id].Position);
+            if (localDist > HuntDistances.LocalClusterRadius)
+            {
+                continue;
+            }
+
+            if (localDist < localBest)
+            {
+                localBest = localDist;
+                localId = id;
+            }
+        }
+
+        if (localId != null)
+        {
+            return localId;
+        }
+
+        int? nearestId = null;
+        float best = float.MaxValue;
+        foreach (int id in unvisited)
+        {
+            float d = TourCost(from, byId[id].Position, aetherytes, main, out _);
+            if (d < best)
+            {
+                best = d;
+                nearestId = id;
+            }
+        }
+
+        return nearestId;
     }
 
     private CarrotData PickCheapestStart(
@@ -1272,13 +1388,95 @@ public sealed class CarrotHunterService
 
     private void MaybeMount(Vector3 destination)
     {
+        // Allow mount even inside camp so Return → walk-south legs do not stay on foot
+        // until outside the camp bubble (treasure hunt uses the same rule).
         MountWait.TryCastIfNeeded(
             conditions,
             objects,
             destination,
             automatorConfig.ShouldAutoMount,
             automatorConfig.PreferredMountId,
-            zones.GetZone().IsInBasecamp());
+            inBaseCamp: false);
+    }
+
+    private bool TryRecoverFromStuckWalk(int authoredId, float distance)
+    {
+        // Near-target stuck is handled by IsStuckNearTarget (interact from here).
+        if (distance <= HuntDistances.StuckNearRadius)
+        {
+            ResetFarStuckWatch();
+            return false;
+        }
+
+        DateTime now = DateTime.UtcNow;
+        if (stuckWatchAuthoredId != authoredId)
+        {
+            stuckWatchAuthoredId = authoredId;
+            stuckWatchBestDistance = distance;
+            stuckWatchStartedUtc = now;
+            stuckNudgeIssued = false;
+            return false;
+        }
+
+        if (distance < stuckWatchBestDistance - StuckProgressThreshold)
+        {
+            stuckWatchBestDistance = distance;
+            stuckWatchStartedUtc = now;
+            stuckNudgeIssued = false;
+            return false;
+        }
+
+        if (!stuckNudgeIssued && now - stuckWatchStartedUtc >= StuckNudgeTimeout)
+        {
+            stuckNudgeIssued = true;
+            TryIssueStuckNudge();
+            return true;
+        }
+
+        if (stuckNudgeIssued && now - stuckWatchStartedUtc >= StuckRepathTimeout)
+        {
+            log.Information(
+                "Carrot hunt: still stuck on authored {Id} after nudge — repathing",
+                authoredId);
+            stuckWatchStartedUtc = now;
+            stuckNudgeIssued = false;
+            pathfinder.Stop();
+            vnav.Stop();
+            vnav.PathfindAndMoveCloseTo(currentTargetPosition, false, OpenTreasureCofferChain.PathArrivalRange);
+            return true;
+        }
+
+        return false;
+    }
+
+    private void TryIssueStuckNudge()
+    {
+        Vector3 toDest = currentTargetPosition - player.Position;
+        toDest.Y = 0f;
+        if (toDest.LengthSquared() < 0.25f)
+        {
+            toDest = new Vector3(1f, 0f, 0f);
+        }
+
+        Vector3 forward = Vector3.Normalize(toDest);
+        Vector3 lateral = new(-forward.Z, 0f, forward.X);
+        Vector3 nudge = player.Position + (lateral * 8f);
+        nudge = new Vector3(nudge.X, player.Position.Y, nudge.Z);
+
+        log.Information(
+            "Carrot hunt: stuck approaching authored {Id} — nudging sideways",
+            currentAuthored?.Id ?? 0);
+        pathfinder.Stop();
+        vnav.Stop();
+        vnav.PathfindAndMoveCloseTo(nudge, false, 1.5f);
+    }
+
+    private void ResetFarStuckWatch()
+    {
+        stuckWatchAuthoredId = null;
+        stuckWatchBestDistance = float.MaxValue;
+        stuckWatchStartedUtc = DateTime.MinValue;
+        stuckNudgeIssued = false;
     }
 
     private bool MaybeDismountNear(float distance)
@@ -1345,6 +1543,7 @@ public sealed class CarrotHunterService
         usedLiveCarrotIdsAtPad.Clear();
         ClearEmptyPadCandidate();
         ResetApproachProgress();
+        ResetFarStuckWatch();
         ClearHop();
         activeReturnChain = null;
         returnThenStop = false;

@@ -73,5 +73,11 @@ public static class HuntDistances
     public const float NearbyLiveDivertMinCurrentDistance = 25f;
 
     /// <summary>Live target must be at least this many yalms closer than the current destination.</summary>
-    public const float NearbyLiveDivertClearAdvantage = 15f;
+    public const float NearbyLiveDivertClearAdvantage = 5f;
+
+    /// <summary>
+    /// After finishing a pad, clear other unfinished pads within this range before hopping away
+    /// (caves, citadel clusters). Also biases nearest-neighbor tour edges.
+    /// </summary>
+    public const float LocalClusterRadius = 90f;
 }

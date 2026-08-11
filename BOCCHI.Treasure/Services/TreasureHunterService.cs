@@ -1387,6 +1387,7 @@ public class TreasureHunterService
 
         if (present == null)
         {
+            // Empty-skip first: a live coffer elsewhere on radar must not pin us to an empty pad (#168).
             if (CanTrustEmptyPad(layoutDestination, step.NodeId) && ConfirmEmptyPad(step.NodeId))
             {
                 log.Info(
@@ -1400,7 +1401,7 @@ public class TreasureHunterService
                 return false;
             }
 
-            // Still see a hunt coffer on radar — don't empty-skip (Nearby peel used to abandon ~50y out).
+            // Still see a hunt coffer on radar — peel to it when it matches this layout area.
             if (HasUnopenedLiveHuntCofferNearPlayer(HuntDistances.NearbyLiveDivertRange))
             {
                 IGameObject? loose = FindUnopenedTreasureNear(
@@ -1422,9 +1423,11 @@ public class TreasureHunterService
                     }
 
                     MaybeMount(destination);
+                    ApplyNinjaHideGate();
                     return false;
                 }
             }
+
             if (present == null)
             {
                 if (!vnav.IsRunning() && dist2d > OpenTreasureCofferChain.PreferredOpenDistance)
@@ -1433,6 +1436,7 @@ public class TreasureHunterService
                 }
 
                 MaybeMount(destination);
+                ApplyNinjaHideGate();
                 return false;
             }
         }
@@ -1690,12 +1694,9 @@ public class TreasureHunterService
             return true;
         }
 
-        // Stand still to cast Hide / swap gear; keep pathing while still mounted toward the threat.
-        if (!ninjaHide.IsMounted)
-        {
-            vnav.Stop();
-        }
-
+        // Always stop — riding through a 10y bubble while dismounting never finishes Hide.
+        vnav.Stop();
+        pathfinder.Stop();
         return false;
     }
 
@@ -1719,6 +1720,12 @@ public class TreasureHunterService
 
         int hideAt = KnowledgeThreat.HideAtOrAbove(foray, config.KnowledgeHideOffset);
         float enter = config.KnowledgeThreatEnterDistance;
+        // Mounted: start earlier so we dismount before the foot enter range is already behind us.
+        if (ninjaHide.IsMounted)
+        {
+            enter += KnowledgeThreat.MountedThreatEnterBonus;
+        }
+
         float exit = Math.Max(config.KnowledgeThreatExitDistance, enter);
 
         if (ninjaHideRequired)

@@ -40,14 +40,27 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
         Node departure = resolved.Value.Departure;
         float walkToDepartureCost = resolved.Value.WalkCost;
 
-        // Same inbound shard = no teleport. Short hop: walk straight. Long hop: go via the shard
-        // first — never emit a fake "cheap" cross-map Pathfind (looked like it refused to TP).
+        // Same inbound shard = no Lifestream hop on that pad. Short: walk straight.
+        // Long: prefer teleporting to a *different* inbound shard (#172 Lost on the Wind),
+        // otherwise walk via the pad (never a fake cross-map Pathfind that skips TP).
         if (IsSameAetheryte(departure, inbound, inboundMeta))
         {
             float direct = start.Distance2D(goal.Position);
             if (direct <= NavigationConstants.MaxDirectWalkDistance)
             {
                 return BuildWalkOnly(start, goal, walkToDepartureCost + walkToGoalFromInbound.Cost);
+            }
+
+            if (TryBuildTeleportViaAlternateInbound(
+                    graph,
+                    start,
+                    goal,
+                    departure,
+                    walkToDepartureCost,
+                    out TraversalCandidate? viaOther)
+                && viaOther != null)
+            {
+                return viaOther;
             }
 
             return BuildViaShardWalk(
@@ -113,6 +126,49 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
 
         return departure.Metadata is TeleportNodeMetadata departureMeta
                && departureMeta.AetheryteId == inboundMeta.AetheryteId;
+    }
+
+    private static bool TryBuildTeleportViaAlternateInbound(
+        ZoneGraph graph,
+        Vector3 start,
+        Node goal,
+        Node departure,
+        float walkToDepartureCost,
+        out TraversalCandidate? candidate)
+    {
+        candidate = null;
+        TraversalCandidate? best = null;
+
+        foreach ((Node altInbound, float walkFromAlt) in graph.GetInboundTeleports(goal))
+        {
+            if (altInbound.Metadata is not TeleportNodeMetadata altMeta)
+            {
+                continue;
+            }
+
+            if (IsSameAetheryte(departure, altInbound, altMeta))
+            {
+                continue;
+            }
+
+            // Field → base camp via shard is Return's job.
+            if (altInbound.Type == NodeType.BaseCampAetheryte && departure.Type != NodeType.BaseCampAetheryte)
+            {
+                continue;
+            }
+
+            float cost = walkToDepartureCost + GraphTraverser.TeleportCost + walkFromAlt;
+            TraversalCandidate option = new(
+                cost,
+                BuildTeleportSteps(departure, altMeta.AetheryteId, goal, altInbound, start));
+            if (best == null || option.TotalCost < best.TotalCost)
+            {
+                best = option;
+            }
+        }
+
+        candidate = best;
+        return best != null;
     }
 
     private static TraversalCandidate BuildWalkOnly(Vector3 start, Node goal, float cost) =>

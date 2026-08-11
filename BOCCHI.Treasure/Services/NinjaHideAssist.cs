@@ -1,3 +1,4 @@
+using BOCCHI.Common.Data.Zones;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
@@ -7,6 +8,7 @@ using Ocelot.Actions;
 using Ocelot.Extensions;
 using Ocelot.Services.PlayerState;
 using ActionType = FFXIVClientStructs.FFXIV.Client.Game.ActionType;
+using ECommonsPlayer = ECommons.GameHelpers.Player;
 
 namespace BOCCHI.Treasure.Services;
 
@@ -49,9 +51,9 @@ public sealed class NinjaHideAssist(IPlayer player, ICondition conditions, IPlug
             return false;
         }
 
-        if (IsMounted)
+        // Dismount jump/landing — Hide fails with "while jumping".
+        if (ECommonsPlayer.IsJumping || DismountAssist.TryDismount(conditions))
         {
-            TryDismount();
             return false;
         }
 
@@ -85,22 +87,11 @@ public sealed class NinjaHideAssist(IPlayer player, ICondition conditions, IPlug
         }
     }
 
-    public void TryDismount()
-    {
-        if (!IsMounted || conditions[ConditionFlag.Mounting])
-        {
-            return;
-        }
-
-        if (EzThrottler.Throttle("NinjaHide::Dismount", 500) && Actions.Dismount.CanCast())
-        {
-            Actions.Dismount.Cast();
-        }
-    }
+    public void TryDismount() => DismountAssist.TryDismount(conditions);
 
     public void TryCastHide()
     {
-        if (!IsNinja || IsStealthed || IsMounted)
+        if (!IsNinja || IsStealthed || IsMounted || ECommonsPlayer.IsJumping)
         {
             return;
         }

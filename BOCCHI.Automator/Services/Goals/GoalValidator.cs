@@ -70,7 +70,8 @@ public class GoalValidator
             return false;
         }
 
-        // Battle: keep goal when EventId matches, we waited here, travel is suspended, or still pathing in.
+        // Battle: only keep the goal when we are committed (in the CE, waited here, or travel suspended).
+        // Pathing-only / completionist fallthrough kept driving to coords after Register ended.
         if (criticalEncounterContext.GetCriticalEncounterId() == id)
         {
             return true;
@@ -88,12 +89,10 @@ public class GoalValidator
             return true;
         }
 
-        if (memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _))
-        {
-            return true;
-        }
-
-        return PassesCompletionistCriticalEncounter(id.Value);
+        logger.Info(
+            "Dropping CE {CeId} — no longer Preparing and not committed (was still pathing)",
+            id.Value);
+        return false;
     }
 
     private bool ValidateFate(FateId id)
@@ -132,6 +131,18 @@ public class GoalValidator
         if (isPot)
         {
             return true;
+        }
+
+        // Prefer / farm pots: leave a non-pot FATE (while still traveling) when a pot is up.
+        if (!potsOnly
+            && fateContext.GetFateId() != id
+            && TryFindLivePreferredPot(out Fate livePot))
+        {
+            logger.Info(
+                "Invalidating FATE {FateId} (still pathing) — live pot {PotId} with Prefer/Farm pots",
+                id.Value,
+                livePot.Id.Value);
+            return false;
         }
 
         // Yield to a CE only while still traveling; finish the FATE once registered in it.
@@ -205,7 +216,7 @@ public class GoalValidator
         }
 
         // Drop if prediction is stale (spawn never observed).
-        if (DateTimeOffset.UtcNow > cycle.PredictedNextSpawnAt + TimeSpan.FromMinutes(5))
+        if (DateTimeOffset.UtcNow > cycle.PredictedNextSpawnAt + PotCycleTracker.PredictionStaleGrace)
         {
             return false;
         }
@@ -220,7 +231,7 @@ public class GoalValidator
             cycle,
             DateTimeOffset.UtcNow,
             potsOnly ? TimeSpan.Zero : TimeSpan.FromMinutes(Math.Max(0, potsConfig.FateFallbackCutoffMinutes)),
-            potsOnly ? PotsTreasureDefaults.PrepositionLeadMinutes : potsConfig.PotSpawnLeadMinutes,
+            potsConfig.PotSpawnLeadMinutes,
             true);
     }
 
@@ -229,4 +240,31 @@ public class GoalValidator
         TimeSpan.FromMinutes(Math.Max(0, potsConfig.FateFallbackCutoffMinutes)),
         potsConfig.PotSpawnLeadMinutes
     );
+
+    private bool TryFindLivePreferredPot(out Fate pot)
+    {
+        pot = null!;
+        if (!automatorConfig.ShouldDoFates
+            || (!automatorConfig.PreferPotFates && !automatorConfig.ShouldFarmPotChests))
+        {
+            return false;
+        }
+
+        IZone zone = zones.GetZone();
+        Fate? live = fateRepository.Snapshot()
+            .Where(f => zone.IsPotFate(f.Id.Value))
+            .FirstOrDefault(f => fatesConfig.IsFateEnabledForIllegalMode(
+                f.Id.Value,
+                isPotFate: true,
+                automatorConfig.PreferPotFates,
+                automatorConfig.ShouldFarmPotChests));
+
+        if (live == null)
+        {
+            return false;
+        }
+
+        pot = live;
+        return true;
+    }
 }

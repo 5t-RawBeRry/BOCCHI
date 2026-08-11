@@ -165,7 +165,7 @@
       "on": "[BOCCHI] Pots & Treasure On",
       "off": "[BOCCHI] Pots & Treasure Off",
       "off_left_zone": "[BOCCHI] Left Occult Crescent — Pots & Treasure Off",
-      "description": "Does pot FATEs and pot chests, then treasure hunts until about 3 minutes before the next pot, waits near pots, and repeats. Does not do CEs or other FATEs. Use Pause to hold without ending the run; Stop ends it.",
+      "description": "Does pot FATEs and pot chests, then treasure hunts until the Leave-for-pots lead under Pot timing, waits near pots, and repeats. Does not do CEs or other FATEs. Use Pause to hold without ending the run; Stop ends it.",
       "phase": "Phase",
       "requires_vnav": "[BOCCHI] Pots & Treasure needs the vnavmesh plugin.",
       "resume_treasure_hunt": "Resume treasure hunt",

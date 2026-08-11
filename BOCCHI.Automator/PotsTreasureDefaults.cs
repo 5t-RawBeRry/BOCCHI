@@ -1,9 +1,9 @@
 namespace BOCCHI.Automator.Services;
 
-/// <summary>Fixed timing for Pots &amp; Treasure (no user config).</summary>
+/// <summary>Fallback timing for Pots &amp; Treasure when config is unavailable.</summary>
 public static class PotsTreasureDefaults
 {
-    /// <summary>Leave hunt and preposition this many minutes before predicted pot spawn.</summary>
+    /// <summary>Default leave-hunt lead before predicted pot spawn (matches <see cref="Common.Config.PotsConfig.PotSpawnLeadMinutes"/> default).</summary>
     public const int PrepositionLeadMinutes = 3;
 
     /// <summary>Skip / abandon pot FATEs with less than this many minutes left.</summary>

@@ -3,7 +3,7 @@ using Ocelot.Config.Fields;
 
 namespace BOCCHI.Common.Config;
 
-/// <summary>Illegal Mode pot timing (Pots &amp; Treasure uses fixed built-in timing).</summary>
+/// <summary>Pot timing for Illegal Mode and Pots &amp; Treasure.</summary>
 [Serializable]
 [ConfigGroup("automation", GroupOrder = 0, Order = 1)]
 public class PotsConfig : IAutoConfig

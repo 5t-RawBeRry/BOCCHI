@@ -14,6 +14,11 @@ public static class KnowledgeThreat
 
     public const float IsleblazerUnhideDistance = 5f;
 
+    /// <summary>
+    /// Extra enter radius while mounted so we stop / dismount before riding through the foot enter bubble.
+    /// </summary>
+    public const float MountedThreatEnterBonus = 15f;
+
     /// <summary>Occult Crescent Knowledge cap (North Horn / 7.55+).</summary>
     public const int MaxKnowledgeLevel = 40;
 

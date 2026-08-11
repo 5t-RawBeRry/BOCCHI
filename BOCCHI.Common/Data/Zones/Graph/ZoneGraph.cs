@@ -163,7 +163,11 @@ public class ZoneGraph
         return true;
     }
 
-    public Node? GetInboundTeleport(Node goal)
+    public Node? GetInboundTeleport(Node goal) =>
+        GetInboundTeleports(goal).FirstOrDefault().Teleport;
+
+    /// <summary>All teleport→activity walk edges, preferred shard first, then by walk cost.</summary>
+    public IReadOnlyList<(Node Teleport, float Cost)> GetInboundTeleports(Node goal)
     {
         uint? preferredId = goal.Metadata is ActivityNodeMetadata { PreferredAethernetId: { } id } ? id : null;
 
@@ -173,26 +177,25 @@ public class ZoneGraph
                 .Where(e => e.To == goal.Id)
                 .Select(e => (Teleport: Nodes[kvp.Key], Cost: e.Cost)))
             .Where(entry => !float.IsPositiveInfinity(entry.Cost) && !float.IsNaN(entry.Cost))
+            .OrderBy(entry => entry.Cost)
             .ToList();
 
         if (inbound.Count == 0)
         {
-            return null;
+            return inbound;
         }
 
-        if (preferredId is { } preferred)
+        if (preferredId is not { } preferred)
         {
-            (Node Teleport, float Cost) preferredInbound = inbound
-                .Where(entry => entry.Teleport.Metadata is TeleportNodeMetadata tm && tm.AetheryteId == preferred)
-                .OrderBy(entry => entry.Cost)
-                .FirstOrDefault();
-            if (preferredInbound.Teleport != null)
-            {
-                return preferredInbound.Teleport;
-            }
+            return inbound;
         }
 
-        return inbound.OrderBy(entry => entry.Cost).First().Teleport;
+        return inbound
+            .OrderBy(entry => entry.Teleport.Metadata is TeleportNodeMetadata tm && tm.AetheryteId == preferred
+                ? 0
+                : 1)
+            .ThenBy(entry => entry.Cost)
+            .ToList();
     }
 
     public IEnumerable<Node> GetNodesByTypes(params NodeType[] types)
@@ -262,24 +265,26 @@ public class ZoneGraph
 
             // Score nearest shards sequentially — parallel WhenAll flooded vnav and stalled movement.
             List<Node> nearestTeleports = NearestTeleports(candidateTeleports, node, takeAll: candidateTeleports != teleports);
-            (Node? bestInbound, float bestInboundCost, Node? bestOutbound, float bestOutboundCost) =
-                await ScoreTeleportWalks(nearestTeleports, node, config);
+            List<(Node Teleport, float InboundCost, float OutboundCost)> scored =
+                await ScoreAllTeleportWalks(nearestTeleports, node, config);
 
-            if ((bestInbound == null || float.IsPositiveInfinity(bestInboundCost))
-                && candidateTeleports != teleports)
+            if (scored.Count == 0 && candidateTeleports != teleports)
             {
-                (bestInbound, bestInboundCost, bestOutbound, bestOutboundCost) =
-                    await ScoreTeleportWalks(NearestTeleports(teleports, node, takeAll: false), node, config);
+                scored = await ScoreAllTeleportWalks(NearestTeleports(teleports, node, takeAll: false), node, config);
             }
 
-            if (bestInbound != null && !float.IsPositiveInfinity(bestInboundCost))
+            // Keep several inbound edges so same-shard departures can hop to another pad (#172).
+            foreach ((Node teleport, float inboundCost, float outboundCost) in scored)
             {
-                AddEdge(bestInbound.Id, node.Id, bestInboundCost, EdgeType.Walk);
-            }
+                if (!float.IsPositiveInfinity(inboundCost))
+                {
+                    AddEdge(teleport.Id, node.Id, inboundCost, EdgeType.Walk);
+                }
 
-            if (bestOutbound != null && !float.IsPositiveInfinity(bestOutboundCost))
-            {
-                AddEdge(node.Id, bestOutbound.Id, bestOutboundCost, EdgeType.Walk);
+                if (!float.IsPositiveInfinity(outboundCost))
+                {
+                    AddEdge(node.Id, teleport.Id, outboundCost, EdgeType.Walk);
+                }
             }
         }
     }
@@ -290,15 +295,12 @@ public class ZoneGraph
         return (takeAll ? ordered : ordered.Take(3)).ToList();
     }
 
-    private static async Task<(Node? Inbound, float InboundCost, Node? Outbound, float OutboundCost)> ScoreTeleportWalks(
+    private static async Task<List<(Node Teleport, float InboundCost, float OutboundCost)>> ScoreAllTeleportWalks(
         List<Node> teleports,
         Node activity,
         GraphConfig config)
     {
-        float bestInboundCost = float.PositiveInfinity;
-        Node? bestInbound = null;
-        float bestOutboundCost = float.PositiveInfinity;
-        Node? bestOutbound = null;
+        List<(Node Teleport, float InboundCost, float OutboundCost)> scored = [];
 
         foreach (Node teleport in teleports)
         {
@@ -308,20 +310,15 @@ public class ZoneGraph
             }
 
             float toActivity = await config.GetWalkingCost(meta.Destination, activity.Position);
-            if (toActivity < bestInboundCost)
+            float fromActivity = await config.GetWalkingCost(activity.Position, meta.Destination);
+            if (float.IsPositiveInfinity(toActivity) && float.IsPositiveInfinity(fromActivity))
             {
-                bestInboundCost = toActivity;
-                bestInbound = teleport;
+                continue;
             }
 
-            float fromActivity = await config.GetWalkingCost(activity.Position, meta.Destination);
-            if (fromActivity < bestOutboundCost)
-            {
-                bestOutboundCost = fromActivity;
-                bestOutbound = teleport;
-            }
+            scored.Add((teleport, toActivity, fromActivity));
         }
 
-        return (bestInbound, bestInboundCost, bestOutbound, bestOutboundCost);
+        return scored;
     }
 }

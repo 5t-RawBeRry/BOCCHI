@@ -139,7 +139,7 @@ public class NorthHorn
         new(58, new(-390f, 68f, 700f), 20f), // Familiar Tactics
         new(52, new(659f, 132f, 659f), 20f, TheCrownOfKarnak.Id), // Forbidden Folios
         new(54, new(765f, 70f, 0f), 20f), // Imbalanced Diet
-        new(61, new(-150f, 70f, -860f), 20f), // Lost on the Wind
+        new(61, new(-150f, 70f, -860f), 20f, MolderingOutskirts.Id), // Lost on the Wind
         new(49, new(-870f, 20f, -560f), 20f), // Many Mouths to Feed
         new(51, new(-519f, 48f, -641f), 20f), // Quarried Away
         new(60, new(152f, 70f, 716f), 20f), // Tiny Terror

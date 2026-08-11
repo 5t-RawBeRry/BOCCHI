@@ -70,6 +70,9 @@ public sealed class PotCycleTracker
 {
     private static readonly TimeSpan PotCycleInterval = TimeSpan.FromMinutes(30);
 
+    /// <summary>How long after a predicted spawn we keep waiting before rolling the cycle forward.</summary>
+    public static readonly TimeSpan PredictionStaleGrace = TimeSpan.FromMinutes(5);
+
     private static readonly PotCycleSnapshot Empty = new();
 
     private readonly Dictionary<ushort, PotCycleSnapshot> cycles = new();
@@ -186,11 +189,7 @@ public sealed class PotCycleTracker
     {
         if (active == null)
         {
-            return previous with
-            {
-                TerritoryTypeId = territoryType,
-                CurrentActivePotFateId = 0,
-            };
+            return RollIdlePrediction(territoryType, potFates, now, previous);
         }
 
         int activeId = active.Id.Value;
@@ -222,6 +221,73 @@ public sealed class PotCycleTracker
             PredictedNextSpawnAt = opposite == null ? DateTimeOffset.MinValue : nextSpawn,
         };
     }
+
+    /// <summary>
+    ///     When no pot is live, advance a missed prediction in 30m steps so the UI and
+    ///     Waiting-for-pot state do not stick on an overdue 00:00 forever.
+    /// </summary>
+    private PotCycleSnapshot RollIdlePrediction(
+        ushort territoryType,
+        List<ActivityData> potFates,
+        DateTimeOffset now,
+        PotCycleSnapshot previous)
+    {
+        if (!previous.HasPredictedNextPot)
+        {
+            return previous with
+            {
+                TerritoryTypeId = territoryType,
+                CurrentActivePotFateId = 0,
+            };
+        }
+
+        DateTimeOffset nextSpawn = previous.PredictedNextSpawnAt;
+        if (now <= nextSpawn + PredictionStaleGrace)
+        {
+            return previous with
+            {
+                TerritoryTypeId = territoryType,
+                CurrentActivePotFateId = 0,
+            };
+        }
+
+        int nextPotId = previous.PredictedNextPotFateId;
+        int anchorId = previous.AnchorPotFateId;
+        DateTimeOffset anchorSpawn = previous.AnchorSpawnAt;
+        int rolled = 0;
+
+        while (now > nextSpawn + PredictionStaleGrace && nextPotId != 0)
+        {
+            anchorId = nextPotId;
+            anchorSpawn = nextSpawn;
+            ActivityData? opposite = potFates.FirstOrDefault(p => p.Id != nextPotId);
+            nextPotId = opposite?.Id ?? 0;
+            nextSpawn += PotCycleInterval;
+            rolled++;
+        }
+
+        if (rolled > 0)
+        {
+            logger.Info(
+                "[PotCycleTracker] zone={Territory} rolled stale prediction x{Rolled} → next={NextId} at {NextSpawn:O}",
+                territoryType,
+                rolled,
+                nextPotId,
+                nextSpawn);
+        }
+
+        return new PotCycleSnapshot
+        {
+            TerritoryTypeId = territoryType,
+            HasKnownAnchor = nextPotId != 0,
+            AnchorPotFateId = anchorId,
+            AnchorSpawnAt = anchorSpawn,
+            IsRemoteAnchor = previous.IsRemoteAnchor,
+            CurrentActivePotFateId = 0,
+            PredictedNextPotFateId = nextPotId,
+            PredictedNextSpawnAt = nextPotId == 0 ? DateTimeOffset.MinValue : nextSpawn,
+        };
+    }
 }
 
 public static class PotFallbackWindow
@@ -246,6 +312,17 @@ public static class PotFallbackWindow
 
         DateTimeOffset departureAt = cycle.PredictedNextSpawnAt - TimeSpan.FromMinutes(Math.Max(0, spawnLeadMinutes));
         TimeSpan timeUntilDeparture = departureAt - now;
+
+        // Overdue prediction (missed spawn) must not block FATEs / force preposition forever.
+        if (timeUntilDeparture < -PotCycleTracker.PredictionStaleGrace)
+        {
+            return new(
+                true,
+                $"{activityName} allowed: pot prediction overdue (stale).",
+                departureAt,
+                timeUntilDeparture);
+        }
+
         if (timeUntilDeparture <= cutoffWindow)
         {
             return new(
@@ -270,6 +347,12 @@ public static class PotFallbackWindow
         bool potFarmingEnabled)
     {
         if (!potFarmingEnabled || !cycle.HasPredictedNextPot)
+        {
+            return false;
+        }
+
+        DateTimeOffset departureAt = cycle.PredictedNextSpawnAt - TimeSpan.FromMinutes(Math.Max(0, spawnLeadMinutes));
+        if (departureAt - now < -PotCycleTracker.PredictionStaleGrace)
         {
             return false;
         }

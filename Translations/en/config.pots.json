@@ -12,7 +12,7 @@
     },
     "pot_spawn_lead_minutes": {
       "label": "Leave for pots this many minutes early",
-      "tooltip": "Minutes before the predicted pot spawn to stop other work and head to pots. Timer resets when you leave OC or hop instances."
+      "tooltip": "Minutes before the predicted pot spawn to stop other work and head to pots (Illegal Mode and Pots & Treasure). Timer resets when you leave OC or hop instances."
     },
     "fate_fallback_cutoff_minutes": {
       "label": "Do not start FATEs within (minutes of pots)",

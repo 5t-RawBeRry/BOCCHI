@@ -451,31 +451,33 @@ public abstract class HuntRoutePlanner
 
     private AuthoredTreasureTransition? FindTransitionBetween(uint from, uint to)
     {
+        // NH (and any untagged segments): honor authored Return/TP on the last pad of a region.
+        // Previously only half-tagged SH boundaries applied these, so NH walked between areas (#169).
+        for (int i = 0; i < authoredEntries.Count; i++)
+        {
+            AuthoredRouteEntry entry = authoredEntries[i];
+            if (entry.NodeId != from || entry.TransitionAfter == null)
+            {
+                continue;
+            }
+
+            string boundaryType = entry.TransitionAfter.Type?.Trim().ToLowerInvariant() ?? "";
+            if (boundaryType is "teleport" or "return" or "auto")
+            {
+                return entry.TransitionAfter;
+            }
+        }
+
         string? fromHalf = TryGetNodeHalf(from);
         string? toHalf = TryGetNodeHalf(to);
 
-        // Crossing halves always Returns (unless an explicit teleport is authored on the boundary).
+        // Crossing halves always Returns when no explicit boundary was authored on `from`.
         if (fromHalf != null && toHalf != null && fromHalf != toHalf)
         {
-            for (int i = 0; i < authoredEntries.Count; i++)
-            {
-                AuthoredRouteEntry entry = authoredEntries[i];
-                if (entry.NodeId != from || entry.TransitionAfter == null)
-                {
-                    continue;
-                }
-
-                string boundaryType = entry.TransitionAfter.Type?.Trim().ToLowerInvariant() ?? "";
-                if (boundaryType is "teleport" or "return")
-                {
-                    return entry.TransitionAfter;
-                }
-            }
-
             return new AuthoredTreasureTransition { Type = "return" };
         }
 
-        // Same half (or untagged): walk only — never Return/TP mid-half.
+        // Same half (or untagged interior): walk only.
         return new AuthoredTreasureTransition { Type = "walk" };
     }
 

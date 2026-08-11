@@ -19,6 +19,7 @@ using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
 using Ocelot.States.Score;
 using System.Numerics;
+using ECommonsPlayer = ECommons.GameHelpers.Player;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
@@ -285,7 +286,8 @@ public class FarmingPotChestsHandler
         if (TryAcquireReveal(farm, out IGameObject? reveal) && reveal != null)
         {
             farm.Phase = PotChestFarmPhase.OpeningReveal;
-            OpenChest(reveal.Position);
+            farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
+            TryOpenChest(reveal);
             return;
         }
 
@@ -360,7 +362,7 @@ public class FarmingPotChestsHandler
         }
 
         Vector3 target = farm.RefineTarget ?? farm.Candidates.Peek().Position;
-        float distance = player.Position.Distance(target);
+        float distance = player.Position.Distance2D(target);
 
         if (distance > OpenTreasureCofferChain.InteractDistance)
         {
@@ -385,7 +387,8 @@ public class FarmingPotChestsHandler
         if (live != null)
         {
             farm.Phase = PotChestFarmPhase.OpeningReveal;
-            OpenChest(live.Position);
+            farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
+            TryOpenChest(live);
             return;
         }
 
@@ -425,7 +428,8 @@ public class FarmingPotChestsHandler
                 return;
             }
 
-            float distance = player.Position.Distance(reveal.Position);
+            // 2D — reveal Y ≈ -500 made 3D distance ~500y and blocked open forever (#170).
+            float distance = player.Position.Distance2D(reveal.Position);
             if (distance > OpenTreasureCofferChain.InteractDistance)
             {
                 EnsurePathing(reveal.Position);
@@ -433,7 +437,7 @@ public class FarmingPotChestsHandler
             }
 
             pathfinder.Stop();
-            OpenChest(reveal.Position);
+            TryOpenChest(reveal);
             return;
         }
 
@@ -500,7 +504,7 @@ public class FarmingPotChestsHandler
         Vector3 chestPosition = farm.Chests.Peek();
         IGameObject? liveChest = FindChestNear(chestPosition);
         Vector3 pathTarget = liveChest?.Position ?? chestPosition;
-        float distance = player.Position.Distance(pathTarget);
+        float distance = player.Position.Distance2D(pathTarget);
 
         if (liveChest == null)
         {
@@ -535,7 +539,7 @@ public class FarmingPotChestsHandler
         }
 
         pathfinder.Stop();
-        OpenChest(liveChest.Position);
+        TryOpenChest(liveChest);
     }
 
     private bool TryRedirectCandidateGroup(PotChestFarmMemory farm, PotTreasureHintEvent evt)
@@ -594,21 +598,44 @@ public class FarmingPotChestsHandler
 
     private void EnsurePathing(Vector3 destination)
     {
+        Vector3 pathable = PathableTreasurePosition(destination);
         if (pathfinder.IsIdle())
         {
-            pathfinder.PathfindAndMoveTo(new(destination));
+            pathfinder.PathfindAndMoveTo(new(pathable));
         }
 
-        AutoMount.MaybeRemount(config, conditions, objects, destination, zones.GetZone().IsInBasecamp());
+        // Remount only for longer walks — not while already on top of a reveal.
+        if (player.Position.Distance2D(pathable) > 15f)
+        {
+            AutoMount.MaybeRemount(config, conditions, objects, pathable, zones.GetZone().IsInBasecamp());
+        }
     }
 
-    private void OpenChest(Vector3 position)
+    private void TryOpenChest(IGameObject chest)
     {
+        if (DismountAssist.TryDismount(conditions) || ECommonsPlayer.IsJumping)
+        {
+            return;
+        }
+
+        Vector3 position = PathableTreasurePosition(chest.Position);
         activeChain = chainManager.Manage(
             chains.Create("PotChestFarm::Open")
                 .Then<OpenTreasureCofferChain, TreasureOpenTarget>(
                     new TreasureOpenTarget(position, PotTreasureIds.RevealCofferBaseIds))
         );
+    }
+
+    /// <summary>Rewrite bogus reveal altitudes so pathfinder/vnav land on the mesh (#170).</summary>
+    private Vector3 PathableTreasurePosition(Vector3 position)
+    {
+        Vector3 normalized = NormalizeY(position);
+        if (MathF.Abs(normalized.Y - player.Position.Y) > 40f)
+        {
+            return normalized with { Y = player.Position.Y };
+        }
+
+        return normalized;
     }
 
     private bool TryAcquireReveal(PotChestFarmMemory farm, out IGameObject? reveal)

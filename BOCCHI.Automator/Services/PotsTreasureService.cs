@@ -17,7 +17,7 @@ namespace BOCCHI.Automator.Services;
 
 /// <summary>
 /// Dedicated pots + treasure mode: pot FATEs and chests, then treasure hunt
-/// until ~3 minutes before the next pot spawn; preposition and repeat.
+/// until the configured pot lead before the next pot spawn; preposition and repeat.
 /// </summary>
 public class PotsTreasureService
 (
@@ -32,6 +32,7 @@ public class PotsTreasureService
     IAutomationModeGuard modeGuard,
     IChatGui chat,
     UIConfig uiConfig,
+    PotsConfig potsConfig,
     ITranslator<MainWindow> translator,
     ILogger<PotsTreasureService> logger
 ) : IPotsTreasureMode, IOnUpdate, IOnStop
@@ -343,7 +344,7 @@ public class PotsTreasureService
             cycle,
             DateTimeOffset.UtcNow,
             TimeSpan.Zero,
-            PotsTreasureDefaults.PrepositionLeadMinutes,
+            potsConfig.PotSpawnLeadMinutes,
             potFarmingEnabled: true);
     }
 

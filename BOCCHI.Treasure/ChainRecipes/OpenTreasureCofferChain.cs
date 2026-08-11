@@ -1,3 +1,4 @@
+using BOCCHI.Common.Data.Zones;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
@@ -9,6 +10,7 @@ using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Chain.Middleware.Chain;
 using Ocelot.Chain.Middleware.Step;
+using Ocelot.Extensions;
 using Ocelot.Ipc.VNavmesh;
 using Ocelot.Services.PlayerState;
 using System.Numerics;
@@ -93,14 +95,20 @@ public class OpenTreasureCofferChain
                     return true;
                 }
 
-                float dist3d = Vector3.Distance(player.Position, nearby.Position);
-                if (dist3d > PreferredOpenDistance)
+                // Pot reveals often report Y ≈ -500 — use 2D so we still walk up and open (#170).
+                float dist2d = player.Position.Distance2D(nearby.Position);
+                if (dist2d > PreferredOpenDistance)
                 {
-                    EnsurePathing(nearby.Position, pathState);
+                    EnsurePathing(PathableTreasurePosition(nearby.Position), pathState);
                     return false;
                 }
 
                 StopNav();
+
+                if (DismountAssist.TryDismount(conditions))
+                {
+                    return false;
+                }
 
                 // Pandora: require targetable before Interact.
                 if (!gameObject->GetIsTargetable())
@@ -114,7 +122,8 @@ public class OpenTreasureCofferChain
                 }
 
                 pathState.InteractAttempted = true;
-                TargetSystem.Instance()->InteractWithObject(gameObject);
+                // false = ignore LoS (same as carrot bunny open).
+                TargetSystem.Instance()->InteractWithObject(gameObject, false);
                 return IsOpenedOrLooted(nearby, tr);
             }
         }
@@ -127,7 +136,7 @@ public class OpenTreasureCofferChain
             return true;
         }
 
-        EnsurePathing(target.Position, pathState);
+        EnsurePathing(PathableTreasurePosition(target.Position), pathState);
         return false;
     }
 
@@ -142,7 +151,7 @@ public class OpenTreasureCofferChain
     private void EnsurePathing(Vector3 destination, PathState pathState)
     {
         // Already inside arrival — do not re-queue move-to every tick (vnav spam in #166).
-        if (Vector3.Distance(player.Position, destination) <= PathArrivalRange)
+        if (player.Position.Distance2D(destination) <= PathArrivalRange)
         {
             StopNav();
             return;
@@ -150,13 +159,28 @@ public class OpenTreasureCofferChain
 
         const float RepathDrift = 1.5f;
         bool drifted = pathState.LastTarget is not { } last
-                       || Vector3.DistanceSquared(last, destination) > RepathDrift * RepathDrift;
+                       || last.Distance2D(destination) > RepathDrift;
 
         if ((!vnav.IsRunning() && !vnav.IsPathfinding()) || drifted)
         {
             pathState.LastTarget = destination;
             vnav.PathfindAndMoveCloseTo(destination, false, PathArrivalRange);
         }
+    }
+
+    /// <summary>
+    ///     Pot Magic Pot reveals sometimes sit at Y ≈ -500. Path/interact using player altitude
+    ///     so vnav and 3D gates do not treat the coffer as underground.
+    /// </summary>
+    private Vector3 PathableTreasurePosition(Vector3 position)
+    {
+        float y = position.Y;
+        if (MathF.Abs(y + 500f) < 0.5f || MathF.Abs(y - player.Position.Y) > 80f)
+        {
+            y = player.Position.Y;
+        }
+
+        return new Vector3(position.X, y, position.Z);
     }
 
     /// <summary>Pandora success: Opened/FadedOut flags, or already listed in the Loot window.</summary>
@@ -212,7 +236,8 @@ public class OpenTreasureCofferChain
                     return false;
                 }
 
-                if (Vector3.Distance(position, o.Position) > searchRadius)
+                // 2D: pot reveals at Y ≈ -500 would never match a grounded search point (#170).
+                if (position.Distance2D(o.Position) > searchRadius)
                 {
                     return false;
                 }
@@ -228,7 +253,7 @@ public class OpenTreasureCofferChain
                     return (CsObjectKind)obj->ObjectKind == CsObjectKind.Treasure;
                 }
             })
-            .OrderBy(o => Vector3.DistanceSquared(player.Position, o.Position))
+            .OrderBy(o => player.Position.Distance2D(o.Position))
             .FirstOrDefault();
     }
 

@@ -267,8 +267,7 @@ public class ChoosingActivityHandler
     private TimeSpan GetPotPrepositionCutoff() =>
         PotsOnly ? TimeSpan.Zero : TimeSpan.FromMinutes(Math.Max(0, potsConfig.FateFallbackCutoffMinutes));
 
-    private int GetPotPrepositionLead() =>
-        PotsOnly ? PotsTreasureDefaults.PrepositionLeadMinutes : potsConfig.PotSpawnLeadMinutes;
+    private int GetPotPrepositionLead() => potsConfig.PotSpawnLeadMinutes;
 
     private bool CompletionistBlocksFate(uint fateId) =>
         !PotsOnly
