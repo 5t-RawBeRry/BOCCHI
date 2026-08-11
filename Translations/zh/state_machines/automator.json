@@ -1,0 +1,56 @@
+{
+  "entry": {
+    "label": "启动中"
+  },
+  "idle": {
+    "label": "待机"
+  },
+  "dead": {
+    "label": "已阵亡"
+  },
+  "in_combat": {
+    "label": "战斗中"
+  },
+  "casting_treasure_sight": {
+    "label": "正在使用魔寻宝"
+  },
+  "applying_buffs": {
+    "label": "正在附加增益"
+  },
+  "repairing": {
+    "label": "正在修理"
+  },
+  "choosing_activity": {
+    "label": "正在挑选下一步"
+  },
+  "returning": {
+    "label": "正在返回营地"
+  },
+  "pathfinding": {
+    "label": "赶路中"
+  },
+  "in_fate": {
+    "label": "危命任务中"
+  },
+  "waiting_for_critical_encounter": {
+    "label": "等待紧急遭遇战"
+  },
+  "waiting_for_pot_fate": {
+    "label": "等待魔法罐"
+  },
+  "in_critical_encounter": {
+    "label": "紧急遭遇战中"
+  },
+  "returning_to_job": {
+    "label": "正在切回职业"
+  },
+  "leveling_phantom_job": {
+    "label": "正在切换辅助职业"
+  },
+  "farming_pot_chests": {
+    "label": "正在收取魔法罐宝箱"
+  },
+  "triaging": {
+    "label": "急救中"
+  }
+}

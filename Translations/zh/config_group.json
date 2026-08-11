@@ -1,0 +1,20 @@
+{
+  "automation": {
+    "label": "违规模式"
+  },
+  "mob_farmer": {
+    "label": "刷怪"
+  },
+  "treasure": {
+    "label": "寻宝"
+  },
+  "ux": {
+    "label": "界面"
+  },
+  "forked_tower": {
+    "label": "两歧塔"
+  },
+  "dependencies": {
+    "label": "依赖"
+  }
+}

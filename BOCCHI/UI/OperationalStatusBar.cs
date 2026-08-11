@@ -3,14 +3,17 @@ using BOCCHI.Automator.Services;
 using BOCCHI.Buff.Services;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.StateMemory;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.UI;
 using BOCCHI.MobFarmer.Data;
 using BOCCHI.MobFarmer.Services;
+using BOCCHI.Treasure;
 using BOCCHI.Treasure.Services;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
+using Dalamud.Plugin.Services;
 using Ocelot.Extensions;
 using Ocelot.Graphics;
 using Ocelot.Services.Translation;
@@ -25,9 +28,12 @@ public class OperationalStatusBar
     Func<IPotsTreasureMode> potsTreasureFactory,
     Func<IMobFarmer> farmerFactory,
     ITreasureHunter hunter,
+    ICarrotHunter carrotHunter,
     IBuffRunner buffRunner,
     UIConfig uiConfig,
     IAutomatorMemory memory,
+    IPotCycleTracker potCycle,
+    IDataManager data,
     IBrandingService branding,
     IUIService ui,
     ITranslator<MainWindow> translator
@@ -47,70 +53,128 @@ public class OperationalStatusBar
 
     public bool IllegalModeActive => Automator.Enabled;
 
+    public bool CompletionistActive => Automator.IsCompletionist;
+
     public bool PotsTreasureActive => PotsTreasure.Running;
 
     public bool MobFarmerActive => Farmer.Running;
 
     public bool TreasureHuntActive => hunter.Running;
 
+    public bool StandaloneTreasureHuntActive => hunter.Running && !hunter.ManagedByPotsTreasure;
+
+    public bool CarrotHuntActive => carrotHunter.Running;
+
     public bool AnyAutomationActive =>
-        IllegalModeActive || PotsTreasureActive || MobFarmerActive || TreasureHuntActive;
+        IllegalModeActive || CompletionistActive || PotsTreasureActive || MobFarmerActive
+        || TreasureHuntActive || CarrotHuntActive;
 
     public void Render()
     {
         ImGui.Separator();
 
-        DrawStatusChip(
-            translator.T(".status.automator"),
-            Automator.Enabled,
-            Automator.CurrentState is { } state ? FormatAutomatorState(state) : null);
+        bool anyMode = IllegalModeActive || CompletionistActive || PotsTreasureActive || MobFarmerActive
+                       || StandaloneTreasureHuntActive || CarrotHuntActive;
+        if (!anyMode)
+        {
+            ui.Text(translator.T(".status.idle"), branding.DalamudGrey);
+        }
+        else
+        {
+            bool first = true;
+            void Chip(string label, string? detail)
+            {
+                if (!first)
+                {
+                    ImGui.SameLine();
+                }
 
-        ImGui.SameLine();
-        DrawStatusChip(
-            translator.T(".status.pots_treasure"),
-            PotsTreasure.Running,
-            PotsTreasure.Running
-                ? translator.T($".automation.pots_treasure.phases.{PotsTreasure.Phase.ToString().ToSnakeCase()}")
-                : null);
+                first = false;
+                DrawActiveChip(label, detail);
+            }
 
-        ImGui.SameLine();
-        DrawStatusChip(
-            translator.T(".status.mob_farmer"),
-            Farmer.Running,
-            Farmer.Running ? FormatFarmerPhase(Farmer.Phase) : null);
+            if (IllegalModeActive)
+            {
+                Chip(
+                    translator.T(".status.automator"),
+                    Automator.CurrentState is { } state ? FormatAutomatorState(state) : null);
+            }
 
-        ImGui.SameLine();
-        DrawStatusChip(
-            translator.T(".status.treasure_hunt"),
-            hunter.Running,
-            hunter.Running
-                ? hunter.Paused
-                    ? translator.T(".treasure.paused")
-                    : hunter.StepCount > 0 ? $"{hunter.StepIndex + 1}/{hunter.StepCount}" : null
-                : null);
+            if (CompletionistActive)
+            {
+                Chip(
+                    translator.T(".status.completionist"),
+                    Automator.CurrentState is { } state ? FormatAutomatorState(state) : null);
+            }
 
-        if (uiConfig.ShowBuffSection)
+            if (PotsTreasureActive)
+            {
+                string phase = translator.T(
+                    $".automation.pots_treasure.phases.{PotsTreasure.Phase.ToString().ToSnakeCase()}");
+                string? detail = PotsTreasure.Paused
+                    ? translator.T(".automation.pots_treasure.paused")
+                    : phase;
+                if (!PotsTreasure.Paused
+                    && PotsTreasure.Phase == PotsTreasurePhase.Hunting
+                    && hunter.Running
+                    && (hunter.StepCount > 0 || hunter.WaitingForSafeWindow))
+                {
+                    detail = $"{phase} · {TreasureHuntStatusUi.FormatProgress(hunter, translator)}";
+                }
+
+                Chip(translator.T(".status.pots_treasure"), detail);
+            }
+
+            if (MobFarmerActive)
+            {
+                Chip(translator.T(".status.mob_farmer"), FormatFarmerPhase(Farmer.Phase));
+            }
+
+            if (StandaloneTreasureHuntActive)
+            {
+                Chip(
+                    translator.T(".status.treasure_hunt"),
+                    TreasureHuntStatusUi.FormatProgress(hunter, translator));
+            }
+
+            if (CarrotHuntActive)
+            {
+                Chip(
+                    translator.T(".status.carrot_hunt"),
+                    translator.T($".treasure.carrot_hunt_phases.{carrotHunter.Phase.ToString().ToSnakeCase()}"));
+            }
+        }
+
+        string? potChip = PotTimerUi.FormatCompact(potCycle, data, translator);
+        if (potChip != null)
         {
             ImGui.SameLine(0f, 16f);
+            ui.Text(potChip, branding.DalamudGrey);
+        }
+
+        // Own row — not a mode chip; knowledge-crystal buff apply/stop.
+        if (uiConfig.ShowBuffSection)
+        {
             DrawBuffAction();
         }
 
-        if (memory.TryRemember<GoalMemory>(out GoalMemory goalMemory))
+        // Goal / pot chests while Illegal Mode, Completionist, or Pots phase drives the automator.
+        bool showGoalRows = IllegalModeActive
+                            || CompletionistActive
+                            || (PotsTreasureActive && PotsTreasure.Phase == PotsTreasurePhase.DoingPots);
+        if (showGoalRows)
         {
-            ui.LabelledValue(translator.T(".status.goal"), GoalFormatHelper.Describe(goalMemory.Goal, translator));
-        }
+            if (memory.TryRemember<GoalMemory>(out GoalMemory goalMemory))
+            {
+                ui.LabelledValue(translator.T(".status.goal"), GoalFormatHelper.Describe(goalMemory.Goal, translator));
+            }
 
-        if (memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory potFarm))
-        {
-            ui.LabelledValue(
-                translator.T(".status.chests"),
-                $"{potFarm.RemainingChests}/{potFarm.TotalChests} (Fate {potFarm.FateId.Value})");
-        }
-
-        if (memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory pathMemory)
-            && pathMemory.GetNextPathStep() is { } currentStep)
-        {
-            ui.LabelledValue(translator.T(".status.current_step"), currentStep.Describe());
+            if (memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory potFarm))
+            {
+                ui.LabelledValue(
+                    translator.T(".status.chests"),
+                    $"{potFarm.RemainingChests}/{potFarm.TotalChests} (Fate {potFarm.FateId.Value})");
+            }
         }
 
         ImGui.Separator();
@@ -118,32 +182,38 @@ public class OperationalStatusBar
 
     private void DrawBuffAction()
     {
-        ui.Text(translator.T(".buffs.title"), branding.DalamudYellow);
-        ImGui.SameLine(0f, 6f);
-
         bool canStart = buffRunner.CanStart;
-        using (ImRaii.Disabled(!canStart && !buffRunner.IsRunning))
+        bool running = buffRunner.IsRunning;
+        string label = running
+            ? translator.T(".buffs.stop_button")
+            : translator.T(".buffs.apply_button");
+
+        using (ImRaii.Disabled(!canStart && !running))
         {
+            // Flask reads as buffs/potions; Magic looked like a random pill next to status chips.
             using (ImRaii.PushFont(UiBuilder.IconFont))
             {
-                // Magic wand reads clearer than Redo for "apply buffs".
-                if (ImGui.SmallButton($"{FontAwesomeIcon.Magic.ToIconString()}##apply_buffs"))
+                ImGui.AlignTextToFramePadding();
+                ImGui.TextUnformatted(FontAwesomeIcon.Flask.ToIconString());
+            }
+
+            ImGui.SameLine(0f, 6f);
+            if (ImGui.SmallButton($"{label}##buffs_action"))
+            {
+                if (running)
                 {
-                    if (buffRunner.IsRunning)
-                    {
-                        buffRunner.Stop();
-                    }
-                    else
-                    {
-                        buffRunner.Start();
-                    }
+                    buffRunner.Stop();
+                }
+                else
+                {
+                    buffRunner.Start();
                 }
             }
         }
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            if (buffRunner.IsRunning)
+            if (running)
             {
                 ImGui.SetTooltip(translator.T(".buffs.stop_tooltip"));
             }
@@ -157,18 +227,16 @@ public class OperationalStatusBar
             }
         }
 
-        if (buffRunner.IsRunning)
+        if (running)
         {
-            ImGui.SameLine(0f, 6f);
+            ImGui.SameLine(0f, 8f);
             ui.Text(translator.T(".buffs.applying"), branding.DalamudGrey);
         }
     }
 
-    private void DrawStatusChip(string label, bool active, string? detail)
+    private void DrawActiveChip(string label, string? detail)
     {
-        string status = active ? translator.T(".status.on") : translator.T(".status.off");
-        Color color = active ? Color.Green : branding.DalamudGrey;
-        ui.Text($"{label}: {status}", color);
+        ui.Text($"{label}: {translator.T(".status.on")}", Color.Green);
 
         if (!string.IsNullOrEmpty(detail))
         {

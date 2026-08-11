@@ -1,15 +1,14 @@
 {
   "label": "Critical Encounters",
-  "tooltip": "Settings for Critical Encounter automation.",
+  "tooltip": "Which Critical Encounters Illegal Mode is allowed to do.",
+  "sections": {
+    "allowlist": "Allowed Critical Encounters"
+  },
   "fields": {
-    "should_do_critical_encounters": {
-      "label": "Do Critical Encounters",
-      "tooltip": "Allow Illegal Mode to select and run Critical Encounter goals."
-    },
     "disabled_critical_encounter_ids": {
-      "label": "Critical Encounter availability",
-      "tooltip": "Uncheck a Critical Encounter to exclude it from Illegal Mode selection.",
-      "empty": "No Critical Encounters defined for the current zone."
+      "label": "Allowed Critical Encounters",
+      "tooltip": "Uncheck a Critical Encounter to skip it.",
+      "empty": "No Critical Encounters listed for this zone."
     }
   }
 }

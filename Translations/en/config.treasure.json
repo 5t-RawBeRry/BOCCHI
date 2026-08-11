@@ -1,62 +1,85 @@
 {
-  "label": "Treasure",
-  "tooltip": "Treasure coffer overlays and treasure hunt routing.",
+  "label": "Treasure Hunter",
+  "tooltip": "Coffer lines on the map and Treasure Hunt routes.",
+  "sections": {
+    "radar": "Radar",
+    "completion": "When hunt ends",
+    "hunt": "Hunt",
+    "ninja_hide": "Ninja Hide"
+  },
   "fields": {
-    "enabled": {
-      "label": "Enabled",
-      "tooltip": "Enable treasure-related overlays and features."
-    },
     "draw_line_to_bronze_chests": {
-      "label": "Draw lines to bronze coffers",
-      "tooltip": "Render a brown line from your character to nearby bronze coffers, while out of combat."
+      "label": "Lines to bronze coffers",
+      "tooltip": "While out of combat, draw a brown line from you to nearby bronze coffers."
     },
     "draw_line_to_silver_chests": {
-      "label": "Draw lines to silver coffers",
-      "tooltip": "Render a silver line from your character to nearby silver coffers, while out of combat."
+      "label": "Lines to silver coffers",
+      "tooltip": "While out of combat, draw a silver line from you to nearby silver coffers."
     },
     "draw_line_to_carrots": {
-      "label": "Draw lines to carrots",
-      "tooltip": "Render a green line from your character to nearby carrots, while out of combat."
+      "label": "Lines to carrots",
+      "tooltip": "While out of combat, draw a green line from you to nearby carrots."
     },
     "show_percentage_active_treasure_count": {
-      "label": "Show active treasure as percentage",
-      "tooltip": "Show active treasure as percentage next to the total"
-    },
-    "enable_treasure_hunt": {
-      "label": "Show Treasure Hunt button",
-      "tooltip": "Show the treasure hunt button in the main window."
+      "label": "Show remaining coffers as %",
+      "tooltip": "Show how many coffers are left as a percentage next to the total."
     },
     "return_to_base_camp_after_hunt": {
       "label": "Return after hunt",
-      "tooltip": "Cast Return to base camp after the last coffer on the route."
+      "tooltip": "Cast Return to base camp after Treasure Hunt finishes the last coffer, or after Carrot Hunt finishes its route."
     },
     "play_sound_on_hunt_complete": {
-      "label": "Play sound when hunt finishes",
-      "tooltip": "Play a chat sound effect when Treasure Hunt completes."
+      "label": "Play sound when Treasure Hunt finishes",
+      "tooltip": "Play an MP3 when Treasure Hunt finishes (Carrot Hunt does not use this)."
     },
-    "hunt_complete_sound_id": {
-      "label": "Hunt complete sound",
-      "tooltip": "Chat sound effect ID (1–16), same as System Config → Sound Effects."
+    "hunt_complete_sound": {
+      "label": "Hunt finished sound",
+      "tooltip": "Pick an MP3 from the plugin Sounds folder. Click a name to preview it.",
+      "open_folder": "Open sound folder — drop MP3s here to add your own."
     },
     "cast_treasure_sight_during_hunt": {
       "label": "Cast Treasure Sight during hunt",
-      "tooltip": "Cast Treasure Sight when the hunt starts (and again periodically). Ends the hunt early when Sight reports no remaining coffers."
+      "tooltip": "Cast Treasure Sight when the hunt starts, and again every N coffers. Stops the hunt early if Sight says no coffers are left."
     },
-    "hunt_return_cost": {
-      "label": "Return cost",
-      "tooltip": "Pathfinding cost weight for returning to base camp"
-    },
-    "hunt_teleport_cost": {
-      "label": "Teleport cost",
-      "tooltip": "Pathfinding cost weight for aethernet teleports"
-    },
-    "hunt_detection_range": {
-      "label": "Detection range",
-      "tooltip": "How close you must be to a chest node before interacting"
+    "treasure_sight_every_n_locations": {
+      "label": "Treasure Sight every N coffers",
+      "tooltip": "After the first cast, cast Treasure Sight again every this many coffers. Raise it to dismount and swap jobs less often in busy areas."
     },
     "hunt_max_level": {
-      "label": "Max chest level",
-      "tooltip": "Maximum treasure node level to include in the hunt route"
+      "label": "Max coffer level",
+      "tooltip": "Skip coffers above this level on the hunt route."
+    },
+    "hunt_silver_chests_only": {
+      "label": "Silver coffers only",
+      "tooltip": "Treasure Hunt only visits silver coffers and skips bronze pads."
+    },
+    "skip_unsafe_treasure_windows": {
+      "label": "Skip dangerous weather / Ashkin",
+      "tooltip": "Pause Treasure Hunt on South Horn during Ashkin or other unsafe weather windows."
+    },
+    "enable_automatic_treasure_hunt_during_illegal_mode": {
+      "label": "Auto treasure hunt in Illegal Mode",
+      "tooltip": "After a CE or FATE in Illegal Mode or Completionist (and after Triage Mode, if it ran): Return to camp and use Treasure Sight when you know it. Then start a treasure hunt if coffers remain — or hunt from the built-in map if you do not have Treasure Sight yet."
+    },
+    "use_ninja_hide_on_dangerous_routes": {
+      "label": "Ninja Hide near strong enemies",
+      "tooltip": "Experimental: if a high-Knowledge enemy is nearby, swap to your Ninja gearset, use Hide, and walk the last stretch to the coffer. Useful near max Knowledge."
+    },
+    "ninja_gearset_number": {
+      "label": "Ninja gearset number",
+      "tooltip": "Gearset number that equips Ninja (as shown in the gearset list, starting at 1). 0 = do not swap — you must already be on Ninja."
+    },
+    "knowledge_hide_offset": {
+      "label": "Hide when Knowledge is this much higher",
+      "tooltip": "Use Hide when a nearby enemy's Knowledge is at least your current (synced) Knowledge plus this number. 0 = same Knowledge or higher. On South Horn you are synced to Knowledge 20 even if your real Knowledge is higher — so mid-20s enemies can still trigger Hide there."
+    },
+    "knowledge_threat_enter_distance": {
+      "label": "Start Hide within (yalms)",
+      "tooltip": "Begin the Hide flow when a dangerous enemy is this close."
+    },
+    "knowledge_threat_exit_distance": {
+      "label": "Keep Hide until farther than (yalms)",
+      "tooltip": "Once Hide is on, keep it until enemies are farther than this. Use a larger value than “Start Hide” so it does not flicker on and off."
     }
   }
 }

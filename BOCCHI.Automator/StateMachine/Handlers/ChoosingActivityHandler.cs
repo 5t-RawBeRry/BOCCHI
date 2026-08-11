@@ -1,5 +1,6 @@
 using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services;
+using BOCCHI.Automator.Services.Goals;
 using BOCCHI.Buff.Services;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.CriticalEncounters;
@@ -17,16 +18,18 @@ public class ChoosingActivityHandler
 (
     IAutomatorMemory memory,
     IAutomatorContext automatorContext,
-    ICriticalEncounterRepository criticalEncounterRepository,
     IFateRepository fateRepository,
     IGoalFactory goalFactory,
     IBuffProvider buffs,
     BuffConfig buffConfig,
+    AutomatorConfig automatorConfig,
     FatesConfig fatesConfig,
-    CriticalEncountersConfig criticalEncountersConfig,
+    PotsConfig potsConfig,
     IFateScorer fateScorer,
     IPotCycleTracker potCycle,
     IZoneProvider zones,
+    IFieldNoteTracker fieldNotes,
+    IStartableCriticalEncounterFinder startableCriticalEncounters,
     ILogger<ChoosingActivityHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.ChoosingActivity)
 {
@@ -59,8 +62,19 @@ public class ChoosingActivityHandler
             return StatePriority.Never;
         }
 
-        // Only claim Choosing when Handle can actually start something (avoids pot-cutoff softlock).
-        bool hasCriticalEncounter = !PotsOnly && FindStartableCriticalEncounter() != null;
+        if (TriageSession.IsActive(memory))
+        {
+            return StatePriority.Never;
+        }
+
+        if (memory.TryRemember<AutomaticTreasureSurveyMemory>(out AutomaticTreasureSurveyMemory survey)
+            && survey.IsBusy)
+        {
+            return StatePriority.Never;
+        }
+
+        // Only claim Choosing when something can actually start (avoids pot-cutoff softlock).
+        bool hasCriticalEncounter = !PotsOnly && startableCriticalEncounters.FindStartable() != null;
         if (!hasCriticalEncounter
             && FindStartableFate() == null
             && !CanPrepositionToPot(out _))
@@ -75,7 +89,7 @@ public class ChoosingActivityHandler
     {
         if (!PotsOnly)
         {
-            CriticalEncounter? criticalEncounter = FindStartableCriticalEncounter();
+            CriticalEncounter? criticalEncounter = startableCriticalEncounters.FindStartable();
             if (criticalEncounter != null)
             {
                 IGoal goal = goalFactory.CriticalEncounter(criticalEncounter.Id);
@@ -110,7 +124,7 @@ public class ChoosingActivityHandler
             return null;
         }
 
-        if (!PotsOnly && !fatesConfig.ShouldDoFates)
+        if (!PotsOnly && !automatorConfig.ShouldDoFates)
         {
             return null;
         }
@@ -120,7 +134,11 @@ public class ChoosingActivityHandler
         DateTimeOffset now = DateTimeOffset.UtcNow;
         PotCycleSnapshot cycle = potCycle.Snapshot;
         bool potFarming = PotsOnly
-            || fatesConfig.IsPotFallbackGatingEnabled((uint)cycle.PredictedNextPotFateId);
+            || fatesConfig.IsPotFallbackGatingEnabled(
+                (uint)cycle.PredictedNextPotFateId,
+                automatorConfig.ShouldDoFates,
+                automatorConfig.PreferPotFates,
+                automatorConfig.ShouldFarmPotChests);
         IZone zone = zones.GetZone();
 
         foreach (Fate fate in snapshot)
@@ -133,18 +151,28 @@ public class ChoosingActivityHandler
                     continue;
                 }
             }
-            else if (!fatesConfig.IsFateEnabled(fate.Id.Value))
+            else if (!fatesConfig.IsFateEnabledForIllegalMode(
+                         fate.Id.Value,
+                         isPot,
+                         automatorConfig.PreferPotFates,
+                         automatorConfig.ShouldFarmPotChests))
+            {
+                continue;
+            }
+
+            if (CompletionistBlocksFate(fate.Id.Value))
             {
                 continue;
             }
 
             if (!isPot)
             {
+                (TimeSpan cutoff, int lead) = GetIllegalPotWindow();
                 PotFallbackStartDecision decision = PotFallbackWindow.Evaluate(
                     cycle,
                     now,
-                    TimeSpan.FromMinutes(Math.Max(0, fatesConfig.FateFallbackCutoffMinutes)),
-                    fatesConfig.PotSpawnLeadMinutes,
+                    cutoff,
+                    lead,
                     potFarming,
                     "FATE");
                 if (!decision.AllowStart)
@@ -185,7 +213,7 @@ public class ChoosingActivityHandler
     private bool CanPrepositionToPot(out FateId potId)
     {
         potId = default;
-        if (!PotsOnly && !fatesConfig.ShouldPrepositionToPots)
+        if (!PotsOnly && !automatorConfig.ShouldPrepositionToPots)
         {
             return false;
         }
@@ -196,7 +224,16 @@ public class ChoosingActivityHandler
             return false;
         }
 
-        if (!PotsOnly && !fatesConfig.IsPotFallbackGatingEnabled((uint)cycle.PredictedNextPotFateId))
+        if (!PotsOnly && !fatesConfig.IsPotFallbackGatingEnabled(
+                (uint)cycle.PredictedNextPotFateId,
+                automatorConfig.ShouldDoFates,
+                automatorConfig.PreferPotFates,
+                automatorConfig.ShouldFarmPotChests))
+        {
+            return false;
+        }
+
+        if (CompletionistBlocksFate((uint)cycle.PredictedNextPotFateId))
         {
             return false;
         }
@@ -210,8 +247,8 @@ public class ChoosingActivityHandler
         if (!PotFallbackWindow.ShouldPreposition(
                 cycle,
                 DateTimeOffset.UtcNow,
-                TimeSpan.FromMinutes(Math.Max(0, fatesConfig.FateFallbackCutoffMinutes)),
-                fatesConfig.PotSpawnLeadMinutes,
+                GetPotPrepositionCutoff(),
+                GetPotPrepositionLead(),
                 true))
         {
             return false;
@@ -221,36 +258,20 @@ public class ChoosingActivityHandler
         return true;
     }
 
-    private CriticalEncounter? FindStartableCriticalEncounter()
-    {
-        DateTimeOffset now = DateTimeOffset.UtcNow;
-        PotCycleSnapshot cycle = potCycle.Snapshot;
-        bool potFarming = fatesConfig.IsPotFallbackGatingEnabled((uint)cycle.PredictedNextPotFateId);
+    private (TimeSpan Cutoff, int Lead) GetIllegalPotWindow() =>
+    (
+        TimeSpan.FromMinutes(Math.Max(0, potsConfig.FateFallbackCutoffMinutes)),
+        potsConfig.PotSpawnLeadMinutes
+    );
 
-        // Register + Warmup — Warmup-only used to leave Choosing stuck with a visible CE.
-        foreach (CriticalEncounter ce in criticalEncounterRepository.SnapshotWithoutForkedTower())
-        {
-            if (!ce.IsPreparing() || !criticalEncountersConfig.IsCriticalEncounterEnabled(ce.Id.Value))
-            {
-                continue;
-            }
+    private TimeSpan GetPotPrepositionCutoff() =>
+        PotsOnly ? TimeSpan.Zero : TimeSpan.FromMinutes(Math.Max(0, potsConfig.FateFallbackCutoffMinutes));
 
-            PotFallbackStartDecision decision = PotFallbackWindow.Evaluate(
-                cycle,
-                now,
-                TimeSpan.FromMinutes(Math.Max(0, fatesConfig.CeFallbackCutoffMinutes)),
-                fatesConfig.PotSpawnLeadMinutes,
-                potFarming,
-                "CE");
-            if (!decision.AllowStart)
-            {
-                logger.Debug(decision.Reason);
-                continue;
-            }
+    private int GetPotPrepositionLead() =>
+        PotsOnly ? PotsTreasureDefaults.PrepositionLeadMinutes : potsConfig.PotSpawnLeadMinutes;
 
-            return ce;
-        }
-
-        return null;
-    }
+    private bool CompletionistBlocksFate(uint fateId) =>
+        !PotsOnly
+        && automatorContext.IsCompletionist
+        && !fieldNotes.ShouldPursueFate(fateId);
 }

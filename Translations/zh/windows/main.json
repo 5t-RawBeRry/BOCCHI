@@ -1,0 +1,246 @@
+{
+  "title": "BOCCHI",
+  "unsupported_zone": "请前往新月岛（新月岛南部或北部）以使用 BOCCHI。",
+  "support": {
+    "kofi_tooltip": "♥ Ko-fi（这样你就能继续出门晒太阳了）"
+  },
+  "sections": {
+    "trackers": "统计",
+    "automation": "违规模式",
+    "completionist": "收集者",
+    "potstreasure": "魔法罐与寻宝",
+    "mobfarmer": "刷怪",
+    "world": "世界",
+    "treasure": "寻宝"
+  },
+  "status": {
+    "automator": "违规模式",
+    "completionist": "收集者",
+    "pots_treasure": "魔法罐与寻宝",
+    "mob_farmer": "刷怪",
+    "treasure_hunt": "寻宝",
+    "carrot_hunt": "胡萝卜狩猎",
+    "on": "开",
+    "off": "关",
+    "idle": "待机",
+    "emergency_stop_tooltip": "紧急停止 —— 停止全部自动化、移动与增益",
+    "emergency_stop_done": "[BOCCHI] 紧急停止",
+    "goal": "目标",
+    "current_step": "当前步骤",
+    "chests": "魔法罐宝箱",
+    "automator_states": {
+      "entry": "启动中",
+      "idle": "待机",
+      "dead": "已阵亡",
+      "in_combat": "战斗中",
+      "casting_treasure_sight": "正在使用魔寻宝",
+      "applying_buffs": "正在附加增益",
+      "repairing": "正在修理",
+      "choosing_activity": "正在挑选下一步",
+      "returning": "正在返回营地",
+      "pathfinding": "赶路中",
+      "in_fate": "危命任务中",
+      "waiting_for_critical_encounter": "等待紧急遭遇战",
+      "waiting_for_pot_fate": "等待魔法罐",
+      "in_critical_encounter": "紧急遭遇战中",
+      "returning_to_job": "正在切回职业",
+      "leveling_phantom_job": "正在切换辅助职业",
+      "farming_pot_chests": "正在收取魔法罐宝箱"
+    },
+    "farmer_phases": {
+      "waiting": "等待中",
+      "buffing": "上增益",
+      "gathering": "拉怪中",
+      "stacking": "聚怪中",
+      "fighting": "战斗中"
+    }
+  },
+  "pot_timer": {
+    "active": "魔法罐危命任务进行中",
+    "next": "下一场魔法罐",
+    "unknown": "下一场魔法罐：未知 — 先见到一场魔法罐危命任务后开始计时。",
+    "chip_active": "进行中",
+    "south_horn": "新月岛南部",
+    "north_horn": "新月岛北部",
+    "south_horn_short": "南部",
+    "north_horn_short": "北部"
+  },
+  "goals": {
+    "fate": "危命任务：{0}",
+    "critical_encounter": "紧急遭遇战：{0}"
+  },
+  "trackers": {
+    "experience": {
+      "current_job": "当前职业",
+      "no_job": "未找到职业",
+      "level": "等级：{0}（{1}）",
+      "per_hour": "每小时经验值"
+    },
+    "currency": {
+      "gold_per_hour": "每小时金币",
+      "silver_per_hour": "每小时银币"
+    }
+  },
+  "buffs": {
+    "title": "增益",
+    "apply_button": "附加增益",
+    "stop_button": "停止增益",
+    "apply_tooltip": "立即附加已设置的增益。不会走近水晶 — 请先站在知识水晶增益圈内再点。",
+    "stop_tooltip": "停止附加增益",
+    "applying": "正在附加……"
+  },
+  "completionist": {
+    "enable": "开始收集者模式",
+    "disable": "停止收集者模式",
+    "mode_on": "[BOCCHI] 收集者模式已开启",
+    "mode_off": "[BOCCHI] 收集者模式已关闭",
+    "mode_off_left_zone": "[BOCCHI] 已离开神典石 — 收集者模式已关闭",
+    "description": "仍缺少的危命／紧急遭遇笔记用违规模式自动完成（移动与战斗设置相同）。调查点：单击插旗；Ctrl+单击自动前往（步行／附近以太之光／更短时先返回）。列表随南角／北角切换。分叉塔记录仅供查看。",
+    "legend": "勾选 = 已拥有 · × = 仍需 · 星 = 辅助职业满级",
+    "notes_header": "勘察记录",
+    "jobs_header": "辅助职业",
+    "outside_zone": "进入南角或北角后，会显示该区域的勘察记录列表。",
+    "survey_tooltip": "单击：仅插旗（请自行前往）。Ctrl+单击：插旗 + 前往（步行／附近以太之光／更短时先返回）。不是违规模式。若收集者模式正在运行，请再次点开始/停止以恢复自动。",
+    "survey_tooltip_flag_only": "单击插旗。Ctrl+单击前往需要寻路就绪。",
+    "sources": {
+      "persistent_pots": "Persistent / Pleading Pots",
+      "black_regiment": "The Black Regiment",
+      "the_unbridled": "The Unbridled",
+      "calamity_bound": "Calamity Bound",
+      "from_times_bygone": "From Times Bygone",
+      "shark_attack": "Shark Attack",
+      "cursed_concern": "Cursed Concern",
+      "survey_point": "调查点",
+      "forked_tower_blood": "仅分叉塔：血",
+      "persistent_pots_nh": "Daylight Pottery / In a Pot of Bother",
+      "doubled_trouble": "Doubled Trouble",
+      "quarried_away": "Quarried Away",
+      "forbidden_folios": "Forbidden Folios",
+      "cursed_resurgence": "Cursed Resurgence",
+      "imbalanced_diet": "Imbalanced Diet",
+      "dark_artistry": "Dark Artistry",
+      "appalling_behavior": "Appalling Behavior",
+      "tiny_terror": "Tiny Terror",
+      "lost_on_the_wind": "Lost on the Wind",
+      "accept_no_imitators": "Accept No Imitators",
+      "forked_tower_magic": "仅分叉塔：魔"
+    }
+  },
+  "automation": {
+    "automator": {
+      "title": "违规模式",
+      "enable": "开始违规模式",
+      "disable": "停止违规模式",
+      "toggle_illegal_mode": "开始／停止违规模式",
+      "refresh_pathfinding": "重新规划路线",
+      "refresh_pathfinding_tooltip": "放弃当前路线，从你所在位置重新规划。卡住或手动挪过位置后很有用。",
+      "details": "详情",
+      "illegal_mode_on": "[BOCCHI] 违规模式已开启",
+      "illegal_mode_off": "[BOCCHI] 违规模式已关闭",
+      "illegal_mode_off_left_zone": "[BOCCHI] 已离开神典石 — 违规模式已关闭",
+      "pathfinding_refreshed": "[BOCCHI] 已重新规划路线",
+      "pathfinding_refreshed_no_goal": "[BOCCHI] 已清除路线（当前没有可前往的目标）",
+      "pot_chest_farm": "魔法罐宝箱收取",
+      "chests_remaining": "剩余宝箱",
+      "time_idle": "待机时长"
+    },
+    "mob_farmer": {
+      "title": "刷怪",
+      "start": "开始刷怪",
+      "stop": "停止刷怪",
+      "not_engaged": "未在战斗",
+      "engaged": "战斗中",
+      "selected_mobs": "已选敌人",
+      "configure_mobs": "请在 /bocchi config → 刷怪 中选择敌人。",
+      "off_left_zone": "[BOCCHI] 已离开神典石 — 刷怪已关闭"
+    },
+    "pots_treasure": {
+      "start": "开始魔法罐与寻宝",
+      "stop": "停止魔法罐与寻宝",
+      "pause": "暂停",
+      "pause_tooltip": "先停下移动，但保留本次运行。准备好后再点继续。",
+      "resume": "继续",
+      "resume_tooltip": "从刚才停下的地方继续魔法罐与寻宝。",
+      "paused": "已暂停",
+      "on": "[BOCCHI] 魔法罐与寻宝已开启",
+      "off": "[BOCCHI] 魔法罐与寻宝已关闭",
+      "off_left_zone": "[BOCCHI] 已离开神典石 — 魔法罐与寻宝已关闭",
+      "description": "先做魔法罐危命任务并收取宝箱，随后寻宝，直到距下一次魔法罐约 3 分钟时在附近等待，如此循环。不执行紧急遭遇战或其他危命任务。暂停可保留进度；停止会彻底结束。",
+      "phase": "阶段",
+      "requires_vnav": "[BOCCHI] 魔法罐与寻宝需要 vnavmesh 插件。",
+      "resume_treasure_hunt": "继续寻宝",
+      "resume_treasure_hunt_tooltip": "跳过等待并开始下一轮寻宝。",
+      "active_fates": "进行中的魔法罐危命",
+      "no_active_fate": "当前没有魔法罐危命任务。",
+      "phases": {
+        "off": "关",
+        "hunting": "寻宝",
+        "doing_pots": "魔法罐"
+      }
+    }
+  },
+  "event_drops": {
+    "demiatma_needed": "需要（还差{count}）",
+    "demiatma_not_needed": "不需要（持有{count}个）"
+  },
+  "world": {
+    "fates": {
+      "title": "危命任务",
+      "none": "当前没有进行中的危命任务。"
+    },
+    "critical_encounters": {
+      "title": "紧急遭遇战",
+      "none": "当前没有进行中的紧急遭遇战。"
+    }
+  },
+  "treasure": {
+    "title": "寻宝",
+    "requires_vnav": "需要 vnavmesh 插件。",
+    "waiting_navmesh": "正在等待地图就绪……",
+    "start_hunt": "开始寻宝",
+    "start_hunt_tooltip": "按地图巡视青铜/白银宝箱并开启，空点会跳过。",
+    "pause_hunt": "暂停",
+    "resume_hunt": "继续",
+    "stop_hunt": "停止寻宝",
+    "off_left_zone": "[BOCCHI] 已离开神典石 — 寻宝已关闭",
+    "carrot_hunt_off_left_zone": "[BOCCHI] 已离开神典石 — 胡萝卜狩猎已关闭",
+    "paused": "已暂停",
+    "waiting_safe_window": "等待安全天气",
+    "waiting_safe_window_detail": "南角的灰灵时段或不安全天气期间，寻宝已暂停。窗口结束后会自动继续（也可在寻宝设置中关闭“跳过不安全的寻宝时段”）。",
+    "elapsed": "已用时",
+    "progress": "进度",
+    "last_checked": "上一个查看的宝箱",
+    "resume_coffer": "从该宝箱续接",
+    "flag_resume_tooltip": "在寻宝将继续的宝箱处放置地图标记",
+    "recalculate_route_tooltip": "从当前位置重新规划寻宝路线",
+    "managed_by_pots": "寻宝当前由“魔法罐与寻宝”控制 —— 请在该处开始或停止。",
+    "managed_by_illegal_mode": "寻宝当前由违规模式控制（在活动之间运行）。",
+    "managed_by_carrot": "胡萝卜狩猎进行中 — 请先在下方停止后再开始寻宝。",
+    "managed_by_treasure": "寻宝进行中 — 请先在上方停止后再开始胡萝卜狩猎。",
+    "distance_to_chest": "距宝箱距离",
+    "nearby_title": "附近的宝箱",
+    "none_nearby": "附近没有宝箱。",
+    "active_bronze": "可采青铜",
+    "active_silver": "可采白银",
+    "distance": "距离：{0:F1}y",
+    "position": "({0:F1}, {1:F1}, {2:F1})",
+    "carrot_hunt_title": "胡萝卜狩猎",
+    "carrot_hunt_description": "巡视被啃过的胡萝卜，使用幸运胡萝卜并打开兔子宝箱；更近时会走以太网络或返回。",
+    "start_carrot_hunt": "开始胡萝卜狩猎",
+    "stop_carrot_hunt": "停止胡萝卜狩猎",
+    "use_fortune_carrot": "使用幸运胡萝卜",
+    "use_fortune_carrot_tooltip": "立刻从背包使用一个。在被啃过的胡萝卜旁卡住时很有用。",
+    "carrot_hunt_phase": "阶段",
+    "fortune_carrots": "幸运胡萝卜",
+    "carrot_hunt_phases": {
+      "idle": "选择下一处",
+      "pathing": "走向胡萝卜",
+      "using_item": "使用幸运胡萝卜",
+      "waiting_for_bunny": "等待兔子宝箱",
+      "opening_bunny": "开启兔子宝箱",
+      "approaching_aetheryte": "走向以太之光",
+      "teleporting": "以太网络传送中",
+      "returning": "返回调查队营地"
+    }
+  }
+}

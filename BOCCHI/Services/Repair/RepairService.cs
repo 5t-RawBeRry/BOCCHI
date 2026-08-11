@@ -6,7 +6,7 @@ using Ocelot.Chain;
 
 namespace BOCCHI.Services.Repair;
 
-public class RepairService(IChainFactory chains, CombatConfig config) : IRepairService
+public class RepairService(IChainFactory chains, AutomatorConfig config) : IRepairService
 {
     public unsafe bool ShouldRepair()
     {

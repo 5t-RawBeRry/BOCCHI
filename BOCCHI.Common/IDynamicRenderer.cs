@@ -4,10 +4,11 @@ public enum MainWindowSection
 {
     Trackers = 0,
     Automation = 1,
-    PotsTreasure = 2,
-    MobFarmer = 3,
-    World = 4,
-    Treasure = 5
+    Completionist = 2,
+    PotsTreasure = 3,
+    MobFarmer = 4,
+    World = 5,
+    Treasure = 6
 }
 
 public interface IDynamicRenderer

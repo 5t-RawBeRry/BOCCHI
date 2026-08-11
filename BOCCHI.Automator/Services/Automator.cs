@@ -1,6 +1,9 @@
 using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services.Goals;
+using BOCCHI.Automator.Services.PotTreasure;
+using BOCCHI.Common;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
@@ -11,6 +14,7 @@ using BOCCHI.Common.Services.Paths;
 using Dalamud.Plugin.Services;
 using Ocelot.Chain;
 using Ocelot.Extensions;
+using Ocelot.Ipc.BossMod;
 using Ocelot.Ipc.VNavmesh;
 using Ocelot.Lifecycle;
 using Ocelot.Services.Logger;
@@ -32,32 +36,39 @@ public class Automator
     IChainManager manager,
     IPathfinder pathfinder,
     IVNavmeshIpc vnav,
+    ILifestreamIpc lifestream,
     IZoneProvider zones,
+    IFateRepository fates,
     IObjectTable objects,
     IChatGui chat,
-    FatesConfig fatesConfig,
+    PotsConfig potsConfig,
     AutomatorConfig automatorConfig,
+    FatesConfig fatesConfig,
+    UIConfig uiConfig,
     AutoRotationController autoRotation,
+    IAutomationModeGuard modeGuard,
     ITranslator<MainWindow> translator,
     ILogger<Automator> logger
 ) : IAutomator, IOnUpdate, IOnStop
 {
     private IStateMachine<AutomatorState>? stateMachine;
 
-    private bool pausedOutsideZone;
-
     private IStateMachine<AutomatorState> StateMachine => stateMachine ??= stateMachineFactory();
 
     public bool Enabled => context.IsIllegalMode;
+
+    public bool IsIllegalMode => context.IsIllegalMode;
 
     public bool IsActive => context.Enabled;
 
     public bool IsPotsAndTreasure => context.IsPotsAndTreasure;
 
+    public bool IsCompletionist => context.IsCompletionist;
+
     public bool SuspendedForTreasure { get; private set; }
 
     public AutomatorState? CurrentState =>
-        IsActive && !pausedOutsideZone && !SuspendedForTreasure ? StateMachine.State : null;
+        IsActive && !SuspendedForTreasure ? StateMachine.State : null;
 
     public void OnStop() => StopAutomation();
 
@@ -74,41 +85,83 @@ public class Automator
             return;
         }
 
-        // Soft-stop movement so Treasure Hunt can own vnav; keep GoalMemory if any.
-        memory.Forget<GoalPathStepMemory>();
-        memory.Forget<WaitingForCriticalEncounterMemory>();
-        memory.Forget<WaitingForPotFateMemory>();
-        manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
-        pathfinder.Stop();
-        vnav.Stop();
+        // Keep GoalMemory; Treasure Hunt owns vnav while suspended.
+        IllegalModeActivityWork.ForgetTravelLatches(memory);
+        SoftStopPathfinding();
         autoRotation.DisableForTravel();
+    }
+
+    public void SoftStopPathfinding()
+    {
+        PathStepSoftStop.Stop(manager, pathfinder, vnav);
+        AethernetTeleport.AbortIfBusy(lifestream);
     }
 
     public void Toggle()
     {
         bool turningOn = !context.IsIllegalMode;
-        if (turningOn && context.IsPotsAndTreasure)
+        if (turningOn)
         {
-            StopAutomation();
+            modeGuard.EnsureExclusive(AutomationMode.IllegalMode);
+            automatorConfig.EnableCompletionistMode = false;
         }
 
-        context.SetRunMode(turningOn ? AutomatorRunMode.IllegalMode : AutomatorRunMode.Off);
-        chat.Print(translator.T(Enabled ? ".automation.automator.illegal_mode_on" : ".automation.automator.illegal_mode_off"));
+        AutomatorRunMode target = turningOn ? AutomatorRunMode.IllegalMode : AutomatorRunMode.Off;
+        if (context.RunMode == target)
+        {
+            return;
+        }
+
+        context.SetRunMode(target);
+        BocchiChat.Print(chat, uiConfig, translator.T(Enabled ? ".automation.automator.illegal_mode_on" : ".automation.automator.illegal_mode_off"));
         ApplyRunModeSideEffects(turningOn);
     }
 
     public void TogglePotsAndTreasure()
     {
         bool turningOn = !context.IsPotsAndTreasure;
-        if (turningOn && context.IsIllegalMode)
+        if (turningOn && (context.IsIllegalMode || context.IsCompletionist))
         {
             StopAutomation();
         }
 
-        context.SetRunMode(turningOn ? AutomatorRunMode.PotsAndTreasure : AutomatorRunMode.Off);
-        chat.Print(translator.T(turningOn
+        AutomatorRunMode target = turningOn ? AutomatorRunMode.PotsAndTreasure : AutomatorRunMode.Off;
+        if (context.RunMode == target)
+        {
+            return;
+        }
+
+        if (turningOn)
+        {
+            automatorConfig.EnableCompletionistMode = false;
+        }
+
+        context.SetRunMode(target);
+        BocchiChat.Print(chat, uiConfig, translator.T(turningOn
             ? ".automation.pots_treasure.on"
             : ".automation.pots_treasure.off"));
+        ApplyRunModeSideEffects(turningOn);
+    }
+
+    public void ToggleCompletionist()
+    {
+        bool turningOn = !context.IsCompletionist;
+        if (turningOn)
+        {
+            modeGuard.EnsureExclusive(AutomationMode.Completionist);
+        }
+
+        AutomatorRunMode target = turningOn ? AutomatorRunMode.Completionist : AutomatorRunMode.Off;
+        if (context.RunMode == target)
+        {
+            return;
+        }
+
+        automatorConfig.EnableCompletionistMode = turningOn;
+        context.SetRunMode(target);
+        BocchiChat.Print(chat, uiConfig, translator.T(turningOn
+            ? ".completionist.mode_on"
+            : ".completionist.mode_off"));
         ApplyRunModeSideEffects(turningOn);
     }
 
@@ -122,39 +175,34 @@ public class Automator
         }
 
         memory.Forget<NavigationInterruptedMemory>();
-        pausedOutsideZone = false;
         autoRotation.PrepareForIllegalMode();
     }
 
     public void RefreshPathfinding()
     {
-        if (!IsActive || pausedOutsideZone || SuspendedForTreasure)
+        if (!IsActive || SuspendedForTreasure)
         {
             return;
         }
 
         logger.Info("Refreshing pathfinding from current position");
         memory.Forget<NavigationInterruptedMemory>();
-        memory.Forget<GoalPathStepMemory>();
-        memory.Forget<WaitingForCriticalEncounterMemory>();
-        memory.Forget<WaitingForPotFateMemory>();
-        manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
-        pathfinder.Stop();
-        vnav.Stop();
+        IllegalModeActivityWork.ForgetTravelLatches(memory, includePotChests: true);
+        SoftStopPathfinding();
 
         // GoalMemory kept — Update() will rebuild GoalPathStepMemory from here.
         if (!memory.TryRemember<GoalMemory>(out GoalMemory _))
         {
-            chat.Print(translator.T(".automation.automator.pathfinding_refreshed_no_goal"));
+            BocchiChat.Print(chat, uiConfig, translator.T(".automation.automator.pathfinding_refreshed_no_goal"));
             return;
         }
 
-        chat.Print(translator.T(".automation.automator.pathfinding_refreshed"));
+        BocchiChat.Print(chat, uiConfig, translator.T(".automation.automator.pathfinding_refreshed"));
     }
 
     public void Render()
     {
-        if (!IsActive || pausedOutsideZone || SuspendedForTreasure)
+        if (!IsActive || SuspendedForTreasure)
         {
             return;
         }
@@ -164,29 +212,29 @@ public class Automator
 
     public void Update()
     {
-        if (!IsActive || SuspendedForTreasure)
+        if (!IsActive)
         {
             return;
         }
 
-        // Zone lock: never cast Return / path outside Occult Crescent (PvP, cities, etc.).
+        // Zone lock even while suspended for treasure — leaving OC must fully turn the mode off
+        // (Pots & Treasure hunt phase sets SuspendedForTreasure, which used to skip this).
         if (!zones.GetZone().IsOccultCrescentZone())
         {
-            if (!pausedOutsideZone)
-            {
-                logger.Info("Left Occult Crescent — pausing automator (zone lock)");
-                PauseOutsideZone();
-                pausedOutsideZone = true;
-            }
-
+            DisableDueToLeavingOccultCrescent();
             return;
         }
 
-        if (pausedOutsideZone)
+        if (SuspendedForTreasure)
         {
-            pausedOutsideZone = false;
-            logger.Info("Re-entered Occult Crescent — automator resumed");
+            return;
         }
+
+        autoRotation.Tick();
+
+        fatesConfig.EnsurePotFatesAllowedWhenPreferred(
+            automatorConfig.PreferPotFates,
+            automatorConfig.ShouldFarmPotChests);
 
         // Mid-route cancel (vnav stop / emergency) — don't replan until mode is toggled.
         if (memory.TryRemember<NavigationInterruptedMemory>(out NavigationInterruptedMemory _))
@@ -194,6 +242,8 @@ public class Automator
             StateMachine.Update();
             return;
         }
+
+        TryStartPendingPotChestFarm();
 
         if (memory.TryRemember<GoalMemory>(out GoalMemory goal))
         {
@@ -204,18 +254,17 @@ public class Automator
                     TryStartPotChestFarm(fateGoal.id);
                 }
 
-                logger.Info("Goal no longer valid — aborting pathfinding");
+                logger.Info(
+                    "Goal no longer valid ({Goal}) — aborting pathfinding",
+                    DescribeGoal(goal.Goal));
                 memory.Forget<GoalMemory>();
-                memory.Forget<GoalPathStepMemory>();
-                memory.Forget<WaitingForCriticalEncounterMemory>();
-                memory.Forget<WaitingForPotFateMemory>();
-                manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
-                pathfinder.Stop();
-                vnav.Stop();
+                IllegalModeActivityWork.ForgetTravelLatches(memory);
+                SoftStopPathfinding();
             }
             else if (!memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _)
                      && !memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory _)
                      && !memory.TryRemember<WaitingForPotFateMemory>(out WaitingForPotFateMemory _)
+                     && !memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _)
                      && !memory.TryRemember<ApplyingBuffsMemory>(out ApplyingBuffsMemory _))
             {
                 memory.TryAdd(new GoalPathStepMemory(goal.Goal, calculator, automatorConfig.StopAfterReturn));
@@ -225,30 +274,36 @@ public class Automator
         StateMachine.Update();
     }
 
-    private void PauseOutsideZone() => StopAutomation(resetPausedFlag: false);
-
-    private void StopAutomation(bool resetPausedFlag = true)
+    private void DisableDueToLeavingOccultCrescent()
     {
-        if (resetPausedFlag)
+        string offMessage = context.RunMode switch
         {
-            pausedOutsideZone = false;
+            AutomatorRunMode.PotsAndTreasure => ".automation.pots_treasure.off_left_zone",
+            AutomatorRunMode.Completionist => ".completionist.mode_off_left_zone",
+            _ => ".automation.automator.illegal_mode_off_left_zone",
+        };
+
+        logger.Info("Left Occult Crescent — turning off {Mode}", context.RunMode);
+
+        if (context.IsCompletionist)
+        {
+            automatorConfig.EnableCompletionistMode = false;
         }
 
+        context.SetRunMode(AutomatorRunMode.Off);
+        BocchiChat.Print(chat, uiConfig, translator.T(offMessage));
+        ApplyRunModeSideEffects(turningOn: false);
+    }
+
+    private void StopAutomation()
+    {
         SuspendedForTreasure = false;
         memory.Wipe();
         manager.CancelAll();
+        AethernetTeleport.AbortIfBusy(lifestream);
         pathfinder.Stop();
         vnav.Stop();
-        if (resetPausedFlag)
-        {
-            // Mode off / plugin stop — delete ephemeral BOCCHI AI preset.
-            autoRotation.TeardownForIllegalMode();
-        }
-        else
-        {
-            // Zone pause — deactivate only; recreate isn't needed until activity resumes.
-            autoRotation.DisableForTravel();
-        }
+        autoRotation.TeardownForIllegalMode();
 
         if (stateMachine != null)
         {
@@ -256,9 +311,25 @@ public class Automator
         }
     }
 
+    private void TryStartPendingPotChestFarm()
+    {
+        if (!memory.TryRemember<PendingPotChestFarmMemory>(out PendingPotChestFarmMemory pending))
+        {
+            return;
+        }
+
+        if (fates.HasFate(pending.FateId))
+        {
+            return;
+        }
+
+        memory.Forget<PendingPotChestFarmMemory>();
+        TryStartPotChestFarm(pending.FateId);
+    }
+
     private void TryStartPotChestFarm(FateId fateId)
     {
-        bool farmChests = fatesConfig.ShouldFarmPotChests || context.IsPotsAndTreasure;
+        bool farmChests = automatorConfig.ShouldFarmPotChests || context.IsPotsAndTreasure;
         if (!farmChests || memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _))
         {
             return;
@@ -270,13 +341,42 @@ public class Automator
             return;
         }
 
+        // Still mid-FATE (e.g. HasFate flicker) — wait until the pot is actually gone.
+        if (fates.HasFate(fateId))
+        {
+            memory.TryAdd(new PendingPotChestFarmMemory(fateId));
+            logger.Info("Pot FATE {FateId} still active — deferring chest farm", fateId.Value);
+            return;
+        }
+
+        memory.Forget<PendingPotChestFarmMemory>();
+
+        // Magical Elixir + compass hints whenever we have pot chest data (SH authored groups, NH binned).
+        // WaitingForBuff waits for Cache Me; leftover elixir alone must not start a blind sweep.
+        ActivityData? potFate = zone.GetPotFateData().FirstOrDefault(f => f.Id == fateId.Value);
+        if (potFate != null && PotTreasureGroups.CanRunSmart(zone, fateId.Value))
+        {
+            logger.Info("Starting pot treasure (elixir/hints) for fate {FateId}", fateId.Value);
+            memory.TryAdd(PotChestFarmMemory.CreateSmart(fateId, potFate.Position));
+            return;
+        }
+
+        // Blind authored sweep only when the buff is already present (no WaitingForBuff phase).
+        if (objects.LocalPlayer?.StatusList.Has(PotTreasureIds.TreasureBuffStatusId) != true)
+        {
+            logger.Info(
+                "Skipping blind pot chest farm for fate {FateId}: no Cache Me If You Can buff and no smart groups",
+                fateId.Value);
+            return;
+        }
+
         if (!zone.GetPotChestData().TryGetValue(fateId.Value, out List<PotChestData>? chestData))
         {
             return;
         }
 
         List<Vector3> positions = chestData.Select(chest => chest.Position).ToList();
-        if (fatesConfig.ShouldFarmRerollPotChests)
+        if (context.IsPotsAndTreasure || potsConfig.ShouldFarmRerollPotChests)
         {
             positions.AddRange(zone.GetRerollPotChestData().Select(chest => chest.Position));
         }
@@ -296,6 +396,14 @@ public class Automator
         }
 
         logger.Info("Starting pot chest farm for fate {FateId} with {Count} chest positions", fateId.Value, positions.Count);
-        memory.TryAdd(new PotChestFarmMemory(fateId, positions));
+        memory.TryAdd(PotChestFarmMemory.CreateBlind(fateId, positions));
     }
+
+    private static string DescribeGoal(IGoal goal) =>
+        goal.GoalType switch
+        {
+            FateGoal(var id) => $"FATE {id.Value}",
+            CriticalEncounterGoal(var id) => $"CE {id.Value}",
+            var _ => goal.Describe()
+        };
 }

@@ -13,6 +13,17 @@ namespace BOCCHI.Common.Data.Aethernet;
 
 public static class AethernetTeleport
 {
+    /// <summary>
+    ///     Clear leftover Lifestream work so the next hop can start. Chain cancel alone does not Abort.
+    /// </summary>
+    public static void AbortIfBusy(ILifestreamIpc lifestream)
+    {
+        if (lifestream.IsBusy())
+        {
+            lifestream.Abort();
+        }
+    }
+
     public static IChain BuildChain(
         IChain chain,
         IChainFactory chains,
@@ -22,7 +33,8 @@ public static class AethernetTeleport
         IVNavmeshIpc vnav,
         ILifestreamIpc lifestream,
         ILogger logger,
-        uint placeNameId)
+        uint placeNameId,
+        bool sprintEnabled = true)
     {
         string chainName = chain.Name;
 
@@ -31,7 +43,7 @@ public static class AethernetTeleport
             .UseMiddleware(new RetryChainMiddleware(logger)
             {
                 DelayMs = 500,
-                // Was 5 — canceling mid-approach felt like endless teleport retry spam.
+                // Keep low — canceling mid-approach used to feel like endless teleport retries.
                 MaxAttempts = 2
             })
             .UseStepMiddleware<LogStepMiddleware>()
@@ -47,8 +59,9 @@ public static class AethernetTeleport
                             lifestream.Abort();
                         }
 
+                        // Success (not Break): callers may AppendPath after this chain — Break would skip the walk.
                         logger.Info("Already at aetheryte {Id} — skipping teleport", placeNameId);
-                        return StepResult.Break();
+                        return StepResult.Success();
                     }
 
                     return StepResult.Success();
@@ -60,7 +73,8 @@ public static class AethernetTeleport
                 pathfinder,
                 vnav,
                 lifestream,
-                $"{chainName}::Approach"))
+                $"{chainName}::Approach",
+                sprintEnabled))
             .Then(_ =>
                 {
                     if (objects.LocalPlayer is not { } player)
@@ -77,7 +91,7 @@ public static class AethernetTeleport
                         }
 
                         logger.Info("Arrived at aetheryte {Id} during approach — skipping teleport", placeNameId);
-                        return StepResult.Break();
+                        return StepResult.Success();
                     }
 
                     if (!AetheryteApproach.IsReadyForLifestream(zones.GetZone(), lifestream, player.Position))
@@ -172,8 +186,9 @@ public static class AethernetTeleport
                         lifestream.Abort();
                     }
 
+                    MountWait.ClearHardAndSoftTarget();
                     return StepResult.Success();
-                }, $"{chainName}::AbortIfStillBusy")
+                }, $"{chainName}::ClearTargetAfterArrive")
             .Wait(TimeSpan.FromMilliseconds(500));
     }
 }

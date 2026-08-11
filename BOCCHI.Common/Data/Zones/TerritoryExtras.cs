@@ -2,15 +2,17 @@ using System.Numerics;
 
 namespace BOCCHI.Common.Data.Zones;
 
-/// <summary>Fixed annulus around the knowledge crystal for buff casting (from AOCCH).</summary>
+/// <summary>Fixed annulus around the knowledge crystal for buff casting.</summary>
 public readonly record struct BuffZone(Vector3 Center, float RadiusMin, float RadiusMax)
 {
-    public bool Contains2D(Vector3 position)
+    /// <summary>True inside the outer buff radius (includes standing on the crystal).</summary>
+    public bool IsWithinCastRadius2D(Vector3 position) => Distance2D(position) <= RadiusMax;
+
+    private float Distance2D(Vector3 position)
     {
         float dx = position.X - Center.X;
         float dz = position.Z - Center.Z;
-        float dist = MathF.Sqrt((dx * dx) + (dz * dz));
-        return dist >= RadiusMin && dist <= RadiusMax;
+        return MathF.Sqrt((dx * dx) + (dz * dz));
     }
 
     /// <summary>Point on the inner ring toward the player (stand here to buff).</summary>
@@ -32,7 +34,7 @@ public readonly record struct BuffZone(Vector3 Center, float RadiusMin, float Ra
 /// <summary>Expedition Antiquarian vendor used for currency shopping.</summary>
 public readonly record struct ShoppingVendorData(uint DataId, uint PreferredAethernetId);
 
-/// <summary>Visible coffer / treasure-route safety + area→aethernet hints (from AOCCH).</summary>
+/// <summary>Visible coffer / treasure-route safety + area→aethernet hints.</summary>
 public sealed class TreasureRoutePolicy
 {
     public IReadOnlyList<uint> UnsafeWeatherIds { get; init; } = [];
@@ -42,10 +44,6 @@ public sealed class TreasureRoutePolicy
 
     /// <summary>Eorzea minute-of-day when Ashkin window ends (exclusive); may wrap midnight.</summary>
     public int AshkinEndEorzeaMinute { get; init; } = -1;
-
-    /// <summary>Sub-area / place name → preferred aethernet PlaceNameId.</summary>
-    public IReadOnlyDictionary<string, uint> AreaAethernetByName { get; init; } =
-        new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase);
 
     public bool HasAshkinWindow => AshkinStartEorzeaMinute >= 0 && AshkinEndEorzeaMinute >= 0;
 
@@ -67,7 +65,7 @@ public sealed class TreasureRoutePolicy
         return eorzeaMinuteOfDay >= AshkinStartEorzeaMinute || eorzeaMinuteOfDay < AshkinEndEorzeaMinute;
     }
 
-    /// <summary>Eorzea minute-of-day from Unix epoch (same formula as AOCCH).</summary>
+    /// <summary>Eorzea minute-of-day from Unix epoch.</summary>
     public static int GetEorzeaMinuteOfDay(DateTimeOffset utc)
     {
         long eorzeaSeconds = utc.ToUnixTimeSeconds() * 3600L / 175L;

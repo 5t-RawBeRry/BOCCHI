@@ -1,0 +1,22 @@
+{
+  "label": "Dependencies",
+  "fields": {
+    "status": {
+      "label": "Status",
+      "tooltip": "Whether helper plugins are installed and working.",
+      "intro": "Required plugins must be installed and loaded for traveling and aethernet teleports. Optional ones unlock BOCCHI AI (a BossMod / BMR autorotation preset for targeting and movement — not a job rotation, and not the legacy ai:on) and a separate job autorotation (Wrath / Rotation Solver) — you only need one from each group. “Linked” means BOCCHI can talk to that plugin.",
+      "required": "Required",
+      "optional": "Optional",
+      "optional_intro": "Pick one plugin per group (either is fine).",
+      "optional_ai": "BOCCHI AI — BossMod preset (pick one)",
+      "optional_autorotation": "Job autorotation (pick one)",
+      "ready": "Ready",
+      "ipc_ok": "Linked",
+      "ipc_ok_mesh_pending": "Linked (map not ready yet)",
+      "ipc_missing": "Not linked",
+      "loaded": "Loaded",
+      "installed_not_loaded": "Installed (not loaded)",
+      "not_installed": "Not installed"
+    }
+  }
+}

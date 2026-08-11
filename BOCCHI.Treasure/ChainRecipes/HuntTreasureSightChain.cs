@@ -41,7 +41,7 @@ public class HuntTreasureSightChain
             .UseStepMiddleware<LogStepMiddleware>()
             .UseStepMiddleware<RunOnMainThreadMiddleware>()
             .IfThen(
-                _ => freelancer.Level < 10,
+                _ => !SupportJobTreasureSight.CanCast(supportJobs),
                 _ => ValueTask.FromResult(StepResult.Break()),
                 "HuntTreasureSight::FreelancerTooLow"
             )

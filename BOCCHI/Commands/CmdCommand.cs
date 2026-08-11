@@ -20,15 +20,15 @@ public class CmdCommand
     ITranslator<CmdCommand> translator
 ) : OcelotCommand(translator)
 {
-    public override string Command => "bocchi-cmd";
+    public override string Command => "cmd";
 
-    public override List<string> Aliases => ["bocchicmd", "ochcmd"];
+    public override List<string> Aliases => [];
 
     public override unsafe void Execute(CommandContext context)
     {
         if (context.Args.Length == 0)
         {
-            chat.PrintError("Usage: /bocchicmd flag-active-ce | flag-active-fate | flag-active-non-pot-fate");
+            chat.PrintError("Usage: /bocchi cmd flag-active-ce | flag-active-fate | flag-active-non-pot-fate");
             return;
         }
 

@@ -55,8 +55,7 @@ public abstract class BaseZone
             return false;
         }
 
-        const float campRadius = 80f;
-        return player.Position.Distance2D(GetAetherytePosition()) <= campRadius;
+        return player.Position.Distance2D(GetAetherytePosition()) <= NavigationConstants.CampRadius;
     }
 
     public abstract AethernetData GetMainAetheryte();
@@ -81,6 +80,7 @@ public abstract class BaseZone
 
     public virtual List<PotChestData> GetRerollPotChestData() => [];
 
+    // Authored chewed-carrot pads for Carrot Hunt (nearest-neighbor tour).
     public virtual List<CarrotData> GetCarrotData() => [];
 
     public virtual BuffZone? GetBuffZone() => null;
@@ -98,29 +98,72 @@ public abstract class BaseZone
 
         // Do not gate on IsInBasecamp() — SubAreaPlaceNameId often does not match the
         // authored BasecampPlaceNameId even while standing at camp. Same BaseId is also
-        // used by some CE event objects, so require proximity to the main aetheryte.
+        // used by some CE event objects, so require proximity to an aetheryte / shard
+        // (or the authored camp buff point) rather than the main camp only.
         Vector3 playerPos = player.Position;
-        Vector3 camp = GetAetherytePosition();
-        const float playerRange = 60f;
-        const float campRange = 100f;
+        const float playerRange = KnowledgeCrystalData.NearbySearchRange;
+        const float aetheryteRange = 100f;
+        float playerRangeSq = playerRange * playerRange;
+        float aetheryteRangeSq = aetheryteRange * aetheryteRange;
 
-        return objects
+        List<Vector3> anchors = [];
+        foreach (AethernetData aetheryte in GetAetherytes())
+        {
+            anchors.Add(aetheryte.Position);
+        }
+
+        foreach (AethernetData shard in GetAethernetShards())
+        {
+            if (anchors.All(a => Vector3.DistanceSquared(a, shard.Position) > 1f))
+            {
+                anchors.Add(shard.Position);
+            }
+        }
+
+        if (anchors.Count == 0)
+        {
+            anchors.Add(GetAetherytePosition());
+        }
+
+        if (GetBuffZone() is { } buffZone)
+        {
+            anchors.Add(buffZone.Center);
+        }
+
+        List<KnowledgeCrystalData> crystals = objects
             .Where(o => o is { ObjectKind: ObjectKind.EventObj, BaseId: KnowledgeCrystalData.BaseId })
-            .Where(o => Vector3.Distance(o.Position, camp) <= campRange)
-            .Where(o => Vector3.Distance(o.Position, playerPos) <= playerRange)
+            .Where(o => Vector3.DistanceSquared(o.Position, playerPos) <= playerRangeSq)
+            .Where(o => anchors.Any(a => Vector3.DistanceSquared(o.Position, a) <= aetheryteRangeSq))
             .OrderBy(o => Vector3.DistanceSquared(o.Position, playerPos))
             .Select(o => new KnowledgeCrystalData
             {
                 Position = o.Position
             })
             .ToList();
+
+        // Authored camp buff point: still count as a crystal when the live object is
+        // missing / id-mismatched but the player is standing at the known buff site.
+        if (GetBuffZone() is { } zone
+            && Vector3.DistanceSquared(playerPos, zone.Center) <= playerRangeSq
+            && crystals.All(c => Vector3.DistanceSquared(c.Position, zone.Center) > 25f))
+        {
+            crystals.Add(new KnowledgeCrystalData
+            {
+                Position = zone.Center
+            });
+            crystals = crystals
+                .OrderBy(c => Vector3.DistanceSquared(c.Position, playerPos))
+                .ToList();
+        }
+
+        return crystals;
     }
 
     public virtual float GetCriticalEncounterRadius(int eventId)
     {
         ActivityData? activity = GetCriticalEncounterData().FirstOrDefault(a => a.Id == eventId);
         return activity?.CombatRadius is { } radius
-            ? radius + NavigationConstants.CriticalEncounterRadiusPadding
+            ? NavigationConstants.CriticalEncounterPaddedRadius(radius, activity.AreaShape)
             : 0f;
     }
 
@@ -158,29 +201,50 @@ public abstract class BaseZone
         string dir = Path.Combine(plugin.GetPluginConfigDirectory(), "zone_graphs");
         Directory.CreateDirectory(dir);
 
-        // Bump when walk-cost / edge semantics or which nodes are wired change.
-        // v5: preferred aethernet inbound edges + CE staging positions.
-        const int graphSchemaVersion = 5;
+        // Bump when walk-cost / edge semantics or which nodes are wired change (v7 validates usability).
+        const int graphSchemaVersion = 7;
         string path = Path.Combine(dir, $"{TerritoryType}.v{graphSchemaVersion}.json");
 
         if (File.Exists(path))
         {
-            logger.Debug("Loaded zone graph from path: " + path);
-            string json = await File.ReadAllTextAsync(path);
-            ZoneGraph loaded = ZoneGraph.FromJson(json);
-            cachedGraph = loaded;
-            return loaded;
+            try
+            {
+                string json = await File.ReadAllTextAsync(path);
+                ZoneGraph? loaded = ZoneGraph.FromJson(json);
+                if (loaded is { } graph && graph.IsUsableForRouting())
+                {
+                    logger.Debug("Loaded zone graph from path: " + path);
+                    cachedGraph = graph;
+                    return graph;
+                }
+
+                logger.Warning(
+                    "Zone graph cache is empty or missing routing edges — rebuilding ({Path})",
+                    path);
+            }
+            catch (Exception ex)
+            {
+                logger.Warning(ex, "Failed to load zone graph cache — rebuilding ({Path})", path);
+            }
+
+            try
+            {
+                File.Delete(path);
+            }
+            catch
+            {
+                // Rebuild overwrites; delete is best-effort.
+            }
         }
 
         logger.Info($"Building zone graph for territory {TerritoryType} (one-time; Automator waits until done)");
-        logger.Debug("Data: " + GetNormalFateData().Count);
         GraphConfig config = new(pathfinder, logger);
-        ZoneGraph graph = await graphs.BuildAsync(config, this);
+        ZoneGraph built = await graphs.BuildAsync(config, this);
         logger.Debug("Writing zone graph to: " + path);
-        await File.WriteAllTextAsync(path, graph.ToJson());
+        await File.WriteAllTextAsync(path, built.ToJson());
 
-        cachedGraph = graph;
-        return graph;
+        cachedGraph = built;
+        return built;
     }
 
     private unsafe uint GetCurrentSubAreaPlaceNameId()

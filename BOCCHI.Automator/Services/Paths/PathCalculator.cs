@@ -1,6 +1,5 @@
 using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Config;
-using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.Paths;
@@ -23,7 +22,6 @@ public class PathCalculator
     IObjectTable objects,
     IZoneProvider zones,
     IFateRepository fates,
-    ICriticalEncounterRepository criticalEncounters,
     IFateContext fateContext,
     AutomatorConfig config,
     ILogger<PathCalculator> logger
@@ -64,7 +62,7 @@ public class PathCalculator
             return [];
         }
 
-        // Prefer live FATE/CE center when available — authored graph points can sit outside the circle.
+        // Prefer live FATE center when available; CEs keep authored graph staging.
         Node pathGoal = goalNode;
         Vector3? potPrepositionStandOff = null;
         if (goal.GoalType is FateGoal liveFateGoal
@@ -83,41 +81,55 @@ public class PathCalculator
         {
             potPrepositionStandOff = NavigationApproach.GetPotPrepositionPosition(goalNode.Position, player.Position);
         }
-        else if (goal.GoalType is CriticalEncounterGoal liveCeGoal
-                 && criticalEncounters.SnapshotWithoutForkedTower()
-                     .FirstOrDefault(c => c.Id.Value == liveCeGoal.id.Value) is { } liveCe
-                 && !float.IsNaN(liveCe.Position.X))
+
+        float ceCombatRadius = 0f;
+        ActivityAreaShape ceShape = ActivityAreaShape.Circle;
+        if (goal.GoalType is CriticalEncounterGoal ceGoalForRadius)
         {
-            // Always path to the authored/staging center — a large combat-radius arrival
-            // left bots ~3y outside gates after nearby aetheryte hops (#122 / #124).
-            pathGoal = new Node
-            {
-                Id = goalNode.Id,
-                Type = goalNode.Type,
-                Position = liveCe.Position,
-                Metadata = goalNode.Metadata
-            };
+            ActivityData? authored = zone.GetCriticalEncounterData()
+                .FirstOrDefault(a => a.Id == ceGoalForRadius.id.Value);
+            ceCombatRadius = authored?.CombatRadius ?? 0f;
+            ceShape = authored?.AreaShape ?? ActivityAreaShape.Circle;
+            logger.Debug(
+                "CE {Id} path goal at {Pos:F0} ({Shape}, combat radius {Radius:F0})",
+                ceGoalForRadius.id.Value,
+                pathGoal.Position,
+                ceShape,
+                ceCombatRadius);
         }
 
         Vector3 arrivalCheck = potPrepositionStandOff ?? pathGoal.Position;
         float distanceToGoal = player.Position.Distance2D(arrivalCheck);
-        if (distanceToGoal <= NavigationConstants.EventArrivalRadius)
+        bool insideCeWait = ceCombatRadius > 0f
+                            && NavigationConstants.IsInsideCriticalEncounterWaitArea(
+                                arrivalCheck,
+                                ceCombatRadius,
+                                ceShape,
+                                player.Position);
+
+        if (insideCeWait)
         {
-            logger.Debug("Too close to destination.");
+            logger.Debug("Inside CE wait area at {Pos:F0} — no travel steps", arrivalCheck);
+            return [];
+        }
+
+        if (ceCombatRadius <= 0f && distanceToGoal <= NavigationConstants.EventArrivalRadius)
+        {
+            logger.Debug("Too close to destination ({Dist:F1}y).", distanceToGoal);
             return [];
         }
 
         GraphTraverser traverser = new(graph, pathfinder, logger);
-        // Teleport-first: from camp this is usually instant (no vnav). DirectWalk only for short hops.
+        // Teleport-first: from camp this is usually instant. DirectWalk only for short hops.
         traverser.AddCalculator(new WalkTeleportWalkCalculator());
         traverser.AddCalculator(new DirectWalkCalculator());
-        traverser.AddCalculator(new ReturnWalkCalculator());
 
-        // Don't offer Return when already closer to the goal than to camp — that caused #84 loops.
+        // Don't offer Return when already closer to the goal than to camp — that caused loops.
         float distToCamp = graph.GetBaseCampAetheryteNode() is { } camp
             ? player.Position.Distance2D(camp.Position)
             : float.MaxValue;
-        if (distanceToGoal > NavigationConstants.MaxDirectWalkDistance
+        if (!insideCeWait
+            && distanceToGoal > NavigationConstants.MaxDirectWalkDistance
             && distanceToGoal >= distToCamp * 0.5f)
         {
             traverser.AddCalculator(new ReturnTeleportWalkCalculator());
@@ -125,12 +137,12 @@ public class PathCalculator
 
         List<PathStep> steps = await traverser.FindPath(player.Position, pathGoal);
         List<PathStep> resolvedSteps = steps
-            .Select(step => AethernetNavigation.ResolveAetherytePathStep(step, zone))
+            .Select(step => AethernetNavigation.ResolveAetherytePathStep(step, zone, player.Position))
             .ToList();
 
         if (potPrepositionStandOff is { } standOff)
         {
-            // Replace approach offsets with the random stand-off so bots don't stack on pot center.
+            // Random stand-off so bots don't stack on pot center.
             resolvedSteps = resolvedSteps
                 .Select(step => step.PathStepData is Pathfind ? PathStep.Pathfind(standOff) : step)
                 .ToList();
@@ -138,12 +150,18 @@ public class PathCalculator
 
         if (config.StopAfterReturn)
         {
-            // Keep Return / Teleport; drop the walk to the FATE or CE (#109).
+            // Keep Return / Teleport; drop the walk to the FATE or CE.
             resolvedSteps = resolvedSteps
                 .Where(step => step.Kind != PathStepKind.Pathfind)
                 .ToList();
-            logger.Debug("StopAfterReturn: {Count} step(s) after dropping pathfinds", resolvedSteps.Count);
+            logger.Debug("TeleportOnlyTravel: {Count} step(s) after dropping pathfinds", resolvedSteps.Count);
         }
+
+        logger.Info(
+            "Path planned: {Count} step(s) toward {Pos:F0} ({Dist:F0}y)",
+            resolvedSteps.Count,
+            arrivalCheck,
+            distanceToGoal);
 
         return new(resolvedSteps);
     }

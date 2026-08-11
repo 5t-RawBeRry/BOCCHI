@@ -1,6 +1,6 @@
 namespace BOCCHI.Common.Data.Shopping;
 
-/// <summary>Known Antiquarian currency-shop rows (AOCCH catalog subset).</summary>
+/// <summary>Known Antiquarian currency-shop rows.</summary>
 public readonly record struct ShopCatalogEntry(
     uint ItemId,
     string Name,

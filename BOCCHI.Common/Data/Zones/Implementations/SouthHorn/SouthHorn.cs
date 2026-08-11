@@ -24,8 +24,8 @@ public class SouthHorn
         Id = 4927,
         BaseId = 2014664,
         Position = new(830.75f, 72.98f, -695.98f),
-        Destination = new(834.5f, 73f, -698.75f),
-        DeadRadius = 3f
+        Destination = new(833.0f, 73f, -697.7f),
+        DeadRadius = 3.5f
     };
 
     private static readonly AethernetData TheWanderersHaven = new()
@@ -34,7 +34,7 @@ public class SouthHorn
         Id = 4928,
         BaseId = 2014665,
         Position = new(-173.02f, 8.19f, -611.14f),
-        // Keep Dest inside LifestreamInteractRadius (3.5); old pad was ~4.29y out.
+        // Keep Dest near crystal; approach stops at body + 2y past the edge for Lifestream.
         Destination = new(-170.74f, 6.5f, -610.13f),
         DeadRadius = 3.2f
     };
@@ -117,7 +117,7 @@ public class SouthHorn
         new(1977, new(-481f, 75f, 528f), PreferredAethernetId: Stonemarsh.Id) // "Pleading Pots" (South)
     ];
 
-    // Positions are AOCCH staging points; CombatRadius keeps BOCCHI engage padding behavior.
+    // Staging positions; CombatRadius keeps BOCCHI engage padding behavior.
     public override List<ActivityData> GetCriticalEncounterData() =>
     [
         new(33, new(300.109f, 70f, 730.029f), 20f, Eldergrowth.Id), // "Scourge of the Mind"
@@ -129,7 +129,8 @@ public class SouthHorn
         new(39, new(-799.895f, 44f, 245.027f), 20f, Stonemarsh.Id), // "From Times Bygone"
         new(40, new(679.954f, 96f, -279.855f), 20f, BaseCamp.Id), // "Company of Stone"
         new(41, new(-117.227f, 1f, -849.941f), 15f, TheWanderersHaven.Id), // "Shark Attack"
-        new(42, new(635.981f, 108f, -53.95f), 20f, Eldergrowth.Id), // "On the Hunt"
+        // BaseCamp: Lost Citadel approach. Eldergrowth walks around the citadel exterior.
+        new(42, new(635.981f, 108f, -53.95f), 20f, BaseCamp.Id), // "On the Hunt"
         new(43, new(-351.222f, 5f, -607.909f), 15f, TheWanderersHaven.Id), // "With Extreme Prejudice"
         new(44, new(460.949f, 97f, -362.86f), 20f, BaseCamp.Id), // "Noise Complaint"
         new(45, new(71.964f, 20f, -544.904f), 20f, TheWanderersHaven.Id), // "Cursed Concern"
@@ -149,92 +150,80 @@ public class SouthHorn
             UnsafeWeatherIds = [7, 62, 64, 192],
             AshkinStartEorzeaMinute = 1350,
             AshkinEndEorzeaMinute = 240,
-            AreaAethernetByName = new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["Southdown Heath"] = BaseCamp.Id,
-                ["Lost Citadel"] = BaseCamp.Id,
-                ["Shadowed City"] = Eldergrowth.Id,
-                ["Eldergrowth"] = Eldergrowth.Id,
-                ["Stonemarsh"] = Stonemarsh.Id,
-                ["Heathcliff"] = Stonemarsh.Id,
-                ["Abandoned Ascent"] = Stonemarsh.Id,
-                ["Crystallized Caverns"] = CrystallizedCaverns.Id,
-                ["Vanishing Slope"] = TheWanderersHaven.Id,
-                ["The Wanderer's Haven"] = TheWanderersHaven.Id,
-            }
         };
 
     public override List<TreasureData> GetTreasureData() =>
     [
-        new(1789, 5),
-        new(1790, 11),
-        new(1791, 13),
-        new(1792, 16),
-        new(1793, 14),
-        new(1794, 23),
-        new(1795, 25),
-        new(1796, 28),
-        new(1797, 1),
-        new(1798, 1),
-        new(1799, 2),
-        new(1800, 2),
-        new(1801, 3),
-        new(1802, 3),
-        new(1803, 4),
-        new(1804, 4),
-        new(1805, 5),
-        new(1806, 5),
-        new(1807, 3),
-        new(1808, 6),
-        new(1809, 6),
-        new(1810, 7),
-        new(1811, 8),
-        new(1812, 8),
-        new(1813, 9),
-        new(1814, 9),
-        new(1815, 10),
-        new(1816, 10),
-        new(1817, 11),
-        new(1818, 11),
-        new(1819, 12),
-        new(1820, 12),
-        new(1821, 13),
-        new(1822, 13),
-        new(1823, 14),
-        new(1824, 14),
-        new(1825, 15),
-        new(1826, 15),
-        new(1827, 16),
-        new(1828, 16),
-        new(1829, 17),
-        new(1830, 17),
-        new(1831, 18),
-        new(1832, 18),
-        new(1833, 19),
-        new(1834, 19),
-        new(1835, 20),
-        new(1836, 20),
-        new(1837, 21),
-        new(1838, 21),
-        new(1839, 22),
-        new(1840, 22),
-        new(1841, 22),
-        new(1842, 99), // 23 marked as 99 to avoid this chest, this is on a lip that vnav can't walk to
-        new(1843, 24),
-        new(1844, 24),
-        new(1845, 25),
-        new(1846, 25),
-        new(1847, 26),
-        new(1848, 26),
-        new(1849, 27),
-        new(1850, 27),
-        new(1851, 28),
-        new(1852, 28),
-        new(1853, 21),
-        new(1854, 10),
-        new(1855, 11),
-        new(1856, 11)
+        new(1789, 5, new(770.748f, 108.000f, -143.542f)),
+        new(1790, 11, new(-283.955f, 116.000f, 377.035f)),
+        new(1791, 13, new(-682.765f, 135.619f, -195.270f)),
+        new(1792, 16, new(697.322f, 70.000f, 597.925f)),
+        new(1793, 14, new(517.754f, 67.897f, 236.133f)),
+        new(1794, 23, new(-825.143f, 3.000f, -832.252f)),
+        new(1795, 25, new(-798.215f, 105.607f, -310.536f)),
+        new(1796, 28, new(-645.655f, 203.000f, 710.170f)),
+        new(1797, 1, new(617.090f, 66.309f, -703.883f)),
+        new(1798, 1, new(490.410f, 62.479f, -590.570f)),
+        new(1799, 2, new(666.545f, 79.133f, -480.360f)),
+        new(1800, 2, new(870.695f, 95.703f, -388.327f)),
+        new(1801, 3, new(354.116f, 95.663f, -288.899f)),
+        new(1802, 3, new(386.953f, 96.817f, -451.347f)),
+        new(1803, 4, new(779.019f, 96.100f, -256.243f)),
+        new(1804, 4, new(475.731f, 96.000f, -87.083f)),
+        new(1805, 5, new(609.624f, 108.000f, 117.292f)),
+        new(1806, 5, new(726.284f, 108.150f, -67.898f)),
+        new(1807, 3, new(381.765f, 22.178f, -743.648f)),
+        new(1808, 6, new(-140.459f, 22.380f, -414.267f)),
+        new(1809, 6, new(142.107f, 16.413f, -574.060f)),
+        new(1810, 7, new(-118.975f, 5.000f, -708.431f)),
+        new(1811, 8, new(-490.990f, 3.000f, -529.595f)),
+        new(1812, 8, new(-451.682f, 3.000f, -775.570f)),
+        new(1813, 9, new(245.624f, 109.137f, -18.174f)),
+        new(1814, 9, new(55.314f, 111.315f, -289.082f)),
+        new(1815, 10, new(-25.681f, 102.230f, 150.195f)),
+        new(1816, 10, new(277.809f, 103.799f, 241.907f)),
+        new(1817, 11, new(-487.114f, 98.531f, -205.463f)),
+        new(1818, 11, new(-158.648f, 98.649f, -132.738f)),
+        new(1819, 12, new(-444.114f, 90.691f, 26.230f)),
+        new(1820, 12, new(-394.888f, 106.744f, 175.463f)),
+        new(1821, 13, new(-713.798f, 62.066f, 192.638f)),
+        new(1822, 13, new(-756.802f, 76.573f, 97.368f)),
+        new(1823, 14, new(256.153f, 73.187f, 492.363f)),
+        new(1824, 14, new(35.721f, 65.110f, 648.981f)),
+        new(1825, 15, new(294.911f, 56.100f, 640.223f)),
+        new(1826, 15, new(140.978f, 56.000f, 770.992f)),
+        new(1827, 16, new(643.000f, 70.000f, 407.797f)),
+        new(1828, 16, new(471.214f, 70.300f, 530.022f)),
+        new(1829, 17, new(433.707f, 70.300f, 683.528f)),
+        new(1830, 17, new(596.490f, 70.300f, 622.766f)),
+        new(1831, 18, new(-197.192f, 74.926f, 618.341f)),
+        new(1832, 18, new(-372.671f, 75.000f, 527.428f)),
+        new(1833, 19, new(-401.633f, 85.065f, 332.540f)),
+        new(1834, 19, new(-648.005f, 75.000f, 403.982f)),
+        new(1835, 20, new(-225.025f, 75.000f, 804.990f)),
+        new(1836, 20, new(788.876f, 120.400f, 109.392f)),
+        new(1837, 21, new(826.718f, 122.000f, 435.019f)),
+        new(1838, 21, new(869.291f, 110.000f, 581.231f)),
+        new(1839, 22, new(-585.260f, 5.000f, -864.836f)),
+        new(1840, 22, new(-729.427f, 5.000f, -724.788f)),
+        new(1841, 22, new(-661.677f, 3.000f, -579.492f)),
+        new(1842, 99, new(-884.123f, 3.800f, -682.002f)),
+        new(1843, 24, new(-729.915f, 116.541f, -79.057f)),
+        new(1844, 24, new(-856.935f, 68.847f, -93.144f)),
+        new(1845, 25, new(-767.446f, 115.623f, -235.004f)),
+        new(1846, 25, new(-680.537f, 104.861f, -354.788f)),
+        new(1847, 26, new(-550.117f, 107.000f, 627.767f)),
+        new(1848, 26, new(-729.519f, 107.000f, 561.181f)),
+        new(1849, 27, new(-784.748f, 139.000f, 699.784f)),
+        new(1850, 27, new(-600.272f, 139.000f, 802.641f)),
+        new(1851, 28, new(-676.387f, 171.000f, 640.406f)),
+        new(1852, 28, new(-716.121f, 171.000f, 794.430f)),
+        new(1853, 21, new(835.111f, 70.000f, 699.122f)),
+        new(1854, 10, new(8.987f, 103.224f, 426.993f)),
+        new(1855, 11, new(-256.855f, 121.000f, 125.078f)),
+        new(1856, 11) // no bake position
     ];
+
 
     public override Dictionary<int, List<PotChestData>> GetPotChestData() =>
         new()
@@ -337,30 +326,31 @@ public class SouthHorn
 
     public override List<CarrotData> GetCarrotData() =>
     [
-        new(1, new(-554.02f, 110.70f, -365.90f), 11),
-        new(2, new(-710.27f, 3.00f, -451.51f), 23),
-        new(3, new(720.41f, 120.00f, 271.05f), 21),
-        new(4, new(-771.63f, 5.00f, -694.00f), 22),
-        new(5, new(845.53f, 98.00f, 777.43f), 17),
-        new(6, new(-701.88f, 201.00f, 718.72f), 28),
-        new(7, new(-843.86f, 83.66f, -36.78f), 24),
-        new(8, new(-84.74f, 3.00f, -796.02f), 1),
-        new(9, new(-490.32f, 3.00f, -741.02f), 22),
-        new(10, new(-727.85f, 81.48f, 328.93f), 19),
-        new(11, new(-273.09f, 75.00f, 850.03f), 20),
-        new(12, new(-806.51f, 107.00f, 887.61f), 26),
-        new(13, new(248.92f, 56.00f, 791.11f), 20),
-        new(14, new(827.20f, 108.00f, -156.44f), 5),
-        new(15, new(-743.60f, 96.39f, 84.44f), 13),
-        new(16, new(650.23f, 108.00f, 141.19f), 5),
-        new(17, new(-174.05f, 121.00f, 107.65f), 11),
-        new(18, new(-575.64f, 162.40f, 668.70f), 27),
-        new(19, new(-400.53f, 3.00f, -518.30f), 8),
-        new(20, new(865.00f, 96.00f, -214.67f), 5),
-        new(21, new(772.36f, 70.30f, 531.13f), 21),
-        new(22, new(466.20f, 70.30f, 563.25f), 17),
-        new(23, new(477.41f, 96.10f, 138.65f), 4),
-        new(24, new(283.65f, 56.00f, 587.31f), 15),
-        new(25, new(-439.05f, 115.82f, 184.47f), 12)
+        // Keep in sync with BOCCHI.Treasure/Data/SouthHorn/carrot_locations.json (worker-accepted).
+        new(1, new(477.4074f, 96.10128f, 138.6543f), 4),
+        new(2, new(-439.0463f, 115.82392f, 184.4665f), 12),
+        new(3, new(466.2025f, 70.3f, 563.2519f), 17),
+        new(4, new(283.6546f, 55.999996f, 587.3107f), 15),
+        new(5, new(-575.6361f, 162.39511f, 668.7043f), 27),
+        new(6, new(-806.5123f, 107f, 887.6146f), 26),
+        new(7, new(248.9159f, 55.999996f, 791.1138f), 20),
+        new(8, new(772.3591f, 70.3f, 531.1259f), 21),
+        new(9, new(845.5334f, 98f, 777.4331f), 17),
+        new(10, new(650.2321f, 108f, 141.1927f), 5),
+        new(11, new(827.2007f, 108f, -156.4444f), 5),
+        new(12, new(-273.0878f, 75f, 850.0336f), 20),
+        new(13, new(-727.8528f, 81.47683f, 328.9311f), 19),
+        new(14, new(-174.0473f, 121.00001f, 107.6488f), 11),
+        new(15, new(-400.528f, 2.999999f, -518.3032f), 8),
+        new(16, new(-710.266f, 3f, -451.5128f), 23),
+        new(17, new(-743.601f, 96.39003f, 84.43998f), 13),
+        new(18, new(-84.73673f, 2.9999988f, -796.0166f), 1),
+        new(19, new(-554.0244f, 110.698654f, -365.897f), 11),
+        new(20, new(-843.8602f, 83.657074f, -36.78173f), 24),
+        new(21, new(720.4133f, 120f, 271.05f), 21),
+        new(22, new(865.0009f, 95.99958f, -214.6744f), 5),
+        new(23, new(-490.3187f, 3f, -741.0153f), 22),
+        new(24, new(-701.8768f, 201f, 718.7181f), 28),
+        new(25, new(-771.6308f, 5f, -694.0016f), 22),
     ];
 }

@@ -1,11 +1,11 @@
 using BOCCHI.Automator.Data;
+using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
-using BOCCHI.MobFarmer.Services;
 using BOCCHI.Treasure.Services;
 using Dalamud.Plugin.Services;
 using Ocelot.Lifecycle;
@@ -16,8 +16,8 @@ using Ocelot.Windows;
 namespace BOCCHI.Automator.Services;
 
 /// <summary>
-/// Dedicated pots + treasure mode (#114): pot FATEs (and chests) when up / near spawn;
-/// soft-pauses treasure hunt as filler between pot windows.
+/// Dedicated pots + treasure mode: pot FATEs and chests, then treasure hunt
+/// until ~3 minutes before the next pot spawn; preposition and repeat.
 /// </summary>
 public class PotsTreasureService
 (
@@ -25,17 +25,35 @@ public class PotsTreasureService
     IAutomatorContext context,
     IAutomatorMemory memory,
     ITreasureHunter hunter,
-    IMobFarmer farmer,
     IPotCycleTracker potCycle,
     IFateRepository fates,
     IZoneProvider zones,
-    FatesConfig fatesConfig,
+    IGoalFactory goalFactory,
+    IAutomationModeGuard modeGuard,
     IChatGui chat,
+    UIConfig uiConfig,
     ITranslator<MainWindow> translator,
     ILogger<PotsTreasureService> logger
 ) : IPotsTreasureMode, IOnUpdate, IOnStop
 {
+    private static readonly TimeSpan TreasureRestartDelay = TimeSpan.FromMinutes(3);
+
+    private static readonly TimeSpan ManualTreasureOverride = TimeSpan.FromMinutes(5);
+
+    private readonly HashSet<uint> visitedTreasureNodes = [];
+
+    private DateTimeOffset nextTreasureHuntAt = DateTimeOffset.MinValue;
+
+    private DateTimeOffset forceTreasureUntil = DateTimeOffset.MinValue;
+
+    private bool huntWasRunning;
+
+    /// <summary>Live pot FATE id we already handed to the automator this pot window.</summary>
+    private uint ensuredPotFateId;
+
     public bool Running => context.IsPotsAndTreasure;
+
+    public bool Paused { get; private set; }
 
     public PotsTreasurePhase Phase { get; private set; } = PotsTreasurePhase.Off;
 
@@ -47,6 +65,8 @@ public class PotsTreasureService
             automator.TogglePotsAndTreasure();
         }
 
+        ResetTreasureLoop();
+        Paused = false;
         Phase = PotsTreasurePhase.Off;
     }
 
@@ -56,19 +76,19 @@ public class PotsTreasureService
         {
             StopHuntSession();
             automator.TogglePotsAndTreasure();
+            ResetTreasureLoop();
+            Paused = false;
             Phase = PotsTreasurePhase.Off;
             return;
         }
 
-        if (farmer.Running)
+        if (!hunter.IsVnavAvailable)
         {
-            farmer.Toggle();
+            BocchiChat.PrintError(chat, uiConfig, translator.T(".automation.pots_treasure.requires_vnav"));
+            return;
         }
 
-        if (context.IsIllegalMode)
-        {
-            automator.Toggle();
-        }
+        modeGuard.EnsureExclusive(AutomationMode.PotsAndTreasure);
 
         // Fresh hunt session for this mode (location-resume still applies if coffers remain).
         if (hunter.Running)
@@ -76,37 +96,79 @@ public class PotsTreasureService
             hunter.Toggle();
         }
 
-        if (!hunter.IsVnavAvailable)
+        automator.TogglePotsAndTreasure();
+        hunter.ManagedByPotsTreasure = true;
+        ResetTreasureLoop();
+        Paused = false;
+        Phase = PotsTreasurePhase.DoingPots;
+        logger.Info("Pots & Treasure mode started");
+    }
+
+    public void Pause()
+    {
+        if (!Running || Paused)
         {
-            chat.PrintError(translator.T(".automation.pots_treasure.requires_vnav"));
             return;
         }
 
-        automator.TogglePotsAndTreasure();
-        Phase = PotsTreasurePhase.DoingPots;
-        logger.Info("Pots & Treasure mode started");
+        Paused = true;
+        SoftPauseMovement();
+        logger.Info("Pots & Treasure paused");
+    }
+
+    public void Resume()
+    {
+        if (!Running || !Paused)
+        {
+            return;
+        }
+
+        Paused = false;
+        logger.Info("Pots & Treasure resumed");
+    }
+
+    public void ResumeTreasureHunt()
+    {
+        if (!Running)
+        {
+            return;
+        }
+
+        Paused = false;
+        forceTreasureUntil = DateTimeOffset.UtcNow + ManualTreasureOverride;
+        nextTreasureHuntAt = DateTimeOffset.MinValue;
+        EnterHuntPhase();
+        logger.Info("Pots & Treasure: manually resumed treasure hunt");
     }
 
     public void Update()
     {
         if (!Running)
         {
-            if (Phase != PotsTreasurePhase.Off)
+            if (Phase != PotsTreasurePhase.Off || hunter.ManagedByPotsTreasure)
             {
-                automator.SetSuspendedForTreasure(false);
-                if (hunter.Running)
-                {
-                    hunter.Toggle();
-                }
-
+                StopHuntSession();
+                ResetTreasureLoop();
+                Paused = false;
                 Phase = PotsTreasurePhase.Off;
             }
 
             return;
         }
 
+        // Leave OC: Automator.Update also turns the mode off; do not Toggle here (race flips it back on).
         if (!zones.GetZone().IsOccultCrescentZone())
         {
+            SoftPauseMovement();
+            return;
+        }
+
+        hunter.ManagedByPotsTreasure = true;
+        CaptureFinishedTreasureHunt();
+
+        if (Paused)
+        {
+            SoftPauseMovement();
             return;
         }
 
@@ -121,8 +183,19 @@ public class PotsTreasureService
         }
     }
 
+    private void SoftPauseMovement()
+    {
+        if (hunter.Running && !hunter.Paused)
+        {
+            hunter.Pause();
+        }
+
+        automator.SoftStopPathfinding();
+    }
+
     private void EnterPotPhase()
     {
+        bool leavingHunt = Phase != PotsTreasurePhase.DoingPots || automator.SuspendedForTreasure;
         Phase = PotsTreasurePhase.DoingPots;
         automator.SetSuspendedForTreasure(false);
 
@@ -131,11 +204,59 @@ public class PotsTreasureService
             hunter.Pause();
             logger.Info("Pots & Treasure: paused hunt for pot window");
         }
+
+        // Hunt filler freezes the automator; when a pot pops we must hand it a FATE goal
+        // (ChoosingActivity alone can stay blocked by interrupt latches / empty score paths).
+        if (leavingHunt)
+        {
+            memory.Forget<NavigationInterruptedMemory>();
+            IllegalModeActivityWork.ForgetTravelLatches(memory);
+            automator.SoftStopPathfinding();
+            ensuredPotFateId = 0;
+        }
+
+        EnsureLivePotFateGoal();
+    }
+
+    private void EnsureLivePotFateGoal()
+    {
+        IZone zone = zones.GetZone();
+        Fate? pot = fates.Snapshot().FirstOrDefault(f => zone.IsPotFate(f.Id.Value));
+        if (pot == null)
+        {
+            ensuredPotFateId = 0;
+            return;
+        }
+
+        if (memory.TryRemember<GoalMemory>(out GoalMemory existing)
+            && existing.Goal.GoalType is FateGoal fateGoal
+            && fateGoal.id.Value == pot.Id.Value)
+        {
+            ensuredPotFateId = pot.Id.Value;
+            return;
+        }
+
+        if (ensuredPotFateId == pot.Id.Value
+            && memory.TryRemember<GoalMemory>(out GoalMemory _))
+        {
+            return;
+        }
+
+        memory.Forget<GoalMemory>();
+        memory.Forget<GoalPathStepMemory>();
+        memory.Forget<NavigationInterruptedMemory>();
+        memory.TryAdd(new GoalMemory(goalFactory.Fate(pot.Id)));
+        ensuredPotFateId = pot.Id.Value;
+        logger.Info(
+            "Pots & Treasure: targeting live pot FATE {Id} ({Name})",
+            pot.Id.Value,
+            pot.Name);
     }
 
     private void EnterHuntPhase()
     {
         Phase = PotsTreasurePhase.Hunting;
+        ensuredPotFateId = 0;
         automator.SetSuspendedForTreasure(true);
 
         if (!hunter.IsVnavReady)
@@ -145,7 +266,14 @@ public class PotsTreasureService
 
         if (!hunter.Running)
         {
-            hunter.Toggle();
+            if (DateTimeOffset.UtcNow < nextTreasureHuntAt)
+            {
+                return;
+            }
+
+            hunter.ConfigureManagedRun(visitedTreasureNodes);
+            hunter.StartManaged();
+            huntWasRunning = hunter.Running;
             logger.Info("Pots & Treasure: started treasure hunt filler");
             return;
         }
@@ -153,13 +281,17 @@ public class PotsTreasureService
         if (hunter.Paused)
         {
             hunter.Resume();
-            logger.Info("Pots & Treasure: resumed treasure hunt");
+            huntWasRunning = true;
+            // Rebuild the walk from the current authored step after pot vnav ownership.
+            hunter.RecalculateRoute();
+            logger.Info("Pots & Treasure: resumed treasure hunt where it left off");
         }
     }
 
     private void StopHuntSession()
     {
         automator.SetSuspendedForTreasure(false);
+        hunter.ManagedByPotsTreasure = false;
         if (hunter.Running)
         {
             hunter.Toggle();
@@ -168,6 +300,11 @@ public class PotsTreasureService
 
     private bool NeedsPotWork()
     {
+        if (DateTimeOffset.UtcNow < forceTreasureUntil)
+        {
+            return false;
+        }
+
         if (memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _))
         {
             return true;
@@ -197,7 +334,6 @@ public class PotsTreasureService
             return true;
         }
 
-        // Preposition window — always on for this mode (ignore PreferPotFates / disabled pot IDs).
         if (!cycle.HasPredictedNextPot)
         {
             return false;
@@ -206,8 +342,51 @@ public class PotsTreasureService
         return PotFallbackWindow.ShouldPreposition(
             cycle,
             DateTimeOffset.UtcNow,
-            TimeSpan.FromMinutes(Math.Max(0, fatesConfig.FateFallbackCutoffMinutes)),
-            fatesConfig.PotSpawnLeadMinutes,
+            TimeSpan.Zero,
+            PotsTreasureDefaults.PrepositionLeadMinutes,
             potFarmingEnabled: true);
+    }
+
+    private void CaptureFinishedTreasureHunt()
+    {
+        if (!huntWasRunning || hunter.Running)
+        {
+            huntWasRunning = hunter.Running;
+            return;
+        }
+
+        IReadOnlySet<uint> checkedNodes = hunter.LastCompletedRunNodeIds;
+        if (checkedNodes.Count > 0)
+        {
+            foreach (uint nodeId in checkedNodes)
+            {
+                visitedTreasureNodes.Add(nodeId);
+            }
+
+            nextTreasureHuntAt = DateTimeOffset.UtcNow + TreasureRestartDelay;
+            logger.Info(
+                "Pots & Treasure: treasure hunt completed {CheckedCount} nodes; {VisitedCount} visited this session. Restart after {Delay:mm\\:ss}.",
+                checkedNodes.Count,
+                visitedTreasureNodes.Count,
+                TreasureRestartDelay);
+        }
+        else
+        {
+            nextTreasureHuntAt = DateTimeOffset.UtcNow + TreasureRestartDelay;
+            logger.Info(
+                "Pots & Treasure: treasure hunt stopped with no completed nodes; restart after {Delay:mm\\:ss}.",
+                TreasureRestartDelay);
+        }
+
+        huntWasRunning = false;
+    }
+
+    private void ResetTreasureLoop()
+    {
+        visitedTreasureNodes.Clear();
+        nextTreasureHuntAt = DateTimeOffset.MinValue;
+        forceTreasureUntil = DateTimeOffset.MinValue;
+        huntWasRunning = false;
+        ensuredPotFateId = 0;
     }
 }

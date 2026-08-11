@@ -14,12 +14,18 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<IDebugPanel, JobLevelsDebugPanel>();
         services.AddSingleton<IDebugPanel, AethernetDebugPanel>();
         services.AddSingleton<IDebugPanel, TreasureHuntPrecomputePanel>();
+        services.AddSingleton<IDebugPanel, TreasureLocationsExportPanel>();
 
         services.AddSingleton<DebugWindow>();
         services.AddSingleton<IDebugWindow>(sp => sp.GetRequiredService<DebugWindow>());
         services.AddSingleton<IWindow>(sp => sp.GetRequiredService<DebugWindow>());
 
+#if DEBUG
+        // Dev-only overlays (CE/aetheryte radius rings). Never ship to players — left on in .21 by mistake.
         services.AddSingleton<DrawCEs>();
+
+        // Dev convenience: open main/config/debug once on load. Not for Release.
         services.AddSingleton<OpenWindows>();
+#endif
     }
 }

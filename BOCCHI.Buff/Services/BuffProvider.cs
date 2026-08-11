@@ -1,6 +1,5 @@
 ﻿using BOCCHI.Buff.Data;
 using BOCCHI.Common.Config;
-using BOCCHI.Common.Data.OccultCrescent;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Extensions;
 using Dalamud.Game.ClientState.Objects.SubKinds;
@@ -33,15 +32,20 @@ public class BuffProvider
 
     public bool ShouldRefreshAny()
     {
+        if (objects.LocalPlayer is not { } player)
+        {
+            return false;
+        }
+
         if (GetBuffs().Any(ShouldRefreshBuff))
         {
             return true;
         }
 
-        // Inquiring Mind applies Quicker Step even when that buff toggle is off.
-        return objects.LocalPlayer is { } player
-               && CanUseInquiringMind()
-               && player.GetRemainingMinutes(PhantomBuffs.QuickerStep) <= (uint)config.ReapplyThreshold;
+        // Inquiring Mind alone (no per-buff toggles): keep every unlocked crystal buff up.
+        return CanUseInquiringMind()
+               && GetInquiringMindTargets().Any(b =>
+                   player.GetRemainingMinutes(b.StatusId) <= (uint)config.ReapplyThreshold);
     }
 
     public bool CanUseInquiringMind()
@@ -55,17 +59,49 @@ public class BuffProvider
         return freelancer.Level >= 15;
     }
 
+    public IEnumerable<BuffData> GetInquiringMindTargetsNeedingRefresh(IPlayerCharacter player, uint maxFreshMinutes) =>
+        GetInquiringMindTargets()
+            .Where(b => player.GetRemainingMinutes(b.StatusId) <= maxFreshMinutes);
+
     public bool NeedsInquiringMind(IPlayerCharacter player, uint maxFreshMinutes) =>
         CanUseInquiringMind()
-        && player.GetRemainingMinutes(PhantomBuffs.QuickerStep) <= maxFreshMinutes;
+        && GetInquiringMindTargetsNeedingRefresh(player, maxFreshMinutes).Any();
 
-    public bool IsInquiringMindFresh(IPlayerCharacter player) =>
-        player.GetRemainingMinutes(PhantomBuffs.QuickerStep) >= InquiringMindFreshMinutes;
+    public bool AreInquiringMindTargetsFresh(IPlayerCharacter player)
+    {
+        List<BuffData> targets = GetInquiringMindTargets().ToList();
+        if (targets.Count == 0)
+        {
+            return true;
+        }
+
+        return targets.All(b => player.GetRemainingMinutes(b.StatusId) >= InquiringMindFreshMinutes);
+    }
+
+    /// <summary>
+    ///     Buffs Inquiring Mind will grant: selected toggles the player can receive, or all
+    ///     unlocked crystal buffs when IM is on and no toggles are selected.
+    /// </summary>
+    private IEnumerable<BuffData> GetInquiringMindTargets()
+    {
+        if (!CanUseInquiringMind())
+        {
+            return [];
+        }
+
+        List<BuffData> selected = GetBuffs().Where(b => b.ShouldApply(config) && CanRefreshBuff(b)).ToList();
+        if (selected.Count > 0)
+        {
+            return selected;
+        }
+
+        // IM-only: maintain every crystal buff the player has unlocked.
+        return GetBuffs().Where(CanRefreshBuff);
+    }
 
     private bool CanRefreshBuff(BuffData buff)
     {
         SupportJob job = supportJobs.Create(buff.SupportJobId);
-
         return job.Level >= buff.RequiredLevel;
     }
 

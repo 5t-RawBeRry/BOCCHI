@@ -1,0 +1,22 @@
+{
+  "label": "依存関係",
+  "fields": {
+    "status": {
+      "label": "状態",
+      "tooltip": "補助プラグインがインストールされ、動いているかです。",
+      "intro": "移動とエーテルネットのテレポには必須プラグインのインストールと読み込みが必要です。任意は BOCCHI AI（BossMod / BMR のオートローテーションプリセット＝ターゲットと移動。ジョブローテーションや旧式 ai:on ではない）と、別枠のジョブオートローテーション（Wrath / Rotation Solver）です — 各グループから1つで十分です。「連携済み」は BOCCHI がそのプラグインと話せている状態です。",
+      "required": "必須",
+      "optional": "任意",
+      "optional_intro": "グループごとにプラグインを1つ選べば十分です（どちらでも可）。",
+      "optional_ai": "BOCCHI AI — BossMod プリセット（1つ選択）",
+      "optional_autorotation": "ジョブオートローテーション（1つ選択）",
+      "ready": "準備完了",
+      "ipc_ok": "連携済み",
+      "ipc_ok_mesh_pending": "連携済み（マップ未準備）",
+      "ipc_missing": "未連携",
+      "loaded": "読み込み済み",
+      "installed_not_loaded": "インストール済み（未読み込み）",
+      "not_installed": "未インストール"
+    }
+  }
+}

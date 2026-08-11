@@ -11,35 +11,23 @@ namespace BOCCHI.Currency;
 public class CurrencyRenderer
 (
     ICurrencyTracker tracker,
-    TrackerConfig config,
     UIConfig uiConfig,
     IUIService ui,
     ITranslator<MainWindow> translator
 ) : IDynamicRenderer
-
 {
     public MainWindowSection Section => MainWindowSection.Trackers;
 
-
-
     public uint Order => 10;
 
-
-
     public void Render()
-
     {
         if (!uiConfig.ShowCurrencyTracker)
-
         {
             return;
         }
 
-
-
-        TimeSpan graphBucketSize = TimeSpan.FromSeconds(config.GraphBucketSize);
-
-
+        TimeSpan graphBucketSize = TimeSpan.FromSeconds(uiConfig.GraphBucketSize);
 
         TrackerRateRenderer.RenderPerHour(
             ui,
@@ -50,8 +38,6 @@ public class CurrencyRenderer
             uiConfig.ShowCurrencyTrackerGraph
         );
 
-
-
         TrackerRateRenderer.RenderPerHour(
             ui,
             translator.T(".trackers.currency.silver_per_hour"),
@@ -61,8 +47,6 @@ public class CurrencyRenderer
             uiConfig.ShowCurrencyTrackerGraph
         );
     }
-
-
 
     public bool ShouldRender() => uiConfig.ShowCurrencyTracker;
 }

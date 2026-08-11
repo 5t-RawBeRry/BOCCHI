@@ -1,5 +1,6 @@
 using BOCCHI.Common;
 using BOCCHI.Common.Services;
+using BOCCHI.Common.UI;
 using BOCCHI.CriticalEncounters;
 using BOCCHI.CriticalEncounters.Data;
 using BOCCHI.CriticalEncounters.Services;
@@ -14,6 +15,8 @@ public static class IServiceCollectionExtensions
 {
     public static void LoadWorldModule(this IServiceCollection services)
     {
+        services.AddSingleton<EventDropIconRenderer>();
+
         services.AddSingleton<IDynamicRenderer, FatesRenderer>();
         services.AddSingleton<IFateRepository, FateRepository>();
         services.AddSingleton<IFateFactory, FateFactory>();

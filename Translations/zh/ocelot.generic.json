@@ -1,0 +1,13 @@
+{
+  "start": "开始",
+  "stop": "停止",
+  "enabled": "开",
+  "disabled": "关",
+  "toggle": "切换",
+  "toggle_config_window": "打开／关闭设置",
+  "emergency_stop": "紧急停止",
+  "yes": "是",
+  "no": "否",
+  "state": "状态",
+  "substate": "详情"
+}

@@ -21,29 +21,22 @@ public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
         Node? returnNode = graph.GetBaseCampReturnPositionNode();
 
         // Already at / near camp (return pad or aetheryte) — never offer Return again.
-        const float alreadyAtCampRadius = 80f;
-        if (baseCampAetheryte != null && start.Distance2D(baseCampAetheryte.Position) <= alreadyAtCampRadius)
+        if (baseCampAetheryte != null && start.Distance2D(baseCampAetheryte.Position) <= NavigationConstants.CampRadius)
         {
             return Task.FromResult<TraversalCandidate?>(null);
         }
 
-        if (returnNode != null && start.Distance2D(returnNode.Position) <= alreadyAtCampRadius)
+        if (returnNode != null && start.Distance2D(returnNode.Position) <= NavigationConstants.CampRadius)
         {
             return Task.FromResult<TraversalCandidate?>(null);
         }
 
-        if (returnNode == null)
+        if (returnNode == null || baseCampAetheryte == null)
         {
             return Task.FromResult<TraversalCandidate?>(null);
         }
 
-        Node? baseCampNode = graph.GetBaseCampAetheryteNode();
-        if (baseCampNode == null)
-        {
-            return Task.FromResult<TraversalCandidate?>(null);
-        }
-
-        Edge? toBaseCampNodeEdge = graph.GetEdge(returnNode, baseCampNode);
+        Edge? toBaseCampNodeEdge = graph.GetEdge(returnNode, baseCampAetheryte);
         if (toBaseCampNodeEdge == null)
         {
             return Task.FromResult<TraversalCandidate?>(null);
@@ -69,7 +62,9 @@ public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
                 [
                     PathStep.Return(),
                     // Destination is already offset via GetEventPosition — don't also give vnav a 20y arrival.
-                    PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, returnNode.Position))
+                    PathStep.Pathfind(
+                        NavigationApproach.ResolveActivityApproach(goal, returnNode.Position),
+                        NavigationConstants.EventArrivalRadius)
                 ]));
         }
 
@@ -78,7 +73,9 @@ public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
             [
                 PathStep.Return(),
                 PathStep.Teleport(meta.AetheryteId),
-                PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, inbound.Position))
+                PathStep.Pathfind(
+                    NavigationApproach.ResolveActivityApproach(goal, inbound.Position),
+                    NavigationConstants.EventArrivalRadius)
             ]));
     }
 }

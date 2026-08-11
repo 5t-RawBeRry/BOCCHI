@@ -24,22 +24,22 @@ public class RerollPotChestNodeMetadata : INodeMetadata
 
 public class ActivityNodeMetadata : INodeMetadata
 {
-    public bool Available { get; set; } = false;
-
     public int Id { get; set; }
 
     public uint? PreferredAethernetId { get; set; }
+
+    /// <summary>Authored engage radius for CE nodes; 0 for FATEs.</summary>
+    public float CombatRadius { get; set; }
+
+    /// <summary>Circle or axis-aligned square join area.</summary>
+    public ActivityAreaShape AreaShape { get; set; } = ActivityAreaShape.Circle;
 }
 
 public class TeleportNodeMetadata : INodeMetadata
 {
     public uint AetheryteId { get; set; } = 0;
 
-    public float InteractRange { get; set; } = 3f;
-
     public Vector3 Destination { get; set; } = Vector3.Zero;
-
-    public bool Unlocked { get; set; } = false;
 }
 
 public enum TreasureType

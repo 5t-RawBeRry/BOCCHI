@@ -18,24 +18,24 @@ public class FightingHandler
 (
     MobFarmerConfig config,
     AutomatorConfig automatorConfig,
-    CombatConfig combat,
     IMobFarmer farmer,
     IMobScanner scanner,
     ITargetManager targets,
     ICondition conditions,
     IObjectTable objects,
     IPathfinder pathfinder,
+    IZoneProvider zones,
     IPlayer player
 ) : FlowStateHandler<FarmerPhase>(FarmerPhase.Fighting)
 {
     public override FarmerPhase? Handle()
     {
         List<IBattleNpc> inCombat = scanner.InCombat.ToList();
-        if (combat.ShouldHandleTargeting
+        if (config.ShouldHandleTargeting
             && inCombat.Count > 0
             && EzThrottler.Throttle("MobFarmer::Fighting::Target", 250))
         {
-            IBattleNpc? target = TargetHelper.Select(inCombat, combat.ForceTargetCentralEnemy);
+            IBattleNpc? target = TargetHelper.Select(inCombat, config.ForceTargetCentralEnemy);
             if (target != null)
             {
                 targets.Target = target;
@@ -49,18 +49,6 @@ public class FightingHandler
         // Finish the fight before gathering again — do not top up mid-pack.
         if (shouldReturnHome && !anyInCombat)
         {
-            if (!MountWait.ShouldSkip(conditions, objects, farmer.StartingPoint, automatorConfig.ShouldAutoMount)
-                && EzThrottler.Throttle("MobFarmer::Fighting::MountHome", 750))
-            {
-                MountWait.TryCast(automatorConfig.PreferredMountId);
-                return null;
-            }
-
-            if (conditions[ConditionFlag.Mounting])
-            {
-                return null;
-            }
-
             if (pathfinder.GetState() == PathfindingState.Idle)
             {
                 pathfinder.PathfindAndMoveTo(new(farmer.StartingPoint)
@@ -68,6 +56,14 @@ public class FightingHandler
                     AllowFlying = false
                 });
             }
+
+            MountWait.TryCastIfNeeded(
+                conditions,
+                objects,
+                farmer.StartingPoint,
+                automatorConfig.ShouldAutoMount,
+                automatorConfig.PreferredMountId,
+                zones.GetZone().IsInBasecamp());
 
             return player.Position.Distance2D(farmer.StartingPoint) <= 2f ? FarmerPhase.Waiting : null;
         }

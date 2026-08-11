@@ -35,12 +35,6 @@ public enum HuntAethernet : uint
     TheCrownOfKarnak = 5576
 }
 
-public static class HuntAethernetExtensions
-{
-    public static bool IsBaseCamp(this HuntAethernet aethernet) =>
-        aethernet is HuntAethernet.BaseCamp or HuntAethernet.NorthHornBaseCamp;
-}
-
 public class HuntPathfinderStep
 {
     public HuntAethernet Aethernet = HuntAethernet.BaseCamp;

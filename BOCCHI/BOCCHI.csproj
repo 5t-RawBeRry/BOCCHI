@@ -2,7 +2,7 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
     <PropertyGroup>
         <AssemblyName>BOCCHI</AssemblyName>
-        <Version>4.0.2.5</Version>
+        <Version>4.0.2.23</Version>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
@@ -20,6 +20,12 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
             <Link>Translations\%(RecursiveDir)%(Filename)%(Extension)</Link>
         </None>
+        <None Include="Sounds\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <EmbeddedResource Include="..\CHANGELOG.md">
+            <LogicalName>BOCCHI.CHANGELOG.md</LogicalName>
+        </EmbeddedResource>
     </ItemGroup>
 
     <ItemGroup>
@@ -31,11 +37,8 @@
         <ProjectReference Include="../BOCCHI.Buff/BOCCHI.Buff.csproj"/>
         <ProjectReference Include="../BOCCHI.MobFarmer/BOCCHI.MobFarmer.csproj"/>
         <ProjectReference Include="../BOCCHI.Treasure/BOCCHI.Treasure.csproj"/>
-        <ProjectReference Include="../Ocelot/Ocelot.Rotation/Ocelot.Rotation.csproj"/>
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(Configuration)' == 'Debug'">
         <ProjectReference Include="../BOCCHI.Debug/BOCCHI.Debug.csproj"/>
+        <ProjectReference Include="../Ocelot/Ocelot.Rotation/Ocelot.Rotation.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

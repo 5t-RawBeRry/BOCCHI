@@ -2,4 +2,8 @@
     <PropertyGroup>
         <AssemblyName>BOCCHI.Common</AssemblyName>
     </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="NAudio" Version="2.3.0"/>
+    </ItemGroup>
 </Project>

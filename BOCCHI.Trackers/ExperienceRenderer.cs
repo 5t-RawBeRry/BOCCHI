@@ -13,58 +13,41 @@ namespace BOCCHI.Experience;
 public class ExperienceRenderer
 (
     IExperienceTracker tracker,
-    TrackerConfig config,
     UIConfig uiConfig,
     ISupportJobFactory supportJobs,
     IBrandingService branding,
     IUIService ui,
     ITranslator<MainWindow> translator
 ) : IDynamicRenderer
-
 {
     public MainWindowSection Section => MainWindowSection.Trackers;
 
-
-
     public void Render()
-
     {
         if (!supportJobs.TryGetCurrent(out SupportJob current))
-
         {
             ui.Text(translator.T(".trackers.experience.no_job"), branding.DalamudRed);
-
             return;
         }
-
-
 
         ComposableGroup left = ui.Compose()
             .Text(translator.T(".trackers.experience.current_job"), branding.DalamudYellow)
             .Text(current.Data.Name.ToString());
 
-
-
         ComposableGroup right = ui.Compose()
             .Text(string.Format(translator.T(".trackers.experience.level"), current.Level, current.TotalExperience));
 
-
-
         ui.Render(left, right);
-
-
 
         TrackerRateRenderer.RenderPerHour(
             ui,
             translator.T(".trackers.experience.per_hour"),
             tracker.ExperiencePerHour,
-            tracker.GetExperienceHistory(TimeSpan.FromSeconds(config.GraphBucketSize)),
+            tracker.GetExperienceHistory(TimeSpan.FromSeconds(uiConfig.GraphBucketSize)),
             "##xp_history",
             uiConfig.ShowExperienceTrackerGraph
         );
     }
-
-
 
     public bool ShouldRender() => uiConfig.ShowExperienceTracker;
 }

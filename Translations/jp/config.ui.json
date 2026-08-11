@@ -1,50 +1,89 @@
 {
   "label": "UI",
-  "tooltip": "メインウィンドウに表示するパネルを選択します。",
+  "tooltip": "言語、メインウィンドウに出すもの、報酬アイコン、トラッカーのグラフです。",
+  "sections": {
+    "general": "一般",
+    "trackers": "トラッカー",
+    "events": "イベント",
+    "panels": "メインウィンドウ",
+    "chat": "チャット"
+  },
   "fields": {
     "language": {
       "label": "言語",
-      "tooltip": "BOCCHI の表示言語を選択します。"
+      "tooltip": "BOCCHI のウィンドウとメッセージに使う言語です。"
+    },
+    "open_on_occult_crescent_entry": {
+      "label": "クレセントアイル入場時に BOCCHI を開く",
+      "tooltip": "南征編または北征編に入ったとき、BOCCHI のメインウィンドウを自動で開きます。"
     },
     "show_experience_tracker": {
       "label": "経験値トラッカーを表示",
-      "tooltip": "メインウィンドウに経験値トラッカーを表示します。"
+      "tooltip": "メインウィンドウに経験値パネルを表示します。"
     },
     "show_experience_tracker_graph": {
       "label": "経験値グラフを表示",
-      "tooltip": "経験値トラッカーの下にグラフを表示します。"
+      "tooltip": "トラッカーの下に経験値グラフを表示します。"
     },
     "show_currency_tracker": {
       "label": "通貨トラッカーを表示",
-      "tooltip": "メインウィンドウに通貨トラッカーを表示します。"
+      "tooltip": "メインウィンドウに通貨パネルを表示します。"
     },
     "show_currency_tracker_graph": {
       "label": "通貨グラフを表示",
-      "tooltip": "通貨トラッカーの下にグラフを表示します。"
+      "tooltip": "トラッカーの下に通貨グラフを表示します。"
+    },
+    "tracked_duration": {
+      "label": "履歴の長さ（分）",
+      "tooltip": "トラッカーが保持する過去データの分数です。"
+    },
+    "graph_bucket_size": {
+      "label": "グラフの刻み（秒）",
+      "tooltip": "グラフの各棒／点がカバーする秒数です。"
     },
     "show_world_section": {
-      "label": "ワールドセクションを表示",
+      "label": "FATE・CE 一覧を表示",
       "tooltip": "メインウィンドウに進行中の FATE とクリティカルエンカウントを表示します。"
     },
+    "show_demiatma_drops": {
+      "label": "デミアートマを表示（南征編）",
+      "tooltip": "南征編のみ。FATE/CE にデミアートマアイコンを表示します。緑枠＝まだ必要、赤＝3個所持済み。"
+    },
+    "show_note_drops": {
+      "label": "探査記録を表示",
+      "tooltip": "探査記録が落ちる FATE/CE にアイコンを表示します（南征編・北征編）。"
+    },
+    "show_soul_shard_drops": {
+      "label": "ソウルシャードを表示（南征編）",
+      "tooltip": "南征編のみ。サポートジョブのソウルシャードが落ちる CE にアイコンを表示します。"
+    },
     "show_buff_section": {
-      "label": "バフボタンを表示",
-      "tooltip": "メインウィンドウ上部にバフ操作を表示します。"
+      "label": "バフ付与ボタンを表示",
+      "tooltip": "メインウィンドウのステータスチップの下に、バフ付与／停止ボタンを表示します。"
     },
     "show_automation_section": {
       "label": "不正モードセクションを表示",
-      "tooltip": "メインウィンドウに不正モード操作を表示します。"
+      "tooltip": "メインウィンドウに不正モードの操作を表示します。"
+    },
+    "show_completionist_section": {
+      "label": "コンプリーショニストセクションを表示",
+      "tooltip": "メインウィンドウにコンプリーショニストモード（開始／停止・ノート一覧）を表示します。"
     },
     "show_mob_farmer_section": {
-      "label": "モブファームを表示",
-      "tooltip": "メインウィンドウにモブファーム操作を表示します。"
+      "label": "モブファームセクションを表示",
+      "tooltip": "メインウィンドウにモブファームの操作を表示します。"
     },
     "show_pots_treasure_section": {
-      "label": "壺＆トレジャーを表示",
-      "tooltip": "メインウィンドウに壺＆トレジャー専用モード操作を表示します。"
+      "label": "ポット＆トレジャーセクションを表示",
+      "tooltip": "メインウィンドウにポット＆トレジャーの操作を表示します。"
     },
     "show_treasure_section": {
-      "label": "宝箱セクションを表示",
-      "tooltip": "メインウィンドウにトレジャーハントの状態と操作を表示します。"
+      "label": "トレジャーハンターセクションを表示",
+      "tooltip": "メインウィンドウにトレジャーハンターとキャロットハントの状態と操作を表示します。"
+    },
+    "show_bocchi_chat_prefix": {
+      "label": "BOCCHI チャットメッセージを表示",
+      "tooltip": "プラグインのメッセージを [BOCCHI] 付きでチャットに出します。オフにすると非表示（起動時の MOTD は出ます）。"
     }
   }
 }

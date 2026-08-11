@@ -1,0 +1,83 @@
+{
+  "label": "刷怪",
+  "tooltip": "选择要刷的敌人，以及拉怪方式。",
+  "sections": {
+    "targets": "目标",
+    "pulls": "拉怪",
+    "home": "战斗后",
+    "buffs": "战斗之铃",
+    "debug": "调试"
+  },
+  "fields": {
+    "should_handle_targeting": {
+      "label": "自动选取目标",
+      "tooltip": "战斗时由 BOCCHI 为你挑选并切换目标。"
+    },
+    "force_target_central_enemy": {
+      "label": "优先怪群中心",
+      "tooltip": "优先选择最靠近怪群中心的敌人，而不是距离最近的。需要开启“自动选取目标”。"
+    },
+    "consider_special_mobs": {
+      "label": "包含特殊敌人",
+      "tooltip": "也会拉取并统计只在特定天气或时段出现的特殊敌人。"
+    },
+    "count_special_mobs_toward_minimum": {
+      "label": "特殊敌人计入最少数量",
+      "tooltip": "关闭时，特殊敌人仍可被拉取，但不计入下方的开始／战斗最少数量。"
+    },
+    "only_start_out_of_combat": {
+      "label": "等完全脱离战斗后再开始",
+      "tooltip": "完全脱离战斗后才开始新一轮拉怪。若已有敌人在攻击你，仍会直接进入战斗。"
+    },
+    "max_mob_level": {
+      "label": "敌人最高等级",
+      "tooltip": "忽略高于该等级的敌人。附近有特殊怪或等级混杂的怪群时很有用。"
+    },
+    "max_euclidean_distance": {
+      "label": "最大拉怪距离",
+      "tooltip": "忽略超过该距离（米）的敌人。避免远处特殊怪把你拽去跑图。"
+    },
+    "min_euclidean_distance_to_return_home": {
+      "label": "超过该距离才回家",
+      "tooltip": "战斗结束后，仅当你距离起点超过该数值（米）时才走回去。"
+    },
+    "return_to_start_in_waiting_phase": {
+      "label": "战斗结束后返回起点",
+      "tooltip": "起点是你按下“开始”时所站的位置。若开启自动上坐骑，返回时会骑乘。"
+    },
+    "render_debug_lines": {
+      "label": "显示调试连线",
+      "tooltip": "刷怪运行时：脱战用红线标出有效敌人，战斗中用绿线标出。"
+    },
+    "apply_battle_bell": {
+      "label": "使用战斗之铃",
+      "tooltip": "每次拉怪前都切换到辅助风水师并施放战斗之铃（即使增益仍在也会重施），然后冲刺。仅当冷却长于下方等待时间时才跳过。"
+    },
+    "maximum_battle_bell_wait_time": {
+      "label": "等待战斗之铃的最长时间",
+      "tooltip": "若战斗之铃冷却长于该时间（秒），本次拉怪跳过铃与冲刺，直接开始聚怪。"
+    },
+    "minimum_mobs_to_start_loop": {
+      "label": "开始拉怪的最少敌人",
+      "tooltip": "附近至少有多少只有效敌人才开始新一轮拉怪。"
+    },
+    "minimum_mobs_to_start_fight": {
+      "label": "开战前最少敌人",
+      "tooltip": "聚集到多少只敌人后停下来开打。附近已没有可拉的敌人时会提前开战。"
+    },
+    "stacking_timeout_seconds": {
+      "label": "聚怪超时（秒）",
+      "tooltip": "跑去聚怪的最长时间，超时后无论如何都会开战。"
+    },
+    "mobs": {
+      "label": "敌人列表",
+      "tooltip": "刷怪会拉取并计入数量的敌人。",
+      "search_hint": "搜索名称或 ID……",
+      "selected": "已选择",
+      "zone_filter": "区域",
+      "zone_all": "全部区域",
+      "zone_south_horn": "新月岛南部",
+      "zone_north_horn": "新月岛北部"
+    }
+  }
+}

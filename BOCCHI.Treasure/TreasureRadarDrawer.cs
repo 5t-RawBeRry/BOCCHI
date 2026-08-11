@@ -25,11 +25,6 @@ public class TreasureRadarDrawer
 {
     public void Render()
     {
-        if (!config.Enabled)
-        {
-            return;
-        }
-
         if (!zones.GetZone().IsOccultCrescentZone() || conditions[ConditionFlag.InCombat])
         {
             return;
@@ -49,15 +44,16 @@ public class TreasureRadarDrawer
 
         foreach (TreasureCoffer treasure in tracker.Treasures.Where(treasure => treasure.IsValid()))
         {
+            Vector3 pos = treasure.GetPosition();
             CofferType cofferType = treasure.GetCofferType();
             if (config.DrawLineToBronzeChests && cofferType == CofferType.Bronze)
             {
-                overlay.StrokeLine(origin, treasure.GetPosition(), ToColor(treasure.GetColor()));
+                overlay.StrokeLine(origin, pos, ToColor(treasure.GetColor()));
             }
 
             if (config.DrawLineToSilverChests && cofferType == CofferType.Silver)
             {
-                overlay.StrokeLine(origin, treasure.GetPosition(), ToColor(treasure.GetColor()));
+                overlay.StrokeLine(origin, pos, ToColor(treasure.GetColor()));
             }
         }
 

@@ -26,7 +26,8 @@ public class DeadHandler
         // Stop any in-flight Return so death prompts aren't auto-accepted.
         memory.Forget<ReturningStateMemory>();
         memory.Forget<GoalPathStepMemory>();
-        chains.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
+        // Cancel pot-chest / travel opens too — PathStep-only cancel left Interact spam while dead.
+        chains.CancelAll();
         pathfinder.Stop();
     }
 

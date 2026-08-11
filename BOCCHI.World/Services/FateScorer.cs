@@ -9,7 +9,9 @@ namespace BOCCHI.Fates.Services;
 
 public class FateScorer
 (
+    AutomatorConfig automatorConfig,
     FatesConfig config,
+    PotsConfig potsConfig,
     IZoneProvider zones,
     IObjectTable objects
 ) : IFateScorer
@@ -20,7 +22,11 @@ public class FateScorer
     {
         FateScore score = new();
 
-        if (!config.IsFateEnabled(fate.Id.Value))
+        if (!automatorConfig.ShouldDoFates || !config.IsFateEnabledForIllegalMode(
+                fate.Id.Value,
+                zones.GetZone().IsPotFate(fate.Id.Value),
+                automatorConfig.PreferPotFates,
+                automatorConfig.ShouldFarmPotChests))
         {
             return score;
         }
@@ -39,7 +45,7 @@ public class FateScorer
         score.Add("distance", 1000f / (distance + 1f));
         score.Add("progress", Math.Max(0, 100 - fate.Progress));
 
-        if (config.PreferPotFates && zones.GetZone().IsPotFate(fate.Id.Value))
+        if (automatorConfig.PreferPotFates && zones.GetZone().IsPotFate(fate.Id.Value))
         {
             score.Add("pot", PotFateBonus);
         }
@@ -49,7 +55,7 @@ public class FateScorer
 
     public Fate? SelectBest(IReadOnlyList<Fate> fates)
     {
-        if (!config.ShouldDoFates || fates.Count == 0)
+        if (!automatorConfig.ShouldDoFates || fates.Count == 0)
         {
             return null;
         }
@@ -59,7 +65,11 @@ public class FateScorer
 
         foreach (Fate fate in fates)
         {
-            if (!config.IsFateEnabled(fate.Id.Value))
+            if (!config.IsFateEnabledForIllegalMode(
+                    fate.Id.Value,
+                    zones.GetZone().IsPotFate(fate.Id.Value),
+                    automatorConfig.PreferPotFates,
+                    automatorConfig.ShouldFarmPotChests))
             {
                 continue;
             }
@@ -82,7 +92,7 @@ public class FateScorer
 
     private bool IsPotFateBelowMinTime(Fate fate)
     {
-        if (config.MinPotFateMinutesRemaining <= 0)
+        if (potsConfig.MinPotFateMinutesRemaining <= 0)
         {
             return false;
         }
@@ -92,6 +102,6 @@ public class FateScorer
             return false;
         }
 
-        return fate.TimeRemainingSeconds < config.MinPotFateMinutesRemaining * 60L;
+        return fate.TimeRemainingSeconds < potsConfig.MinPotFateMinutesRemaining * 60L;
     }
 }

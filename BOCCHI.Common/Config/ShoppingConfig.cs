@@ -19,11 +19,9 @@ public class ShoppingConfig : IAutoConfig
     [IntRange(0, 50000)]
     public int GoldThreshold { get; set; } = 0;
 
-    /// <summary>Keep at least this many silver after purchases.</summary>
     [IntRange(0, 50000)]
     public int ReserveSilver { get; set; } = 0;
 
-    /// <summary>Keep at least this many gold after purchases.</summary>
     [IntRange(0, 50000)]
     public int ReserveGold { get; set; } = 0;
 

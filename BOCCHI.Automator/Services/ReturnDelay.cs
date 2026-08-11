@@ -15,3 +15,22 @@ public static class ReturnDelay
         return TimeSpan.FromSeconds(Random.Shared.Next(2, maxSeconds + 1));
     }
 }
+
+/// <summary>Random idle at camp before teleporting to a FATE/CE.</summary>
+public static class BaseTeleportDelay
+{
+    /// <summary>
+    ///     Uniform roll in [0, max] seconds inclusive.
+    ///     Returns <see cref="TimeSpan.Zero"/> when max is 0 (feature off).
+    /// </summary>
+    public static TimeSpan Roll(AutomatorConfig config)
+    {
+        int maxSeconds = Math.Max(0, config.MaxBaseTeleportDelaySeconds);
+        if (maxSeconds == 0)
+        {
+            return TimeSpan.Zero;
+        }
+
+        return TimeSpan.FromSeconds(Random.Shared.Next(0, maxSeconds + 1));
+    }
+}

@@ -1,4 +1,4 @@
-﻿using Dalamud.Game.ClientState.Fates;
+using Dalamud.Game.ClientState.Fates;
 using Ocelot.Services.Data;
 using System.Numerics;
 using FateData = Lumina.Excel.Sheets.Fate;
@@ -17,8 +17,6 @@ public class Fate(FateId id, IFate context, IDataRepository<FateData> fateDataRe
 
     public readonly string Name = context.Name.ToString();
 
-    public readonly ActivityProgressTracker ProgressTracker = new();
-
     public readonly float Radius = context.Radius;
 
     public Vector3 Position { get; private set; } = context.Position;
@@ -26,6 +24,9 @@ public class Fate(FateId id, IFate context, IDataRepository<FateData> fateDataRe
     public FateState State { get; private set; } = context.State;
 
     public byte Progress { get; private set; } = context.Progress;
+
+    /// <summary>Unix epoch seconds when this FATE started (Dalamud <see cref="IFate.StartTimeEpoch"/>).</summary>
+    public int StartTimeEpoch { get; private set; } = context.StartTimeEpoch;
 
     /// <summary>Seconds left on the FATE timer (Dalamud <see cref="IFate.TimeRemaining"/>).</summary>
     public long TimeRemainingSeconds { get; private set; } = context.TimeRemaining;
@@ -35,8 +36,7 @@ public class Fate(FateId id, IFate context, IDataRepository<FateData> fateDataRe
         Position = context.Position;
         State = context.State;
         Progress = context.Progress;
+        StartTimeEpoch = context.StartTimeEpoch;
         TimeRemainingSeconds = context.TimeRemaining;
-
-        ProgressTracker.Observe(Progress);
     }
 }

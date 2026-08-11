@@ -1,0 +1,38 @@
+{
+  "label": "增益",
+  "tooltip": "自动维持辅助职业增益。",
+  "sections": {
+    "automation": "自动化",
+    "which": "选择增益"
+  },
+  "fields": {
+    "should_automate_buffs": {
+      "label": "自动维持增益",
+      "tooltip": "在违规模式中，于知识水晶自动刷新你在下方勾选的增益。不会仅为补增益而离开已在等待或战斗中的紧急遭遇战。"
+    },
+    "apply_romeos_ballad": {
+      "label": "爱之歌",
+      "tooltip": "开启自动增益时保持爱之歌生效。"
+    },
+    "apply_enduring_fortitude": {
+      "label": "守护之祈祷",
+      "tooltip": "开启自动增益时保持守护之祈祷生效。"
+    },
+    "apply_fleetfooted": {
+      "label": "架招疾行",
+      "tooltip": "开启自动增益时保持架招疾行生效。"
+    },
+    "apply_quicker_step": {
+      "label": "快攻步",
+      "tooltip": "开启自动增益时保持快攻步生效。"
+    },
+    "apply_buffs_using_inquiring_mind": {
+      "label": "尽量使用探求心",
+      "tooltip": "在知识水晶附近，辅助自由人可用探求心一次附加所有已选且已解锁的增益。若还有缺失，再换职逐个附加。"
+    },
+    "reapply_threshold": {
+      "label": "剩余不足（分钟）时刷新",
+      "tooltip": "某个增益剩余时间不超过该分钟数时重新附加。"
+    }
+  }
+}

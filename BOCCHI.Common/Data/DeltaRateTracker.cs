@@ -72,7 +72,7 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
 
         if (delta < 0)
         {
-            // Remember pre-drop balance so a shop/state dip→recover is not counted as a gain (#96).
+            // Remember pre-drop balance so a shop/state dip→recover is not counted as a gain.
             valueBeforeDrop = lastValue;
             dropAt = DateTime.UtcNow;
             lastValue = current;

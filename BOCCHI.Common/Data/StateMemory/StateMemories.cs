@@ -1,7 +1,9 @@
+using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.Paths;
 using BOCCHI.Common.Data.SupportJobs;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services.Paths;
 using System.Numerics;
 
@@ -11,18 +13,100 @@ public sealed class ApplyingBuffsMemory;
 
 public sealed class ManualBuffRunMemory;
 
+/// <summary>Inquiring Mind already ran this buff cycle — do not cast it again.</summary>
+public sealed class InquiringMindAttemptedMemory;
+
 public sealed class CastingTreasureSightMemory;
-public class WaitingForCriticalEncounterMemory;
+
+/// <summary>Post-FATE/CE: raise nearby players as Phantom Chemist before leaving.</summary>
+public sealed class PendingTriageMemory;
+
+/// <summary>Sticky while TriagingHandler is actively swapping/casting raises.</summary>
+public sealed class TriagingMemory;
+
+public sealed class TriageSupportJobMemory(SupportJobId job)
+{
+    public readonly SupportJobId Job = job;
+}
 
 /// <summary>
-///     Arrived at predicted pot stand-off; hold until the FATE spawns (#112).
+///     Post-activity Treasure Sight / map-hunt latch for Illegal Mode auto hunts.
+/// </summary>
+public sealed class AutomaticTreasureSurveyMemory
+{
+    /// <summary>Cast Sight when idle at base camp.</summary>
+    public bool PendingSurvey { get; set; }
+
+    /// <summary>Waiting for WideText after a Sight cast.</summary>
+    public bool WaitingForSurveyResult { get; set; }
+
+    /// <summary>
+    ///     Start a built-in-map treasure hunt when idle (no Treasure Sight / Freelancer &lt; 10).
+    /// </summary>
+    public bool PendingMapHunt { get; set; }
+
+    /// <summary>True while a survey or map hunt is latched or waiting for the chat result.</summary>
+    public bool IsBusy => PendingSurvey || WaitingForSurveyResult || PendingMapHunt;
+
+    /// <summary>Accept surveys with Tracker.SurveyRevision &gt; this value.</summary>
+    public int MinAcceptedRevision { get; set; }
+
+    public DateTime SurveyWaitDeadlineUtc { get; set; }
+}
+
+public sealed class WaitingForCriticalEncounterMemory(CriticalEncounterId encounterId)
+{
+    public CriticalEncounterId EncounterId { get; } = encounterId;
+
+    public DateTimeOffset? BattleStartedAtUtc { get; private set; }
+
+    public bool IsFor(CriticalEncounterId id) => EncounterId == id;
+
+    public void MarkBattleStarted()
+    {
+        BattleStartedAtUtc ??= DateTimeOffset.UtcNow;
+    }
+}
+
+/// <summary>
+///     In FATE/CE combat — block travel replan until the activity goal is dropped.
+///     Avoids edge stutter when FATE sync flickers and Pathfinding fights BOCCHI AI.
+/// </summary>
+public sealed class SuspendTravelForActivityMemory;
+
+/// <summary>
+///     Arrived at predicted pot stand-off; hold until the FATE spawns.
 /// </summary>
 public sealed class WaitingForPotFateMemory;
 
 /// <summary>
-///     User / soft-cancel stopped navigation. Blocks auto-replan until Illegal Mode is toggled.
+///     Pot FATE goal ended while the event was still up — start chest farm once it despawns.
+/// </summary>
+public sealed class PendingPotChestFarmMemory(FateId fateId)
+{
+    public FateId FateId { get; } = fateId;
+}
+
+/// <summary>
+///     User / soft-cancel stopped navigation. Blocks auto-replan until the mode is toggled.
 /// </summary>
 public sealed class NavigationInterruptedMemory;
+
+/// <summary>Random idle at camp before the outbound teleport to a FATE/CE.</summary>
+public sealed class BaseTeleportDelayMemory(TimeSpan delay)
+{
+    private readonly DateTime startedUtc = DateTime.UtcNow;
+
+    public TimeSpan Delay { get; } = delay;
+
+    public bool IsReady() => DateTime.UtcNow - startedUtc >= Delay;
+
+    public TimeSpan Remaining()
+    {
+        TimeSpan left = Delay - (DateTime.UtcNow - startedUtc);
+        return left > TimeSpan.Zero ? left : TimeSpan.Zero;
+    }
+}
 
 /// <summary>
 ///     One initial combat approach per FATE/CE. Re-arms when the activity id changes.
@@ -95,31 +179,140 @@ public class TreasureSightSupportJobMemory(SupportJobId job)
     public readonly SupportJobId Job = job;
 }
 
-public sealed class PotChestFarmMemory(FateId fateId, IEnumerable<Vector3> chestPositions)
+public enum PotChestFarmMode
 {
-    public FateId FateId
+    /// <summary>Magical Elixir + compass hints (South Horn authored groups / North Horn binned spots).</summary>
+    Smart,
+
+    /// <summary>Visit authored positions (missing buff/elixir/hints, or rerolls).</summary>
+    Blind,
+}
+
+public enum PotChestFarmPhase
+{
+    WaitingForBuff,
+    ApproachCenter,
+    ElixirAtCenter,
+    SearchingCandidates,
+    OpeningReveal,
+    BlindSweep,
+}
+
+public sealed class PotChestFarmMemory
+{
+    private PotChestFarmMemory(
+        FateId fateId,
+        PotChestFarmMode mode,
+        Vector3 fateCenter,
+        IEnumerable<Vector3> blindPositions)
     {
-        get => fateId;
+        FateId = fateId;
+        Mode = mode;
+        FateCenter = fateCenter;
+        Chests = new Queue<Vector3>(blindPositions);
+        BlindTotalChests = Chests.Count;
+        Phase = mode == PotChestFarmMode.Smart
+            ? PotChestFarmPhase.WaitingForBuff
+            : PotChestFarmPhase.BlindSweep;
+        PhaseStartedUtc = DateTimeOffset.UtcNow;
     }
 
-    public readonly Queue<Vector3> Chests = new(chestPositions);
+    public static PotChestFarmMemory CreateSmart(FateId fateId, Vector3 fateCenter) =>
+        new(fateId, PotChestFarmMode.Smart, fateCenter, []);
 
-    public readonly int TotalChests = chestPositions.Count();
+    public static PotChestFarmMemory CreateBlind(FateId fateId, IEnumerable<Vector3> chestPositions) =>
+        new(fateId, PotChestFarmMode.Blind, Vector3.Zero, chestPositions);
 
-    public int RemainingChests => Chests.Count;
+    public FateId FateId { get; }
 
-    /// <summary>When we started waiting for the current (peek) chest to spawn.</summary>
+    public PotChestFarmMode Mode { get; private set; }
+
+    public PotChestFarmPhase Phase { get; set; }
+
+    public Vector3 FateCenter { get; }
+
+    public readonly Queue<Vector3> Chests;
+
+    public int BlindTotalChests { get; private set; }
+
+    public readonly Queue<PotTreasureCandidate> Candidates = new();
+
+    public int CandidateTotal { get; set; }
+
+    public string? ActiveGroupKey { get; set; }
+
+    public DateTimeOffset PhaseStartedUtc { get; set; }
+
+    public DateTimeOffset SettledAtUtc { get; set; } = DateTimeOffset.MinValue;
+
+    public int ElixirAttempts { get; set; }
+
+    public int HintRevisionBaseline { get; set; }
+
+    public int RefineSteps { get; set; }
+
+    public Vector3? RefineTarget { get; set; }
+
+    /// <summary>When we started waiting for the current (peek) blind chest to spawn.</summary>
     public DateTimeOffset WaitingForSpawnSince { get; set; } = DateTimeOffset.MinValue;
+
+    public int RemainingChests => Mode == PotChestFarmMode.Smart
+        ? (Phase is PotChestFarmPhase.SearchingCandidates or PotChestFarmPhase.OpeningReveal
+            ? Candidates.Count
+            : Math.Max(CandidateTotal, 1))
+        : Chests.Count;
+
+    public int TotalChests => Mode == PotChestFarmMode.Smart
+        ? Math.Max(CandidateTotal, 1)
+        : BlindTotalChests;
+
+    public void BeginBlindFallback(IEnumerable<Vector3> positions)
+    {
+        Mode = PotChestFarmMode.Blind;
+        Phase = PotChestFarmPhase.BlindSweep;
+        Chests.Clear();
+        foreach (Vector3 p in positions)
+        {
+            Chests.Enqueue(p);
+        }
+
+        BlindTotalChests = Chests.Count;
+        Candidates.Clear();
+        CandidateTotal = 0;
+        ActiveGroupKey = null;
+        ElixirAttempts = 0;
+        RefineSteps = 0;
+        RefineTarget = null;
+        WaitingForSpawnSince = DateTimeOffset.MinValue;
+        PhaseStartedUtc = DateTimeOffset.UtcNow;
+    }
+
+    public void BeginCandidateSearch(string groupKey, IEnumerable<PotTreasureCandidate> ordered)
+    {
+        ActiveGroupKey = groupKey;
+        Candidates.Clear();
+        foreach (PotTreasureCandidate c in ordered)
+        {
+            Candidates.Enqueue(c);
+        }
+
+        CandidateTotal = Candidates.Count;
+        ElixirAttempts = 0;
+        RefineSteps = 0;
+        RefineTarget = null;
+        SettledAtUtc = DateTimeOffset.MinValue;
+        Phase = PotChestFarmPhase.SearchingCandidates;
+        PhaseStartedUtc = DateTimeOffset.UtcNow;
+    }
 }
 
 public sealed class GoalPathStepMemory(IGoal goal, IPathCalculator calculator, bool pauseWhenPlanCompletes = false)
 {
     private Task<Queue<IPathStep>>? pathStepTask = calculator.Calculate(goal);
 
-    /// <summary>Calc finished with no steps (already at destination). Keeps memory valid so Automator doesn't recreate an empty plan every tick.</summary>
     private bool emptyPlan;
 
-    /// <summary>When true, finishing the plan (or an empty teleport-only plan) pauses nav for manual travel (#109).</summary>
+    /// <summary>When true, finishing the plan (or an empty teleport-only plan) pauses nav for manual travel.</summary>
     public bool PauseWhenPlanCompletes { get; } = pauseWhenPlanCompletes;
 
     public Queue<IPathStep> PathSteps { get; private set; } = [];

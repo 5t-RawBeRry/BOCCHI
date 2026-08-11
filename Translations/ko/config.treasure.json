@@ -1,62 +1,85 @@
 {
-  "label": "보물상자",
-  "tooltip": "보물 상자 표시 및 보물 탐색 경로 설정입니다.",
+  "label": "트레저 헌터",
+  "tooltip": "지도의 보물상자 선과 트레저 헌트 경로입니다.",
+  "sections": {
+    "radar": "레이더",
+    "completion": "헌트 종료 시",
+    "hunt": "헌트",
+    "ninja_hide": "닌자 은신"
+  },
   "fields": {
-    "enabled": {
-      "label": "사용",
-      "tooltip": "보물상자 관련 표시 및 기능을 활성화합니다."
-    },
     "draw_line_to_bronze_chests": {
-      "label": "청동 보물상자 연결선 표시",
-      "tooltip": "비전투 상태에서 주변의 청동 보물상자까지 갈색 연결선을 표시합니다."
+      "label": "청동 상자 연결선",
+      "tooltip": "비전투 중, 자신에서 주변 청동 상자까지 갈색 선을 그립니다."
     },
     "draw_line_to_silver_chests": {
-      "label": "백은 보물상자 연결선 표시",
-      "tooltip": "비전투 상태에서 주변의 백은 보물상자까지 은색 연결선을 표시합니다."
+      "label": "백은 상자 연결선",
+      "tooltip": "비전투 중, 자신에서 주변 백은 상자까지 은색 선을 그립니다."
     },
     "draw_line_to_carrots": {
-      "label": "재물당근 연결선 표시",
-      "tooltip": "비전투 상태에서 주변의 재물당근까지 초록색 연결선을 표시합니다."
+      "label": "재물당근 연결선",
+      "tooltip": "비전투 중, 자신에서 주변 재물당근까지 초록 선을 그립니다."
     },
     "show_percentage_active_treasure_count": {
-      "label": "활성 보물을 백분율로 표시",
-      "tooltip": "전체 개수 옆에 현재 활성화된 보물상자의 비율을 백분율로 표시합니다."
-    },
-    "enable_treasure_hunt": {
-      "label": "보물 탐색 버튼 표시",
-      "tooltip": "메인 창에 보물상자 탐색 버튼을 표시합니다."
+      "label": "남은 상자를 %로 표시",
+      "tooltip": "전체 개수 옆에 남은 상자를 비율로 표시합니다."
     },
     "return_to_base_camp_after_hunt": {
-      "label": "탐색 완료 후 귀환",
-      "tooltip": "경로의 마지막 보물상자를 연 뒤 거점으로 데존을 사용합니다."
+      "label": "헌트 후 귀환",
+      "tooltip": "트레저 헌트의 마지막 상자 뒤, 또는 캐럿 헌트 경로가 끝난 뒤 베이스캠프로 귀환합니다."
     },
     "play_sound_on_hunt_complete": {
-      "label": "탐색 완료 시 효과음 재생",
-      "tooltip": "보물상자 탐색이 완료되면 채팅 효과음을 재생합니다."
+      "label": "트레저 헌트 끝나면 소리 재생",
+      "tooltip": "트레저 헌트가 끝나면 MP3를 재생합니다(캐럿 헌트는 사용하지 않음)."
     },
-    "hunt_complete_sound_id": {
-      "label": "탐색 완료 효과음",
-      "tooltip": "채팅 효과음 ID(1~16)입니다. 시스템 설정 → 효과음과 동일한 번호를 사용합니다."
+    "hunt_complete_sound": {
+      "label": "헌트 완료 소리",
+      "tooltip": "플러그인 Sounds 폴더에서 MP3를 고릅니다. 이름을 클릭하면 미리 듣습니다.",
+      "open_folder": "사운드 폴더 열기 — MP3를 넣어 직접 추가할 수 있습니다."
     },
     "cast_treasure_sight_during_hunt": {
-      "label": "탐색 중 마기 보물 탐색 사용",
-      "tooltip": "탐색 시작 시 마기 보물 탐색을 사용하고 이후에도 주기적으로 다시 사용합니다. 마기 보물 탐색이 남은 보물상자가 없다고 알려주면 탐색을 조기에 종료합니다."
+      "label": "헌트 중 마기 보물 탐색",
+      "tooltip": "헌트 시작 시와, 이후 N개 상자마다 마기 보물 탐색을 씁니다. 탐색 결과가 남은 상자 0이면 헌트를 일찍 멈춥니다."
     },
-    "hunt_return_cost": {
-      "label": "귀환 비용",
-      "tooltip": "거점으로 귀환할 때 경로 탐색에 적용할 비용 가중치입니다."
-    },
-    "hunt_teleport_cost": {
-      "label": "순간이동 비용",
-      "tooltip": "에테라이트 순간이동을 사용할 때 경로 탐색에 적용할 비용 가중치입니다."
-    },
-    "hunt_detection_range": {
-      "label": "탐지 범위",
-      "tooltip": "보물상자 노드와 상호작용하기 위해 접근해야 하는 거리입니다."
+    "treasure_sight_every_n_locations": {
+      "label": "마기 보물 탐색 N개마다",
+      "tooltip": "첫 사용 후, 이 개수의 상자마다 다시 마기 보물 탐색을 씁니다. 값을 키우면 혼잡한 곳에서 내리기·잡 전환이 줄어듭니다."
     },
     "hunt_max_level": {
-      "label": "최대 보물 레벨",
-      "tooltip": "보물상자 탐색 경로에 포함할 보물상자 노드의 최대 레벨입니다."
+      "label": "상자 최대 레벨",
+      "tooltip": "이 레벨보다 높은 상자는 헌트 경로에서 뺍니다."
+    },
+    "hunt_silver_chests_only": {
+      "label": "백은 상자만",
+      "tooltip": "트레저 헌트는 백은 상자만 돌고 청동은 건너뜁니다."
+    },
+    "skip_unsafe_treasure_windows": {
+      "label": "위험 날씨 / 애쉬킨 건너뛰기",
+      "tooltip": "남쪽 뿔에서 애쉬킨이나 그 밖의 위험한 날씨 구간에는 트레저 헌트를 잠시 멈춥니다."
+    },
+    "enable_automatic_treasure_hunt_during_illegal_mode": {
+      "label": "불법 모드 자동 트레저 헌트",
+      "tooltip": "비상 조우/돌발 후(불법 모드 또는 컴플리셔니스트. 트리아지가 돌았다면 그 다음): 마기 보물 탐색을 알고 있으면 캠프로 귀환해 사용합니다. 상자가 남아 있으면 헌트를 시작하고, 탐색을 아직 모르면 내장 지도로 헌트합니다."
+    },
+    "use_ninja_hide_on_dangerous_routes": {
+      "label": "강한 적 근처에서 닌자 은신",
+      "tooltip": "실험적: 지식이 높은 적이 가까우면 닌자 기어셋으로 바꾸고, Hide로 은신한 뒤 마지막 구간을 걸어 상자로 갑니다. 지식이 높을 때 유용합니다."
+    },
+    "ninja_gearset_number": {
+      "label": "닌자 기어셋 번호",
+      "tooltip": "닌자를 장비하는 기어셋 번호(목록의 1부터). 0 = 전환 없음 — 이미 닌자여야 합니다."
+    },
+    "knowledge_hide_offset": {
+      "label": "지식이 이만큼 높으면 은신",
+      "tooltip": "근처 적의 지식이 현재(동기화된) 내 지식 + 이 값 이상일 때 Hide를 씁니다. 0 = 같거나 더 높음. 사우스 혼에서는 지식이 20으로 동기화되므로, 실제 지식이 더 높아도 20대 적에게 Hide가 걸릴 수 있습니다."
+    },
+    "knowledge_threat_enter_distance": {
+      "label": "이 거리 이내에서 은신 시작(얄름)",
+      "tooltip": "위험한 적이 이 거리까지 오면 은신 흐름을 시작합니다."
+    },
+    "knowledge_threat_exit_distance": {
+      "label": "이 거리보다 멀어질 때까지 은신 유지(얄름)",
+      "tooltip": "Hide가 켜진 뒤에는 적이 이보다 멀어질 때까지 유지합니다. 「은신 시작」보다 크게 해서 켜졌다 꺼졌다 하지 않게 합니다."
     }
   }
 }

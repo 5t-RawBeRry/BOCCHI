@@ -1,4 +1,4 @@
-﻿using BOCCHI.Common.Data.SupportJobs;
+using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Services;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
@@ -44,7 +44,6 @@ public class SupportJobChanger
         {
             return chains.Create("SupportJobChanger")
                 .IfThen(
-                    // Already on the requested job.
                     _ => supportJobs.TryGetCurrent(out SupportJob current) && current.Id == id,
                     _ => ValueTask.FromResult(StepResult.Break()),
                     "SupportJobChanger::CheckCurrentJob"

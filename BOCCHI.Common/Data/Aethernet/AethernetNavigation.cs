@@ -8,17 +8,10 @@ namespace BOCCHI.Common.Data.Aethernet;
 
 public static class AethernetNavigation
 {
-    /// <summary>Graph routing when exact interact points are unreachable.</summary>
-    public const float AetherytePathfindArrivalRadius = 3.5f;
+    /// <summary>Arrival radius while closing on aetheryte rings.</summary>
+    public const float PathfindArrivalRadius = 0.5f;
 
-    /// <summary>Soft vnav stop while closing in for Lifestream.</summary>
-    public const float PathfindArrivalRadius = 1.5f;
-
-    /// <summary>
-    ///     Idle stand-off: outside the stone base, inside
-    ///     <see cref="AethernetData.LifestreamInteractRadius"/>.
-    /// </summary>
-    public const float CampApproachRadius = 3.0f;
+    public const float EdgeClearance = AethernetData.LifestreamEdgeClearance;
 
     public static Vector3 GetInteractPosition(this AethernetData data) => data.Destination != Vector3.Zero ? data.Destination : data.Position;
 
@@ -32,99 +25,165 @@ public static class AethernetNavigation
         return node.Position;
     }
 
-    public static IEnumerable<AethernetData> EnumerateAetherytes(this IZone zone) => zone.GetAetherytes();
+    /// <summary>Magenta ring — solid body / Lifestream zone.</summary>
+    public static float GetBodyRadius(this AethernetData data) => MathF.Max(2f, data.DeadRadius);
 
-    public static bool IsWithinInteractRange(this IZone zone, Vector3 position)
+    /// <summary>Cyan ring — outer edge of the idle band.</summary>
+    public static float GetIdleOuterRadius(this AethernetData data) => data.GetBodyRadius() + EdgeClearance;
+
+    /// <summary>Midpoint of the idle band (between magenta and cyan).</summary>
+    public static float GetIdleWaitRadius(this AethernetData data) =>
+        data.GetBodyRadius() + (EdgeClearance * 0.5f);
+
+    /// <summary>
+    ///     Approach-side point on the magenta Lifestream ring (ready to teleport).
+    ///     Idle wandering uses <see cref="GetIdleWaitPosition"/> / cyan candidates instead.
+    /// </summary>
+    public static Vector3 GetCampStandOffPosition(this AethernetData data, Vector3? from = null)
+        => GetRingPosition(data.Position, data.GetInteractPosition(), data.GetBodyRadius(), from);
+
+    public static Vector3 GetCampStandOffPosition(this Node node, Vector3? from = null)
+        => GetRingPosition(node.Position, node.GetInteractPosition(), DefaultBodyRadius, from);
+
+    /// <summary>Prefer authored dead radius when the node maps to a zone shard.</summary>
+    public static Vector3 GetCampStandOffPosition(this Node node, IZone zone, Vector3? from = null)
     {
-        return zone.EnumerateAetherytes()
-            .Any(aetheryte => position.Distance2D(aetheryte.GetInteractPosition()) <= AethernetData.InteractRadius
-                              || position.Distance2D(aetheryte.Position) <= AethernetData.InteractRadius);
+        float body = DefaultBodyRadius;
+        if (node.Metadata is TeleportNodeMetadata { AetheryteId: var id }
+            && zone.FindAetheryte(id) is { } data)
+        {
+            body = data.GetBodyRadius();
+        }
+
+        return GetRingPosition(node.Position, node.GetInteractPosition(), body, from);
     }
 
+    private static float DefaultBodyRadius => MathF.Max(2f, AethernetData.DefaultDeadRadius);
+
+    public static Vector3 GetIdleWaitPosition(this AethernetData data, Vector3? from = null)
+        => GetRingPosition(data.Position, data.GetInteractPosition(), data.GetIdleWaitRadius(), from);
+
+    private static Vector3 GetRingPosition(Vector3 crystal, Vector3 interactOrHint, float radius, Vector3? from = null)
+    {
+        // Prefer the approach side (player). Destination is only a fallback facing.
+        Vector3 dir = FlatOffset(from ?? interactOrHint, crystal);
+        if (dir.LengthSquared() < 0.25f)
+        {
+            dir = FlatOffset(interactOrHint, crystal);
+        }
+
+        if (dir.LengthSquared() < 0.25f)
+        {
+            dir = new Vector3(1f, 0f, 0f);
+        }
+
+        // Always the outer ring on that side. Shrinking to Destination distance put the
+        // target inside the crystal; floor-snap then dragged it to the far-side pad.
+        Vector3 onRing = crystal + Vector3.Normalize(dir) * MathF.Max(radius, 0.5f);
+        return new Vector3(onRing.X, crystal.Y, onRing.Z);
+    }
+
+    private static Vector3 FlatOffset(Vector3 point, Vector3 origin)
+    {
+        Vector3 d = point - origin;
+        d.Y = 0f;
+        return d;
+    }
+
+    public static IEnumerable<AethernetData> EnumerateAetherytes(this IZone zone) => zone.GetAetherytes();
+
+    /// <summary>True when inside the magenta Lifestream ring (ready to teleport).</summary>
     public static bool IsWithinLifestreamRange(this IZone zone, Vector3 position)
     {
         return zone.EnumerateAetherytes()
-            .Any(aetheryte => position.Distance2D(aetheryte.Position) <= AethernetData.LifestreamInteractRadius);
+            .Any(aetheryte =>
+            {
+                float ready = aetheryte.GetBodyRadius() + PathfindArrivalRadius;
+                return position.Distance2D(aetheryte.Position) <= ready;
+            });
     }
 
-    /// <summary>Camp pads that are still inside Lifestream range.</summary>
-    public static IEnumerable<Vector3> GetApproachCandidates(this IZone zone, Vector3 from)
+    /// <summary>Idle can stop once at or inside the drawn cyan ring (no pad past it).</summary>
+    public static bool IsWithinIdleWait(this IZone zone, Vector3 position)
     {
-        AethernetData? nearest = zone.EnumerateAetherytes()
-            .OrderBy(aetheryte => from.Distance2D(aetheryte.Position))
-            .FirstOrDefault();
+        return zone.EnumerateAetherytes()
+            .Any(aetheryte => position.Distance2D(aetheryte.Position) <= aetheryte.GetIdleOuterRadius());
+    }
 
+    /// <summary>Idle wait spots on the approach side of the crystal (avoid walking around it).</summary>
+    public static IEnumerable<Vector3> GetIdleWaitCandidates(this IZone zone, Vector3 from)
+    {
+        AethernetData? nearest = NearestAetheryte(zone, from);
         if (nearest == null)
         {
             yield break;
         }
 
+        // Keep targets inside cyan after PathfindArrivalRadius so idle does not stop outside the ring.
+        float inner = nearest.GetBodyRadius() + 0.25f;
+        float outer = nearest.GetIdleOuterRadius() - PathfindArrivalRadius;
+        if (outer <= inner)
+        {
+            outer = inner + MathF.Max(0.5f, EdgeClearance - PathfindArrivalRadius);
+        }
+
+        yield return nearest.GetIdleWaitPosition(from);
+
         Vector3 crystal = nearest.Position;
-        Vector3 interact = nearest.GetInteractPosition();
-
-        // Skip Destination pads outside Lifestream range (SH base camp is ~4.7y out).
-        float maxPadDistance = AethernetData.LifestreamInteractRadius - PathfindArrivalRadius;
-        if (interact.Distance2D(crystal) > 0.5f && interact.Distance2D(crystal) <= maxPadDistance)
+        Vector3 approach = FlatOffset(from, crystal);
+        if (approach.LengthSquared() < 0.25f)
         {
-            yield return new Vector3(interact.X, crystal.Y, interact.Z);
+            approach = new Vector3(1f, 0f, 0f);
         }
 
-        Vector3 toPlayer = from - crystal;
-        toPlayer.Y = 0f;
-        if (toPlayer.LengthSquared() > 0.25f)
-        {
-            yield return crystal + Vector3.Normalize(toPlayer) * CampApproachRadius;
-        }
-
-        const int steps = 12;
+        float baseAngle = MathF.Atan2(approach.Z, approach.X);
+        const int steps = 5;
         for (int i = 0; i < steps; i++)
         {
-            float angle = i * 2f * MathF.PI / steps;
+            float bandT = ((i % 3) + 1) / 4f;
+            float radius = inner + ((outer - inner) * bandT);
+            float angle = baseAngle + ((i - (steps / 2)) * (MathF.PI / 6f));
             yield return crystal + new Vector3(
-                MathF.Cos(angle) * CampApproachRadius,
-                0f,
-                MathF.Sin(angle) * CampApproachRadius);
+                MathF.Cos(angle) * radius,
+                crystal.Y,
+                MathF.Sin(angle) * radius);
         }
     }
 
-    public static Vector3 GetNearestInteractPosition(this IZone zone, Vector3 position)
-    {
-        return zone.EnumerateAetherytes()
-            .Select(aetheryte => aetheryte.GetInteractPosition())
-            .OrderBy(interact => position.Distance2D(interact))
+    private static AethernetData? NearestAetheryte(IZone zone, Vector3 from) =>
+        zone.EnumerateAetherytes()
+            .OrderBy(aetheryte => from.Distance2D(aetheryte.Position))
             .FirstOrDefault();
-    }
 
-    public static Vector3 ResolveInteractDestination(Vector3 destination, IZone zone)
+    public static Vector3 ResolveInteractDestination(Vector3 destination, IZone zone, Vector3? from = null)
     {
-        foreach(AethernetData aetheryte in zone.EnumerateAetherytes())
+        foreach (AethernetData aetheryte in zone.EnumerateAetherytes())
         {
-            // Rewrite crystal-aimed paths only — not nearby event approaches.
-            if (destination.Distance2D(aetheryte.Position) <= 3f)
+            float toCrystal = destination.Distance2D(aetheryte.Position);
+            float toDest = destination.Distance2D(aetheryte.GetInteractPosition());
+            if (toCrystal <= aetheryte.GetIdleOuterRadius() + 2f || toDest <= 1.5f)
             {
-                return aetheryte.GetInteractPosition();
+                return aetheryte.GetCampStandOffPosition(from);
             }
         }
 
         return destination;
     }
 
-    public static PathStep ResolveAetherytePathStep(IPathStep step, IZone zone)
+    public static PathStep ResolveAetherytePathStep(IPathStep step, IZone zone, Vector3? from = null)
     {
-        if (step is not PathStep pathStep || pathStep.PathStepData is not Pathfind(var destination, var range))
+        if (step is not PathStep pathStep || pathStep.PathStepData is not Pathfind(var destination, _))
         {
             return (PathStep)step;
         }
 
-        Vector3 resolved = ResolveInteractDestination(destination, zone);
+        Vector3 resolved = ResolveInteractDestination(destination, zone, from);
         if (resolved == destination)
         {
             return pathStep;
         }
 
-        return PathStep.Pathfind(
-            resolved,
-            range > 0f ? range : AetherytePathfindArrivalRadius);
+        return PathStep.Pathfind(resolved, PathfindArrivalRadius);
     }
 
     public static AethernetData? FindAetheryte(this IZone zone, uint placeNameId)

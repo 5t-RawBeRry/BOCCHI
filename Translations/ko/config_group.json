@@ -1,20 +1,20 @@
 {
-  "forked_tower": {
-    "label": "포크 타워"
-  },
   "automation": {
-    "label": "자동 모드"
+    "label": "불법 모드"
   },
-  "trackers": {
-    "label": "추적기"
+  "mob_farmer": {
+    "label": "몹 파머"
+  },
+  "treasure": {
+    "label": "트레저 헌터"
   },
   "ux": {
     "label": "UI"
   },
-  "mob_farmer": {
-    "label": "몹 사냥"
+  "forked_tower": {
+    "label": "포크드 타워"
   },
-  "treasure": {
-    "label": "보물상자"
+  "dependencies": {
+    "label": "의존성"
   }
 }

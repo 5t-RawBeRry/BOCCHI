@@ -1,6 +1,7 @@
 using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services;
 using BOCCHI.Common.Data.Aethernet;
+using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
@@ -28,6 +29,7 @@ public class ReturningHandler
     ICondition conditions,
     IAddonLifecycle addons,
     IFateRepository fates,
+    ICriticalEncounterRepository criticalEncounters,
     IPlayer player,
     IGateService gate,
     IGameGui gui,
@@ -53,9 +55,24 @@ public class ReturningHandler
             return StatePriority.Never;
         }
 
+        // Pot chest farm / deferred handoff — open the reveal before Sight Return.
+        if (memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _)
+            || memory.TryRemember<PendingPotChestFarmMemory>(out PendingPotChestFarmMemory _))
+        {
+            return StatePriority.Never;
+        }
+
         if (memory.TryRemember<ReturningStateMemory>(out ReturningStateMemory _))
         {
             return StatePriority.VeryHigh;
+        }
+
+        // After activity, get to camp for Treasure Sight before the next CE/FATE.
+        if (memory.TryRemember<AutomaticTreasureSurveyMemory>(out AutomaticTreasureSurveyMemory survey)
+            && survey.PendingSurvey
+            && !zones.GetZone().IsInBasecamp())
+        {
+            return StatePriority.High;
         }
 
         if (!memory.TryRemember<IdleStateMemory>(out IdleStateMemory idle) || zones.GetZone().IsInBasecamp())
@@ -63,8 +80,21 @@ public class ReturningHandler
             return StatePriority.Never;
         }
 
-        // Waiting inside / near the goal FATE circle — don't Return-to-base (#84).
+        // Waiting inside / near the goal FATE circle — don't Return-to-base.
         if (IsNearActiveFateGoal())
+        {
+            return StatePriority.Never;
+        }
+
+        // Committed to a CE (wait latch / SuspendTravel / live Preparing|Battle goal) — never
+        // Opportunistic Return while Goal still shows that CE (e.g. Familiar / Unbridled).
+        if (IsCommittedToCriticalEncounterGoal())
+        {
+            return StatePriority.Never;
+        }
+
+        // Raise nearby players before leaving the FATE/CE site.
+        if (TriageSession.IsActive(memory))
         {
             return StatePriority.Never;
         }
@@ -107,17 +137,6 @@ public class ReturningHandler
             return;
         }
 
-        // Return needs feet on the ground — lingering mount after a FATE/CE looked like a long wait.
-        if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
-        {
-            if (Actions.Dismount.CanCast())
-            {
-                Actions.Dismount.Cast();
-            }
-
-            return;
-        }
-
         IZone zone = zones.GetZone();
         if (zone.IsInBasecamp())
         {
@@ -125,7 +144,7 @@ public class ReturningHandler
             return;
         }
 
-        // Poll confirm — PostSetup alone can miss when BossMod slows UI setup (#107).
+        // Poll confirm — PostSetup alone can miss when BossMod slows UI setup.
         if (TryConfirmReturnDialog())
         {
             return;
@@ -137,25 +156,25 @@ public class ReturningHandler
         }
 
         // Path handoff: hold Returning while the rolled 2..max delay elapses.
-        if (memory.TryRemember<ReturningStateMemory>(out ReturningStateMemory returning))
+        // Survey latch skips the humanize delay — get to camp for Sight ASAP.
+        bool surveyLatch = memory.TryRemember<AutomaticTreasureSurveyMemory>(out AutomaticTreasureSurveyMemory latch)
+                           && latch.PendingSurvey;
+        if (memory.TryRemember<ReturningStateMemory>(out ReturningStateMemory returning)
+            && !returning.IsReadyToCast()
+            && !surveyLatch)
         {
-            if (!returning.IsReadyToCast())
-            {
-                return;
-            }
-
-            if (!Actions.Return.CanCast())
-            {
-                return;
-            }
+            return;
         }
 
         if (Actions.Return.CanCast())
         {
-            // Opportunistic cast already waited via IdleStateMemory — no second delay.
             memory.TryAdd(new ReturningStateMemory(TimeSpan.Zero));
             Actions.Return.Cast();
+            return;
         }
+
+        // Fallback: some clients block Return on mount.
+        DismountAssist.TryDismount(conditions);
     }
 
     public override void Exit(AutomatorState next)
@@ -220,5 +239,24 @@ public class ReturningHandler
             ? fate.Radius * 0.9f
             : NavigationConstants.EventArrivalRadius;
         return player.Position.Distance2D(fate.Position) <= radius;
+    }
+
+    private bool IsCommittedToCriticalEncounterGoal()
+    {
+        if (memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory _)
+            || memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _))
+        {
+            return true;
+        }
+
+        if (!memory.TryRemember<GoalMemory>(out GoalMemory goal)
+            || goal.Goal.GoalType is not CriticalEncounterGoal ceGoal)
+        {
+            return false;
+        }
+
+        CriticalEncounter? ce = criticalEncounters.SnapshotWithoutForkedTower()
+            .FirstOrDefault(c => c.Id == ceGoal.id);
+        return ce is { } encounter && (encounter.IsPreparing() || encounter.IsActive());
     }
 }

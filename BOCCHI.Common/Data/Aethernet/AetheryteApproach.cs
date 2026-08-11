@@ -12,7 +12,7 @@ namespace BOCCHI.Common.Data.Aethernet;
 
 public static class AetheryteApproach
 {
-    private static readonly TimeSpan ApproachTimeout = TimeSpan.FromSeconds(20);
+    private static readonly TimeSpan ApproachTimeout = TimeSpan.FromSeconds(45);
 
     public static IChain BuildApproachChain(
         IChainFactory chains,
@@ -21,9 +21,10 @@ public static class AetheryteApproach
         IPathfinder pathfinder,
         IVNavmeshIpc vnav,
         ILifestreamIpc lifestream,
-        string chainName)
+        string chainName,
+        bool sprintEnabled = true)
     {
-        if (objects.LocalPlayer is not { } player)
+        if (objects.LocalPlayer is null)
         {
             return chains.Create(chainName)
                 .Then(_ => StepResult.Failure("No local player."), $"{chainName}::NoPlayer");
@@ -44,7 +45,9 @@ public static class AetheryteApproach
                         return StepResult.Failure("No local player.");
                     }
 
-                    if (IsReadyForLifestream(zone, lifestream, current.Position))
+                    // Distance only — Lifestream IPC can report an "active" shard while still
+                    // outside the cyan ring, which used to skip movement entirely.
+                    if (zone.IsWithinLifestreamRange(current.Position))
                     {
                         return StepResult.Success();
                     }
@@ -58,15 +61,10 @@ public static class AetheryteApproach
                         return StepResult.Failure("No aetheryte nearby.");
                     }
 
-                    Vector3 crystal = nearest.Position;
-                    Vector3 target = crystal.GetApproachPosition(current.Position, AethernetNavigation.CampApproachRadius);
-                    target = new Vector3(target.X, crystal.Y, target.Z);
+                    Vector3 target = nearest.GetCampStandOffPosition(current.Position);
 
-                    pathfinder.PathfindAndMoveTo(new PathfinderConfig(target)
-                    {
-                        DistanceThreshold = AethernetNavigation.PathfindArrivalRadius,
-                        ShouldSnapToFloor = false,
-                    });
+                    SprintAssist.MaybeCast(sprintEnabled, zone.IsInBasecamp());
+                    StartApproachPath(pathfinder, target);
 
                     ChainResult result = await chains.Create($"{chainName}::CloseInWait")
                         .WaitUntil(
@@ -77,11 +75,18 @@ public static class AetheryteApproach
                                     return ValueTask.FromResult(false);
                                 }
 
-                                if (IsReadyForLifestream(zone, lifestream, p.Position))
+                                if (zone.IsWithinLifestreamRange(p.Position))
                                 {
                                     pathfinder.Stop();
                                     vnav.Stop();
                                     return ValueTask.FromResult(true);
+                                }
+
+                                // Re-issue if vnav went idle short of magenta.
+                                if (pathfinder.GetState() == PathfindingState.Idle)
+                                {
+                                    Vector3 retryTarget = nearest.GetCampStandOffPosition(p.Position);
+                                    StartApproachPath(pathfinder, retryTarget);
                                 }
 
                                 return ValueTask.FromResult(false);
@@ -100,7 +105,7 @@ public static class AetheryteApproach
                     }
 
                     if (objects.LocalPlayer is { } after
-                        && IsReadyForLifestream(zone, lifestream, after.Position))
+                        && zone.IsWithinLifestreamRange(after.Position))
                     {
                         return StepResult.Success();
                     }
@@ -109,22 +114,21 @@ public static class AetheryteApproach
                 }), $"{chainName}::CloseIn");
     }
 
-    public static bool IsReadyForLifestream(IZone zone, ILifestreamIpc lifestream, Vector3 position)
+    private static void StartApproachPath(IPathfinder pathfinder, Vector3 target)
     {
-        try
+        pathfinder.PathfindAndMoveTo(new PathfinderConfig(target)
         {
-            if (lifestream.GetActiveCustomAetheryte() != 0)
-            {
-                return true;
-            }
-        }
-        catch
-        {
-            // IPC optional — fall through to distance check.
-        }
-
-        return zone.IsWithinLifestreamRange(position);
+            DistanceThreshold = AethernetNavigation.PathfindArrivalRadius,
+            ShouldSnapToFloor = false,
+        });
     }
+
+    /// <summary>
+    ///     Ready to open Lifestream: must be inside the magenta body ring.
+    ///     Distance is authoritative — Lifestream IPC can be non-zero while still outside cyan.
+    /// </summary>
+    public static bool IsReadyForLifestream(IZone zone, ILifestreamIpc _, Vector3 position) =>
+        zone.IsWithinLifestreamRange(position);
 
     /// <summary>
     ///     True when we have arrived at / are standing on this shard.

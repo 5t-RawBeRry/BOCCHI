@@ -1,5 +1,5 @@
-using BOCCHI.Automator.ChainRecipes;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Paths;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services.Paths;
@@ -8,6 +8,7 @@ using Dalamud.Plugin.Services;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Chain.Recipes;
+using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
 
 namespace BOCCHI.Automator.Services.Paths;
@@ -18,6 +19,7 @@ public class PathStepExecutor
     IChainManager manager,
     IObjectTable objects,
     ICondition conditions,
+    IZoneProvider zones,
     AutomatorConfig config
 ) : IPathStepExecutor
 {
@@ -27,8 +29,8 @@ public class PathStepExecutor
         {
             Pathfind(var destination, var range) => BuildPathfindChain(destination, range),
 
-            Teleport(var id) => chains.Create($"PathStep::Teleport({id})")
-                .Then<TeleportToAethernetChain, uint>(id),
+            Teleport(var id) => chains.Create($"{PathStepSoftStop.Prefix}Teleport({id})")
+                .Then<AethernetTeleportChain, uint>(id),
 
             Return _ => throw new InvalidOperationException("Return path steps are handled by PathfindingHandler."),
 
@@ -40,42 +42,22 @@ public class PathStepExecutor
 
     private IChain BuildPathfindChain(System.Numerics.Vector3 destination, float range)
     {
-        // Set when MaybeMount runs so StartGrace is not burned at compose time.
-        DateTime mountStarted = DateTime.MinValue;
+        // Aetheryte stand-offs sit on a ring; floor-snap often jumps to the opposite pad.
+        bool nearAetheryte = zones.GetZone().EnumerateAetherytes()
+            .Any(a => destination.Distance2D(a.Position) <= a.GetIdleOuterRadius() + 3f);
 
-        return chains.Create($"PathStep::Pathfind({destination:f2}, {range:f2})")
-            .Then(_ =>
-            {
-                mountStarted = DateTime.UtcNow;
-
-                if (MountWait.ShouldSkip(conditions, objects, destination, config.ShouldAutoMount))
-                {
-                    return StepResult.Success();
-                }
-
-                MountWait.TryCast(config.PreferredMountId);
-                return StepResult.Success();
-            }, "PathStep::MaybeMount")
-            .WaitUntil(
-                _ =>
-                {
-                    DateTime started = mountStarted == DateTime.MinValue ? DateTime.UtcNow : mountStarted;
-                    return ValueTask.FromResult(
-                        MountWait.IsReadyOrGiveUp(
-                            conditions,
-                            objects,
-                            destination,
-                            started,
-                            config.ShouldAutoMount,
-                            config.PreferredMountId));
-                },
-                MountWait.Timeout,
-                TimeSpan.FromMilliseconds(250),
-                "PathStep::WaitForMount")
+        return chains.Create($"{PathStepSoftStop.Prefix}Pathfind({destination:f2}, {range:f2})")
             .Then<PathfindToChain, PathfinderConfig>(new(destination)
             {
                 DistanceThreshold = range > 0f ? range : 2f,
-                ShouldSnapToFloor = true
+                ShouldSnapToFloor = !nearAetheryte,
+                WhileMoving = () => MountWait.TryCastIfNeeded(
+                    conditions,
+                    objects,
+                    destination,
+                    config.ShouldAutoMount,
+                    config.PreferredMountId,
+                    zones.GetZone().IsInBasecamp()),
             });
     }
 }

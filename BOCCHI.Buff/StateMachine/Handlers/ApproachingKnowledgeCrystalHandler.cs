@@ -1,9 +1,10 @@
 using BOCCHI.Buff.Data;
 using BOCCHI.Common.Data.KnowledgeCrystals;
+using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
+using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
-using Ocelot.Actions;
 using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
@@ -17,7 +18,8 @@ public class ApproachingKnowledgeCrystalHandler
     IZoneProvider zones,
     IPlayer player,
     IPathfinder pathfinder,
-    ICondition conditions
+    ICondition conditions,
+    IAutomatorMemory memory
 ) : FlowStateHandler<BuffState>(BuffState.ApproachingKnowledgeCrystal)
 {
     private const float CrystalInteractionRange = 5f;
@@ -36,29 +38,29 @@ public class ApproachingKnowledgeCrystalHandler
             return BuffState.NoCrystalsFound;
         }
 
-        BuffZone? buffZone = zone.GetBuffZone();
-        KnowledgeCrystalData closest = crystals[0];
-
-        // Prefer the fixed buff annulus when authored; fall back to crystal approach.
-        bool inRange = buffZone is { } zoneData
-            ? zoneData.Contains2D(player.Position)
-            : player.Position.Distance2D(closest.Position) <= CrystalInteractionRange;
+        bool manual = memory.TryRemember<ManualBuffRunMemory>(out ManualBuffRunMemory _);
+        bool inRange = zone.IsInBuffCastRange(player.Position);
 
         if (inRange)
         {
             pathfinder.Stop();
 
-            if (conditions[ConditionFlag.Mounted] || conditions[ConditionFlag.Mounting])
-            {
-                if (!conditions[ConditionFlag.Mounting])
-                {
-                    Actions.Dismount.Cast();
-                }
+        if (DismountAssist.TryDismount(conditions))
+        {
+            return null;
+        }
 
-                return null;
-            }
+        return BuffState.ChoosingBuffToApply;
+        }
 
-            return BuffState.ChoosingBuffToApply;
+        // Standalone Apply Buffs /buff — cast in place only; Illegal Mode still walks in.
+        if (manual)
+        {
+            pathfinder.Stop();
+            memory.Forget<ApplyingBuffsMemory>();
+            memory.Forget<ManualBuffRunMemory>();
+            memory.Forget<InquiringMindAttemptedMemory>();
+            return null;
         }
 
         if (pathfinder.GetState() != PathfindingState.Idle)
@@ -66,9 +68,13 @@ public class ApproachingKnowledgeCrystalHandler
             return null;
         }
 
+        BuffZone? buffZone = zone.GetBuffZone();
+        KnowledgeCrystalData closest = crystals[0];
+        // Prefer the authored camp annulus only when the closest crystal is that camp crystal.
         Vector3 destination = buffZone is { } bz
-            ? bz.GetApproachPoint(player.Position)
-            : closest.Position.GetApproachPosition(player.Position, CrystalInteractionRange - 0.2f);
+            && Vector3.DistanceSquared(closest.Position, bz.Center) <= 900f
+                ? bz.GetApproachPoint(player.Position)
+                : closest.Position.GetApproachPosition(player.Position, CrystalInteractionRange - 0.2f);
 
         pathfinder.PathfindAndMoveTo(new(destination)
         {

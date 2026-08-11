@@ -1,6 +1,7 @@
-﻿using BOCCHI.Common;
+using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.CriticalEncounters;
+using BOCCHI.Common.Data.EventDrops;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.UI;
@@ -18,6 +19,7 @@ public class CriticalEncountersRenderer
     IZoneProvider zones,
     ForkedTowerConfig forkedTowerConfig,
     UIConfig uiConfig,
+    EventDropIconRenderer eventDrops,
     IBrandingService branding,
     IUIService ui,
     ITranslator<MainWindow> translator
@@ -42,7 +44,13 @@ public class CriticalEncountersRenderer
             return;
         }
 
-        using ImGuiSectionHelper.BoundedListScope list = ImGuiSectionHelper.BoundedList("##ce_list", 120f);
+        ZoneId zoneId = zones.GetZone().ZoneId;
+        bool showDrops = zones.GetZone().IsOccultCrescentZone() && uiConfig.AnyEventDropsEnabled;
+        float dropExtra = EventDropIconRenderer.ListRowExtra(showDrops);
+        float maxHeight = EventDropIconRenderer.ListMaxHeight(showDrops);
+
+        using ImGuiSectionHelper.BoundedListScope list =
+            ImGuiSectionHelper.BoundedList("##ce_list", snapshots.Count, maxHeight, dropExtra);
         if (!list.IsOpen)
         {
             return;
@@ -53,7 +61,6 @@ public class CriticalEncountersRenderer
             string details =
                 $"{criticalEncounter.State} · #{criticalEncounter.Id.Value} · {criticalEncounter.Position:f0}";
 
-            // Match old panel: action buttons while registering / preparing.
             bool showActions = criticalEncounter.State is DynamicEventState.Register or DynamicEventState.Warmup
                                && criticalEncounter.Position is { X: not float.NaN };
 
@@ -78,13 +85,21 @@ public class CriticalEncountersRenderer
                     criticalEncounter.Name,
                     details);
             }
+
+            if (FieldNoteTargets.TryGetDropsForCriticalEncounter(
+                    zoneId,
+                    criticalEncounter.Id.Value,
+                    out EventDropInfo drops))
+            {
+                eventDrops.Render(criticalEncounter.Id.Value, drops);
+            }
         }
     }
 
     private void RenderForkedTower(out bool showed)
     {
         showed = false;
-        if (!forkedTowerConfig.Enabled || !forkedTowerConfig.ShowRegistrationCountdown)
+        if (!forkedTowerConfig.ShowRegistrationCountdown)
         {
             return;
         }

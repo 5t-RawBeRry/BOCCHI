@@ -22,9 +22,9 @@ public class TeleportCommand
     ITranslator<TeleportCommand> translator
 ) : OcelotCommand(translator)
 {
-    public override string Command => "bocchi-tp";
+    public override string Command => "tp";
 
-    public override List<string> Aliases => ["bocchitp"];
+    public override List<string> Aliases => ["teleport"];
 
     public override void Execute(CommandContext context)
     {
@@ -43,7 +43,7 @@ public class TeleportCommand
 
         if (mode is not ("" or "fate" or "pot" or "ce"))
         {
-            chat.PrintError("Usage: /bocchitp [fate|ce|pot]");
+            chat.PrintError("Usage: /bocchi tp [fate|ce|pot]");
             return;
         }
 

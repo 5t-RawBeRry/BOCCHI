@@ -1,9 +1,9 @@
 using BOCCHI.Automator;
-using BOCCHI.Automator.ChainRecipes;
 using BOCCHI.Buff;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Config.Fields;
 using BOCCHI.Common.Config.Renderers;
+using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph.Factory;
@@ -16,6 +16,7 @@ using BOCCHI.Data;
 using BOCCHI.MobFarmer;
 using BOCCHI.Renderers;
 using BOCCHI.Services;
+using BOCCHI.Services.Changelog;
 using BOCCHI.Services.Repair;
 using BOCCHI.Trackers;
 using BOCCHI.Treasure;
@@ -38,14 +39,16 @@ using Ocelot.Services.WindowManager;
 using Ocelot.UI.Services;
 using Ocelot.Windows;
 using System.Reflection;
-#if DEBUG
+using BOCCHI.Services.MOTD;
+using BOCCHI.Services.Shopping;
 using BOCCHI.Debug;
-#endif
+using Ocelot.Lifecycle;
 
 namespace BOCCHI;
 
 public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : OcelotPlugin(plugin, logger)
 {
+    // Avoid CS9107: primary-ctor params are also passed to the base ctor.
     private readonly IPluginLog logger = logger;
     private readonly IDalamudPluginInterface plugin = plugin;
 
@@ -64,15 +67,31 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
 
         services.AddSingleton<IMainRenderer, MainRenderer>();
         services.AddSingleton<IConfigRenderer, ConfigRenderer>();
+        services.AddSingleton<IAutomationModeGuard, AutomationModeGuard>();
         services.AddSingleton<OperationalStatusBar>();
+        services.AddSingleton<OccultCrescentWindowAutoOpener>();
+        services.AddSingleton<CombatPathfindCancelService>();
         services.AddSingleton<IMainWindowTitleBarContributor, IllegalModeTitleBarContributor>();
         services.AddSingleton<IMainWindowTitleBarContributor, KofiTitleBarContributor>();
         services.AddSingleton<IFieldRenderer<MobMultiSelectAttribute>, MobMultiSelectRenderer>();
         services.AddSingleton<IFieldRenderer<DisabledFateIdsAttribute>, DisabledFateIdsRenderer>();
         services.AddSingleton<IFieldRenderer<DisabledCriticalEncounterIdsAttribute>, DisabledCriticalEncounterIdsRenderer>();
         services.AddSingleton<IFieldRenderer<MountSelectAttribute>, MountSelectRenderer>();
+        services.AddSingleton<IFieldRenderer<PluginDependencyStatusAttribute>, PluginDependencyStatusRenderer>();
+        services.AddSingleton<IMp3SoundPlayer, Mp3SoundPlayer>();
+        services.AddSingleton<IFieldRenderer<Mp3SoundSelectAttribute>, Mp3SoundSelectRenderer>();
         services.AddSingleton<UILanguageDisplay>();
         services.AddSingleton<NoOpFilter<UILanguage>>();
+        services.AddSingleton<IFieldRenderer<TriageRaiseJobAttribute>, TriageRaiseJobRenderer>();
+
+        services.AddSingleton<MessageOfTheDayService>();
+        services.AddSingleton<IOnStart>(sp => sp.GetRequiredService<MessageOfTheDayService>());
+        services.AddSingleton<IOnStop>(sp => sp.GetRequiredService<MessageOfTheDayService>());
+
+        services.AddSingleton<ChangelogWindow>();
+        services.AddSingleton<IChangelogWindow>(sp => sp.GetRequiredService<ChangelogWindow>());
+        services.AddSingleton<IWindow>(sp => sp.GetRequiredService<ChangelogWindow>());
+        services.AddSingleton<ChangelogPopupService>();
 
         services.AddSingleton<ISupportJobFactory, SupportJobFactory>();
         services.AddSingleton<ISupportJobChanger, SupportJobChanger>();
@@ -84,11 +103,13 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<IGraphFactory, GraphFactory>();
 
         services.AddSingleton<IActivityNavigation, ActivityNavigation>();
+        services.AddSingleton<IFieldNoteTracker, FieldNoteTracker>();
 
         services.AddSingleton<UnmountStep>();
         services.AddSingleton<RepairStep>();
         services.AddSingleton<IRepairService, RepairService>();
-        services.AddSingleton<TeleportToAethernetChain>();
+        services.AddSingleton<AethernetTeleportChain>();
+        services.AddSingleton<ShoppingService>();
 
         services.LoadTrackersModule();
         services.LoadWorldModule();
@@ -99,10 +120,7 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.LoadTreasureModule();
 
         services.AddBocchiCommands();
-
-#if DEBUG
         services.LoadDebugModule();
-#endif
     }
 
     private static void BootstrapOcelotModules(IServiceCollection services)
@@ -124,6 +142,16 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         }
 
         Configuration cfg = plugin.GetPluginConfig() as Configuration ?? new Configuration();
+        EnsureAutoConfigInstances(cfg);
+        EnsureConfigDefaults(cfg);
+
+        if (cfg.AutomatorConfig.StopAfterReturn)
+        {
+            logger.Info(
+                "Illegal Mode: Stop after return and teleport is ON — after Return/aetheryte BOCCHI mounts and pauses so you can walk the rest "
+                + "(Illegal Mode → Stop after return and teleport). Toggle Illegal Mode to resume, or turn the option off.");
+        }
+
         services.AddSingleton(cfg);
         services.AddSingleton<IConfiguration>(cfg);
         services.AddSingleton<IPluginConfiguration>(s => s.GetRequiredService<Configuration>());
@@ -149,5 +177,67 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
                 });
             }
         }
+    }
+
+    /// <summary>
+    ///     Dalamud/Newtonsoft can leave new IAutoConfig properties null when absent from saved JSON.
+    ///     Null entries break ConfigRenderer and hide those pages.
+    /// </summary>
+    private static void EnsureAutoConfigInstances(Configuration cfg)
+    {
+        foreach (PropertyInfo prop in typeof(IConfiguration).GetProperties(BindingFlags.Instance | BindingFlags.Public))
+        {
+            if (!typeof(IAutoConfig).IsAssignableFrom(prop.PropertyType) || prop.GetValue(cfg) is not null)
+            {
+                continue;
+            }
+
+            prop.SetValue(cfg, Activator.CreateInstance(prop.PropertyType));
+        }
+    }
+
+    /// <summary>Null HashSets from bad/partial JSON would NRE in allowlist checks.</summary>
+    private static void EnsureConfigDefaults(Configuration cfg)
+    {
+        cfg.FatesConfig.DisabledFateIds ??= [];
+        cfg.CriticalEncountersConfig.DisabledCriticalEncounterIds ??= [];
+        cfg.ShoppingConfig.PreferredItemIds ??= [];
+        cfg.MobFarmerConfig.Mobs ??= [];
+        SanitizeAutomatorConfig(cfg.AutomatorConfig);
+        SanitizeTreasureConfig(cfg.TreasureConfig);
+        SanitizeBuffConfig(cfg.BuffConfig);
+        SanitizeUIConfig(cfg.UIConfig);
+        cfg.FatesConfig.EnsurePotFatesAllowedWhenPreferred(
+            cfg.AutomatorConfig.PreferPotFates,
+            cfg.AutomatorConfig.ShouldFarmPotChests);
+    }
+
+    /// <summary>
+    ///     UI ranges are not enforced on load — early/partial JSON can leave delays that look like stuck pathing.
+    /// </summary>
+    private static void SanitizeAutomatorConfig(AutomatorConfig automator)
+    {
+        automator.MaxRemoteIdleTimeSeconds = Math.Clamp(automator.MaxRemoteIdleTimeSeconds, 2, 60);
+        automator.MaxBaseTeleportDelaySeconds = Math.Clamp(automator.MaxBaseTeleportDelaySeconds, 0, 60);
+        automator.TreasureSightRecastIntervalSeconds =
+            Math.Clamp(automator.TreasureSightRecastIntervalSeconds, 60, 600);
+        automator.AutoRepairThreshold = Math.Clamp(automator.AutoRepairThreshold, 1, 99);
+    }
+
+    private static void SanitizeTreasureConfig(TreasureConfig treasure)
+    {
+        treasure.TreasureSightEveryNLocations = Math.Clamp(treasure.TreasureSightEveryNLocations, 1, 50);
+        treasure.HuntMaxLevel = Math.Clamp(treasure.HuntMaxLevel, 1, 50);
+    }
+
+    private static void SanitizeBuffConfig(BuffConfig buff)
+    {
+        buff.ReapplyThreshold = Math.Clamp(buff.ReapplyThreshold, 0, 25);
+    }
+
+    private static void SanitizeUIConfig(UIConfig ui)
+    {
+        ui.TrackedDuration = Math.Clamp(ui.TrackedDuration, 1, 180);
+        ui.GraphBucketSize = Math.Clamp(ui.GraphBucketSize, 1, 60);
     }
 }

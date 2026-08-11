@@ -1,3 +1,4 @@
+using BOCCHI.Treasure.ChainRecipes;
 using BOCCHI.Treasure.Data;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
@@ -17,10 +18,8 @@ namespace BOCCHI.Treasure.Data
 
     public static class TreasureColors
     {
-        /// <summary>Brown/bronze tether for bronze coffers.</summary>
         public static readonly Vector4 Bronze = new(0.72f, 0.45f, 0.20f, 1f);
 
-        /// <summary>Silver-grey tether for silver coffers.</summary>
         public static readonly Vector4 Silver = new(0.82f, 0.84f, 0.88f, 1f);
 
         public static readonly Vector4 Unknown = new(0.6f, 0.2f, 0.8f, 1f);
@@ -31,8 +30,19 @@ namespace BOCCHI.Treasure.Services
 {
     public class TreasureCoffer(IGameObject obj, IDataManager data)
     {
+        public const uint BronzeSgbId = 1596;
+
+        public const uint SilverSgbId = 1597;
+
         private TreasureFlags lastFlags = TreasureFlags.None;
+
+        /// <summary>Treasure sheet row (shared by every bronze/silver of that type).</summary>
         public uint Id => obj.BaseId;
+
+        public static bool IsBronzeOrSilverSgb(uint sgbId) => sgbId is BronzeSgbId or SilverSgbId;
+
+        /// <summary>Unique live instance id — use this to track multiple coffers of the same type.</summary>
+        public ulong GameObjectId => obj.GameObjectId;
 
         public unsafe bool CheckOpened()
         {
@@ -57,18 +67,33 @@ namespace BOCCHI.Treasure.Services
             return wasNotOpened && isNowOpened;
         }
 
-        public bool IsValid() => obj.IsValid() && obj is { IsDead: false, IsTargetable: true };
+        // Don't require IsTargetable — often false until inside interact range.
+        // Hide opened / faded coffers so radar doesn't keep drawing to ghosts.
+        public bool IsValid() =>
+            obj.IsValid()
+            && obj is { IsDead: false }
+            && !OpenTreasureCofferChain.IsOpenedOrLooted(obj);
 
         public Vector3 GetPosition() => obj.Position;
 
-        private uint? GetModelId() => data.GetExcelSheet<XIVTreasure>().GetRow(obj.BaseId).SGB.RowId;
+        private uint? GetModelId()
+        {
+            // Some ObjectKind.Treasure entries use BaseIds outside the Treasure sheet
+            // (e.g. 2007457) — GetRow throws ArgumentOutOfRangeException.
+            if (!data.GetExcelSheet<XIVTreasure>().TryGetRow(obj.BaseId, out XIVTreasure row))
+            {
+                return null;
+            }
+
+            return row.SGB.RowId;
+        }
 
         public CofferType GetCofferType()
         {
-            return (GetModelId() ?? 0) switch
+            return GetModelId() switch
             {
-                1597 => CofferType.Silver,
-                1596 => CofferType.Bronze,
+                SilverSgbId => CofferType.Silver,
+                BronzeSgbId => CofferType.Bronze,
                 var _ => CofferType.Unknown
             };
         }

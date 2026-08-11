@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 2,
+  "territoryId": 1346,
+  "zone": "NorthHorn",
+  "source": "digitized-map-regions-v2",
+  "segments": [
+    {
+      "id": "basecamp",
+      "nodes": [
+        2014,
+        2016,
+        2015,
+        2017,
+        2019,
+        2020
+      ],
+      "transitionAfter": {
+        "type": "auto"
+      }
+    },
+    {
+      "id": "crown",
+      "nodes": [
+        2070,
+        2018,
+        2032,
+        2008,
+        2033,
+        2073
+      ],
+      "transitionAfter": {
+        "type": "return"
+      }
+    },
+    {
+      "id": "sinking",
+      "nodes": [
+        2028,
+        2030,
+        2055,
+        2010,
+        2054,
+        2057,
+        2056,
+        2029,
+        2021,
+        2022,
+        2006,
+        2071,
+        2023,
+        2031,
+        2027,
+        2007
+      ],
+      "transitionAfter": {
+        "type": "return"
+      }
+    },
+    {
+      "id": "moldering",
+      "nodes": [
+        2044,
+        2009,
+        2042,
+        2046,
+        2047,
+        2062,
+        2012,
+        2063,
+        2064,
+        2049,
+        2065,
+        2026,
+        2048,
+        2025,
+        2045,
+        2024,
+        2043
+      ],
+      "transitionAfter": {
+        "type": "teleport",
+        "to": "SuspendedMasonry"
+      }
+    },
+    {
+      "id": "suspended",
+      "nodes": [
+        2058,
+        2037,
+        2038,
+        2061,
+        2060,
+        2059,
+        2011,
+        2036,
+        2034,
+        2035,
+        2040,
+        2039,
+        2041
+      ],
+      "transitionAfter": {
+        "type": "teleport",
+        "to": "UnhallowedHamlet"
+      }
+    },
+    {
+      "id": "unhallowed",
+      "nodes": [
+        2068,
+        2013,
+        2051,
+        2050,
+        2052,
+        2053,
+        2072,
+        2066,
+        2067,
+        2069
+      ]
+    }
+  ]
+}

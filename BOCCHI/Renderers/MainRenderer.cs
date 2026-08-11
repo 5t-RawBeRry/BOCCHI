@@ -22,6 +22,8 @@ public class MainRenderer
 {
     private IEnumerable<IDynamicRenderer>? renderers;
 
+    private readonly HashSet<MainWindowSection> openedWhileActive = [];
+
     private IEnumerable<IDynamicRenderer> OrderedRenderers =>
         (renderers ??= services.GetServices<IDynamicRenderer>())
         .Where(r => r.ShouldRender())
@@ -47,16 +49,57 @@ public class MainRenderer
                 continue;
             }
 
-            bool defaultOpen = section switch
+            // Trackers: always visible, no collapsing header.
+            if (section == MainWindowSection.Trackers)
+            {
+                ui.Text(GetSectionTitle(section));
+                ImGui.Indent();
+                foreach (IDynamicRenderer renderer in sectionRenderers)
+                {
+                    if (renderer.SubsectionTitle is { } title)
+                    {
+                        ui.Text(title);
+                        ImGui.Indent();
+                    }
+
+                    renderer.Render();
+
+                    if (renderer.SubsectionTitle != null)
+                    {
+                        ImGui.Unindent();
+                    }
+
+                    ImGui.Spacing();
+                }
+
+                ImGui.Unindent();
+                continue;
+            }
+
+            bool forceOpen = section switch
             {
                 MainWindowSection.Automation => statusBar.IllegalModeActive,
+                MainWindowSection.Completionist => statusBar.CompletionistActive,
                 MainWindowSection.PotsTreasure => statusBar.PotsTreasureActive,
                 MainWindowSection.MobFarmer => statusBar.MobFarmerActive,
-                MainWindowSection.World => false,
-                var _ => true
+                MainWindowSection.Treasure => statusBar.StandaloneTreasureHuntActive
+                                             || statusBar.CarrotHuntActive,
+                var _ => false
             };
 
-            ImGui.SetNextItemOpen(defaultOpen, ImGuiCond.FirstUseEver);
+            // Open once when a mode becomes active (do not force every frame — that fights collapse / layout).
+            if (forceOpen)
+            {
+                if (openedWhileActive.Add(section))
+                {
+                    ImGui.SetNextItemOpen(true);
+                }
+            }
+            else
+            {
+                openedWhileActive.Remove(section);
+                ImGui.SetNextItemOpen(false, ImGuiCond.FirstUseEver);
+            }
 
             if (!ImGui.CollapsingHeader(GetSectionTitle(section)))
             {
@@ -64,6 +107,7 @@ public class MainRenderer
             }
 
             ImGui.Indent();
+            ImGui.Spacing();
 
             foreach(IDynamicRenderer renderer in sectionRenderers)
             {

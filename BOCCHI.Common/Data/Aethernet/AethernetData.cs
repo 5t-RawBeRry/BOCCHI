@@ -1,15 +1,19 @@
 ﻿using System.Numerics;
+
 namespace BOCCHI.Common.Data.Aethernet;
 
 public class AethernetData
 {
-    // Graph routing / idle stand-off from the crystal or Destination pad.
+    /// <summary>Pad / interact proximity used by graph routing.</summary>
     public const float InteractRadius = 4.3f;
 
-    // Lifestream UI range from crystal center (OC bases are ~2y+; 1.9 sat inside the mesh).
-    public const float LifestreamInteractRadius = 3.5f;
+    /// <summary>Idle band width outside the magenta (Lifestream) ring.</summary>
+    public const float LifestreamEdgeClearance = 2.0f;
 
-    public float DeadRadius { get; init; } = 3.2f;
+    public const float DefaultDeadRadius = 3.2f;
+
+    /// <summary>Magenta / Lifestream radius from <see cref="Position"/>.</summary>
+    public float DeadRadius { get; init; } = DefaultDeadRadius;
 
     public uint Id { get; init; }
 

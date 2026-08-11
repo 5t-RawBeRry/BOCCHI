@@ -1,3 +1,4 @@
+using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.Paths;
 using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
@@ -13,9 +14,6 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
     ///     so 20f was too tight and forced a slow live vnav every depart-from-camp route.
     /// </summary>
     private const float GraphSnapRadius = 45f;
-
-    /// <summary>Treat as basecamp without pathfinding (matches IsInBasecamp proximity).</summary>
-    private const float CampSnapRadius = 80f;
 
     public string Key() => "WalkTeleportWalk";
 
@@ -42,10 +40,21 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
         Node departure = resolved.Value.Departure;
         float walkToDepartureCost = resolved.Value.WalkCost;
 
-        // Same inbound shard as current = no-op teleport; just walk.
+        // Same inbound shard = no teleport. Short hop: walk straight. Long hop: go via the shard
+        // first — never emit a fake "cheap" cross-map Pathfind (looked like it refused to TP).
         if (IsSameAetheryte(departure, inbound, inboundMeta))
         {
-            return BuildWalkOnly(start, goal, walkToDepartureCost + walkToGoalFromInbound.Cost);
+            float direct = start.Distance2D(goal.Position);
+            if (direct <= NavigationConstants.MaxDirectWalkDistance)
+            {
+                return BuildWalkOnly(start, goal, walkToDepartureCost + walkToGoalFromInbound.Cost);
+            }
+
+            return BuildViaShardWalk(
+                start,
+                goal,
+                departure,
+                walkToDepartureCost + walkToGoalFromInbound.Cost);
         }
 
         // Field → base camp via shard loses to Return; leave to ReturnTeleportWalk.
@@ -56,7 +65,7 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
 
         return new(
             walkToDepartureCost + GraphTraverser.TeleportCost + walkToGoalFromInbound.Cost,
-            BuildTeleportSteps(inboundMeta.AetheryteId, goal, inbound));
+            BuildTeleportSteps(departure, inboundMeta.AetheryteId, goal, inbound, start));
     }
 
     private static async Task<(Node Departure, float WalkCost)?> ResolveDeparture(
@@ -66,30 +75,17 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
     {
         // Prefer camp aetheryte when standing in camp — never burn a vnav query just to leave base.
         Node? baseCamp = graph.GetBaseCampAetheryteNode();
-        if (baseCamp != null && start.Distance2D(baseCamp.Position) <= CampSnapRadius)
+        if (baseCamp != null && start.Distance2D(baseCamp.Position) <= NavigationConstants.CampRadius)
         {
             return (baseCamp, start.Distance(baseCamp.Position));
         }
 
-        if (graph.TryGetNode(start, GraphSnapRadius, out Node node))
+        // Only snap when already on a teleport pad. Snapping to a nearby FATE/CE node and
+        // using that activity→shard graph edge inflated departure cost (often 100–300y) even
+        // when a field aethernet was close — Return (~40) then wrongly won.
+        if (graph.TryGetNode(start, GraphSnapRadius, out Node node) && node.IsTeleport())
         {
-            if (node.IsTeleport())
-            {
-                return (node, start.Distance(node.Position));
-            }
-
-            List<Edge> connectedTeleports = graph.GetEdges(node.Id)
-                .Where(e => graph.Nodes[e.To].IsTeleport())
-                .OrderBy(e => e.Cost)
-                .ToList();
-
-            if (connectedTeleports.Count == 0)
-            {
-                return null;
-            }
-
-            Edge walkToNearestAethernet = connectedTeleports.First();
-            return (graph.Nodes[walkToNearestAethernet.To], walkToNearestAethernet.Cost);
+            return (node, start.Distance(node.Position));
         }
 
         Node? nearest = graph.GetNearestTeleport(start);
@@ -98,7 +94,8 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
             return null;
         }
 
-        Path walkToNearestTeleportPath = await pathfinder.Pathfind(new(nearest.Position)
+        Vector3 approach = nearest.GetCampStandOffPosition(start);
+        Path walkToNearestTeleportPath = await pathfinder.Pathfind(new(approach)
         {
             From = start,
             AllowFlying = false
@@ -122,13 +119,62 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
         new(
             cost,
             [
-                // Destination is already offset via GetEventPosition — don't also give vnav a 20y arrival.
-                PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, start))
+                PathStep.Pathfind(
+                    NavigationApproach.ResolveActivityApproach(goal, start),
+                    NavigationConstants.EventArrivalRadius)
             ]);
 
-    private static List<PathStep> BuildTeleportSteps(uint aetheryteId, Node goal, Node inbound) =>
-    [
-        PathStep.Teleport(aetheryteId),
-        PathStep.Pathfind(NavigationApproach.GetEventPosition(goal.Position, inbound.Position))
-    ];
+    /// <summary>Same shard but far: walk to the pad, then to the activity (no Lifestream hop).</summary>
+    private static TraversalCandidate BuildViaShardWalk(
+        Vector3 start,
+        Node goal,
+        Node departure,
+        float cost)
+    {
+        List<PathStep> steps = [];
+        Vector3 standOff = departure.GetCampStandOffPosition(start);
+        float ready = DefaultLifestreamReadyRadius();
+        if (start.Distance2D(departure.Position) > ready
+            && start.Distance2D(standOff) > AethernetNavigation.PathfindArrivalRadius + 0.5f)
+        {
+            steps.Add(PathStep.Pathfind(standOff, AethernetNavigation.PathfindArrivalRadius));
+        }
+
+        Vector3 fromPad = departure.GetInteractPosition();
+        steps.Add(PathStep.Pathfind(
+            NavigationApproach.ResolveActivityApproach(goal, fromPad),
+            NavigationConstants.EventArrivalRadius));
+        return new(cost, steps);
+    }
+
+    /// <summary>Pathfind to departure aetheryte, Teleport, then Pathfind to the goal.</summary>
+    private static List<PathStep> BuildTeleportSteps(
+        Node departure,
+        uint aetheryteId,
+        Node goal,
+        Node inbound,
+        Vector3 start)
+    {
+        List<PathStep> steps = [];
+
+        // Skip Pathfind only when already inside Lifestream (magenta); stand-off is on that ring.
+        float ready = DefaultLifestreamReadyRadius();
+        if (start.Distance2D(departure.Position) > ready)
+        {
+            Vector3 standOff = departure.GetCampStandOffPosition(start);
+            if (start.Distance2D(standOff) > AethernetNavigation.PathfindArrivalRadius + 0.5f)
+            {
+                steps.Add(PathStep.Pathfind(standOff, AethernetNavigation.PathfindArrivalRadius));
+            }
+        }
+
+        steps.Add(PathStep.Teleport(aetheryteId));
+        steps.Add(PathStep.Pathfind(
+            NavigationApproach.ResolveActivityApproach(goal, inbound.Position),
+            NavigationConstants.EventArrivalRadius));
+        return steps;
+    }
+
+    private static float DefaultLifestreamReadyRadius() =>
+        MathF.Max(2f, AethernetData.DefaultDeadRadius) + AethernetNavigation.PathfindArrivalRadius;
 }

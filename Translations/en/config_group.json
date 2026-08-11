@@ -1,20 +1,20 @@
 {
-  "forked_tower": {
-    "label": "Forked Tower"
-  },
   "automation": {
     "label": "Illegal Mode"
-  },
-  "trackers": {
-    "label": "Trackers"
-  },
-  "ux": {
-    "label": "UI"
   },
   "mob_farmer": {
     "label": "Mob Farmer"
   },
   "treasure": {
-    "label": "Treasure"
+    "label": "Treasure Hunter"
+  },
+  "ux": {
+    "label": "UI"
+  },
+  "forked_tower": {
+    "label": "Forked Tower"
+  },
+  "dependencies": {
+    "label": "Dependencies"
   }
 }

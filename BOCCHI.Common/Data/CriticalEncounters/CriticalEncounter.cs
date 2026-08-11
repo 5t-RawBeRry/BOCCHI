@@ -1,9 +1,10 @@
-﻿using BOCCHI.Common.Data;
+﻿using BOCCHI.Common.Data.Zones.Graph;
 using ECommons;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using FFXIVClientStructs.FFXIV.Client.LayoutEngine;
 using FFXIVClientStructs.Interop;
 using FFXIVClientStructs.STD;
+using Ocelot.Extensions;
 using System.Numerics;
 
 namespace BOCCHI.Common.Data.CriticalEncounters;
@@ -13,7 +14,12 @@ public readonly record struct CriticalEncounterId(ushort Value)
     public override string ToString() => Value.ToString();
 }
 
-public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev, float radius, Vector3 fallbackPosition)
+public class CriticalEncounter(
+    CriticalEncounterId id,
+    DynamicEvent ev,
+    float radius,
+    Vector3 fallbackPosition,
+    ActivityAreaShape areaShape = ActivityAreaShape.Circle)
 {
     private readonly Vector3 fallbackPosition = fallbackPosition;
 
@@ -21,9 +27,10 @@ public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev, float ra
 
     public readonly string Name = ev.Name.ToString();
 
-    public readonly ActivityProgressTracker ProgressTracker = new();
-
+    /// <summary>Padded size used for debug outer ring (circle radius or square half-extent).</summary>
     public readonly float Radius = radius;
+
+    public readonly ActivityAreaShape AreaShape = areaShape;
 
     public Vector3 Position { get; private set; } = ResolvePosition(ev, fallbackPosition);
 
@@ -67,14 +74,17 @@ public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev, float ra
 
     private static Vector3 ResolvePosition(DynamicEvent ev, Vector3 fallbackPosition)
     {
-        // Authored staging points win when present — live LGB markers can sit under elevated CEs
-        // (e.g. Accept No Imitators on the tower: live at base, player at y=56).
-        if (!float.IsNaN(fallbackPosition.X))
+        Vector3 live = TryReadLayoutPosition(ev);
+        bool hasLive = !float.IsNaN(live.X);
+        bool hasAuthored = !float.IsNaN(fallbackPosition.X);
+
+        // Prefer authored — live LGB is often an entrance marker or under elevated CEs.
+        if (hasAuthored)
         {
             return fallbackPosition;
         }
 
-        return TryReadLayoutPosition(ev);
+        return hasLive ? live : fallbackPosition;
     }
 
     public void Update(DynamicEvent ev)
@@ -83,16 +93,18 @@ public class CriticalEncounter(CriticalEncounterId id, DynamicEvent ev, float ra
         Progress = ev.Progress;
         StartTimestamp = ev.StartTimestamp;
 
-        if (float.IsNaN(fallbackPosition.X))
+        // Keep authored staging when we have it (elevated / square CEs); otherwise refresh live.
+        if (!float.IsNaN(fallbackPosition.X))
         {
-            Vector3 live = TryReadLayoutPosition(ev);
-            if (!float.IsNaN(live.X))
-            {
-                Position = live;
-            }
+            Position = fallbackPosition;
+            return;
         }
 
-        ProgressTracker.Observe(Progress);
+        Vector3 live = TryReadLayoutPosition(ev);
+        if (!float.IsNaN(live.X))
+        {
+            Position = live;
+        }
     }
 
     public TimeSpan? GetTimeUntilStart()

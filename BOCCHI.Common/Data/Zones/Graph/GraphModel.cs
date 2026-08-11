@@ -5,9 +5,9 @@ namespace BOCCHI.Common.Data.Zones.Graph;
 public enum NodeType
 {
     // Teleports
-    BaseCampReturnPosition, // Where you end up when you cast return
-    BaseCampAetheryte, // The main zone aetheryte
-    AethernetShard, // Other shards around the zone
+    BaseCampReturnPosition,
+    BaseCampAetheryte,
+    AethernetShard,
 
     // Activities
     NormalFate,

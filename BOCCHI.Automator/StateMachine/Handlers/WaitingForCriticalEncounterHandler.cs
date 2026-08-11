@@ -6,130 +6,152 @@ using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
+using BOCCHI.Common.Services.Paths;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
 using Ocelot.Actions;
 using Ocelot.Chain;
 using Ocelot.Extensions;
-using Ocelot.Pathfinding.Extensions;
+using Ocelot.Ipc.VNavmesh;
 using Ocelot.Services.Pathfinding;
 using Ocelot.States.Score;
-using System.Numerics;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
+/// <summary>
+///     Hold near a CE after arrival. Travel delivers via PathCalculator; this state prevents leaving
+///     for another activity while the arrived CE moves from preparation into Battle.
+///     Once Battle is underway (player EventId, CE enemies, or combat), yield to
+///     <see cref="InCriticalEncounterHandler"/> so BOCCHI AI can enable.
+/// </summary>
 public class WaitingForCriticalEncounterHandler
 (
     IAutomatorMemory memory,
     IObjectTable objects,
     ICondition conditions,
     IPathfinder pathfinder,
+    IVNavmeshIpc vnav,
     IChainManager manager,
     ICriticalEncounterRepository repo,
+    ICriticalEncounterContext context,
     AutomatorConfig config
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.WaitingForCriticalEncounter)
 {
+    /// <summary>
+    ///     If player EventId never appears, still hand off after this so we do not sit in Waiting
+    ///     for the whole fight (CE AI never enables).
+    /// </summary>
     public override StatePriority GetScore()
     {
+        if (!TryGetGoalEncounter(out CriticalEncounter ce))
+        {
+            return StatePriority.Never;
+        }
+
+        bool hasWaitLatch = memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory wait)
+                            && wait.IsFor(ce.Id);
+
+        if (ce.IsActive())
+        {
+            // Hand off to InCritical as soon as we look like participants — do not keep Waiting
+            // for the whole Battle when EventId is slow/missing.
+            if (ShouldHandOffToInCritical(ce))
+            {
+                return StatePriority.Never;
+            }
+
+            return hasWaitLatch ? StatePriority.VeryHigh : StatePriority.Never;
+        }
+
+        if (!ce.IsPreparing())
+        {
+            return StatePriority.Never;
+        }
+
+        // Already arrived — keep Waiting unless we drifted outside the red zone.
+        if (hasWaitLatch)
+        {
+            if (objects.LocalPlayer is { } latchedPlayer)
+            {
+                float latchedRadius = NavigationConstants.CriticalEncounterRedRadius(ce.Radius, ce.AreaShape);
+                if (!NavigationConstants.IsInsideCriticalEncounterWaitArea(
+                        ce.Position,
+                        latchedRadius,
+                        ce.AreaShape,
+                        latchedPlayer.Position))
+                {
+                    memory.Forget<WaitingForCriticalEncounterMemory>();
+                    return StatePriority.Never;
+                }
+            }
+
+            return StatePriority.VeryHigh;
+        }
+
         if (objects.LocalPlayer is not { } player)
         {
             return StatePriority.Never;
         }
 
-        // See if we have a goal in memory and that goal is a CE
-        if (!memory.TryRemember<GoalMemory>(out GoalMemory goal) || goal.Goal.GoalType is not CriticalEncounterGoal ceGoal)
+        float combatRadius = NavigationConstants.CriticalEncounterRedRadius(ce.Radius, ce.AreaShape);
+        if (!NavigationConstants.IsInsideCriticalEncounterWaitArea(
+                ce.Position,
+                combatRadius,
+                ce.AreaShape,
+                player.Position))
         {
             return StatePriority.Never;
         }
 
-        // See if that ce goal memory is an active CE that is currently preparing to launch
-        CriticalEncounter? ce = repo.SnapshotWithoutForkedTower().FirstOrDefault(ce => ce.Id == ceGoal.id);
-        if (ce == null || !ce.IsPreparing())
-        {
-            return StatePriority.Never;
-        }
-
-        // ce.Radius includes padding; score against the real combat circle.
-        float combatRadius = ce.Radius - NavigationConstants.CriticalEncounterRadiusPadding;
-        if (combatRadius <= 0f)
-        {
-            return StatePriority.Never;
-        }
-
-        float percent = player.Position.Distance2D(ce.Position) / combatRadius;
-
-        if (percent >= 1.5f)
-        {
-            return StatePriority.Never;
-        }
-
-        if (percent >= 0.95f)
-        {
-            return StatePriority.Normal;
-        }
-
-        if (percent >= NavigationConstants.CriticalEncounterWaitInnerRatio)
-        {
-            return StatePriority.AboveNormal;
-        }
-
+        // Beat Pathfinding (High) once inside the red registration ring.
         return StatePriority.VeryHigh;
     }
 
     public override void Enter()
     {
         base.Enter();
-        manager.CancelAll();
+        // Drop the route latch before canceling chains so PathfindingHandler does not
+        // treat the cancel as a soft-pause while GoalPathStepMemory is still present.
         memory.Forget<GoalPathStepMemory>();
-        memory.TryAdd<WaitingForCriticalEncounterMemory>();
-        pathfinder.Stop();
+        StopNavigation();
+
+        if (TryGetGoalEncounter(out CriticalEncounter ce))
+        {
+            memory.Forget<WaitingForCriticalEncounterMemory>();
+            memory.TryAdd(new WaitingForCriticalEncounterMemory(ce.Id));
+        }
     }
 
     public override void Handle()
     {
-        if (objects.LocalPlayer is not { } player)
+        if (!memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory wait))
         {
             return;
         }
 
-        if (!memory.TryRemember<GoalMemory>(out GoalMemory goal) || goal.Goal.GoalType is not CriticalEncounterGoal ceGoal)
+        if (!TryGetGoalEncounter(out CriticalEncounter ce))
         {
             return;
         }
 
-        CriticalEncounter? ce = repo.SnapshotWithoutForkedTower().FirstOrDefault(ce => ce.Id == ceGoal.id);
-        if (ce == null || !ce.IsPreparing())
+        if (!wait.IsFor(ce.Id))
         {
             return;
         }
 
-        float combatRadius = ce.Radius - NavigationConstants.CriticalEncounterRadiusPadding;
-        if (combatRadius <= 0f)
+        if (ce.IsActive())
+        {
+            wait.MarkBattleStarted();
+        }
+        else if (!ce.IsPreparing())
         {
             return;
         }
 
-        float percent = player.Position.Distance2D(ce.Position) / combatRadius;
-
-        // Keep walking until clearly inside the registration box — not just within authored radius.
-        if (percent >= NavigationConstants.CriticalEncounterWaitInnerRatio)
-        {
-            float approachRange = combatRadius * NavigationConstants.CriticalEncounterWaitApproachRatio;
-            Vector3 approach = ce.Position.GetApproachPosition(player.Position, approachRange);
-            AutoMount.MaybeRemount(config, conditions, objects, approach);
-
-            if (pathfinder.IsIdle())
-            {
-                pathfinder.PathfindAndMoveTo(new PathfinderConfig(approach)
-                {
-                    DistanceThreshold = 1.5f,
-                    ShouldSnapToFloor = true,
-                });
-            }
-
-            return;
-        }
+        // Enter already soft-stopped PathStep chains; only keep vnav quiet while holding.
+        pathfinder.Stop();
+        vnav.Stop();
 
         if (!config.StayMountedWhileWaitingForCe
             && conditions[ConditionFlag.Mounted]
@@ -137,7 +159,44 @@ public class WaitingForCriticalEncounterHandler
             && Actions.Unmount.CanCast())
         {
             Actions.Unmount.Cast();
-            pathfinder.Stop();
         }
     }
+
+    private bool ShouldHandOffToInCritical(CriticalEncounter ce)
+    {
+        if (context.GetCriticalEncounterId() == ce.Id)
+        {
+            return true;
+        }
+
+        if (!memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory wait)
+            || !wait.IsFor(ce.Id))
+        {
+            return false;
+        }
+
+        return CriticalEncounterBattleHandoff.IsReady(wait, ce.Id, context, conditions);
+    }
+
+    private bool TryGetGoalEncounter(out CriticalEncounter ce)
+    {
+        ce = null!;
+
+        if (!memory.TryRemember<GoalMemory>(out GoalMemory goal)
+            || goal.Goal.GoalType is not CriticalEncounterGoal ceGoal)
+        {
+            return false;
+        }
+
+        CriticalEncounter? found = repo.SnapshotWithoutForkedTower().FirstOrDefault(c => c.Id == ceGoal.id);
+        if (found is not { } encounter)
+        {
+            return false;
+        }
+
+        ce = encounter;
+        return true;
+    }
+
+    private void StopNavigation() => PathStepSoftStop.Stop(manager, pathfinder, vnav);
 }

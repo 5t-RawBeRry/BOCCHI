@@ -3,9 +3,11 @@ using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Paths;
 using BOCCHI.Common.Data.StateMemory;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.UI;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Plugin.Services;
 using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
 using Ocelot.Windows;
@@ -17,7 +19,11 @@ public class AutomatorRenderer
     Func<IAutomator> automatorFactory,
     IAutomatorMemory memory,
     UIConfig uiConfig,
+    IPotCycleTracker potCycle,
+    IZoneProvider zones,
+    IDataManager data,
     IUIService ui,
+    IBrandingService branding,
     ITranslator<MainWindow> translator
 ) : IDynamicRenderer
 {
@@ -49,6 +55,9 @@ public class AutomatorRenderer
                 ImGui.SetTooltip(translator.T(".automation.automator.refresh_pathfinding_tooltip"));
             }
         }
+
+        ImGui.Spacing();
+        PotTimerUi.Draw(potCycle, zones, data, ui, translator, branding);
 
         if (!Automator.Enabled && !HasDetails())
         {

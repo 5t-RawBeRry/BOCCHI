@@ -1,0 +1,30 @@
+{
+  "label": "항아리 타이밍",
+  "tooltip": "항아리로 떠날 시점, 짧은 항아리 포기, 리롤 상자. 다음 항아리 예측은 오컬트 크레센트에서 나가거나 인스턴스를 바꾸면 초기화됩니다.",
+  "sections": {
+    "timing": "타이밍",
+    "chests": "상자"
+  },
+  "fields": {
+    "min_pot_fate_minutes_remaining": {
+      "label": "남은 (분) 미만 항아리는 건너뛰기",
+      "tooltip": "남은 시간이 이보다 짧은 항아리 돌발로는 가지 않고, 머무르지도 않습니다. 0 = 시간으로 건너뛰지 않음."
+    },
+    "pot_spawn_lead_minutes": {
+      "label": "항아리 몇 분 전에 떠날지",
+      "tooltip": "예측 스폰 몇 분 전에 다른 일을 멈추고 항아리로 향할지입니다. OC에서 나가거나 인스턴스를 바꾸면 타이머가 초기화됩니다."
+    },
+    "fate_fallback_cutoff_minutes": {
+      "label": "항아리 (분) 이내에는 돌발 시작 안 함",
+      "tooltip": "항아리 출발까지 이 분 이내면 일반 돌발을 시작하지 않습니다. 0 = 제한 없음."
+    },
+    "ce_fallback_cutoff_minutes": {
+      "label": "항아리 (분) 이내에는 비상 조우 시작 안 함",
+      "tooltip": "항아리 출발까지 이 분 이내면 비상 조우를 시작하지 않습니다. 0 = 제한 없음."
+    },
+    "should_farm_reroll_pot_chests": {
+      "label": "리롤 항아리 상자도 수집",
+      "tooltip": "항아리 돌발 상자 수집 후, Cache Me가 남아 있는 동안 공유 리롤 상자 위치도 돌아봅니다."
+    }
+  }
+}

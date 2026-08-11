@@ -1,5 +1,4 @@
 ﻿using BOCCHI.Buff.Data;
-using BOCCHI.Common.Data.OccultCrescent;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 
 namespace BOCCHI.Buff.Services;
@@ -14,7 +13,11 @@ public interface IBuffProvider
 
     bool CanUseInquiringMind();
 
+    /// <summary>Selected buffs Inquiring Mind can grant that still need a refresh.</summary>
+    IEnumerable<BuffData> GetInquiringMindTargetsNeedingRefresh(IPlayerCharacter player, uint maxFreshMinutes);
+
     bool NeedsInquiringMind(IPlayerCharacter player, uint maxFreshMinutes);
 
-    bool IsInquiringMindFresh(IPlayerCharacter player);
+    /// <summary>True when every Inquiring Mind target for this run is freshly applied.</summary>
+    bool AreInquiringMindTargetsFresh(IPlayerCharacter player);
 }

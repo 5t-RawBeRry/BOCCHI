@@ -7,6 +7,7 @@ using ECommons.Throttlers;
 using Ocelot.Lifecycle;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
+using Ocelot.Services.PlayerState;
 using Ocelot.States;
 
 namespace BOCCHI.Buff.Services;
@@ -15,6 +16,7 @@ public class BuffRunner
 (
     Func<IStateMachine<BuffState>> factory,
     IZoneProvider zones,
+    IPlayer player,
     IAutomatorMemory memory,
     ISupportJobFactory jobs,
     ISupportJobChanger changer,
@@ -48,6 +50,7 @@ public class BuffRunner
         stateMachine = factory();
         memory.TryAdd<ApplyingBuffsMemory>();
         memory.TryAdd<ManualBuffRunMemory>();
+        memory.Forget<InquiringMindAttemptedMemory>();
 
         if (jobs.TryGetCurrent(out SupportJob job))
         {
@@ -68,6 +71,7 @@ public class BuffRunner
         pathfinder.Stop();
         memory.Forget<ApplyingBuffsMemory>();
         memory.Forget<ManualBuffRunMemory>();
+        memory.Forget<InquiringMindAttemptedMemory>();
         RestoreJobIfNeeded();
         CompleteIfJobRestored();
         logger.Info("Manual buff run stopped");
@@ -90,6 +94,7 @@ public class BuffRunner
                 pathfinder.Stop();
                 memory.Forget<ApplyingBuffsMemory>();
                 memory.Forget<ManualBuffRunMemory>();
+                memory.Forget<InquiringMindAttemptedMemory>();
                 RestoreJobIfNeeded();
                 CompleteIfJobRestored();
                 return;
@@ -101,9 +106,9 @@ public class BuffRunner
             return;
         }
 
-        // Buff state machine finished — restore original phantom job, then clear.
         stateMachine = null;
         memory.Forget<ManualBuffRunMemory>();
+        memory.Forget<InquiringMindAttemptedMemory>();
         RestoreJobIfNeeded();
         CompleteIfJobRestored();
     }
@@ -129,6 +134,11 @@ public class BuffRunner
         if (!zone.HasNearbyKnowledgeCrystals())
         {
             return "You must be near a knowledge crystal.";
+        }
+
+        if (!zone.IsInBuffCastRange(player.Position))
+        {
+            return "Stand in the buff circle at the knowledge crystal.";
         }
 
         return null;

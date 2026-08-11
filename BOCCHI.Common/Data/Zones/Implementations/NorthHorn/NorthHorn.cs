@@ -108,15 +108,15 @@ public class NorthHorn
     [
         new(2081, new(-440f, 47.02659f, -790f), PreferredAethernetId: MolderingOutskirts.Id), // A Rotten Affair
         new(2078, new(-402.0002f, 29.76808f, -252.9997f)), // Allure of the Occult
-        new(2075, new(510f, 16.76658f, -29.99999f), 30f, SinkingSanctuary.Id), // Eye to Eye
+        new(2075, new(510f, 16.76658f, -29.99999f), 30f, TheCrownOfKarnak.Id), // Eye to Eye (not Unhallowed — water gap)
         new(2082, new(-855.7433f, 70.67716f, 482.1518f), 30f), // Gale-force Encounter
         new(2079, new(-170f, 30f, -500f), 30f), // Inconstant Gardener
         new(2074, new(724f, 70f, 220f), 30f), // Raging Thrall
-        new(2083, new(-661.0049f, 87f, -54.00021f), 30f), // Scale Model
+        new(2083, new(-661.0049f, 87f, -54.00021f), 30f, MolderingOutskirts.Id), // Scale Model
         new(2076, new(95f, 10f, 470f), 30f), // Shoreline Showdown
         new(2080, new(-90f, 67.47852f, 865.9999f), 30f), // Territorial Dispute
         new(2084, new(140f, 37f, -708f), 30f), // Thunderregnum
-        new(2077, new(330f, 0f, -250f), 30f) // Waved Away
+        new(2077, new(330f, 0f, -250f), 30f, SinkingSanctuary.Id) // Waved Away
     ];
 
     public override List<ActivityData> GetPotFateData() =>
@@ -127,12 +127,14 @@ public class NorthHorn
 
     public override List<ActivityData> GetCriticalEncounterData() =>
     [
-        new(56, new(238f, 15f, 367f), 20f), // A Beast Unleashed
-        new(63, new(500f, 56f, -310f), 20f), // Accept No Imitators
+        // Center from in-game stand on the blue box; half-extent = registration (not hazard platform).
+        new(56, new(237.91f, 15f, 351.69f), 16f, AreaShape: ActivityAreaShape.Square), // A Beast Unleashed
+        new(63, new(500f, 56f, -310f), 27f), // Accept No Imitators (red ≈ registration rim)
         new(62, new(-82f, 12f, 485f), 20f), // Ahead of the Competition
         new(59, new(807f, 61f, -562f), 20f), // Appalling Behavior
         new(53, new(-688f, 90f, 150f), 20f), // Cursed Resurgence
         new(57, new(224f, 52f, -860f), 20f), // Dark Artistry
+        // LGB center (-215, 18, -65). Registration ~20y (stone rim was ~27 and left drop outside blue).
         new(50, new(-215f, 18f, -65f), 20f), // Doubled Trouble
         new(58, new(-390f, 68f, 700f), 20f), // Familiar Tactics
         new(52, new(659f, 132f, 659f), 20f, TheCrownOfKarnak.Id), // Forbidden Folios
@@ -151,23 +153,7 @@ public class NorthHorn
         new(1059485, BaseCamp.Id);
 
     public override TreasureRoutePolicy GetTreasureRoutePolicy() =>
-        new()
-        {
-            AreaAethernetByName = new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["BaseCamp"] = BaseCamp.Id,
-                ["CrownOfKarnak"] = TheCrownOfKarnak.Id,
-                ["The Crown of Karnak"] = TheCrownOfKarnak.Id,
-                ["SuspendedMasonry"] = SuspendedMasonry.Id,
-                ["Suspended Masonry"] = SuspendedMasonry.Id,
-                ["MolderingOutskirts"] = MolderingOutskirts.Id,
-                ["Moldering Outskirts"] = MolderingOutskirts.Id,
-                ["SinkingSanctuary"] = SinkingSanctuary.Id,
-                ["Sinking Sanctuary"] = SinkingSanctuary.Id,
-                ["UnhallowedHamlet"] = UnhallowedHamlet.Id,
-                ["Unhallowed Hamlet"] = UnhallowedHamlet.Id,
-            }
-        };
+        new();
 
     public override List<TreasureData> GetTreasureData() =>
     [
@@ -241,7 +227,6 @@ public class NorthHorn
         new(2073, 30, new(222.912f, 90.400f, 913.629f)) // CrownofKarnak_6
     ];
 
-    // Pot/carrot positions sourced from Eureka Linker (OccultChests.cs).
     public override Dictionary<int, List<PotChestData>> GetPotChestData() =>
         new()
         {
@@ -343,31 +328,32 @@ public class NorthHorn
 
     public override List<CarrotData> GetCarrotData() =>
     [
-        new(1, new(-857.4f, 71.45287f, 379.6f), 1),
-        new(2, new(7.60699f, 4.3169565f, -35.67316f), 1),
-        new(3, new(287.2872f, 142.99992f, -366.9024f), 1),
-        new(4, new(-608.8f, 59.286507f, 373.9f), 1),
-        new(5, new(-254f, 54.388798f, -739f), 1),
-        new(6, new(-560.9f, 50.74249f, -447f), 1),
-        new(7, new(-500f, 48.000004f, -867.6f), 1),
-        new(8, new(226f, 90.400055f, 904f), 1),
-        new(9, new(-258.7481f, 3.588304f, 53.59217f), 1),
-        new(10, new(-604f, 160.05638f, 939.1f), 1),
-        new(11, new(756.858f, 68.92707f, -79.33746f), 1),
-        new(12, new(-814.6948f, 5.6813054f, -561.0853f), 1),
-        new(13, new(-129.7795f, 8.029996f, -171.18f), 1),
-        new(14, new(-847.9f, 114f, 196.6f), 1),
-        new(15, new(-808f, 6.3495464f, -879f), 1),
-        new(16, new(960f, 97.05797f, -879f), 1),
-        new(17, new(625.8f, 61.06923f, -846.3f), 1),
-        new(18, new(-956.1f, 157.8f, 720.2f), 1),
-        new(19, new(-581f, 160f, 791f), 1),
-        new(20, new(108f, 22.332209f, -556f), 1),
-        new(21, new(-35f, 72.89336f, -860f), 1),
-        new(22, new(882.1526f, 53.999996f, 115.9092f), 1),
-        new(23, new(923f, 80.26997f, -277f), 1),
-        new(24, new(853.9f, 70.20017f, -343.3f), 1),
-        new(25, new(-124f, 76.75548f, 777f), 1),
+        // Keep in sync with BOCCHI.Treasure/Data/NorthHorn/carrot_locations.json (worker-accepted).
+        new(1, new(-258.7481f, 3.588304f, 53.59217f), 40),
+        new(2, new(-254f, 54.388798f, -739f), 27),
+        new(3, new(-581f, 160f, 791f), 41),
+        new(4, new(287.2872f, 142.99992f, -366.9024f), 26),
+        new(5, new(756.858f, 68.92707f, -79.33746f), 24),
+        new(6, new(-847.9f, 114f, 196.6f), 34),
+        new(7, new(-560.9f, 50.74249f, -447f), 37),
+        new(8, new(625.8f, 61.06923f, -846.3f), 43),
+        new(9, new(7.60699f, 4.3169565f, -35.67316f), 39),
+        new(10, new(-608.8f, 59.286507f, 373.9f), 34),
+        new(11, new(-857.4f, 71.45287f, 379.6f), 34),
+        new(12, new(226f, 90.400055f, 904f), 30),
+        new(13, new(-814.6948f, 5.6813054f, -561.0853f), 45),
+        new(14, new(-500f, 48.000004f, -867.6f), 38),
+        new(15, new(108f, 22.332209f, -556f), 25),
+        new(16, new(-808f, 6.3495464f, -879f), 46),
+        new(17, new(960f, 97.05797f, -879f), 44),
+        new(18, new(-124f, 76.75548f, 777f), 30),
+        new(19, new(-35f, 72.89336f, -860f), 27),
+        new(20, new(-604f, 160.05638f, 939.1f), 41),
+        new(21, new(882.1526f, 53.999996f, 115.9092f), 20),
+        new(22, new(923f, 80.26997f, -277f), 28),
+        new(23, new(-129.7795f, 8.029996f, -171.18f), 39),
+        new(24, new(853.9f, 70.20017f, -343.3f), 28),
+        new(25, new(-956.1f, 157.8f, 720.2f), 42),
     ];
 
 }

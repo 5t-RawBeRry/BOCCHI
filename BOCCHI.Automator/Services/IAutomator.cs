@@ -4,27 +4,35 @@ namespace BOCCHI.Automator.Services;
 
 public interface IAutomator
 {
-    /// <summary>Illegal Mode is on (not Pots &amp; Treasure).</summary>
+    /// <summary>Illegal Mode is on (not Pots &amp; Treasure / Completionist).</summary>
     bool Enabled { get; }
 
-    /// <summary>Automator pipeline is active for Illegal Mode or Pots &amp; Treasure.</summary>
+    /// <summary>Automator pipeline is active for Illegal Mode, Completionist, or Pots &amp; Treasure.</summary>
     bool IsActive { get; }
 
     bool IsPotsAndTreasure { get; }
 
-    /// <summary>
-    /// When true, Pots &amp; Treasure is filling with treasure hunt — skip automator Update so hunt owns vnav.
-    /// </summary>
+    bool IsCompletionist { get; }
+
+    /// <summary>Treasure hunt owns vnav (Illegal/Completionist soft-pause or Pots &amp; Treasure filler).</summary>
     bool SuspendedForTreasure { get; }
 
-    /// <summary>Suspend or resume the automator pipeline for treasure-hunt filler.</summary>
+    /// <summary>Illegal Mode is on (including while suspended for treasure).</summary>
+    bool IsIllegalMode { get; }
+
+    /// <summary>Suspend or resume the automator pipeline so treasure hunt can own vnav.</summary>
     void SetSuspendedForTreasure(bool suspended);
+
+    /// <summary>Stop current pathfinding without clearing goals or run mode (soft pause).</summary>
+    void SoftStopPathfinding();
 
     AutomatorState? CurrentState { get; }
 
     void Toggle();
 
     void TogglePotsAndTreasure();
+
+    void ToggleCompletionist();
 
     /// <summary>Drop the current route and replan from the player's position (keeps the goal).</summary>
     void RefreshPathfinding();

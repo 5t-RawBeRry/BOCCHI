@@ -12,23 +12,6 @@ public static unsafe class OccultCrescentHelper
         return instance != null && instance->StateLoaded && GetState() != null;
     }
 
-    public static uint GetTotalSupportJobExperience()
-    {
-        OccultCrescentState* state = GetState();
-        if (state == null)
-        {
-            return 0;
-        }
-
-        uint total = 0;
-        foreach(uint jobExp in state->SupportJobExperience)
-        {
-            total += jobExp;
-        }
-
-        return total;
-    }
-
     public static ushort GetSilver()
     {
         OccultCrescentState* state = GetState();

@@ -8,11 +8,18 @@ namespace BOCCHI.Common.Data.Zones;
 
 public sealed record PotCycleSnapshot
 {
-    public DateTimeOffset LastUpdated { get; init; }
-
     public ushort TerritoryTypeId { get; init; }
 
     public bool HasKnownAnchor { get; init; }
+
+    /// <summary>Pot FATE id that established this cycle (local or remote).</summary>
+    public int AnchorPotFateId { get; init; }
+
+    /// <summary>Spawn time of <see cref="AnchorPotFateId"/>.</summary>
+    public DateTimeOffset AnchorSpawnAt { get; init; }
+
+    /// <summary>True when the anchor came from pot-cycle sync rather than a local sighting.</summary>
+    public bool IsRemoteAnchor { get; init; }
 
     public int CurrentActivePotFateId { get; init; }
 
@@ -24,6 +31,9 @@ public sealed record PotCycleSnapshot
         HasKnownAnchor
         && PredictedNextPotFateId != 0
         && PredictedNextSpawnAt > DateTimeOffset.MinValue;
+
+    public bool HasAnythingToShow =>
+        CurrentActivePotFateId != 0 || HasPredictedNextPot;
 }
 
 public readonly record struct PotFallbackStartDecision(
@@ -34,12 +44,22 @@ public readonly record struct PotFallbackStartDecision(
 
 public interface IPotCycleTracker
 {
+    /// <summary>Cycle for the Occult Crescent zone you are in now (empty outside OC).</summary>
     PotCycleSnapshot Snapshot { get; }
+
+    /// <summary>South Horn and/or North Horn cycles that have been seen this session.</summary>
+    IReadOnlyList<PotCycleSnapshot> KnownCycles { get; }
+
+    /// <summary>
+    ///     Apply a shared pot spawn from another BOCCHI client on the same instance.
+    ///     Ignored when a newer local (or equal) anchor already exists, or a pot is live locally.
+    /// </summary>
+    bool TryApplyRemoteAnchor(int potFateId, DateTimeOffset spawnAt, ushort territoryTypeId);
 }
 
 /// <summary>
-/// Tracks the 30-minute alternating pot FATE cycle (AOCCH algorithm).
-/// Observing one pot predicts the opposite pot's next spawn.
+/// Tracks the 30-minute alternating pot FATE cycle per Occult Crescent zone.
+/// Observing one pot predicts the opposite pot's next spawn. SH and NH are kept separately.
 /// </summary>
 public sealed class PotCycleTracker
 (
@@ -50,9 +70,29 @@ public sealed class PotCycleTracker
 {
     private static readonly TimeSpan PotCycleInterval = TimeSpan.FromMinutes(30);
 
-    private PotCycleSnapshot snapshot = new();
+    private static readonly PotCycleSnapshot Empty = new();
 
-    public PotCycleSnapshot Snapshot => snapshot;
+    private readonly Dictionary<ushort, PotCycleSnapshot> cycles = new();
+
+    public PotCycleSnapshot Snapshot
+    {
+        get
+        {
+            IZone zone = zones.GetZone();
+            if (!zone.IsOccultCrescentZone())
+            {
+                return Empty;
+            }
+
+            return cycles.TryGetValue(zone.TerritoryType, out PotCycleSnapshot? snap) ? snap : Empty;
+        }
+    }
+
+    public IReadOnlyList<PotCycleSnapshot> KnownCycles =>
+        cycles.Values
+            .Where(c => c.HasAnythingToShow)
+            .OrderBy(c => c.TerritoryTypeId)
+            .ToList();
 
     public UpdateLimit UpdateLimit =>
         new()
@@ -76,8 +116,65 @@ public sealed class PotCycleTracker
             return;
         }
 
+        ushort territory = zone.TerritoryType;
         Fate? active = fates.Snapshot().FirstOrDefault(f => potFates.Any(p => p.Id == f.Id.Value));
-        snapshot = BuildSnapshot(zone.TerritoryType, potFates, active, now, snapshot);
+        PotCycleSnapshot previous = cycles.TryGetValue(territory, out PotCycleSnapshot? existing)
+            ? existing
+            : Empty;
+
+        cycles[territory] = BuildSnapshot(territory, potFates, active, now, previous);
+    }
+
+    public bool TryApplyRemoteAnchor(int potFateId, DateTimeOffset spawnAt, ushort territoryTypeId)
+    {
+        IZone zone = zones.GetZone();
+        if (!zone.IsOccultCrescentZone() || zone.TerritoryType != territoryTypeId)
+        {
+            return false;
+        }
+
+        List<ActivityData> potFates = zone.GetPotFateData();
+        if (potFates.All(p => p.Id != potFateId))
+        {
+            return false;
+        }
+
+        PotCycleSnapshot previous = cycles.TryGetValue(territoryTypeId, out PotCycleSnapshot? existing)
+            ? existing
+            : Empty;
+
+        if (previous.CurrentActivePotFateId != 0)
+        {
+            return false;
+        }
+
+        if (previous.HasKnownAnchor
+            && previous.AnchorSpawnAt != DateTimeOffset.MinValue
+            && previous.AnchorSpawnAt >= spawnAt)
+        {
+            return false;
+        }
+
+        ActivityData? opposite = potFates.FirstOrDefault(p => p.Id != potFateId);
+        Fate? live = fates.Snapshot().FirstOrDefault(f => f.Id.Value == potFateId);
+        DateTimeOffset nextSpawn = spawnAt + PotCycleInterval;
+
+        PotCycleSnapshot applied = new()
+        {
+            TerritoryTypeId = territoryTypeId,
+            HasKnownAnchor = true,
+            AnchorPotFateId = potFateId,
+            AnchorSpawnAt = spawnAt,
+            IsRemoteAnchor = true,
+            CurrentActivePotFateId = live != null ? potFateId : 0,
+            PredictedNextPotFateId = opposite?.Id ?? 0,
+            PredictedNextSpawnAt = opposite == null ? DateTimeOffset.MinValue : nextSpawn,
+        };
+
+        cycles[territoryTypeId] = applied;
+        logger.Info(
+            $"[PotCycleTracker] remote anchor zone={territoryTypeId} pot={potFateId} spawnAt={spawnAt:O} next={opposite?.Id ?? 0} nextSpawnAt={nextSpawn:O}");
+        return true;
     }
 
     private PotCycleSnapshot BuildSnapshot(
@@ -89,36 +186,40 @@ public sealed class PotCycleTracker
     {
         if (active == null)
         {
-            bool sameTerritory = previous.TerritoryTypeId == territoryType;
             return previous with
             {
-                LastUpdated = now,
                 TerritoryTypeId = territoryType,
-                HasKnownAnchor = sameTerritory && previous.HasKnownAnchor,
                 CurrentActivePotFateId = 0,
-                PredictedNextPotFateId = sameTerritory ? previous.PredictedNextPotFateId : 0,
-                PredictedNextSpawnAt = sameTerritory ? previous.PredictedNextSpawnAt : DateTimeOffset.MinValue
             };
         }
 
         int activeId = active.Id.Value;
-        if (previous.TerritoryTypeId == territoryType && previous.CurrentActivePotFateId == activeId)
+        if (previous.TerritoryTypeId == territoryType
+            && previous.CurrentActivePotFateId == activeId
+            && !previous.IsRemoteAnchor)
         {
-            return previous with { LastUpdated = now };
+            return previous;
         }
 
+        DateTimeOffset spawnAt = active.StartTimeEpoch > 0
+            ? DateTimeOffset.FromUnixTimeSeconds(active.StartTimeEpoch)
+            : now;
         ActivityData? opposite = potFates.FirstOrDefault(p => p.Id != activeId);
+        DateTimeOffset nextSpawn = spawnAt + PotCycleInterval;
+
         logger.Info(
-            $"[PotCycleTracker] anchor pot={activeId} next={opposite?.Id ?? 0} nextSpawnAt={(opposite == null ? "none" : (now + PotCycleInterval).ToString("O"))}");
+            $"[PotCycleTracker] zone={territoryType} local anchor pot={activeId} next={opposite?.Id ?? 0} nextSpawnAt={(opposite == null ? "none" : nextSpawn.ToString("O"))}");
 
         return new PotCycleSnapshot
         {
-            LastUpdated = now,
             TerritoryTypeId = territoryType,
             HasKnownAnchor = true,
+            AnchorPotFateId = activeId,
+            AnchorSpawnAt = spawnAt,
+            IsRemoteAnchor = false,
             CurrentActivePotFateId = activeId,
             PredictedNextPotFateId = opposite?.Id ?? 0,
-            PredictedNextSpawnAt = opposite == null ? DateTimeOffset.MinValue : now + PotCycleInterval
+            PredictedNextSpawnAt = opposite == null ? DateTimeOffset.MinValue : nextSpawn,
         };
     }
 }

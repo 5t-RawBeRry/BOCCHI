@@ -1,24 +1,34 @@
 using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Services;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Services;
+using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
 using Ocelot.States.Score;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
-public class ReturningToJobHandler(IAutomatorMemory memory, ISupportJobFactory jobs, ISupportJobChanger changer) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.ReturningToJob)
+public class ReturningToJobHandler
+(
+    IAutomatorMemory memory,
+    ISupportJobFactory jobs,
+    ISupportJobChanger changer,
+    ICondition conditions
+) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.ReturningToJob)
 {
-    // Must beat Pathfinding (High) / InFate / InCombat so TS/buff job restore is not skipped.
-    // Do not restore while Treasure Sight is still in progress — otherwise Freelancer swap loops forever.
+    // Must beat Pathfinding (High) / InFate / InCombat so job restore is not skipped.
     public override StatePriority GetScore()
     {
-        if (memory.TryRemember<CastingTreasureSightMemory>(out CastingTreasureSightMemory _))
+        // Only TriagingMemory (active Chemist session) — Pending alone must not block restore
+        // after triage clears without entering, and Sight uses CastingTreasureSightMemory.
+        if (memory.TryRemember<CastingTreasureSightMemory>(out CastingTreasureSightMemory _)
+            || memory.TryRemember<TriagingMemory>(out TriagingMemory _))
         {
             return StatePriority.Never;
         }
 
-        return HasJobToRestore() ? StatePriority.VeryHigh : StatePriority.Never;
+        return TryGetJobToRestore(out _) ? StatePriority.VeryHigh : StatePriority.Never;
     }
 
     public override void Handle()
@@ -39,15 +49,13 @@ public class ReturningToJobHandler(IAutomatorMemory memory, ISupportJobFactory j
             return;
         }
 
-        if (!changer.IsBusy())
+        if (changer.IsBusy() || PhantomJobChangeGate.IsBlocked(conditions))
         {
-            changer.Change(jobId);
+            return;
         }
-    }
 
-    private bool HasJobToRestore() =>
-        memory.TryRemember<BuffSupportJobMemory>(out BuffSupportJobMemory _)
-        || memory.TryRemember<TreasureSightSupportJobMemory>(out TreasureSightSupportJobMemory _);
+        changer.Change(jobId);
+    }
 
     private bool TryGetJobToRestore(out SupportJobId jobId)
     {
@@ -63,6 +71,12 @@ public class ReturningToJobHandler(IAutomatorMemory memory, ISupportJobFactory j
             return true;
         }
 
+        if (memory.TryRemember<TriageSupportJobMemory>(out TriageSupportJobMemory triageJob))
+        {
+            jobId = triageJob.Job;
+            return true;
+        }
+
         jobId = default;
         return false;
     }
@@ -71,5 +85,6 @@ public class ReturningToJobHandler(IAutomatorMemory memory, ISupportJobFactory j
     {
         memory.Forget<BuffSupportJobMemory>();
         memory.Forget<TreasureSightSupportJobMemory>();
+        memory.Forget<TriageSupportJobMemory>();
     }
 }

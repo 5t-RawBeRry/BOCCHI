@@ -1,0 +1,5 @@
+Default hunt-complete MP3s (Moogle.mp3, Game Over.mp3, Time Up.mp3) are
+shipped from Saucy (https://github.com/PunishXIV/Saucy), BSD 3-Clause License,
+Copyright (c) 2023, Puni.sh.
+
+Drop additional .mp3 files in this folder to use them as hunt-complete sounds.

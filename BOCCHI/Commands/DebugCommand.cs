@@ -1,28 +1,33 @@
+using BOCCHI.Common;
+using BOCCHI.Common.Config;
+using BOCCHI.Debug;
 using Dalamud.Plugin.Services;
 using Ocelot.Rotation.Services.BossMod;
 using Ocelot.Services.Commands;
+using Ocelot.Services.PlayerState;
 using Ocelot.Services.Translation;
 
 namespace BOCCHI.Commands;
 
 public class DebugCommand
 (
+    IDebugWindow debugWindow,
     BossModRotationService bossModRotation,
+    IPlayer player,
     IChatGui chat,
+    UIConfig uiConfig,
     ITranslator<DebugCommand> translator
 ) : OcelotCommand(translator)
 {
-    public override string Command => "bocchi-debug";
+    public override string Command => "debug";
 
-    public override List<string> Aliases => ["bocchidebug", "ochdebug"];
-
-    public override bool Hidden => true;
+    public override List<string> Aliases => [];
 
     public override void Execute(CommandContext context)
     {
         if (context.Args.Length == 0)
         {
-            chat.PrintError("Usage: /bocchi-debug ai-preset");
+            debugWindow.Toggle();
             return;
         }
 
@@ -32,27 +37,49 @@ public class DebugCommand
             case "make-ai-preset":
                 MakeAiPreset();
                 break;
+            case "open":
+                debugWindow.IsOpen = true;
+                break;
+            case "close":
+                debugWindow.IsOpen = false;
+                break;
+            case "toggle":
+                debugWindow.Toggle();
+                break;
             default:
-                chat.PrintError("Unknown argument. Try: ai-preset");
+                chat.PrintError("Usage: /bocchi debug [open|close|toggle|ai-preset]");
                 break;
         }
     }
 
     private void MakeAiPreset()
     {
+        var job = player.GetClassJob();
+        BocchiChat.Print(
+            chat,
+            uiConfig,
+            $"Base job={job?.Abbreviation.ToString() ?? "?"} Role={job?.Role.ToString() ?? "?"} "
+            + $"IsMelee={player.IsMelee()} IsMeleeDps={player.IsMeleeDps()}");
+
         if (!bossModRotation.TryEnsureBocchiAiPreset(out string? storedJson))
         {
-            chat.PrintError("[BOCCHI] Failed to create BOCCHI AI preset (is BossMod / BMR loaded?)");
+            BocchiChat.PrintError(chat, uiConfig, "Failed to create BOCCHI AI preset (is BossMod / BMR loaded?)");
             return;
         }
 
-        chat.Print($"[BOCCHI] Created/updated preset '{BossModRotationService.AiPresetName}'.");
+        BocchiChat.Print(
+            chat,
+            uiConfig,
+            $"Created/updated presets '{BossModRotationService.FatePresetName}' and '{BossModRotationService.CePresetName}'.");
         if (string.IsNullOrWhiteSpace(storedJson))
         {
-            chat.PrintError("[BOCCHI] Preset Create succeeded but Get returned empty — check BossMod Presets IPC.");
+            BocchiChat.PrintError(
+                chat,
+                uiConfig,
+                "Preset Create succeeded but Get returned empty — check BossMod Presets IPC.");
             return;
         }
 
-        chat.Print($"[BOCCHI] Stored JSON:\n{storedJson}");
+        BocchiChat.Print(chat, uiConfig, $"Stored JSON:\n{storedJson}");
     }
 }

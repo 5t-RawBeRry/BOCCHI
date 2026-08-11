@@ -1,6 +1,6 @@
 {
   "entry": {
-    "label": "Entry"
+    "label": "Starting"
   },
   "idle": {
     "label": "Idle"
@@ -21,13 +21,13 @@
     "label": "Repairing"
   },
   "choosing_activity": {
-    "label": "Choosing activity"
+    "label": "Picking next activity"
   },
   "returning": {
-    "label": "Returning"
+    "label": "Returning to camp"
   },
   "pathfinding": {
-    "label": "Pathfinding"
+    "label": "Traveling"
   },
   "in_fate": {
     "label": "In FATE"
@@ -35,13 +35,22 @@
   "waiting_for_critical_encounter": {
     "label": "Waiting for CE"
   },
+  "waiting_for_pot_fate": {
+    "label": "Waiting for pot"
+  },
   "in_critical_encounter": {
     "label": "In CE"
   },
   "returning_to_job": {
-    "label": "Returning to job"
+    "label": "Switching back to job"
+  },
+  "leveling_phantom_job": {
+    "label": "Switching phantom job"
   },
   "farming_pot_chests": {
     "label": "Farming pot chests"
+  },
+  "triaging": {
+    "label": "Triage Mode"
   }
 }

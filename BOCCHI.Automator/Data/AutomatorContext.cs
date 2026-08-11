@@ -4,18 +4,23 @@ public interface IAutomatorContext
 {
     AutomatorRunMode RunMode { get; }
 
-    /// <summary>True when Illegal Mode or Pots &amp; Treasure is driving the automator pipeline.</summary>
+    /// <summary>True when Illegal Mode, Completionist, or Pots &amp; Treasure is driving the automator pipeline.</summary>
     bool Enabled { get; }
 
     bool IsIllegalMode { get; }
 
     bool IsPotsAndTreasure { get; }
 
-    /// <summary>Toggle Illegal Mode on/off. Turns off Pots &amp; Treasure if it was active.</summary>
+    bool IsCompletionist { get; }
+
+    /// <summary>Toggle Illegal Mode on/off. Turns off other automator run modes if active.</summary>
     void Toggle();
 
-    /// <summary>Toggle dedicated Pots &amp; Treasure mode. Turns off Illegal Mode if it was active.</summary>
+    /// <summary>Toggle dedicated Pots &amp; Treasure mode.</summary>
     void TogglePotsAndTreasure();
+
+    /// <summary>Toggle Completionist Mode (note-filtered Illegal pipeline).</summary>
+    void ToggleCompletionist();
 
     void SetRunMode(AutomatorRunMode mode);
 
@@ -32,6 +37,8 @@ public class AutomatorContext : IAutomatorContext
 
     public bool IsPotsAndTreasure => RunMode == AutomatorRunMode.PotsAndTreasure;
 
+    public bool IsCompletionist => RunMode == AutomatorRunMode.Completionist;
+
     public void Toggle()
     {
         SetRunMode(IsIllegalMode ? AutomatorRunMode.Off : AutomatorRunMode.IllegalMode);
@@ -40,6 +47,11 @@ public class AutomatorContext : IAutomatorContext
     public void TogglePotsAndTreasure()
     {
         SetRunMode(IsPotsAndTreasure ? AutomatorRunMode.Off : AutomatorRunMode.PotsAndTreasure);
+    }
+
+    public void ToggleCompletionist()
+    {
+        SetRunMode(IsCompletionist ? AutomatorRunMode.Off : AutomatorRunMode.Completionist);
     }
 
     public void SetRunMode(AutomatorRunMode mode)

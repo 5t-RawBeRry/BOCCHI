@@ -7,12 +7,6 @@ namespace BOCCHI.Common.Data.Zones.Graph;
 
 public class ZoneGraph
 {
-    private Dictionary<int, Guid> CriticalEncounterNodes = new();
-
-    private Dictionary<Guid, EdgeSet> EdgeSets = new();
-
-    private Dictionary<int, Guid> FateNodes = new();
-
     [JsonInclude] public Dictionary<Guid, Node> Nodes { get; private set; } = new();
 
     [JsonInclude] public Dictionary<Guid, List<Edge>> Edges { get; private set; } = new();
@@ -33,7 +27,7 @@ public class ZoneGraph
         return JsonSerializer.Serialize(this, options);
     }
 
-    public static ZoneGraph FromJson(string json)
+    public static ZoneGraph? FromJson(string json)
     {
         JsonSerializerOptions options = new()
         {
@@ -45,36 +39,46 @@ public class ZoneGraph
             }
         };
 
-        return JsonSerializer.Deserialize<ZoneGraph>(json, options)!;
+        return JsonSerializer.Deserialize<ZoneGraph>(json, options);
     }
 
-    public void Cache()
+    /// <summary>
+    ///     True when the cached graph has the camp/teleport/activity wiring Automator needs.
+    ///     Corrupt or half-written early caches fail this and should be rebuilt.
+    /// </summary>
+    public bool IsUsableForRouting()
     {
-        foreach((Guid key, Node node) in Nodes)
+        if (Nodes.Count == 0 || Edges.Count == 0)
         {
-            if (node is { Type: NodeType.CriticalEncounter, Metadata: ActivityNodeMetadata cMeta })
-            {
-                CriticalEncounterNodes.Add(cMeta.Id, key);
-            }
-
-            if (node is { Type: NodeType.NormalFate or NodeType.PotFate, Metadata: ActivityNodeMetadata fMeta })
-            {
-                FateNodes.Add(fMeta.Id, key);
-            }
-
-            EdgeSets.Add(key, GetEdgeSetForNode(node));
+            return false;
         }
-    }
 
-    private EdgeSet GetEdgeSetForNode(Node node)
-    {
-        List<Edge> inbound = Edges.Values
-            .SelectMany(edgeSet => edgeSet)
-            .Where(edge => edge.To == node.Id).ToList();
+        if (GetBaseCampReturnPositionNode() == null || GetBaseCampAetheryteNode() == null)
+        {
+            return false;
+        }
 
-        List<Edge> outbound = Edges.TryGetValue(node.Id, out List<Edge>? list) ? list : [];
+        if (!GetTeleportNodes().Any())
+        {
+            return false;
+        }
 
-        return new(inbound, outbound);
+        List<Node> activities = GetActivityNodes().ToList();
+        if (activities.Count == 0)
+        {
+            return false;
+        }
+
+        bool hasFiniteWalk = Edges.Values
+            .SelectMany(list => list)
+            .Any(edge => edge.Type == EdgeType.Walk && float.IsFinite(edge.Cost) && edge.Cost >= 0f);
+        if (!hasFiniteWalk)
+        {
+            return false;
+        }
+
+        // No inbound walk from any aetheryte → every FATE/CE route dies in Pathfinding.
+        return activities.Any(activity => GetInboundTeleport(activity) != null);
     }
 
     public void AddNode(Node node)
@@ -114,21 +118,7 @@ public class ZoneGraph
         AddEdge(b, a, costAB, type);
     }
 
-    public void AddTwoWayEdge(Guid a, Guid b, float costAB, float costBA, EdgeType type)
-    {
-        AddEdge(a, b, costAB, type);
-        AddEdge(b, a, costBA, type);
-    }
-
     public IEnumerable<Edge> GetEdges(Guid nodeId) => Edges.TryGetValue(nodeId, out List<Edge>? list) ? list : [];
-
-    public EdgeSet GetEdgeSet(Guid nodeId) => EdgeSets.TryGetValue(nodeId, out EdgeSet set) ? set : new([], []);
-
-    public Node GetCriticalEncounterNode(int id) => Nodes[CriticalEncounterNodes[id]];
-
-    public Node GetFateNode(int id) => Nodes[FateNodes[id]];
-
-    public IEnumerable<Node> GetNodes(Func<Node, bool> predicate) => Nodes.Values.Where(predicate);
 
     public Edge? GetEdge(Node from, Node to)
     {
@@ -153,7 +143,7 @@ public class ZoneGraph
         float bestDistSq = float.MaxValue;
         Node? best = null;
 
-        foreach(Node n in Nodes.Values)
+        foreach (Node n in Nodes.Values)
         {
             float distSq = Vector3.DistanceSquared(n.Position, position);
             if (distSq <= maxDistSq && distSq < bestDistSq)
@@ -173,15 +163,36 @@ public class ZoneGraph
         return true;
     }
 
-    public bool TryGetNode(Vector3 position, out Node node) => TryGetNode(position, 20f, out node);
-
     public Node? GetInboundTeleport(Node goal)
     {
-        return Edges
+        uint? preferredId = goal.Metadata is ActivityNodeMetadata { PreferredAethernetId: { } id } ? id : null;
+
+        List<(Node Teleport, float Cost)> inbound = Edges
             .Where(kvp => Nodes[kvp.Key].IsTeleport())
-            .Where(kvp => kvp.Value.Any(e => e.To == goal.Id))
-            .Select(kvp => Nodes[kvp.Key])
-            .FirstOrDefault();
+            .SelectMany(kvp => kvp.Value
+                .Where(e => e.To == goal.Id)
+                .Select(e => (Teleport: Nodes[kvp.Key], Cost: e.Cost)))
+            .Where(entry => !float.IsPositiveInfinity(entry.Cost) && !float.IsNaN(entry.Cost))
+            .ToList();
+
+        if (inbound.Count == 0)
+        {
+            return null;
+        }
+
+        if (preferredId is { } preferred)
+        {
+            (Node Teleport, float Cost) preferredInbound = inbound
+                .Where(entry => entry.Teleport.Metadata is TeleportNodeMetadata tm && tm.AetheryteId == preferred)
+                .OrderBy(entry => entry.Cost)
+                .FirstOrDefault();
+            if (preferredInbound.Teleport != null)
+            {
+                return preferredInbound.Teleport;
+            }
+        }
+
+        return inbound.OrderBy(entry => entry.Cost).First().Teleport;
     }
 
     public IEnumerable<Node> GetNodesByTypes(params NodeType[] types)
@@ -207,7 +218,8 @@ public class ZoneGraph
 
     public async Task ConnectToBaseCamp(List<Node> nodes, GraphConfig config)
     {
-        const float MaxEuclideanDistance2D = 512f;
+        // Cover Lost Citadel CEs (On the Hunt ~685y from return pad); 512 skipped those edges.
+        const float MaxEuclideanDistance2D = 750f;
 
         Node? returnNode = GetBaseCampReturnPositionNode();
         if (returnNode == null)
@@ -215,7 +227,7 @@ public class ZoneGraph
             return;
         }
 
-        foreach(Node node in nodes)
+        foreach (Node node in nodes)
         {
             float euclideanDistance2D = returnNode.Position.Distance2D(node.Position);
             if (euclideanDistance2D > MaxEuclideanDistance2D)
@@ -229,14 +241,13 @@ public class ZoneGraph
         }
     }
 
-
     public async Task ConnectToNearestTeleports(List<Node> nodes, GraphConfig config)
     {
         List<Node> teleports = GetTeleportNodes().ToList();
 
         foreach (Node node in nodes)
         {
-            // Prefer authored aethernet when present (AOCCH preferred shard), else nearest few.
+            // Prefer authored aethernet when present; fall back if that shard cannot walk to the activity.
             List<Node> candidateTeleports = teleports;
             if (node.Metadata is ActivityNodeMetadata { PreferredAethernetId: { } preferredId })
             {
@@ -249,38 +260,16 @@ public class ZoneGraph
                 }
             }
 
-            // Score a few Euclidean-nearest shards sequentially. Parallel WhenAll flooded
-            // vnav (Queries: 1 + N queued) and stalled actual movement pathfinds.
-            List<Node> nearestTeleports = candidateTeleports
-                .OrderBy(t => t.Position.Distance2D(node.Position))
-                .Take(candidateTeleports == teleports ? 3 : candidateTeleports.Count)
-                .ToList();
+            // Score nearest shards sequentially — parallel WhenAll flooded vnav and stalled movement.
+            List<Node> nearestTeleports = NearestTeleports(candidateTeleports, node, takeAll: candidateTeleports != teleports);
+            (Node? bestInbound, float bestInboundCost, Node? bestOutbound, float bestOutboundCost) =
+                await ScoreTeleportWalks(nearestTeleports, node, config);
 
-            float bestInboundCost = float.PositiveInfinity;
-            Node? bestInbound = null;
-            float bestOutboundCost = float.PositiveInfinity;
-            Node? bestOutbound = null;
-
-            foreach (Node teleport in nearestTeleports)
+            if ((bestInbound == null || float.IsPositiveInfinity(bestInboundCost))
+                && candidateTeleports != teleports)
             {
-                if (teleport.Metadata is not TeleportNodeMetadata meta)
-                {
-                    throw new("Teleport node metadata is not set");
-                }
-
-                float toActivity = await config.GetWalkingCost(meta.Destination, node.Position);
-                if (toActivity < bestInboundCost)
-                {
-                    bestInboundCost = toActivity;
-                    bestInbound = teleport;
-                }
-
-                float fromActivity = await config.GetWalkingCost(node.Position, meta.Destination);
-                if (fromActivity < bestOutboundCost)
-                {
-                    bestOutboundCost = fromActivity;
-                    bestOutbound = teleport;
-                }
+                (bestInbound, bestInboundCost, bestOutbound, bestOutboundCost) =
+                    await ScoreTeleportWalks(NearestTeleports(teleports, node, takeAll: false), node, config);
             }
 
             if (bestInbound != null && !float.IsPositiveInfinity(bestInboundCost))
@@ -295,27 +284,44 @@ public class ZoneGraph
         }
     }
 
-    public async Task ConnectToNearestAlike(List<Node> nodes, GraphConfig config, int max = 2, float max_euclidean_distance_2d = 256f)
+    private static List<Node> NearestTeleports(List<Node> candidates, Node activity, bool takeAll)
     {
-        for(int i = 0; i < nodes.Count; i++)
+        IOrderedEnumerable<Node> ordered = candidates.OrderBy(t => t.Position.Distance2D(activity.Position));
+        return (takeAll ? ordered : ordered.Take(3)).ToList();
+    }
+
+    private static async Task<(Node? Inbound, float InboundCost, Node? Outbound, float OutboundCost)> ScoreTeleportWalks(
+        List<Node> teleports,
+        Node activity,
+        GraphConfig config)
+    {
+        float bestInboundCost = float.PositiveInfinity;
+        Node? bestInbound = null;
+        float bestOutboundCost = float.PositiveInfinity;
+        Node? bestOutbound = null;
+
+        foreach (Node teleport in teleports)
         {
-            Node node = nodes[i];
-
-            IEnumerable<Node> nearestOther = nodes.Skip(i + 1).Where(n => n.Id != node.Id).OrderBy(c => c.Position.Distance2D(node.Position)).Take(max);
-            foreach(Node other in nearestOther)
+            if (teleport.Metadata is not TeleportNodeMetadata meta)
             {
-                float euclidean_distance_2d = node.Position.Distance2D(other.Position);
-                if (euclidean_distance_2d > max_euclidean_distance_2d)
-                {
-                    continue;
-                }
+                throw new InvalidOperationException("Teleport node metadata is not set");
+            }
 
-                float ab = await config.GetWalkingCost(node, other);
-                float ba = await config.GetWalkingCost(other, node);
+            float toActivity = await config.GetWalkingCost(meta.Destination, activity.Position);
+            if (toActivity < bestInboundCost)
+            {
+                bestInboundCost = toActivity;
+                bestInbound = teleport;
+            }
 
-                AddTwoWayEdge(node.Id, other.Id, ab, ba, EdgeType.Walk);
+            float fromActivity = await config.GetWalkingCost(activity.Position, meta.Destination);
+            if (fromActivity < bestOutboundCost)
+            {
+                bestOutboundCost = fromActivity;
+                bestOutbound = teleport;
             }
         }
+
+        return (bestInbound, bestInboundCost, bestOutbound, bestOutboundCost);
     }
-    public readonly record struct EdgeSet(List<Edge> Inbound, List<Edge> Outbound);
 }

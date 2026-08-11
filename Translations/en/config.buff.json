@@ -1,38 +1,38 @@
 {
   "label": "Buffs",
-  "tooltip": "Automatic support job buff upkeep.",
+  "tooltip": "Keep phantom job buffs up automatically.",
+  "sections": {
+    "automation": "Automation",
+    "which": "Which buffs"
+  },
   "fields": {
     "should_automate_buffs": {
       "label": "Automate buffs",
-      "tooltip": "Automatically maintain selected support buffs."
+      "tooltip": "In Illegal Mode, automatically keep the buffs you select below refreshed at knowledge crystals. Will not leave a CE you are already waiting for or fighting just to rebuff."
     },
     "apply_romeos_ballad": {
-      "label": "Apply Romeo's Ballad",
-      "tooltip": "Keep Romeo's Ballad applied when automating buffs."
+      "label": "Romeo's Ballad",
+      "tooltip": "Keep Romeo's Ballad up when buff automation is on."
     },
     "apply_enduring_fortitude": {
-      "label": "Apply Enduring Fortitude",
-      "tooltip": "Keep Enduring Fortitude applied when automating buffs."
+      "label": "Enduring Fortitude",
+      "tooltip": "Keep Enduring Fortitude up when buff automation is on."
     },
     "apply_fleetfooted": {
-      "label": "Apply Fleetfooted",
-      "tooltip": "Keep Fleetfooted applied when automating buffs."
+      "label": "Fleetfooted",
+      "tooltip": "Keep Fleetfooted up when buff automation is on."
     },
     "apply_quicker_step": {
-      "label": "Apply Quicker Step",
-      "tooltip": "Keep Quicker Step applied when automating buffs."
+      "label": "Quicker Step",
+      "tooltip": "Keep Quicker Step up when buff automation is on."
     },
     "apply_buffs_using_inquiring_mind": {
-      "label": "Apply buffs using Inquiring Mind",
-      "tooltip": "Use Freelancer Inquiring Mind to refresh Quicker Step when available, then apply other selected buffs individually."
+      "label": "Use Inquiring Mind when you can",
+      "tooltip": "Near a knowledge crystal, Freelancer can cast Inquiring Mind once to apply all selected unlocked buffs. If anything is still missing, BOCCHI switches jobs and applies those one by one."
     },
     "reapply_threshold": {
-      "label": "Reapply threshold (minutes)",
-      "tooltip": "Reapply a buff when this many minutes (or less) remain on its duration."
-    },
-    "knowledge_crystal_distance": {
-      "label": "Knowledge crystal distance",
-      "tooltip": "Maximum distance to a knowledge crystal before walking to it for buffs."
+      "label": "Refresh when under (minutes left)",
+      "tooltip": "Recast a buff when this many minutes or fewer remain."
     }
   }
 }

@@ -1,20 +1,20 @@
 {
-  "forked_tower": {
-    "label": "フォークタワー"
-  },
   "automation": {
     "label": "不正モード"
-  },
-  "trackers": {
-    "label": "トラッカー"
-  },
-  "ux": {
-    "label": "UI"
   },
   "mob_farmer": {
     "label": "モブファーム"
   },
   "treasure": {
-    "label": "宝箱"
+    "label": "トレジャーハンター"
+  },
+  "ux": {
+    "label": "UI"
+  },
+  "forked_tower": {
+    "label": "フォークタワー"
+  },
+  "dependencies": {
+    "label": "依存関係"
   }
 }

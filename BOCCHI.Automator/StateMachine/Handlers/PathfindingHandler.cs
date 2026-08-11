@@ -3,10 +3,12 @@ using BOCCHI.Automator.Services;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Paths;
 using BOCCHI.Common.Data.StateMemory;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.Services.Paths;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
+using ECommons.Throttlers;
 using Ocelot.Chain;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
@@ -22,13 +24,20 @@ public class PathfindingHandler
     IObjectTable objects,
     IPathfinder pathfinder,
     ITargetManager targetManager,
+    IZoneProvider zones,
     AutomatorConfig config,
     ICondition conditions,
     AutoRotationController autoRotation,
     ILogger<PathfindingHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Pathfinding)
 {
+    private static readonly TimeSpan MountBeforePauseTimeout = TimeSpan.FromSeconds(8);
+
     private Task<ChainResult>? currentPathTask;
+
+    private string? pendingPauseReason;
+
+    private DateTime mountBeforePauseDeadline = DateTime.MinValue;
 
     public override void Enter()
     {
@@ -50,12 +59,26 @@ public class PathfindingHandler
             return;
         }
 
+        // Soft-interrupt (e.g. Completionist survey click) owns vnav via ActivityGoto — leave it alone.
+        if (memory.TryRemember<NavigationInterruptedMemory>(out NavigationInterruptedMemory _))
+        {
+            currentPathTask = null;
+            pendingPauseReason = null;
+            PathStepSoftStop.Cancel(manager);
+            return;
+        }
+
         ResetPathfinding();
     }
 
     public override StatePriority GetScore()
     {
         if (memory.TryRemember<ApplyingBuffsMemory>(out ApplyingBuffsMemory _))
+        {
+            return StatePriority.Never;
+        }
+
+        if (memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _))
         {
             return StatePriority.Never;
         }
@@ -70,6 +93,11 @@ public class PathfindingHandler
             return;
         }
 
+        if (pendingPauseReason != null && FinishMountBeforePause())
+        {
+            return;
+        }
+
         if (!memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory path))
         {
             ResetPathfinding();
@@ -78,10 +106,10 @@ public class PathfindingHandler
 
         path.Update();
 
-        // Teleport-only mode: calc produced no Return/Teleport steps → pause for manual (#109).
+        // Teleport-only mode: calc produced no Return/Teleport steps → pause for manual.
         if (path.PauseWhenPlanCompletes && path.IsEmptyPlan && currentPathTask == null)
         {
-            PauseForManualPathing("No auto-walk steps — paused for manual pathing");
+            BeginMountThenPause(TeleportOnlyMessage("no travel steps left"));
             return;
         }
 
@@ -90,7 +118,12 @@ public class PathfindingHandler
             // Remount mid-route if Treasure Sight (or anything else) left us on foot.
             if (path.GetNextPathStep()?.PathStepData is Pathfind(var destination, _))
             {
-                AutoMount.MaybeRemount(config, conditions, objects, destination);
+                AutoMount.MaybeRemount(
+                    config,
+                    conditions,
+                    objects,
+                    destination,
+                    zones.GetZone().IsInBasecamp());
             }
 
             if (currentPathTask.IsCompleted)
@@ -109,25 +142,34 @@ public class PathfindingHandler
                             && completedKind is PathStepKind.Teleport or PathStepKind.Return)
                         {
                             currentPathTask = null;
-                            PauseForManualPathing("Arrived at aetheryte — paused for manual pathing");
+                            memory.Forget<BaseTeleportDelayMemory>();
+                            BeginMountThenPause(TeleportOnlyMessage("arrived at aetheryte"));
                             return;
                         }
                     }
                     else if (result.IsCanceled)
                     {
-                        PauseForManualPathing("Path step canceled — pausing navigation until Illegal Mode is toggled");
+                        // Soft-stop / CE wait handoff / combat cancel — keep the goal and replan.
+                        // Soft-pausing here left Illegal Mode idle until toggled.
+                        ReplanAfterPathCancel("Path step canceled");
                         return;
                     }
                     else
                     {
                         logger.Warning("Path step failed: {Error}", result.ErrorMessage ?? "unknown");
                         pathfinder.Stop();
-                        path.DequeuePathStep();
+
+                        // Keep Teleport — dequeuing skips the hop and leaves you stuck outside
+                        // the pad (or walking the long way). Approach retries next tick.
+                        if (path.GetNextPathStep()?.Kind != PathStepKind.Teleport)
+                        {
+                            path.DequeuePathStep();
+                        }
                     }
                 }
                 else if (currentPathTask.IsCanceled)
                 {
-                    PauseForManualPathing("Path step canceled — pausing navigation until Illegal Mode is toggled");
+                    ReplanAfterPathCancel("Path step task canceled");
                     return;
                 }
                 else
@@ -152,22 +194,112 @@ public class PathfindingHandler
 
                 if (path.PauseWhenPlanCompletes && path.GetNextPathStep() == null)
                 {
-                    PauseForManualPathing("Returned to camp — paused for manual pathing");
+                    BeginMountThenPause(TeleportOnlyMessage("returned to camp"));
                 }
 
                 return;
             }
 
+            if (step.PathStepData is Teleport
+                && zones.GetZone().IsInBasecamp()
+                && !WaitForBaseTeleportDelay())
+            {
+                return;
+            }
+
             logger.Info("Starting next task step...");
+            memory.Forget<BaseTeleportDelayMemory>();
             currentPathTask = pathStepExecutor.Execute(step);
             return;
         }
 
-        // Empty plan (already at destination) — keep GoalPathStepMemory so Automator doesn't recreate (#92).
+        // Empty plan (already at destination) — keep GoalPathStepMemory so Automator doesn't recreate.
         if (!path.IsValid)
         {
             memory.Forget<GoalPathStepMemory>();
         }
+    }
+
+    /// <returns>False while still waiting; true when ready to teleport.</returns>
+    private bool WaitForBaseTeleportDelay()
+    {
+        if (config.MaxBaseTeleportDelaySeconds <= 0)
+        {
+            return true;
+        }
+
+        if (!memory.TryRemember<BaseTeleportDelayMemory>(out BaseTeleportDelayMemory delay))
+        {
+            delay = new BaseTeleportDelayMemory(BaseTeleportDelay.Roll(config));
+            if (delay.Delay <= TimeSpan.Zero)
+            {
+                return true;
+            }
+
+            memory.TryAdd(delay);
+            logger.Info("Waiting {Seconds:F1}s at camp before teleport", delay.Delay.TotalSeconds);
+            return false;
+        }
+
+        return delay.IsReady();
+    }
+
+    private void BeginMountThenPause(string reason)
+    {
+        if (!config.ShouldAutoMount || conditions[ConditionFlag.Mounted])
+        {
+            PauseForManualPathing(reason);
+            return;
+        }
+
+        pendingPauseReason = reason;
+        mountBeforePauseDeadline = DateTime.UtcNow + MountBeforePauseTimeout;
+        if (!conditions[ConditionFlag.Mounting])
+        {
+            MountWait.TryCast(config.PreferredMountId);
+        }
+    }
+
+    /// <returns>True when this frame handled the mount-before-pause wait.</returns>
+    private bool FinishMountBeforePause()
+    {
+        if (pendingPauseReason == null)
+        {
+            return false;
+        }
+
+        if (conditions[ConditionFlag.Mounted]
+            || !config.ShouldAutoMount
+            || DateTime.UtcNow >= mountBeforePauseDeadline)
+        {
+            string reason = pendingPauseReason;
+            pendingPauseReason = null;
+            PauseForManualPathing(reason);
+            return true;
+        }
+
+        if (!conditions[ConditionFlag.Mounting]
+            && EzThrottler.Throttle("Pathfinding::MountBeforePause", 750))
+        {
+            MountWait.TryCast(config.PreferredMountId);
+        }
+
+        return true;
+    }
+
+    private static string TeleportOnlyMessage(string where) =>
+        $"Stop after return and teleport: {where} — paused so you can walk the rest "
+        + "(Illegal Mode → Stop after return and teleport; toggle Illegal Mode to resume)";
+
+    private void ReplanAfterPathCancel(string reason)
+    {
+        logger.Info("{Reason} — dropping route for replan", reason);
+        pathfinder.Stop();
+        currentPathTask = null;
+        pendingPauseReason = null;
+        memory.Forget<GoalPathStepMemory>();
+        memory.Forget<BaseTeleportDelayMemory>();
+        // GoalMemory kept — Automator.Update rebuilds GoalPathStepMemory.
     }
 
     private void PauseForManualPathing(string reason)
@@ -177,14 +309,16 @@ public class PathfindingHandler
         ResetPathfinding();
         memory.Forget<GoalPathStepMemory>();
         memory.Forget<GoalMemory>();
+        memory.Forget<BaseTeleportDelayMemory>();
         memory.TryAdd<NavigationInterruptedMemory>();
     }
 
     private void ResetPathfinding()
     {
-        manager.CancelWhere(name => name.StartsWith("PathStep::", StringComparison.Ordinal));
+        PathStepSoftStop.Cancel(manager);
 
         currentPathTask = null;
+        pendingPauseReason = null;
         pathfinder.Stop();
     }
 }

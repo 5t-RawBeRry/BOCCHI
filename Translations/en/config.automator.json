@@ -1,44 +1,95 @@
 {
-  "label": "Illegal Mode",
-  "tooltip": "Core Illegal Mode behavior and idle handling.",
+  "label": "General",
+  "tooltip": "FATEs, Critical Encounters, pots, mounting, BOCCHI AI, Triage Mode, Return, and repair.",
+  "sections": {
+    "activities": "Activities",
+    "combat": "Combat",
+    "travel": "Travel",
+    "jobs": "Phantom jobs",
+    "triage": "Triage",
+    "treasure": "Treasure Sight",
+    "delays": "Delays",
+    "repair": "Repair"
+  },
   "fields": {
+    "should_do_fates": {
+      "label": "Do FATEs",
+      "tooltip": "Go to and complete FATEs."
+    },
+    "prefer_pot_fates": {
+      "label": "Prefer pot FATEs",
+      "tooltip": "Pick Magic Pot FATEs when choosing what to do, and allow those FATEs even if they are unchecked under Allowed FATEs. Also turns on pot timing and waiting near pots (see Pot timing)."
+    },
+    "should_farm_pot_chests": {
+      "label": "Farm pot chests after pot FATEs",
+      "tooltip": "After a pot FATE ends (not between waves), wait for Cache Me If You Can, drink Magical Elixir, and follow the compass. Keeps going while Cache Me is up; stops when that buff is gone. If you have no buff, elixir, or hints, it visits known chest spots instead. Also allows pot FATEs for Illegal Mode even if they are unchecked under Allowed FATEs. Extra reroll chests are under Pot timing."
+    },
+    "should_preposition_to_pots": {
+      "label": "Wait near pots before they spawn",
+      "tooltip": "Leave early and stand near where the next pot FATE should appear. Timing is under Pot timing. The next-pot timer resets if you leave Occult Crescent or change instance."
+    },
+    "should_do_critical_encounters": {
+      "label": "Do Critical Encounters",
+      "tooltip": "Go to and complete Critical Encounters. While waiting for or fighting a CE, BOCCHI will not Return early just to refresh buffs or idle."
+    },
+    "toggle_ai_provider": {
+      "label": "Use BOCCHI AI",
+      "tooltip": "In FATE and CE combat, activates the BOCCHI AI autorotation preset in BossMod / BossMod Reborn for targeting and combat movement. Does not enable a job combat rotation (Wrath / Rotation Solver) and does not use the legacy ai:on command. Turns off while traveling and back on when you arrive."
+    },
     "should_auto_mount": {
-      "label": "Auto-mount while traveling",
-      "tooltip": "Mount before long pathfinds and remount if you dismount mid-route (e.g. after Treasure Sight) while heading to a FATE or CE."
+      "label": "Mount while traveling",
+      "tooltip": "Mount for long trips to a FATE or CE, and remount if you get off mid-way (for example after Treasure Sight)."
     },
     "preferred_mount_id": {
       "label": "Preferred mount",
-      "tooltip": "Mount to use while auto-traveling. Mount Roulette uses the game's roulette; otherwise pick an unlocked mount from the list.",
       "roulette": "Mount Roulette",
       "search": "Search mounts..."
     },
-    "toggle_ai_provider": {
-      "label": "Toggle autorotation while traveling",
-      "tooltip": "Toggle the BOCCHI AI BossMod preset off while pathing to a FATE or CE, and back on when you arrive. While on, VBM handles targeting and combat movement (BOCCHI's own targeting is skipped)."
+    "sprint_on_aetheryte_approach": {
+      "label": "Sprint to aetherytes",
+      "tooltip": "Use Sprint when walking up to an aetheryte (camp, aethernet shard, or escaping combat during a treasure hunt)."
     },
     "stay_mounted_while_waiting_for_ce": {
       "label": "Stay mounted while waiting for CEs",
-      "tooltip": "Do not auto-dismount after arriving at a preparing CE. You still dismount when the encounter starts."
+      "tooltip": "Do not get off your mount after you arrive at a CE that is still preparing. You still dismount when it starts."
     },
     "stop_after_return": {
-      "label": "Stop after return",
-      "tooltip": "Return (and teleport to the inbound aetheryte) toward the next FATE or CE, then pause for manual pathing. Toggle Illegal Mode to resume auto-nav."
+      "label": "Stop after return and teleport",
+      "tooltip": "After a FATE or CE, return to camp, teleport toward the next one, mount, then stop. You walk the rest yourself. Toggle Illegal Mode to resume, or turn this off for full auto."
     },
     "phantom_jobs_leveling_mode": {
-      "label": "Phantom jobs leveling mode",
-      "tooltip": "When your current phantom job reaches max level, switch to the next unlocked job that is not maxed. Stays put if every unlocked job is maxed."
+      "label": "Level phantom jobs automatically",
+      "tooltip": "When your current phantom job is maxed, switch to the next unlocked one that is not maxed. Skips Freelancer (it does not level from combat). Stays put if every unlocked job is already maxed. Does not switch during Triage Mode or pot chest farming, and does not interrupt Treasure Sight or buffs."
+    },
+    "enable_triage_mode": {
+      "label": "Triage Mode",
+      "tooltip": "Fits into normal Illegal Mode. After a FATE or CE: if dead players nearby still need a raise, briefly switch to your chosen raise job, raise them (skips anyone who already has a raise pending), switch back, then continue as usual (Return / Sight / next activity). If nobody needs a raise, nothing extra happens — no job swap and no waiting. Needs Chemist or White Mage unlocked."
+    },
+    "preferred_triage_raise_job": {
+      "label": "Triage raise job",
+      "tooltip": "Which phantom job to use for raises. If that job is not unlocked, Triage uses the other one when available.",
+      "chemist": "Phantom Chemist",
+      "white_mage": "Phantom White Mage"
     },
     "should_cast_treasure_sight": {
-      "label": "Cast Treasure Sight",
-      "tooltip": "Automatically recast Treasure Sight while Illegal Mode is running."
+      "label": "Cast Treasure Sight at camp",
+      "tooltip": "While idle at base camp, cast Treasure Sight on a timer. Ignored if Auto treasure hunt in Illegal Mode is on (that already surveys after each CE/FATE). Waits if Triage Mode is currently raising."
     },
     "treasure_sight_recast_interval_seconds": {
-      "label": "Treasure Sight recast interval (seconds)",
-      "tooltip": "How often to recast Treasure Sight."
+      "label": "Treasure Sight every (seconds)",
+      "tooltip": "How often to cast Treasure Sight at camp when the option above is on."
     },
     "max_remote_idle_time_seconds": {
-      "label": "Max Return delay after FATE/CE (seconds)",
-      "tooltip": "After a FATE or CE ends, wait a random time between 2 seconds and this value before casting Return. Occult Crescent has no Return cooldown — this only humanizes the pause."
+      "label": "Max wait before Return (seconds)",
+      "tooltip": "After a FATE or CE ends (and Triage Mode finishes, if it ran), wait a random time between 2 seconds and this value before casting Return."
+    },
+    "max_base_teleport_delay_seconds": {
+      "label": "Max wait before leaving camp (seconds)",
+      "tooltip": "At camp, wait a random time between 0 seconds and this value before teleporting to a FATE or CE. Helps when people would otherwise leave at the same time. 0 means leave right away."
+    },
+    "auto_repair_threshold": {
+      "label": "Repair gear below (%)",
+      "tooltip": "At base camp, repair any equipped piece at or below this durability."
     }
   }
 }

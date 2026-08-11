@@ -18,7 +18,7 @@ public interface ICurrencyTracker
     float[] GetSilverHistory(TimeSpan sampleDuration);
 }
 
-public class CurrencyTracker(TrackerConfig config, IGameGui gui) : ICurrencyTracker, IOnUpdate
+public class CurrencyTracker(UIConfig config, IGameGui gui) : ICurrencyTracker, IOnUpdate
 {
     private readonly DeltaRateTracker goldTracker = new(() => TimeSpan.FromMinutes(config.TrackedDuration));
 
@@ -56,7 +56,7 @@ public class CurrencyTracker(TrackerConfig config, IGameGui gui) : ICurrencyTrac
             return;
         }
 
-        // Shopping churns currency reads; re-baseline so spend→recover isn't a false gain (#96).
+        // Shopping churns currency reads; re-baseline so spend→recover isn't a false gain.
         if (IsShopOpen())
         {
             goldTracker.SyncBaseline(gold);

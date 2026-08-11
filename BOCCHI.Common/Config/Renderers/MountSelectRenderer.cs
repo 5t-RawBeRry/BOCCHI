@@ -37,8 +37,17 @@ public sealed class MountSelectRenderer(IDataManager data) : IFieldRenderer<Moun
         int index = Array.IndexOf(ids, current);
         if (index < 0)
         {
+            // Unknown / locked mount → persist Mount Roulette (id 0).
             index = 0;
-            current = ids[0];
+            current = 0;
+            if (prop.PropertyType == typeof(int))
+            {
+                prop.SetValue(target, 0);
+            }
+            else
+            {
+                prop.SetValue(target, 0u);
+            }
         }
 
         string label = prop.Label(owner, translator);

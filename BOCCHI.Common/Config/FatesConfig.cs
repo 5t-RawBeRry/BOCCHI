@@ -4,74 +4,63 @@ using Ocelot.Config.Fields;
 
 namespace BOCCHI.Common.Config;
 
+/// <summary>Illegal Mode FATE allowlist (not used by Pots &amp; Treasure for pot selection).</summary>
 [Serializable]
-[ConfigGroup("automation", GroupOrder = 10, Order = 1)]
+[ConfigGroup("automation", GroupOrder = 0, Order = 2)]
 public class FatesConfig : IAutoConfig
 {
-    [Checkbox]
-    public bool ShouldDoFates { get; set; } = true;
+    /// <summary>South / North Horn Magic Pot FATE ids (Persistent / Pleading / Daylight / Pot of Bother).</summary>
+    public static readonly uint[] PotFateIds = [1976, 1977, 2072, 2073];
 
-    [Checkbox]
-    public bool PreferPotFates { get; set; } = false;
-
-    /// <summary>
-    ///     When pot farming is gated, path to the predicted pot spot before spawn and wait (#112).
-    /// </summary>
-    [Checkbox]
-    public bool ShouldPrepositionToPots { get; set; } = true;
-
-    /// <summary>
-    ///     Skip / abandon pot FATEs with less than this many minutes left (0 = disabled).
-    /// </summary>
-    [IntRange(0, 15)]
-    public int MinPotFateMinutesRemaining { get; set; } = 2;
-
-    /// <summary>
-    ///     Minutes before predicted pot spawn to leave for pot (AOCCH SpawnLeadMinutes).
-    /// </summary>
-    [IntRange(0, 15)]
-    public int PotSpawnLeadMinutes { get; set; } = 3;
-
-    /// <summary>
-    ///     Do not start a FATE when pot departure is within this many minutes (0 = disabled).
-    /// </summary>
-    [IntRange(0, 30)]
-    public int FateFallbackCutoffMinutes { get; set; } = 5;
-
-    /// <summary>
-    ///     Do not start a CE when pot departure is within this many minutes (0 = disabled).
-    /// </summary>
-    [IntRange(0, 30)]
-    public int CeFallbackCutoffMinutes { get; set; } = 10;
-
-    [Checkbox]
-    public bool ShouldFarmPotChests { get; set; } = false;
-
-    [Checkbox]
-    public bool ShouldFarmRerollPotChests { get; set; } = true;
-
-    [DisabledFateIds]
+    [DisabledFateIds(Order = 0, Section = "allowlist")]
     public HashSet<uint> DisabledFateIds { get; set; } =
     [
-        // South Horn
-        1965, // The Winged Terror
-        1976, // Persistent Pots
-        1977, // Pleading Pots
-        // North Horn
-        2072, // Daylight Pottery
-        2073 // In a Pot of Bother
-
+        // South Horn — dangerous / usually skipped by default
+        1965 // The Winged Terror
     ];
 
-    public bool IsFateEnabled(uint fateId) => ShouldDoFates && !DisabledFateIds.Contains(fateId);
+    public bool IsFateEnabled(uint fateId) => !DisabledFateIds.Contains(fateId);
+
+    /// <summary>
+    ///     Prefer pot FATEs / farm pot chests imply Magic Pot FATEs are allowed for Illegal Mode,
+    ///     even if they were left unchecked under Allowed FATEs.
+    /// </summary>
+    public bool IsFateEnabledForIllegalMode(uint fateId, bool isPotFate, bool preferPotFates, bool shouldFarmPotChests)
+    {
+        if (IsFateEnabled(fateId))
+        {
+            return true;
+        }
+
+        return isPotFate && (preferPotFates || shouldFarmPotChests);
+    }
+
+    /// <summary>Keep Allowed FATEs checkboxes in sync when Prefer / Farm pots is on.</summary>
+    public void EnsurePotFatesAllowedWhenPreferred(bool preferPotFates, bool shouldFarmPotChests)
+    {
+        if (!preferPotFates && !shouldFarmPotChests)
+        {
+            return;
+        }
+
+        DisabledFateIds ??= [];
+        foreach (uint id in PotFateIds)
+        {
+            DisabledFateIds.Remove(id);
+        }
+    }
 
     /// <summary>
     ///     Pot fallback cutoffs only apply when pot farming is on AND the predicted next pot FATE is enabled.
-    ///     Disabled pot FATEs must not idle the automator near spawn (#85).
+    ///     Disabled pot FATEs must not idle the automator near spawn.
     /// </summary>
-    public bool IsPotFallbackGatingEnabled(uint predictedNextPotFateId)
+    public bool IsPotFallbackGatingEnabled(
+        uint predictedNextPotFateId,
+        bool shouldDoFates,
+        bool preferPotFates,
+        bool shouldFarmPotChests)
     {
-        if (!ShouldFarmPotChests && !PreferPotFates)
+        if (!shouldDoFates || (!shouldFarmPotChests && !preferPotFates))
         {
             return false;
         }
@@ -81,6 +70,10 @@ public class FatesConfig : IAutoConfig
             return false;
         }
 
-        return IsFateEnabled(predictedNextPotFateId);
+        return IsFateEnabledForIllegalMode(
+            predictedNextPotFateId,
+            isPotFate: true,
+            preferPotFates,
+            shouldFarmPotChests);
     }
 }

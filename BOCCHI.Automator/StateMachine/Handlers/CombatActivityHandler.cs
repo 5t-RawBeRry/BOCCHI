@@ -1,5 +1,4 @@
 using System.Numerics;
-using BOCCHI.Common.Config;
 using BOCCHI.Common.Targeting;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
@@ -29,34 +28,28 @@ internal static class CombatActivityHandler
         IGameObject player,
         IPlayer playerState,
         IEnumerable<IBattleNpc> targets,
-        CombatConfig combat,
-        ITargetManager targetManager,
         ICondition conditions,
         IPathfinder pathfinder,
         string throttlePrefix,
         bool shouldApproachTarget,
         bool stopPathfinderInCombat = false,
-        bool deferCombatToBossModAi = false
+        bool deferCombatToBossModAi = false,
+        ITargetManager? targetManager = null
     )
     {
         List<IBattleNpc> list = targets as List<IBattleNpc> ?? targets.ToList();
-        IBattleNpc? target = TargetHelper.Select(list, combat.ForceTargetCentralEnemy);
+        IBattleNpc? target = TargetHelper.Select(list, preferCentroid: false);
         if (target == null)
         {
             return false;
         }
 
+        // Seed / keep a hard target from the activity list. CE bosses often never enter
+        // BossMod's potential-target / aggro table, so AutoTarget alone can leave you idle.
+        SeedActivityTarget(targetManager, list, target, throttlePrefix);
+
         bool isMelee = playerState.IsMelee();
         float distance = player.Position.Distance2D(target.Position) - target.HitboxRadius;
-
-        // BossMod owns targeting once AI is on — still close in / dismount first (#123).
-        if (!deferCombatToBossModAi
-            && combat.ShouldHandleTargeting
-            && EzThrottler.Throttle($"{throttlePrefix}::Target")
-            && targetManager.Target?.GameObjectId != target.GameObjectId)
-        {
-            targetManager.Target = target;
-        }
 
         if (conditions[ConditionFlag.Mounted]
             && distance <= DismountRange
@@ -70,22 +63,20 @@ internal static class CombatActivityHandler
 
         if (deferCombatToBossModAi)
         {
-            // Hand off once we're in role range so StayCloseToTarget isn't starting from afar.
-            if (IsInEngagementRange(distance, isMelee) || conditions[ConditionFlag.InCombat])
-            {
-                pathfinder.Stop();
-                return true;
-            }
+            // Release vnav — StayCloseToTarget / NormalMovement own combat movement.
+            // Issuing PathToEngagement here fights the AI and causes edge stutter (in/out of FATE).
+            pathfinder.Stop();
 
-            if (!shouldApproachTarget
-                || !EzThrottler.Throttle($"{throttlePrefix}::Approach", 500)
-                || !pathfinder.IsIdle())
+            if (conditions[ConditionFlag.Mounted]
+                && (conditions[ConditionFlag.InCombat] || distance <= DismountRange)
+                && EzThrottler.Throttle($"{throttlePrefix}::Unmount")
+                && Actions.Unmount.CanCast())
             {
+                Actions.Unmount.Cast();
                 return false;
             }
 
-            PathToEngagement(player, target, isMelee, pathfinder);
-            return false;
+            return true;
         }
 
         if (stopPathfinderInCombat && conditions[ConditionFlag.InCombat])
@@ -109,6 +100,29 @@ internal static class CombatActivityHandler
 
         PathToEngagement(player, target, isMelee, pathfinder);
         return false;
+    }
+
+    private static void SeedActivityTarget(
+        ITargetManager? targetManager,
+        List<IBattleNpc> activityTargets,
+        IBattleNpc preferred,
+        string throttlePrefix
+    )
+    {
+        if (targetManager == null
+            || !EzThrottler.Throttle($"{throttlePrefix}::Target", 250))
+        {
+            return;
+        }
+
+        if (targetManager.Target is IBattleNpc current
+            && !current.IsDead
+            && activityTargets.Any(t => t.Address == current.Address))
+        {
+            return;
+        }
+
+        targetManager.Target = preferred;
     }
 
     private static bool IsInEngagementRange(float distancePastHitbox, bool isMelee)

@@ -1,4 +1,5 @@
 using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Services;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.SupportJobs;
@@ -9,9 +10,7 @@ using Ocelot.States.Score;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
-/// <summary>
-///     When the current phantom job is maxed, switch to the next unlocked non-maxed job (#89).
-/// </summary>
+/// <summary>When the current phantom job is maxed, switch to the next unlocked non-maxed XP job.</summary>
 public class LevelingPhantomJobHandler
 (
     IAutomatorMemory memory,
@@ -30,8 +29,11 @@ public class LevelingPhantomJobHandler
 
         if (memory.TryRemember<CastingTreasureSightMemory>(out CastingTreasureSightMemory _)
             || memory.TryRemember<ApplyingBuffsMemory>(out ApplyingBuffsMemory _)
+            || TriageSession.IsActive(memory)
             || memory.TryRemember<BuffSupportJobMemory>(out BuffSupportJobMemory _)
             || memory.TryRemember<TreasureSightSupportJobMemory>(out TreasureSightSupportJobMemory _)
+            || memory.TryRemember<TriageSupportJobMemory>(out TriageSupportJobMemory _)
+            || memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _)
             || memory.TryRemember<GoalMemory>(out GoalMemory _)
             || memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _)
             || memory.TryRemember<NavigationInterruptedMemory>(out NavigationInterruptedMemory _))
@@ -39,7 +41,7 @@ public class LevelingPhantomJobHandler
             return StatePriority.Never;
         }
 
-        if (!jobs.TryGetCurrent(out SupportJob current) || !IsMaxed(current))
+        if (!jobs.TryGetCurrent(out SupportJob current) || !ShouldSwitchFrom(current))
         {
             return StatePriority.Never;
         }
@@ -59,7 +61,7 @@ public class LevelingPhantomJobHandler
             return;
         }
 
-        if (!jobs.TryGetCurrent(out SupportJob current) || !IsMaxed(current))
+        if (!jobs.TryGetCurrent(out SupportJob current) || !ShouldSwitchFrom(current))
         {
             return;
         }
@@ -69,7 +71,15 @@ public class LevelingPhantomJobHandler
             return;
         }
 
-        logger.Info("Phantom job {Current} is maxed — switching to {Next}", current.Id, next);
+        if (current.Id == SupportJobId.PhantomFreelancer)
+        {
+            logger.Info("Phantom Freelancer is excluded from XP leveling — switching to {Next}", next);
+        }
+        else
+        {
+            logger.Info("Phantom job {Current} is maxed — switching to {Next}", current.Id, next);
+        }
+
         changer.Change(next);
     }
 
@@ -91,7 +101,7 @@ public class LevelingPhantomJobHandler
         for (int offset = 1; offset <= ordered.Count; offset++)
         {
             SupportJob candidate = ordered[(start + offset) % ordered.Count];
-            if (candidate.Id == current.Id)
+            if (candidate.Id == current.Id || !IsLevelableByXp(candidate))
             {
                 continue;
             }
@@ -105,6 +115,13 @@ public class LevelingPhantomJobHandler
 
         return false;
     }
+
+    /// <summary>Freelancer advances via knowledge crystals, not combat XP — skip it.</summary>
+    private static bool IsLevelableByXp(SupportJob job) =>
+        job.Id != SupportJobId.PhantomFreelancer;
+
+    private static bool ShouldSwitchFrom(SupportJob job) =>
+        !IsLevelableByXp(job) || IsMaxed(job);
 
     private static bool IsMaxed(SupportJob job) =>
         job.Data.LevelMax > 0 && job.Level >= job.Data.LevelMax;

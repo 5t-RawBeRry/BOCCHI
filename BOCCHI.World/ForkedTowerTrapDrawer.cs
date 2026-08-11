@@ -25,7 +25,7 @@ public class ForkedTowerTrapDrawer
 
     public void Render()
     {
-        if (!config.Enabled || !config.DrawPotentialTrapPositions)
+        if (!config.DrawPotentialTrapPositions)
         {
             return;
         }

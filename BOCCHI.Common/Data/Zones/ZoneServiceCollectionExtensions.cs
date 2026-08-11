@@ -1,3 +1,4 @@
+using BOCCHI.Common.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BOCCHI.Common.Data.Zones;
@@ -8,6 +9,7 @@ public static class ZoneServiceCollectionExtensions
     {
         services.AddSingleton<IZoneProvider, ZoneProvider>();
         services.AddSingleton<IPotCycleTracker, PotCycleTracker>();
+        services.AddSingleton<PotCycleSyncService>();
         return services;
     }
 

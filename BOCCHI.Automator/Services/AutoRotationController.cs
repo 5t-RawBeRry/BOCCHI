@@ -1,45 +1,113 @@
+using BOCCHI.Common;
 using BOCCHI.Common.Config;
-using Ocelot.Rotation.Services;
+using BOCCHI.Common.Services;
+using Dalamud.Plugin.Services;
+using Ocelot.Rotation.Services.BossMod;
+using Ocelot.Services.PlayerState;
 
 namespace BOCCHI.Automator.Services;
 
-/// <summary>
-///     Owns the ephemeral <c>BOCCHI AI</c> BossMod preset while Illegal Mode is on
-///     when <see cref="AutomatorConfig.ToggleAiProvider"/> is set.
-/// </summary>
-public class AutoRotationController(IRotationService rotations, AutomatorConfig config)
+/// <summary>Owns ephemeral BOCCHI AI BossMod/VBM presets while Illegal Mode is on.</summary>
+public class AutoRotationController(
+    BossModRotationService bossMod,
+    AutomatorConfig config,
+    UIConfig uiConfig,
+    IPlayer player,
+    IChatGui chat,
+    ICriticalEncounterContext criticalEncounters,
+    IFateContext fates
+)
 {
-    /// <summary>Illegal Mode started — create the preset (not yet active).</summary>
     public void PrepareForIllegalMode()
     {
-        if (config.ToggleAiProvider)
+        if (!config.ToggleAiProvider)
         {
-            rotations.EnsureAutoRotationPreset();
+            return;
         }
+
+        if (!bossMod.TryEnsureBocchiAiPreset(out _))
+        {
+            PrintNotReady();
+        }
+
+        // Hot reload mid-CE/FATE: Enter may have already run (or EventId lags). Arm AI now.
+        SyncActivityAi();
     }
 
-    /// <summary>Illegal Mode stopped — clear active and delete the preset.</summary>
     public void TeardownForIllegalMode()
     {
-        if (config.ToggleAiProvider)
+        if (!config.ToggleAiProvider)
         {
-            rotations.DestroyAutoRotationPreset();
+            return;
         }
+
+        bossMod.DestroyAutoRotationPreset();
     }
 
-    public void EnableForActivity()
+    public void EnableForFate()
     {
-        if (config.ToggleAiProvider)
+        if (!config.ToggleAiProvider)
         {
-            rotations.EnableAutoRotation();
+            return;
         }
+
+        bossMod.EnableForActivity(BocchiAiActivity.Fate);
+    }
+
+    public void EnableForCriticalEncounter()
+    {
+        if (!config.ToggleAiProvider)
+        {
+            return;
+        }
+
+        bossMod.EnableForActivity(BocchiAiActivity.CriticalEncounter);
     }
 
     public void DisableForTravel()
     {
-        if (config.ToggleAiProvider)
+        if (!config.ToggleAiProvider)
         {
-            rotations.DisableAutoRotation();
+            return;
         }
+
+        bossMod.DisableAutoRotation();
+    }
+
+    public void Tick()
+    {
+        if (!config.ToggleAiProvider)
+        {
+            return;
+        }
+
+        // Pathfinding Enter disables AI; if EventId already says we're in the CE/FATE,
+        // re-arm so a plugin reload mid-fight does not leave the preset inactive.
+        SyncActivityAi();
+        bossMod.Refresh();
+    }
+
+    private void SyncActivityAi()
+    {
+        if (criticalEncounters.IsInCriticalEncounter())
+        {
+            bossMod.EnableForActivity(BocchiAiActivity.CriticalEncounter);
+            return;
+        }
+
+        if (fates.IsInFate())
+        {
+            bossMod.EnableForActivity(BocchiAiActivity.Fate);
+        }
+    }
+
+    private void PrintNotReady()
+    {
+        var job = player.GetClassJob();
+        BocchiChat.PrintError(
+            chat,
+            uiConfig,
+            $"BOCCHI AI not ready (is BossMod / BMR loaded?). "
+            + $"job={job?.Abbreviation.ToString() ?? "?"} melee={player.IsMelee()}");
     }
 }

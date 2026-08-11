@@ -29,7 +29,8 @@ public class WaitingForPotFateHandler
     IChainManager manager,
     IFateRepository fates,
     IZoneProvider zones,
-    AutomatorConfig config
+    AutomatorConfig config,
+    AutoRotationController autoRotation
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.WaitingForPotFate)
 {
     public override StatePriority GetScore()
@@ -77,6 +78,7 @@ public class WaitingForPotFateHandler
     public override void Enter()
     {
         base.Enter();
+        autoRotation.DisableForTravel();
         manager.CancelAll();
         memory.Forget<GoalPathStepMemory>();
         memory.TryAdd<WaitingForPotFateMemory>();
@@ -110,12 +112,13 @@ public class WaitingForPotFateHandler
         if (dist > NavigationConstants.PotPrepositionMaxRadius)
         {
             Vector3 approach = NavigationApproach.GetPotPrepositionPosition(potCenter, player.Position);
-            AutoMount.MaybeRemount(config, conditions, objects, approach);
 
             if (pathfinder.IsIdle())
             {
                 pathfinder.PathfindAndMoveTo(new(approach));
             }
+
+            AutoMount.MaybeRemount(config, conditions, objects, approach, zones.GetZone().IsInBasecamp());
 
             return;
         }
