@@ -86,7 +86,7 @@ public class TreasureHunterService
     private const float StuckProgressThreshold = 1.5f;
 
     /// <summary>Below this distance, walk-stuck recovery does not run (open / empty-skip owns it).</summary>
-    private const float StuckDetectionMinDistance = OpenTreasureCofferChain.MaxInteractRange;
+    private const float StuckDetectionMinDistance = OpenTreasureCofferChain.PreferredOpenDistance;
 
     private readonly List<TreasureLayoutDatum> layoutTreasure = [];
     private readonly List<HuntPathfinderStep> steps = [];
@@ -1243,7 +1243,6 @@ public class TreasureHunterService
 
             checkedNodeIds.Add(nodeId);
             trimmed++;
-            log.Debug("Treasure Sight: trimming empty pad {NodeId} (within skip range)", nodeId);
         }
 
         return trimmed;

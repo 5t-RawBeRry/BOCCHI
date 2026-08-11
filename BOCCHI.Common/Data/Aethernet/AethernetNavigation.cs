@@ -45,19 +45,6 @@ public static class AethernetNavigation
     public static Vector3 GetCampStandOffPosition(this Node node, Vector3? from = null)
         => GetRingPosition(node.Position, node.GetInteractPosition(), DefaultBodyRadius, from);
 
-    /// <summary>Prefer authored dead radius when the node maps to a zone shard.</summary>
-    public static Vector3 GetCampStandOffPosition(this Node node, IZone zone, Vector3? from = null)
-    {
-        float body = DefaultBodyRadius;
-        if (node.Metadata is TeleportNodeMetadata { AetheryteId: var id }
-            && zone.FindAetheryte(id) is { } data)
-        {
-            body = data.GetBodyRadius();
-        }
-
-        return GetRingPosition(node.Position, node.GetInteractPosition(), body, from);
-    }
-
     private static float DefaultBodyRadius => MathF.Max(2f, AethernetData.DefaultDeadRadius);
 
     public static Vector3 GetIdleWaitPosition(this AethernetData data, Vector3? from = null)

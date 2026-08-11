@@ -49,9 +49,6 @@ public class OpenTreasureCofferChain
     /// <summary>Alias used by callers / pot farm approach.</summary>
     public const float InteractDistance = PreferredOpenDistance;
 
-    /// <summary>Keep pathing toward a live coffer while outside Pandora range.</summary>
-    public const float MaxInteractRange = PreferredOpenDistance;
-
     public override string Name => "Open Treasure Coffer";
 
     protected override IChain Compose(IChain chain, TreasureOpenTarget target)

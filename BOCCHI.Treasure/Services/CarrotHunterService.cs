@@ -682,20 +682,10 @@ public sealed class CarrotHunterService
         float dist2d = player.Position.Distance2D(bunny.Position);
         float dist3d = player.Position.Distance(bunny.Position);
 
-        // Path in until within Pandora-style open range (do not interact from 5–12y).
+        // Path in until within open range (do not interact from 5–12y).
         // Bunny coffers open while mounted — only Fortune Carrot use needs a dismount.
         if (dist3d > HuntDistances.BunnyInteractRadius
             && !(dist2d <= HuntDistances.StuckNearRadius && IsStuckNearTarget(dist2d)))
-        {
-            if (!vnav.IsRunning())
-            {
-                vnav.PathfindAndMoveCloseTo(bunny.Position, false, OpenTreasureCofferChain.PathArrivalRange);
-            }
-
-            return;
-        }
-
-        if (dist3d > HuntDistances.BunnyMaxInteractRadius)
         {
             if (!vnav.IsRunning())
             {

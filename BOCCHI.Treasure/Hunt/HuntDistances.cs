@@ -1,5 +1,3 @@
-using BOCCHI.Treasure.ChainRecipes;
-
 namespace BOCCHI.Treasure.Hunt;
 
 /// <summary>
@@ -48,9 +46,6 @@ public static class HuntDistances
 
     /// <summary>3D interact range for bunny chests (same as coffer open).</summary>
     public const float BunnyInteractRadius = UseRadius;
-
-    /// <summary>Keep aligned with <see cref="OpenTreasureCofferChain.MaxInteractRange"/>.</summary>
-    public const float BunnyMaxInteractRadius = OpenTreasureCofferChain.MaxInteractRange;
 
     /// <summary>Dismount once this close before using a Fortune Carrot.</summary>
     public const float DismountRadius = 15f;

@@ -87,9 +87,7 @@ public sealed class NinjaHideAssist(IPlayer player, ICondition conditions, IPlug
         }
     }
 
-    public void TryDismount() => DismountAssist.TryDismount(conditions);
-
-    public void TryCastHide()
+    private void TryCastHide()
     {
         if (!IsNinja || IsStealthed || IsMounted || ECommonsPlayer.IsJumping)
         {
@@ -104,7 +102,7 @@ public sealed class NinjaHideAssist(IPlayer player, ICondition conditions, IPlug
         Hide.Cast();
     }
 
-    public bool TryEquipGearset(int gearsetNumber) =>
+    private bool TryEquipGearset(int gearsetNumber) =>
         TryEquipGearsetNumber(gearsetNumber, requireNinja: true);
 
     private void RememberCurrentGearsetIfNeeded()
