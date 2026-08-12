@@ -296,8 +296,9 @@ public class NorthHorn
                     new(new(-269.6122f, 107.93719f, 875.6997f), 99),
                     new(new(-15.89468f, 4.0000005f, -20.29277f), 99),
                     new(new(-747.4032f, 28.970308f, -492.1095f), 99),
-                    new(new(-259.6f, 3.6823246f, 56.9f), 99),
-                    new(new(-172.6f, 6.0019975f, 103.2f), 99),
+                    // Map ~16.8, 22.3 — old Y≈3–6 points were off-mesh and stuck the farm (#176).
+                    new(new(-184f, 53.15f, 91f), 99),
+                    new(new(-172.6f, 53.15f, 103.2f), 99),
                 ]
             }
         };

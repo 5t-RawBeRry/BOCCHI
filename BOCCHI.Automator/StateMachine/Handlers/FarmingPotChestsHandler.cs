@@ -59,11 +59,22 @@ public class FarmingPotChestsHandler
 
     private static readonly TimeSpan SettleDelay = TimeSpan.FromMilliseconds(300);
 
+    /// <summary>Skip a candidate when vnav can't progress toward it (off-mesh pads) (#176).</summary>
+    private static readonly TimeSpan CandidateApproachStuckTimeout = TimeSpan.FromSeconds(20);
+
+    private const float CandidateApproachProgressThreshold = 1.5f;
+
     private const int MaxElixirAttempts = 3;
 
     private const int MaxRefineSteps = 6;
 
     private Task<ChainResult>? activeChain;
+
+    private Vector3? candidateApproachTarget;
+
+    private DateTimeOffset candidateApproachSince = DateTimeOffset.MinValue;
+
+    private float candidateApproachBestDist = float.MaxValue;
 
     public override StatePriority GetScore()
     {
@@ -72,13 +83,10 @@ public class FarmingPotChestsHandler
             return StatePriority.Never;
         }
 
-        if (memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _))
-        {
-            return StatePriority.Never;
-        }
-
+        // High so we beat opportunistic Return / next-goal pathing if a GoalPathStep
+        // briefly overlaps (Pending handoff race). Farm start clears those latches.
         return memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _)
-            ? StatePriority.Normal
+            ? StatePriority.High
             : StatePriority.Never;
     }
 
@@ -96,6 +104,7 @@ public class FarmingPotChestsHandler
     public override void Exit(AutomatorState next)
     {
         base.Exit(next);
+        ResetCandidateApproachWatch();
         chainManager.CancelAll();
         pathfinder.Stop();
         activeChain = null;
@@ -367,10 +376,22 @@ public class FarmingPotChestsHandler
         if (distance > OpenTreasureCofferChain.InteractDistance)
         {
             farm.SettledAtUtc = DateTimeOffset.MinValue;
+            if (IsCandidateApproachStuck(target, distance))
+            {
+                logger.Warning(
+                    "Pot treasure: stuck approaching {Label} at {Pos:F0} — skipping candidate ({Remaining} left)",
+                    farm.Candidates.Peek().Label,
+                    target,
+                    farm.Candidates.Count - 1);
+                SkipCurrentCandidate(farm);
+                return;
+            }
+
             EnsurePathing(target);
             return;
         }
 
+        ResetCandidateApproachWatch();
         pathfinder.Stop();
         if (farm.SettledAtUtc == DateTimeOffset.MinValue)
         {
@@ -411,11 +432,50 @@ public class FarmingPotChestsHandler
         }
 
         // Give up on this candidate.
-        farm.Candidates.Dequeue();
+        SkipCurrentCandidate(farm);
+    }
+
+    private void SkipCurrentCandidate(PotChestFarmMemory farm)
+    {
+        if (farm.Candidates.Count > 0)
+        {
+            farm.Candidates.Dequeue();
+        }
+
         farm.ElixirAttempts = 0;
         farm.RefineSteps = 0;
         farm.RefineTarget = null;
         farm.SettledAtUtc = DateTimeOffset.MinValue;
+        farm.WaitingForSpawnSince = DateTimeOffset.MinValue;
+        ResetCandidateApproachWatch();
+        pathfinder.Stop();
+    }
+
+    private bool IsCandidateApproachStuck(Vector3 target, float distance)
+    {
+        if (candidateApproachTarget is not { } previous
+            || previous.Distance2D(target) > 2f)
+        {
+            candidateApproachTarget = target;
+            candidateApproachSince = DateTimeOffset.UtcNow;
+            candidateApproachBestDist = distance;
+            return false;
+        }
+
+        if (distance < candidateApproachBestDist - CandidateApproachProgressThreshold)
+        {
+            candidateApproachBestDist = distance;
+            return false;
+        }
+
+        return DateTimeOffset.UtcNow - candidateApproachSince >= CandidateApproachStuckTimeout;
+    }
+
+    private void ResetCandidateApproachWatch()
+    {
+        candidateApproachTarget = null;
+        candidateApproachSince = DateTimeOffset.MinValue;
+        candidateApproachBestDist = float.MaxValue;
     }
 
     private void HandleOpeningReveal(PotChestFarmMemory farm)
@@ -613,7 +673,8 @@ public class FarmingPotChestsHandler
 
     private void TryOpenChest(IGameObject chest)
     {
-        if (DismountAssist.TryDismount(conditions) || ECommonsPlayer.IsJumping)
+        // Mounted open matches Pandora / hunt coffers (#175). Wait out jump landings only.
+        if (ECommonsPlayer.IsJumping)
         {
             return;
         }

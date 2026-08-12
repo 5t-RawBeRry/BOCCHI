@@ -1,4 +1,5 @@
 using System.Numerics;
+using BOCCHI.Common.Data.Mobs;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using ECommons.GameFunctions;
@@ -13,6 +14,9 @@ public static class KnowledgeThreat
     public const uint OccultIsleblazerBaseId = 17900;
 
     public const float IsleblazerUnhideDistance = 5f;
+
+    /// <summary>Crescent Haunt (NH) — sees through Hide; do not dismount/Hide for it (#175).</summary>
+    public static readonly uint CrescentHauntNameId = (uint)Mob.Haunt;
 
     /// <summary>
     /// Extra enter radius while mounted so we stop / dismount before riding through the foot enter bubble.
@@ -54,7 +58,8 @@ public static class KnowledgeThreat
                 continue;
             }
 
-            if (battle.BaseId == OccultIsleblazerBaseId)
+            if (battle.BaseId == OccultIsleblazerBaseId
+                || battle.NameId == CrescentHauntNameId)
             {
                 continue;
             }

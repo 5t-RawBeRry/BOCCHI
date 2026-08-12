@@ -357,7 +357,7 @@ public class Automator
         if (potFate != null && PotTreasureGroups.CanRunSmart(zone, fateId.Value))
         {
             logger.Info("Starting pot treasure (elixir/hints) for fate {FateId}", fateId.Value);
-            memory.TryAdd(PotChestFarmMemory.CreateSmart(fateId, potFate.Position));
+            BeginExclusivePotChestFarm(PotChestFarmMemory.CreateSmart(fateId, potFate.Position));
             return;
         }
 
@@ -396,7 +396,20 @@ public class Automator
         }
 
         logger.Info("Starting pot chest farm for fate {FateId} with {Count} chest positions", fateId.Value, positions.Count);
-        memory.TryAdd(PotChestFarmMemory.CreateBlind(fateId, positions));
+        BeginExclusivePotChestFarm(PotChestFarmMemory.CreateBlind(fateId, positions));
+    }
+
+    /// <summary>
+    /// Drop next-goal / Return travel so FarmingPotChests can open reveals.
+    /// Otherwise Choosing during Pending + Pathfinding (High) preempts the farm.
+    /// </summary>
+    private void BeginExclusivePotChestFarm(PotChestFarmMemory farm)
+    {
+        memory.Forget<GoalMemory>();
+        IllegalModeActivityWork.ForgetTravelLatches(memory);
+        memory.Forget<ReturningStateMemory>();
+        SoftStopPathfinding();
+        memory.TryAdd(farm);
     }
 
     private static string DescribeGoal(IGoal goal) =>

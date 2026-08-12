@@ -31,7 +31,7 @@ public class FateScorer
             return score;
         }
 
-        if (IsPotFateBelowMinTime(fate))
+        if (ShouldSkipPot(fate))
         {
             return score;
         }
@@ -74,7 +74,7 @@ public class FateScorer
                 continue;
             }
 
-            if (IsPotFateBelowMinTime(fate))
+            if (ShouldSkipPot(fate))
             {
                 continue;
             }
@@ -90,18 +90,7 @@ public class FateScorer
         return best;
     }
 
-    private bool IsPotFateBelowMinTime(Fate fate)
-    {
-        if (potsConfig.MinPotFateMinutesRemaining <= 0)
-        {
-            return false;
-        }
-
-        if (!zones.GetZone().IsPotFate(fate.Id.Value))
-        {
-            return false;
-        }
-
-        return fate.TimeRemainingSeconds < potsConfig.MinPotFateMinutesRemaining * 60L;
-    }
+    private bool ShouldSkipPot(Fate fate) =>
+        zones.GetZone().IsPotFate(fate.Id.Value)
+        && potsConfig.ShouldSkipLivePot(fate.Progress, fate.TimeRemainingSeconds);
 }

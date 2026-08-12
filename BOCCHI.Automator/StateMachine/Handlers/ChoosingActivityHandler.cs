@@ -57,7 +57,8 @@ public class ChoosingActivityHandler
             return StatePriority.Never;
         }
 
-        if (memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _))
+        if (memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _)
+            || memory.TryRemember<PendingPotChestFarmMemory>(out PendingPotChestFarmMemory _))
         {
             return StatePriority.Never;
         }

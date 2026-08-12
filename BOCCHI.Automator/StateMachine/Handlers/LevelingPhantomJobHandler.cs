@@ -34,6 +34,7 @@ public class LevelingPhantomJobHandler
             || memory.TryRemember<TreasureSightSupportJobMemory>(out TreasureSightSupportJobMemory _)
             || memory.TryRemember<TriageSupportJobMemory>(out TriageSupportJobMemory _)
             || memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _)
+            || memory.TryRemember<PendingPotChestFarmMemory>(out PendingPotChestFarmMemory _)
             || memory.TryRemember<GoalMemory>(out GoalMemory _)
             || memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _)
             || memory.TryRemember<NavigationInterruptedMemory>(out NavigationInterruptedMemory _))

@@ -91,6 +91,8 @@ public class TreasureHunterService
     private readonly List<TreasureLayoutDatum> layoutTreasure = [];
     private readonly List<HuntPathfinderStep> steps = [];
     private readonly HashSet<uint> checkedNodeIds = [];
+    /// <summary>Stuck / geometry skips — never reclaim via Nearby divert (#173).</summary>
+    private readonly HashSet<uint> stuckSkippedNodeIds = [];
     private readonly HashSet<uint> lastCompletedRunNodeIds = [];
 
     private readonly Stopwatch stopwatch = new();
@@ -521,6 +523,7 @@ public class TreasureHunterService
         authoredNodeHalves.Clear();
         authoredNodeOrder.Clear();
         checkedNodeIds.Clear();
+        stuckSkippedNodeIds.Clear();
         ClearEmptyPadCandidate();
         ResetStuckWatch();
         if (!ManagedByPotsTreasure)
@@ -701,6 +704,7 @@ public class TreasureHunterService
             "Treasure hunt appears stuck reaching coffer {NodeId}; excluding it and recalculating the route",
             step.NodeId);
         checkedNodeIds.Add(step.NodeId);
+        stuckSkippedNodeIds.Add(step.NodeId);
         LastCheckedNodeId = step.NodeId;
         ResetStuckWatch();
         return RecalculateRoute();
@@ -1023,6 +1027,12 @@ public class TreasureHunterService
             return false;
         }
 
+        // Stuck / unpathable pads must stay skipped — reclaiming them loops the wind jump (#173).
+        if (stuckSkippedNodeIds.Contains(nearbyId))
+        {
+            return false;
+        }
+
         // False empty-skip may have checked this pad while the coffer is still live.
         checkedNodeIds.Remove(nearbyId);
         pendingPreferStartNode = nearbyId;
@@ -1083,7 +1093,9 @@ public class TreasureHunterService
                 continue;
             }
 
-            if (!MatchesHuntCofferFilter(layout.ModelId) || IsLayoutCofferOpened(layout.Id))
+            if (!MatchesHuntCofferFilter(layout.ModelId)
+                || IsLayoutCofferOpened(layout.Id)
+                || stuckSkippedNodeIds.Contains(layout.Id))
             {
                 continue;
             }
@@ -2287,6 +2299,7 @@ public class TreasureHunterService
 
         layoutTreasure.Clear();
         pathPlanner = null;
+        stuckSkippedNodeIds.Clear();
         pandoraAutoOpen.Release();
 
         if (wasStandalone || wasIllegalFiller)

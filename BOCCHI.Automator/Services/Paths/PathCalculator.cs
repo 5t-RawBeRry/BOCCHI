@@ -139,10 +139,14 @@ public class PathCalculator
 
         if (potPrepositionStandOff is { } standOff)
         {
-            // Random stand-off so bots don't stack on pot center.
-            resolvedSteps = resolvedSteps
-                .Select(step => step.PathStepData is Pathfind ? PathStep.Pathfind(standOff) : step)
-                .ToList();
+            // Only rewrite the *arrival* Pathfind. Rewriting walk-to-pad Pathfinds before
+            // Teleport turned Return→TP into a cross-map mount (#174).
+            int lastPathfind = resolvedSteps.FindLastIndex(step => step.PathStepData is Pathfind);
+            if (lastPathfind >= 0)
+            {
+                float range = resolvedSteps[lastPathfind].PathStepData is Pathfind(_, var r) ? r : 0f;
+                resolvedSteps[lastPathfind] = PathStep.Pathfind(standOff, range);
+            }
         }
 
         if (config.StopAfterReturn)

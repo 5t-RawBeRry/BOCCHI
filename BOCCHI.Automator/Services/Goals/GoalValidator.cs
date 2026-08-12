@@ -128,8 +128,26 @@ public class GoalValidator
         }
 
         // Live pot — stay until despawn (chest farm starts then). Keep pot goals over CEs.
+        // Skip late pots while still pathing; once registered, finish for Cache Me / chests (#174).
         if (isPot)
         {
+            if (fateContext.GetFateId() == id)
+            {
+                return true;
+            }
+
+            Fate? live = fateRepository.Snapshot().FirstOrDefault(f => f.Id == id);
+            if (live != null
+                && potsConfig.ShouldSkipLivePot(live.Progress, live.TimeRemainingSeconds))
+            {
+                logger.Info(
+                    "Dropping pot FATE {FateId} — progress {Progress}% / {Minutes:F1}m left (skip thresholds)",
+                    id.Value,
+                    live.Progress,
+                    live.TimeRemainingSeconds / 60.0);
+                return false;
+            }
+
             return true;
         }
 
@@ -253,6 +271,7 @@ public class GoalValidator
         IZone zone = zones.GetZone();
         Fate? live = fateRepository.Snapshot()
             .Where(f => zone.IsPotFate(f.Id.Value))
+            .Where(f => !potsConfig.ShouldSkipLivePot(f.Progress, f.TimeRemainingSeconds))
             .FirstOrDefault(f => fatesConfig.IsFateEnabledForIllegalMode(
                 f.Id.Value,
                 isPotFate: true,

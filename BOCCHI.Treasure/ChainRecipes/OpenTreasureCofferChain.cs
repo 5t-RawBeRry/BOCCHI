@@ -1,4 +1,3 @@
-using BOCCHI.Common.Data.Zones;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
@@ -102,10 +101,9 @@ public class OpenTreasureCofferChain
 
                 StopNav();
 
-                if (DismountAssist.TryDismount(conditions))
-                {
-                    return false;
-                }
+                // Stay mounted when possible (Pandora AutoOpenChests style). Forced dismount
+                // in high-knowledge areas was getting players killed while looting (#175).
+                // Callers that need feet (Ninja Hide) already dismount before this chain.
 
                 // Pandora: require targetable before Interact.
                 if (!gameObject->GetIsTargetable())

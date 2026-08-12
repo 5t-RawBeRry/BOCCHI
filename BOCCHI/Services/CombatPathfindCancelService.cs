@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using BOCCHI.Automator.Services;
 using BOCCHI.Common.Data.OccultCrescent;
+using BOCCHI.Common.Data.Paths;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
@@ -139,12 +140,21 @@ public sealed unsafe class CombatPathfindCancelService
 
     private void CancelPathfinding()
     {
+        // Don't abort aethernet Teleport mid-hop — combat while walking to the camp pad
+        // was dropping Return→TP and remounting across the map (#174).
+        if (memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory path)
+            && path.GetNextPathStep()?.Kind == PathStepKind.Teleport)
+        {
+            return;
+        }
+
         logger.Info("Combat action used — canceling pathfinding");
         pathfinder.Stop();
         vnav.Stop();
         chains.CancelWhere(name =>
             name.StartsWith("ActivityGoto::", StringComparison.Ordinal)
-            || PathStepSoftStop.IsPathStepChain(name));
+            || (PathStepSoftStop.IsPathStepChain(name)
+                && !name.StartsWith($"{PathStepSoftStop.Prefix}Teleport", StringComparison.Ordinal)));
 
         // Drop the in-flight route only — keep GoalMemory so Illegal Mode can enter the
         // FATE/CE or replan after combat (#157 / #159). Soft-pause is for World Path /

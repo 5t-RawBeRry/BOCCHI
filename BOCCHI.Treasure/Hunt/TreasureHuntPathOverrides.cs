@@ -18,6 +18,12 @@ public static class TreasureHuntPathOverrides
         [
             new(-904f, 157.8f, 636f),
         ],
+        // Suspended Masonry lower pad — map ~8.6, 35.8; vnav cuts off the island edge (#173).
+        [(ZoneId.NorthHorn, 2058)] =
+        [
+            new(-700f, 160f, 800f),
+            new(-640f, 160.1f, 780f),
+        ],
     };
 
     /// <summary>Leave through after the coffer so the next leg does not re-enter the hazard.</summary>
@@ -27,6 +33,10 @@ public static class TreasureHuntPathOverrides
         [(ZoneId.NorthHorn, 2061)] =
         [
             new(-919f, 157.8f, 641f),
+        ],
+        [(ZoneId.NorthHorn, 2058)] =
+        [
+            new(-700f, 160f, 800f),
         ],
     };
 
