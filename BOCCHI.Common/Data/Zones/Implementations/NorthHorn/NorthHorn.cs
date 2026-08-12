@@ -149,6 +149,12 @@ public class NorthHorn
     public override BuffZone? GetBuffZone() =>
         new(new Vector3(885.009f, 258.500f, 874.735f), 2.5f, 4.5f);
 
+    public override List<Vector3> GetAuthoredKnowledgeCrystalCenters() =>
+    [
+        // Forked Tower: Magic — first knowledge crystal (manual buff inside the tower).
+        new(-893f, 780f, -981.803f),
+    ];
+
     public override ShoppingVendorData? GetShoppingVendor() =>
         new(1059485, BaseCamp.Id);
 

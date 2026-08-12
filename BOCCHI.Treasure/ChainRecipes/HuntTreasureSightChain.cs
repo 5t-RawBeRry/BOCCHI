@@ -35,6 +35,7 @@ public class HuntTreasureSightChain
         }
 
         SupportJob freelancer = supportJobs.Create(SupportJobId.PhantomFreelancer);
+        var castState = new CastState();
 
         return chain
             .UseMiddleware<LogChainMiddleware>()
@@ -58,8 +59,8 @@ public class HuntTreasureSightChain
                 "HuntTreasureSight::ToFreelancer"
             )
             .WaitUntil(
-                _ => ValueTask.FromResult(TryCastSight()),
-                TimeSpan.FromSeconds(15),
+                _ => ValueTask.FromResult(TryCastSight(castState)),
+                TimeSpan.FromSeconds(20),
                 TimeSpan.FromMilliseconds(250),
                 "HuntTreasureSight::Cast"
             )
@@ -113,8 +114,24 @@ public class HuntTreasureSightChain
         return player.StatusList.Has(statusId);
     }
 
-    private bool TryCastSight()
+    /// <summary>
+    /// Start Treasure Sight and wait until the cast finishes.
+    /// Returning true on UseAction alone restored the previous job mid-cast and cancelled Sight.
+    /// </summary>
+    private bool TryCastSight(CastState state)
     {
+        if (IsCasting())
+        {
+            state.SawCasting = true;
+            return false;
+        }
+
+        if (state.SawCasting || state.Issued)
+        {
+            // Cast completed (or never entered casting for an instant-style success).
+            return true;
+        }
+
         if (!EzThrottler.Throttle("HuntTreasureSight::Cast", 500))
         {
             return false;
@@ -125,11 +142,25 @@ public class HuntTreasureSightChain
             return false;
         }
 
-        return Actions.PhantomActionII.Cast();
+        if (Actions.PhantomActionII.Cast())
+        {
+            state.Issued = true;
+        }
+
+        return false;
     }
+
+    private bool IsCasting() =>
+        conditions[ConditionFlag.Casting] || conditions[ConditionFlag.Casting87];
 
     private bool TryRestore(SupportJobId? restoreId)
     {
+        // Never swap while still casting — job change cancels Treasure Sight.
+        if (IsCasting())
+        {
+            return false;
+        }
+
         if (restoreId is not { } id)
         {
             return true;
@@ -137,5 +168,12 @@ public class HuntTreasureSightChain
 
         SupportJob job = supportJobs.Create(id);
         return TryBecomeJob(id, job.StatusId);
+    }
+
+    private sealed class CastState
+    {
+        public bool Issued;
+
+        public bool SawCasting;
     }
 }

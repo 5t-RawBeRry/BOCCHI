@@ -96,9 +96,16 @@ public class IdleHandler(
         }
 
         // Path to spots spread between magenta (Lifestream) and cyan (idle outer).
-        List<Vector3> candidates = zone.GetIdleWaitCandidates(player.Position)
-            .OrderBy(candidate => player.Position.Distance2D(candidate))
-            .ToList();
+        // Shuffle once per idle session so clients don't all take the nearest tile first.
+        if (idle.WaitCandidates is not { Count: > 0 })
+        {
+            List<Vector3> built = zone.GetIdleWaitCandidates(player.Position).ToList();
+            ShuffleInPlace(built);
+            idle.WaitCandidates = built;
+            idle.ApproachCandidateIndex = 0;
+        }
+
+        List<Vector3> candidates = idle.WaitCandidates;
         if (candidates.Count == 0)
         {
             return;
@@ -138,4 +145,13 @@ public class IdleHandler(
 
     private bool IsNavigationInterrupted() =>
         memory.TryRemember<NavigationInterruptedMemory>(out NavigationInterruptedMemory _);
+
+    private static void ShuffleInPlace(List<Vector3> list)
+    {
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = Random.Shared.Next(i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
+        }
+    }
 }

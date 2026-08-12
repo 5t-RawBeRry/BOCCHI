@@ -44,6 +44,16 @@ public interface IZone
 
         const float crystalInteractionRange = 5f;
         float maxSq = crystalInteractionRange * crystalInteractionRange;
+        foreach (Vector3 site in GetAuthoredKnowledgeCrystalCenters())
+        {
+            float adx = position.X - site.X;
+            float adz = position.Z - site.Z;
+            if ((adx * adx) + (adz * adz) <= maxSq)
+            {
+                return true;
+            }
+        }
+
         foreach (KnowledgeCrystalData crystal in GetNearbyKnowledgeCrystals())
         {
             float dx = position.X - crystal.Position.X;
@@ -81,6 +91,12 @@ public interface IZone
     List<CarrotData> GetCarrotData() => [];
 
     BuffZone? GetBuffZone() => null;
+
+    /// <summary>
+    ///     Authored knowledge-crystal centers away from camp (e.g. Forked Tower) so manual buff
+    ///     works when the live object is filtered out or missing.
+    /// </summary>
+    List<Vector3> GetAuthoredKnowledgeCrystalCenters() => [];
 
     TreasureRoutePolicy GetTreasureRoutePolicy() => new();
 

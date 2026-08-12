@@ -114,8 +114,6 @@ public static class AethernetNavigation
             outer = inner + MathF.Max(0.5f, EdgeClearance - PathfindArrivalRadius);
         }
 
-        yield return nearest.GetIdleWaitPosition(from);
-
         Vector3 crystal = nearest.Position;
         Vector3 approach = FlatOffset(from, crystal);
         if (approach.LengthSquared() < 0.25f)
@@ -123,13 +121,18 @@ public static class AethernetNavigation
             approach = new Vector3(1f, 0f, 0f);
         }
 
-        float baseAngle = MathF.Atan2(approach.Z, approach.X);
+        // Jitter the fan around the approach side so clients don't share one tile.
+        float baseAngle = MathF.Atan2(approach.Z, approach.X)
+                          + ((Random.Shared.NextSingle() * 2f - 1f) * (MathF.PI / 4f));
         const int steps = 5;
         for (int i = 0; i < steps; i++)
         {
             float bandT = ((i % 3) + 1) / 4f;
-            float radius = inner + ((outer - inner) * bandT);
-            float angle = baseAngle + ((i - (steps / 2)) * (MathF.PI / 6f));
+            float bandJitter = (Random.Shared.NextSingle() * 2f - 1f) * 0.08f;
+            float radius = inner + ((outer - inner) * Math.Clamp(bandT + bandJitter, 0.05f, 1f));
+            float angle = baseAngle
+                          + ((i - (steps / 2)) * (MathF.PI / 6f))
+                          + ((Random.Shared.NextSingle() * 2f - 1f) * (MathF.PI / 18f));
             // Offset is XZ-only — using crystal.Y here doubled altitude (259→519) and broke vnav.
             yield return crystal + new Vector3(
                 MathF.Cos(angle) * radius,

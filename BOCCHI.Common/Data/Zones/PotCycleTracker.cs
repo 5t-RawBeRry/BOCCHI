@@ -55,6 +55,11 @@ public interface IPotCycleTracker
     ///     Ignored when a newer local (or equal) anchor already exists, or a pot is live locally.
     /// </summary>
     bool TryApplyRemoteAnchor(int potFateId, DateTimeOffset spawnAt, ushort territoryTypeId);
+
+    /// <summary>
+    ///     Drop the saved schedule for a territory so a new island/instance can sync or re-anchor.
+    /// </summary>
+    void Invalidate(ushort territoryTypeId, string? reason = null);
 }
 
 /// <summary>
@@ -126,6 +131,19 @@ public sealed class PotCycleTracker
             : Empty;
 
         cycles[territory] = BuildSnapshot(territory, potFates, active, now, previous);
+    }
+
+    public void Invalidate(ushort territoryTypeId, string? reason = null)
+    {
+        if (!cycles.Remove(territoryTypeId))
+        {
+            return;
+        }
+
+        logger.Info(
+            "[PotCycleTracker] cleared schedule for territory {Territory}{Reason}",
+            territoryTypeId,
+            string.IsNullOrEmpty(reason) ? "" : $": {reason}");
     }
 
     public bool TryApplyRemoteAnchor(int potFateId, DateTimeOffset spawnAt, ushort territoryTypeId)

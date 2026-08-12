@@ -1324,6 +1324,14 @@ public class TreasureHunterService
             return true;
         }
 
+        Vector3 layoutDestination = layoutTreasure.First(t => t.Id == step.NodeId).Position;
+
+        // Already opened (us or another plugin like VBM) — skip before finishing vias / path spam.
+        if (TryCompleteOpenedLayoutCoffer(layoutDestination, step.NodeId))
+        {
+            return true;
+        }
+
         EnsureWalkVias(step);
         if (walkViaIndex < walkVias.Count)
         {
@@ -1354,8 +1362,6 @@ public class TreasureHunterService
             vnav.Stop();
             return false;
         }
-
-        Vector3 layoutDestination = layoutTreasure.First(t => t.Id == step.NodeId).Position;
 
         // Open finished: succeed, or skip the pad on failure.
         if (activeChain != null)
@@ -1453,6 +1459,14 @@ public class TreasureHunterService
 
         ClearEmptyPadCandidate();
 
+        // Opened / looted (including VBM AutoOpen) — do not keep pathing at a dead coffer.
+        if (OpenTreasureCofferChain.IsOpenedOrLooted(present))
+        {
+            vnav.Stop();
+            ResetStuckWatch();
+            return true;
+        }
+
         if (!vnav.IsRunning()
             && !vnav.IsPathfinding()
             && dist2d > OpenTreasureCofferChain.PreferredOpenDistance)
@@ -1477,15 +1491,9 @@ public class TreasureHunterService
             return false;
         }
 
-        if (OpenTreasureCofferChain.IsOpenedOrLooted(present))
-        {
-            vnav.Stop();
-            ResetStuckWatch();
-            return true;
-        }
-
-        float dist3d = Vector3.Distance(player.Position, present.Position);
-        if (dist3d > OpenTreasureCofferChain.PreferredOpenDistance)
+        // Match OpenTreasureCofferChain: 2D gate. 3D Y mismatch left people pathing at chests
+        // already in front of them.
+        if (dist2d > OpenTreasureCofferChain.PreferredOpenDistance)
         {
             return false;
         }
@@ -1503,6 +1511,20 @@ public class TreasureHunterService
         );
 
         return false;
+    }
+
+    /// <summary>Layout pad already has an opened/looted coffer — count it done and stop nav.</summary>
+    private bool TryCompleteOpenedLayoutCoffer(Vector3 layoutDestination, uint nodeId)
+    {
+        IGameObject? present = FindTreasureForLayout(layoutDestination, nodeId);
+        if (present == null || !OpenTreasureCofferChain.IsOpenedOrLooted(present))
+        {
+            return false;
+        }
+
+        vnav.Stop();
+        ResetStuckWatch();
+        return true;
     }
 
     private bool HandleReturnToBaseCamp()

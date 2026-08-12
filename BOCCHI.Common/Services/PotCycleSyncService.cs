@@ -400,6 +400,10 @@ public sealed class PotCycleSyncService
         fingerprintStartEpoch = 0;
         lastFetchedInstanceKey = null;
         nextFetchAttemptUtc = DateTime.MinValue;
+
+        // Entering a zone (or returning after leave) must not keep a previous instance's pot clock.
+        // Stale HasKnownAnchor blocks sync fetch and makes Illegal Mode leave for pots too early/late.
+        potCycles.Invalidate(territory, "new island/instance fingerprint");
     }
 
     private void ResetSession()
@@ -409,7 +413,8 @@ public sealed class PotCycleSyncService
             return;
         }
 
-        // Drop sync fingerprint only — keep pot timers so "next pot" survives leaving OC.
+        // Drop sync fingerprint. Territory schedules stay until that zone is entered again
+        // (ResetFingerprint invalidates the destination so a new instance can sync).
         fingerprintTerritory = 0;
         instanceKey = null;
         fingerprintFateId = 0;

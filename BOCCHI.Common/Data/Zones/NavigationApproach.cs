@@ -16,10 +16,14 @@ public static class NavigationConstants
 
     public const float EventApproachMaxRadius = 5f;
 
+    /// <summary>Angular jitter (degrees) for FATE stand-off so clients don't stack on one ray.</summary>
+    public const float EventApproachJitter = 50f;
+
     /// <summary>PathCalculator treats this as "arrived at event" — must be ≥ max approach.</summary>
     public const float EventArrivalRadius = 5f;
 
-    public const float CampApproachJitter = 30f;
+    /// <summary>Legacy alias — prefer <see cref="EventApproachJitter"/> for FATE waits.</summary>
+    public const float CampApproachJitter = EventApproachJitter;
 
     /// <summary>
     ///     Added to authored CE combat radius for <see cref="CriticalEncounter.Radius"/> / debug green.
@@ -53,6 +57,9 @@ public static class NavigationConstants
 
     /// <summary>Circle travel stand-off outer (≤ stand ratio).</summary>
     public const float CriticalEncounterApproachMaxRatio = 0.75f;
+
+    /// <summary>Angular jitter (degrees) for CE wait stand-off around the approach ray.</summary>
+    public const float CriticalEncounterApproachJitter = 60f;
 
     /// <summary>Square CEs: max Chebyshev stand-off from center as a fraction of half-extent.</summary>
     public const float CriticalEncounterSquareApproachMaxRatio = 0.25f;
@@ -148,7 +155,7 @@ public static class NavigationApproach
         float range = NavigationConstants.EventApproachMinRadius
                       + Random.Shared.NextSingle() * (NavigationConstants.EventApproachMaxRadius - NavigationConstants.EventApproachMinRadius);
 
-        return destination.GetApproachPosition(from, range, NavigationConstants.CampApproachJitter);
+        return destination.GetApproachPosition(from, range, NavigationConstants.EventApproachJitter);
     }
 
     /// <summary>Random point inside the combat area so travel lands on the blue registration zone.</summary>
@@ -161,20 +168,18 @@ public static class NavigationApproach
         float red = MathF.Max(1f, combatRadius);
         if (shape == ActivityAreaShape.Square)
         {
-            // Squares (e.g. A Beast Unleashed): land well inside the blue box.
+            // Squares (e.g. A Beast Unleashed): scatter inside the blue box — not one approach ray.
             float maxFromCenter = MathF.Min(
                 red * NavigationConstants.CriticalEncounterSquareApproachMaxRatio,
                 NavigationConstants.EventApproachMaxRadius);
-            float approachRange = Random.Shared.NextSingle() * maxFromCenter;
-            Vector3 delta = from - center;
-            float chebyshev = MathF.Max(MathF.Abs(delta.X), MathF.Abs(delta.Z));
-            if (chebyshev < 0.001f || approachRange < 0.001f)
+            if (maxFromCenter < 0.5f)
             {
-                return center;
+                maxFromCenter = 0.5f;
             }
 
-            float scale = approachRange / chebyshev;
-            return center + new Vector3(delta.X * scale, 0f, delta.Z * scale);
+            float x = (Random.Shared.NextSingle() * 2f - 1f) * maxFromCenter;
+            float z = (Random.Shared.NextSingle() * 2f - 1f) * maxFromCenter;
+            return center + new Vector3(x, 0f, z);
         }
 
         float min = red * NavigationConstants.CriticalEncounterApproachMinRatio;
@@ -185,7 +190,10 @@ public static class NavigationApproach
         }
 
         float approachRangeCircle = min + Random.Shared.NextSingle() * (max - min);
-        return center.GetApproachPosition(from, approachRangeCircle);
+        return center.GetApproachPosition(
+            from,
+            approachRangeCircle,
+            NavigationConstants.CriticalEncounterApproachJitter);
     }
 
     public static Vector3 ResolveActivityApproach(Node goal, Vector3 from)

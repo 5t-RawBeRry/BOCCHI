@@ -152,6 +152,9 @@ public sealed class IdleStateMemory(TimeSpan returnAfter)
 
     public int ApproachCandidateIndex { get; set; }
 
+    /// <summary>Shuffled cyan-ring wait spots for this idle session (avoids stacking on nearest).</summary>
+    public List<Vector3>? WaitCandidates { get; set; }
+
     public TimeSpan GetIdleTime() => DateTimeOffset.UtcNow - Entered;
 
     public bool IsReadyToReturn() => GetIdleTime() >= ReturnAfter;
