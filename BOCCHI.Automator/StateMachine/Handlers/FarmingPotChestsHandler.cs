@@ -11,6 +11,7 @@ using BOCCHI.Treasure.Services;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
+using ECommons.Throttlers;
 using Ocelot.Chain;
 using Ocelot.Extensions;
 using Ocelot.Pathfinding.Extensions;
@@ -59,10 +60,10 @@ public class FarmingPotChestsHandler
 
     private static readonly TimeSpan SettleDelay = TimeSpan.FromMilliseconds(300);
 
-    /// <summary>Skip a candidate when vnav can't progress toward it (off-mesh pads) (#176).</summary>
-    private static readonly TimeSpan CandidateApproachStuckTimeout = TimeSpan.FromSeconds(20);
+    /// <summary>Skip a pot treasure target when vnav can't progress toward it (off-mesh pads) (#176/#177).</summary>
+    private static readonly TimeSpan ApproachStuckTimeout = TimeSpan.FromSeconds(20);
 
-    private const float CandidateApproachProgressThreshold = 1.5f;
+    private const float ApproachProgressThreshold = 1.5f;
 
     private const int MaxElixirAttempts = 3;
 
@@ -70,11 +71,11 @@ public class FarmingPotChestsHandler
 
     private Task<ChainResult>? activeChain;
 
-    private Vector3? candidateApproachTarget;
+    private Vector3? approachTarget;
 
-    private DateTimeOffset candidateApproachSince = DateTimeOffset.MinValue;
+    private DateTimeOffset approachSince = DateTimeOffset.MinValue;
 
-    private float candidateApproachBestDist = float.MaxValue;
+    private float approachBestDist = float.MaxValue;
 
     public override StatePriority GetScore()
     {
@@ -104,7 +105,7 @@ public class FarmingPotChestsHandler
     public override void Exit(AutomatorState next)
     {
         base.Exit(next);
-        ResetCandidateApproachWatch();
+        ResetApproachWatch();
         chainManager.CancelAll();
         pathfinder.Stop();
         activeChain = null;
@@ -376,7 +377,7 @@ public class FarmingPotChestsHandler
         if (distance > OpenTreasureCofferChain.InteractDistance)
         {
             farm.SettledAtUtc = DateTimeOffset.MinValue;
-            if (IsCandidateApproachStuck(target, distance))
+            if (IsApproachStuck(target, distance))
             {
                 logger.Warning(
                     "Pot treasure: stuck approaching {Label} at {Pos:F0} — skipping candidate ({Remaining} left)",
@@ -391,7 +392,7 @@ public class FarmingPotChestsHandler
             return;
         }
 
-        ResetCandidateApproachWatch();
+        ResetApproachWatch();
         pathfinder.Stop();
         if (farm.SettledAtUtc == DateTimeOffset.MinValue)
         {
@@ -447,35 +448,36 @@ public class FarmingPotChestsHandler
         farm.RefineTarget = null;
         farm.SettledAtUtc = DateTimeOffset.MinValue;
         farm.WaitingForSpawnSince = DateTimeOffset.MinValue;
-        ResetCandidateApproachWatch();
+        ResetApproachWatch();
         pathfinder.Stop();
     }
 
-    private bool IsCandidateApproachStuck(Vector3 target, float distance)
+    private bool IsApproachStuck(Vector3 target, float distance)
     {
-        if (candidateApproachTarget is not { } previous
-            || previous.Distance2D(target) > 2f)
+        Vector3 pathable = PathableTreasurePosition(target);
+        if (approachTarget is not { } previous
+            || previous.Distance2D(pathable) > 2f)
         {
-            candidateApproachTarget = target;
-            candidateApproachSince = DateTimeOffset.UtcNow;
-            candidateApproachBestDist = distance;
+            approachTarget = pathable;
+            approachSince = DateTimeOffset.UtcNow;
+            approachBestDist = distance;
             return false;
         }
 
-        if (distance < candidateApproachBestDist - CandidateApproachProgressThreshold)
+        if (distance < approachBestDist - ApproachProgressThreshold)
         {
-            candidateApproachBestDist = distance;
+            approachBestDist = distance;
             return false;
         }
 
-        return DateTimeOffset.UtcNow - candidateApproachSince >= CandidateApproachStuckTimeout;
+        return DateTimeOffset.UtcNow - approachSince >= ApproachStuckTimeout;
     }
 
-    private void ResetCandidateApproachWatch()
+    private void ResetApproachWatch()
     {
-        candidateApproachTarget = null;
-        candidateApproachSince = DateTimeOffset.MinValue;
-        candidateApproachBestDist = float.MaxValue;
+        approachTarget = null;
+        approachSince = DateTimeOffset.MinValue;
+        approachBestDist = float.MaxValue;
     }
 
     private void HandleOpeningReveal(PotChestFarmMemory farm)
@@ -492,10 +494,20 @@ public class FarmingPotChestsHandler
             float distance = player.Position.Distance2D(reveal.Position);
             if (distance > OpenTreasureCofferChain.InteractDistance)
             {
+                if (IsApproachStuck(reveal.Position, distance))
+                {
+                    logger.Warning(
+                        "Pot treasure: stuck approaching revealed coffer at {Pos:F0} - resuming search",
+                        reveal.Position);
+                    SkipCurrentReveal(farm);
+                    return;
+                }
+
                 EnsurePathing(reveal.Position);
                 return;
             }
 
+            ResetApproachWatch();
             pathfinder.Stop();
             TryOpenChest(reveal);
             return;
@@ -521,9 +533,27 @@ public class FarmingPotChestsHandler
         farm.RefineTarget = null;
         farm.SettledAtUtc = DateTimeOffset.MinValue;
         farm.WaitingForSpawnSince = DateTimeOffset.MinValue;
+        ResetApproachWatch();
         logger.Info(
             "Pot treasure: reveal already open — next candidate ({Remaining} left)",
             farm.Candidates.Count);
+        ResumeSearchOrBlind(farm);
+    }
+
+    private void SkipCurrentReveal(PotChestFarmMemory farm)
+    {
+        pathfinder.Stop();
+        if (farm.Candidates.Count > 0)
+        {
+            farm.Candidates.Dequeue();
+        }
+
+        farm.ElixirAttempts = 0;
+        farm.RefineSteps = 0;
+        farm.RefineTarget = null;
+        farm.SettledAtUtc = DateTimeOffset.MinValue;
+        farm.WaitingForSpawnSince = DateTimeOffset.MinValue;
+        ResetApproachWatch();
         ResumeSearchOrBlind(farm);
     }
 
@@ -575,10 +605,17 @@ public class FarmingPotChestsHandler
 
             if (distance > OpenTreasureCofferChain.InteractDistance)
             {
+                if (IsApproachStuck(chestPosition, distance))
+                {
+                    SkipCurrentBlindChest(farm, chestPosition, "stuck approaching blind chest");
+                    return;
+                }
+
                 EnsurePathing(chestPosition);
                 return;
             }
 
+            ResetApproachWatch();
             pathfinder.Stop();
 
             if (DateTimeOffset.UtcNow - farm.WaitingForSpawnSince >= ChestSpawnWait)
@@ -594,12 +631,37 @@ public class FarmingPotChestsHandler
 
         if (distance > OpenTreasureCofferChain.InteractDistance)
         {
+            if (IsApproachStuck(pathTarget, distance))
+            {
+                SkipCurrentBlindChest(farm, pathTarget, "stuck approaching live blind chest");
+                return;
+            }
+
             EnsurePathing(pathTarget);
             return;
         }
 
+        ResetApproachWatch();
         pathfinder.Stop();
         TryOpenChest(liveChest);
+    }
+
+    private void SkipCurrentBlindChest(PotChestFarmMemory farm, Vector3 target, string reason)
+    {
+        if (farm.Chests.Count > 0)
+        {
+            farm.Chests.Dequeue();
+        }
+
+        farm.WaitingForSpawnSince = DateTimeOffset.MinValue;
+        farm.SettledAtUtc = DateTimeOffset.MinValue;
+        ResetApproachWatch();
+        pathfinder.Stop();
+        logger.Warning(
+            "Pot treasure: {Reason} at {Pos:F0} - skipping blind chest ({Remaining} left)",
+            reason,
+            target,
+            farm.Chests.Count);
     }
 
     private bool TryRedirectCandidateGroup(PotChestFarmMemory farm, PotTreasureHintEvent evt)
@@ -659,7 +721,8 @@ public class FarmingPotChestsHandler
     private void EnsurePathing(Vector3 destination)
     {
         Vector3 pathable = PathableTreasurePosition(destination);
-        if (pathfinder.IsIdle())
+        string throttleKey = $"PotChestFarm::Path::{MathF.Round(pathable.X)}::{MathF.Round(pathable.Z)}";
+        if (pathfinder.IsIdle() && EzThrottler.Throttle(throttleKey, 750))
         {
             pathfinder.PathfindAndMoveTo(new(pathable));
         }
