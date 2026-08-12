@@ -13,6 +13,6 @@
 - Incomplete or outdated saved path maps are replaced with the bundled map (or rebuilt) automatically.
 - Leaving one island and entering another (or a new instance) no longer keeps an old pot FATE timer — pot timing resets for that island so it can sync again.
 - Waiting for FATEs/CEs and idling at camp use more random stand positions so people are less stacked on one tile.
-- Treasure Hunt no longer keeps pathfinding at coffers you (or another plugin) already opened.
-- Treasure Hunt opens coffers that are already in front of you instead of pathfinding again.
-- Starting Treasure Hunt no longer cancels Treasure Sight by swapping phantom jobs mid-cast.
+- Treasure Hunt moves on when a coffer is already open (including if another plugin opened it for you).
+- Treasure Hunt should open a coffer that’s already next to you instead of walking in place.
+- Starting Treasure Hunt should finish casting Treasure Sight instead of cancelling it when switching phantom jobs.
