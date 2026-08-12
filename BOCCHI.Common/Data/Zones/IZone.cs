@@ -87,4 +87,13 @@ public interface IZone
     ShoppingVendorData? GetShoppingVendor() => null;
 
     Task<ZoneGraph> GetGraph();
+
+    /// <summary>Current path-map load lifecycle for UI / diagnostics.</summary>
+    ZoneGraphLoadState GraphLoadState { get; }
+
+    /// <summary>Where the ready path map came from (none until Ready).</summary>
+    ZoneGraphSource GraphSource { get; }
+
+    /// <summary>Drop the in-memory and on-disk zone path map so the next GetGraph rebuilds or reseeds.</summary>
+    void InvalidateGraph(string? reason = null);
 }

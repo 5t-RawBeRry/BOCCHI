@@ -33,6 +33,7 @@ public class OperationalStatusBar
     UIConfig uiConfig,
     IAutomatorMemory memory,
     IPotCycleTracker potCycle,
+    IZoneProvider zones,
     IDataManager data,
     IBrandingService branding,
     IUIService ui,
@@ -150,6 +151,18 @@ public class OperationalStatusBar
         {
             ImGui.SameLine(0f, 16f);
             ui.Text(potChip, branding.DalamudGrey);
+        }
+
+        if (ZoneGraphStatusUi.TryFormat(
+                zones.GetZone(),
+                translator,
+                out _,
+                out string pathMapValue,
+                out bool pathMapBusy)
+            && pathMapBusy)
+        {
+            ImGui.SameLine(0f, 16f);
+            ui.Text($"{translator.T(".automation.automator.path_map")}: {pathMapValue}", branding.DalamudYellow);
         }
 
         // Own row — not a mode chip; knowledge-crystal buff apply/stop.

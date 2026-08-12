@@ -66,9 +66,24 @@ public class CompletionistRenderer
             }
         }
 
+        if (zones.GetZone().IsOccultCrescentZone())
+        {
+            ImGui.SameLine();
+            if (ImGui.Button(translator.T(".automation.automator.rebuild_path_map")))
+            {
+                automator.RebuildPathMap();
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip(translator.T(".automation.automator.rebuild_path_map_tooltip"));
+            }
+        }
+
         ImGui.Spacing();
         ImGui.TextWrapped(translator.T(".completionist.description"));
         ImGui.Spacing();
+        ZoneGraphStatusUi.Draw(zones.GetZone(), ui, translator);
         ImGui.TextDisabled(translator.T(".completionist.legend"));
 
         if (automator.IsCompletionist && memory.TryRemember<GoalMemory>(out GoalMemory goalMemory))

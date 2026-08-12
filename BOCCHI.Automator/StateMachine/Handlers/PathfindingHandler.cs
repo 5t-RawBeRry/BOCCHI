@@ -1,5 +1,6 @@
 using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services;
+using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Paths;
 using BOCCHI.Common.Data.StateMemory;
@@ -12,7 +13,9 @@ using ECommons.Throttlers;
 using Ocelot.Chain;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
+using Ocelot.Services.Translation;
 using Ocelot.States.Score;
+using Ocelot.Windows;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
@@ -26,7 +29,10 @@ public class PathfindingHandler
     ITargetManager targetManager,
     IZoneProvider zones,
     AutomatorConfig config,
+    UIConfig uiConfig,
     ICondition conditions,
+    IChatGui chat,
+    ITranslator<MainWindow> translator,
     AutoRotationController autoRotation,
     ILogger<PathfindingHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Pathfinding)
@@ -105,6 +111,15 @@ public class PathfindingHandler
         }
 
         path.Update();
+
+        // Route calc found nothing while still far from the goal — don't hang forever.
+        if (path.RoutingFailed && currentPathTask == null)
+        {
+            string message = translator.T(".automation.automator.path_routing_failed");
+            BocchiChat.PrintError(chat, uiConfig, message);
+            PauseForManualPathing(message);
+            return;
+        }
 
         // Teleport-only mode: calc produced no Return/Teleport steps → pause for manual.
         if (path.PauseWhenPlanCompletes && path.IsEmptyPlan && currentPathTask == null)

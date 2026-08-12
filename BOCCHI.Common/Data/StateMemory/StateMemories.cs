@@ -308,9 +308,11 @@ public sealed class PotChestFarmMemory
 
 public sealed class GoalPathStepMemory(IGoal goal, IPathCalculator calculator, bool pauseWhenPlanCompletes = false)
 {
-    private Task<Queue<IPathStep>>? pathStepTask = calculator.Calculate(goal);
+    private Task<PathCalculationResult>? pathStepTask = calculator.Calculate(goal);
 
     private bool emptyPlan;
+
+    private bool routingFailed;
 
     /// <summary>When true, finishing the plan (or an empty teleport-only plan) pauses nav for manual travel.</summary>
     public bool PauseWhenPlanCompletes { get; } = pauseWhenPlanCompletes;
@@ -322,7 +324,10 @@ public sealed class GoalPathStepMemory(IGoal goal, IPathCalculator calculator, b
     /// <summary>Calc finished with zero steps (already at destination, or walks-only plan stripped).</summary>
     public bool IsEmptyPlan => emptyPlan && pathStepTask == null;
 
-    public bool IsValid => pathStepTask != null || PathSteps.Count != 0 || emptyPlan;
+    /// <summary>Calc finished with no usable route while still far from the goal.</summary>
+    public bool RoutingFailed => routingFailed && pathStepTask == null;
+
+    public bool IsValid => pathStepTask != null || PathSteps.Count != 0 || emptyPlan || routingFailed;
 
     public void Update()
     {
@@ -338,8 +343,16 @@ public sealed class GoalPathStepMemory(IGoal goal, IPathCalculator calculator, b
 
         if (pathStepTask.IsCompletedSuccessfully)
         {
-            PathSteps = pathStepTask.Result;
-            emptyPlan = PathSteps.Count == 0;
+            PathCalculationResult result = pathStepTask.Result;
+            PathSteps = result.Steps;
+            routingFailed = result.RoutingFailed;
+            emptyPlan = PathSteps.Count == 0 && !result.RoutingFailed;
+        }
+        else
+        {
+            routingFailed = true;
+            emptyPlan = false;
+            PathSteps = [];
         }
 
         pathStepTask = null;

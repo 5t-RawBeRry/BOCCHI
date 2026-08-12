@@ -199,6 +199,48 @@ public class Automator
         BocchiChat.Print(chat, uiConfig, translator.T(".automation.automator.pathfinding_refreshed"));
     }
 
+    public void RebuildPathMap()
+    {
+        IZone zone = zones.GetZone();
+        if (!zone.IsOccultCrescentZone())
+        {
+            BocchiChat.Print(chat, uiConfig, translator.T(".automation.automator.path_map_rebuild_wrong_zone"));
+            return;
+        }
+
+        logger.Info("Rebuilding zone path map for territory {Territory}", zone.TerritoryType);
+        zone.InvalidateGraph("manual rebuild");
+
+        if (IsActive)
+        {
+            memory.Forget<NavigationInterruptedMemory>();
+            IllegalModeActivityWork.ForgetTravelLatches(memory, includePotChests: true);
+            SoftStopPathfinding();
+            memory.Forget<GoalPathStepMemory>();
+            // GoalMemory kept — Update() replans once the path map is ready.
+        }
+
+        // Kick load immediately so the UI shows Loading/Building instead of waiting for a FATE pick.
+        _ = zone.GetGraph().ContinueWith(
+            task =>
+            {
+                if (task.IsFaulted)
+                {
+                    logger.Warning(task.Exception, "Path map rebuild failed");
+                }
+                else
+                {
+                    logger.Info(
+                        "Path map ready for territory {Territory} ({Source})",
+                        zone.TerritoryType,
+                        zone.GraphSource);
+                }
+            },
+            TaskScheduler.Default);
+
+        BocchiChat.Print(chat, uiConfig, translator.T(".automation.automator.path_map_rebuilding"));
+    }
+
     public void Render()
     {
         if (!IsActive || SuspendedForTreasure)

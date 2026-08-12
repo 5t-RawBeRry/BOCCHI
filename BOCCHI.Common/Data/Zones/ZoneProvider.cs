@@ -46,5 +46,13 @@ public class NullZone : IZone
 
     public float GetCriticalEncounterRadius(int eventId) => 0f;
 
-    public async Task<ZoneGraph> GetGraph() => new();
+    public Task<ZoneGraph> GetGraph() => Task.FromResult(new ZoneGraph());
+
+    public ZoneGraphLoadState GraphLoadState => ZoneGraphLoadState.Idle;
+
+    public ZoneGraphSource GraphSource => ZoneGraphSource.None;
+
+    public void InvalidateGraph(string? reason = null)
+    {
+    }
 }

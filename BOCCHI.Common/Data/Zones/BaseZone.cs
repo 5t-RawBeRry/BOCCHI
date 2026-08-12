@@ -178,6 +178,17 @@ public abstract class BaseZone
     private Task<ZoneGraph>? graphLoadTask;
     private readonly object graphGate = new();
 
+    private ZoneGraphLoadState graphLoadState = ZoneGraphLoadState.Idle;
+
+    private ZoneGraphSource graphSource = ZoneGraphSource.None;
+
+    /// <summary>Schema for on-disk / shipped zone path maps. Bump with Data/ZoneGraphs files.</summary>
+    private const int GraphSchemaVersion = 7;
+
+    public ZoneGraphLoadState GraphLoadState => graphLoadState;
+
+    public ZoneGraphSource GraphSource => graphSource;
+
     public Task<ZoneGraph> GetGraph()
     {
         if (cachedGraph != null)
@@ -196,47 +207,102 @@ public abstract class BaseZone
         }
     }
 
-    private async Task<ZoneGraph> LoadOrBuildGraphAsync()
+    public void InvalidateGraph(string? reason = null)
     {
-        string dir = Path.Combine(plugin.GetPluginConfigDirectory(), "zone_graphs");
-        Directory.CreateDirectory(dir);
-
-        // Bump when walk-cost / edge semantics or which nodes are wired change (v7 validates usability).
-        const int graphSchemaVersion = 7;
-        string path = Path.Combine(dir, $"{TerritoryType}.v{graphSchemaVersion}.json");
-
-        if (File.Exists(path))
+        lock (graphGate)
         {
-            try
-            {
-                string json = await File.ReadAllTextAsync(path);
-                ZoneGraph? loaded = ZoneGraph.FromJson(json);
-                if (loaded is { } graph && graph.IsUsableForRouting())
-                {
-                    logger.Debug("Loaded zone graph from path: " + path);
-                    cachedGraph = graph;
-                    return graph;
-                }
+            cachedGraph = null;
+            graphLoadTask = null;
+            graphLoadState = ZoneGraphLoadState.Idle;
+            graphSource = ZoneGraphSource.None;
+        }
 
-                logger.Warning(
-                    "Zone graph cache is empty or missing routing edges — rebuilding ({Path})",
-                    path);
-            }
-            catch (Exception ex)
-            {
-                logger.Warning(ex, "Failed to load zone graph cache — rebuilding ({Path})", path);
-            }
+        string path = Path.Combine(
+            plugin.GetPluginConfigDirectory(),
+            "zone_graphs",
+            $"{TerritoryType}.v{GraphSchemaVersion}.json");
 
-            try
+        try
+        {
+            if (File.Exists(path))
             {
                 File.Delete(path);
             }
-            catch
-            {
-                // Rebuild overwrites; delete is best-effort.
-            }
+
+            logger.Info(
+                "Invalidated zone path map for territory {Territory}{Reason}",
+                TerritoryType,
+                string.IsNullOrEmpty(reason) ? "" : $": {reason}");
+        }
+        catch (Exception ex)
+        {
+            logger.Warning(ex, "Failed to delete zone path map cache ({Path})", path);
+        }
+    }
+
+    private async Task<ZoneGraph> LoadOrBuildGraphAsync()
+    {
+        graphLoadState = ZoneGraphLoadState.Loading;
+        graphSource = ZoneGraphSource.None;
+
+        string dir = Path.Combine(plugin.GetPluginConfigDirectory(), "zone_graphs");
+        Directory.CreateDirectory(dir);
+
+        // Bump GraphSchemaVersion when walk-cost / edge semantics or which nodes are wired change.
+        // Also refresh Data/ZoneGraphs/{TerritoryType}.vN.json when bumping.
+        string fileName = $"{TerritoryType}.v{GraphSchemaVersion}.json";
+        string path = Path.Combine(dir, fileName);
+
+        ZoneGraph? cached = await TryLoadGraphAsync(path);
+        ZoneGraph? shipped = await TryLoadShippedGraphAsync(fileName);
+
+        if (cached != null && !cached.CoversZoneActivities(this))
+        {
+            logger.Warning(
+                "Zone path map cache is stale or incomplete for territory {Territory} — discarding",
+                TerritoryType);
+            TryDeleteFile(path);
+            cached = null;
         }
 
+        // Prefer a more complete bundled map over an older saved cache.
+        if (cached != null
+            && shipped != null
+            && shipped.CoversZoneActivities(this)
+            && shipped.CountRoutableActivities() > cached.CountRoutableActivities())
+        {
+            logger.Info(
+                "Bundled path map is more complete than cache for territory {Territory} — replacing saved map",
+                TerritoryType);
+            cached = null;
+            TryDeleteFile(path);
+        }
+
+        if (cached != null)
+        {
+            logger.Debug("Loaded zone graph from path: " + path);
+            cachedGraph = cached;
+            graphSource = ZoneGraphSource.Cache;
+            graphLoadState = ZoneGraphLoadState.Ready;
+            return cached;
+        }
+
+        if (shipped != null && shipped.CoversZoneActivities(this))
+        {
+            logger.Info($"Using shipped zone graph for territory {TerritoryType}");
+            await File.WriteAllTextAsync(path, shipped.ToJson());
+            cachedGraph = shipped;
+            graphSource = ZoneGraphSource.Shipped;
+            graphLoadState = ZoneGraphLoadState.Ready;
+            return shipped;
+        }
+
+        if (File.Exists(path))
+        {
+            TryDeleteFile(path);
+        }
+
+        graphLoadState = ZoneGraphLoadState.Building;
         logger.Info($"Building zone graph for territory {TerritoryType} (one-time; Automator waits until done)");
         GraphConfig config = new(pathfinder, logger);
         ZoneGraph built = await graphs.BuildAsync(config, this);
@@ -244,7 +310,72 @@ public abstract class BaseZone
         await File.WriteAllTextAsync(path, built.ToJson());
 
         cachedGraph = built;
+        graphSource = ZoneGraphSource.Built;
+        graphLoadState = ZoneGraphLoadState.Ready;
         return built;
+    }
+
+    private async Task<ZoneGraph?> TryLoadShippedGraphAsync(string fileName)
+    {
+        string? shippedPath = GetShippedZoneGraphPath(fileName);
+        return shippedPath == null ? null : await TryLoadGraphAsync(shippedPath);
+    }
+
+    private async Task<ZoneGraph?> TryLoadGraphAsync(string path)
+    {
+        if (!File.Exists(path))
+        {
+            return null;
+        }
+
+        try
+        {
+            string json = await File.ReadAllTextAsync(path);
+            ZoneGraph? loaded = ZoneGraph.FromJson(json);
+            if (loaded is not { } graph || !graph.IsUsableForRouting())
+            {
+                return null;
+            }
+
+            return graph;
+        }
+        catch (Exception ex)
+        {
+            logger.Warning(ex, "Failed to load zone graph ({Path})", path);
+            return null;
+        }
+    }
+
+    private static void TryDeleteFile(string path)
+    {
+        try
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+        catch
+        {
+            // Rebuild / seed overwrites; delete is best-effort.
+        }
+    }
+
+    private string? GetShippedZoneGraphPath(string fileName)
+    {
+        string? pluginDir = plugin.AssemblyLocation.DirectoryName;
+        if (string.IsNullOrEmpty(pluginDir))
+        {
+            pluginDir = Path.GetDirectoryName(plugin.GetType().Assembly.Location);
+        }
+
+        if (string.IsNullOrEmpty(pluginDir))
+        {
+            return null;
+        }
+
+        string path = Path.Combine(pluginDir, "Data", "ZoneGraphs", fileName);
+        return File.Exists(path) ? path : null;
     }
 
     private unsafe uint GetCurrentSubAreaPlaceNameId()

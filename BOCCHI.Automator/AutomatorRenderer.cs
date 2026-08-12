@@ -42,6 +42,7 @@ public class AutomatorRenderer
             Automator.Toggle();
         }
 
+        bool inOccult = zones.GetZone().IsOccultCrescentZone();
         if (Automator.Enabled)
         {
             ImGui.SameLine();
@@ -56,10 +57,25 @@ public class AutomatorRenderer
             }
         }
 
+        if (inOccult)
+        {
+            ImGui.SameLine();
+            if (ImGui.Button(translator.T(".automation.automator.rebuild_path_map")))
+            {
+                Automator.RebuildPathMap();
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip(translator.T(".automation.automator.rebuild_path_map_tooltip"));
+            }
+        }
+
         ImGui.Spacing();
         PotTimerUi.Draw(potCycle, zones, data, ui, translator, branding);
+        ZoneGraphStatusUi.Draw(zones.GetZone(), ui, translator, branding);
 
-        if (!Automator.Enabled && !HasDetails())
+        if (!Automator.Enabled && !HasDetails() && !inOccult)
         {
             return;
         }

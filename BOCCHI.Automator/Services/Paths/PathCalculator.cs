@@ -27,26 +27,28 @@ public class PathCalculator
     ILogger<PathCalculator> logger
 ) : IPathCalculator
 {
-    public async Task<Queue<IPathStep>> Calculate(IGoal goal)
+    public Task<PathCalculationResult> Calculate(IGoal goal) => Calculate(goal, allowAutoRebuild: true);
+
+    private async Task<PathCalculationResult> Calculate(IGoal goal, bool allowAutoRebuild)
     {
         if (objects.LocalPlayer is not { } player)
         {
             logger.Warn("No Player");
-            return [];
+            return PathCalculationResult.NoTravelNeeded();
         }
 
         IZone zone = zones.GetZone();
         if (!zone.IsOccultCrescentZone())
         {
             logger.Warn("In wrong zone");
-            return [];
+            return PathCalculationResult.NoTravelNeeded();
         }
 
         // Already registered in the target FATE — no more travel needed.
         if (goal.GoalType is FateGoal fateGoal && fateContext.GetFateId() == fateGoal.id)
         {
             logger.Debug("Already inside target FATE.");
-            return [];
+            return PathCalculationResult.NoTravelNeeded();
         }
 
         ZoneGraph graph = await zone.GetGraph();
@@ -56,10 +58,10 @@ public class PathCalculator
         {
             goalNode = GetGoalNode(goal, graph);
         }
-        catch (ArgumentOutOfRangeException ex)
+        catch (Exception ex)
         {
-            logger.Error(ex.Message);
-            return [];
+            logger.Error(ex, "Failed to resolve goal node");
+            return await AutoRebuildAndRetry(zone, goal, allowAutoRebuild, "missing activity node");
         }
 
         // Prefer live FATE center when available; CEs keep authored graph staging.
@@ -110,13 +112,13 @@ public class PathCalculator
         if (insideCeWait)
         {
             logger.Debug("Inside CE wait area at {Pos:F0} — no travel steps", arrivalCheck);
-            return [];
+            return PathCalculationResult.NoTravelNeeded();
         }
 
         if (ceCombatRadius <= 0f && distanceToGoal <= NavigationConstants.EventArrivalRadius)
         {
             logger.Debug("Too close to destination ({Dist:F1}y).", distanceToGoal);
-            return [];
+            return PathCalculationResult.NoTravelNeeded();
         }
 
         GraphTraverser traverser = new(graph, pathfinder, logger);
@@ -149,6 +151,7 @@ public class PathCalculator
             }
         }
 
+        int stepsBeforeTeleportOnlyStrip = resolvedSteps.Count;
         if (config.StopAfterReturn)
         {
             // Keep Return / Teleport; drop the walk to the FATE or CE.
@@ -158,13 +161,50 @@ public class PathCalculator
             logger.Debug("TeleportOnlyTravel: {Count} step(s) after dropping pathfinds", resolvedSteps.Count);
         }
 
+        if (resolvedSteps.Count == 0)
+        {
+            // Teleport-only mode stripped walks — PathfindingHandler pauses for manual travel.
+            if (config.StopAfterReturn && stepsBeforeTeleportOnlyStrip > 0)
+            {
+                logger.Info(
+                    "Path planned: 0 step(s) toward {Pos:F0} ({Dist:F0}y) after teleport-only strip",
+                    arrivalCheck,
+                    distanceToGoal);
+                return PathCalculationResult.Planned([]);
+            }
+
+            logger.Error(
+                "No route to {Pos:F0} ({Dist:F0}y) — zone path map may be incomplete",
+                arrivalCheck,
+                distanceToGoal);
+            return await AutoRebuildAndRetry(zone, goal, allowAutoRebuild, "no route to activity");
+        }
+
         logger.Info(
             "Path planned: {Count} step(s) toward {Pos:F0} ({Dist:F0}y)",
             resolvedSteps.Count,
             arrivalCheck,
             distanceToGoal);
 
-        return new(resolvedSteps);
+        return PathCalculationResult.Planned(resolvedSteps);
+    }
+
+    private async Task<PathCalculationResult> AutoRebuildAndRetry(
+        IZone zone,
+        IGoal goal,
+        bool allowAutoRebuild,
+        string reason)
+    {
+        if (!allowAutoRebuild)
+        {
+            return PathCalculationResult.Failed();
+        }
+
+        logger.Warning("Auto-rebuilding zone path map ({Reason}) and retrying once", reason);
+        zone.InvalidateGraph(reason);
+        // Kick load now so UI shows Loading/Building and the retry uses the fresh map.
+        await zone.GetGraph();
+        return await Calculate(goal, allowAutoRebuild: false);
     }
 
     private Node GetGoalNode(IGoal goal, ZoneGraph graph)
@@ -189,6 +229,6 @@ public class PathCalculator
             return meta.Id == id;
         }).ToList();
 
-        return nodes.Count == 0 ? throw new("No nodes for Activity") : nodes.First();
+        return nodes.Count == 0 ? throw new InvalidOperationException("No nodes for Activity") : nodes.First();
     }
 }

@@ -77,8 +77,54 @@ public class ZoneGraph
             return false;
         }
 
-        // No inbound walk from any aetheryte → every FATE/CE route dies in Pathfinding.
-        return activities.Any(activity => GetInboundTeleport(activity) != null);
+        // Partial caches softlock specific FATEs/CEs — every activity needs an inbound walk.
+        return activities.All(activity => GetInboundTeleport(activity) != null);
+    }
+
+    /// <summary>How many FATE/CE nodes have a usable inbound aetheryte walk.</summary>
+    public int CountRoutableActivities() =>
+        GetActivityNodes().Count(activity => GetInboundTeleport(activity) != null);
+
+    /// <summary>
+    ///     True when every authored FATE/CE for the zone exists in the graph with an inbound teleport.
+    ///     Catches stale caches that are "usable" but missing newer activities.
+    /// </summary>
+    public bool CoversZoneActivities(IZone zone)
+    {
+        if (!IsUsableForRouting())
+        {
+            return false;
+        }
+
+        List<int> expectedIds = zone.GetNormalFateData().Select(a => a.Id)
+            .Concat(zone.GetPotFateData().Select(a => a.Id))
+            .Concat(zone.GetCriticalEncounterData().Select(a => a.Id))
+            .Distinct()
+            .ToList();
+
+        if (expectedIds.Count == 0)
+        {
+            return true;
+        }
+
+        Dictionary<int, Node> byActivityId = [];
+        foreach (Node node in GetActivityNodes())
+        {
+            if (node.Metadata is ActivityNodeMetadata { Id: var id })
+            {
+                byActivityId.TryAdd(id, node);
+            }
+        }
+
+        foreach (int id in expectedIds)
+        {
+            if (!byActivityId.TryGetValue(id, out Node? node) || GetInboundTeleport(node) == null)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public void AddNode(Node node)

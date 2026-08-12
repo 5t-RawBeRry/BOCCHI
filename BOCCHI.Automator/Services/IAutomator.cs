@@ -37,5 +37,10 @@ public interface IAutomator
     /// <summary>Drop the current route and replan from the player's position (keeps the goal).</summary>
     void RefreshPathfinding();
 
+    /// <summary>
+    ///     Delete this zone's saved path map and reload (bundled map, or a fresh vnav build if needed).
+    /// </summary>
+    void RebuildPathMap();
+
     void Render();
 }
