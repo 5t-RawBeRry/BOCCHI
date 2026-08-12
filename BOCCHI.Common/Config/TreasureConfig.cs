@@ -32,11 +32,11 @@ public class TreasureConfig : IAutoConfig
     [Mp3SoundSelect(Order = 6, Section = "completion")]
     public string HuntCompleteSound { get; set; } = "Moogle";
 
-    /// <summary>Cast Treasure Sight at hunt start and every N coffers; abort early when Sight reports none left.</summary>
+    /// <summary>Cast Treasure Sight at hunt start and every N locations checked; abort early when Sight reports none left.</summary>
     [Checkbox(Order = 7, Section = "hunt")]
     public bool CastTreasureSightDuringHunt { get; set; } = true;
 
-    /// <summary>Recast Treasure Sight every N coffers after the opening cast.</summary>
+    /// <summary>Recast Treasure Sight every N hunt locations checked (opened or empty pads).</summary>
     [IntRange(1, 50, Order = 8, Section = "hunt")]
     public int TreasureSightEveryNLocations { get; set; } = 10;
 
@@ -59,20 +59,24 @@ public class TreasureConfig : IAutoConfig
     [Checkbox(Order = 13, Section = "ninja_hide")]
     public bool UseNinjaHideOnDangerousRoutes { get; set; } = false;
 
+    /// <summary>While Hide is up, swap to Phantom Thief and cast Occult Sprint for move speed.</summary>
+    [Checkbox(Order = 14, Section = "ninja_hide")]
+    public bool UseOccultSprintWhileHidden { get; set; } = false;
+
     /// <summary>Gearset number (1-based) that equips Ninja. 0 = already on Ninja only.</summary>
-    [IntRange(0, 100, Order = 14, Section = "ninja_hide")]
+    [IntRange(0, 100, Order = 15, Section = "ninja_hide")]
     public int NinjaGearsetNumber { get; set; } = 0;
 
     /// <summary>Hide when mob knowledge ≥ player knowledge + this offset.</summary>
-    [IntRange(-5, 10, Order = 15, Section = "ninja_hide")]
+    [IntRange(-5, 10, Order = 16, Section = "ninja_hide")]
     public int KnowledgeHideOffset { get; set; } = 0;
 
     /// <summary>Start Hide when a knowledge threat is within this distance (yalms).</summary>
-    [FloatRange(5f, 40f, Order = 16, Section = "ninja_hide")]
+    [FloatRange(5f, 40f, Order = 17, Section = "ninja_hide")]
     public float KnowledgeThreatEnterDistance { get; set; } = 10f;
 
     /// <summary>Clear Hide requirement when threats are beyond this distance (yalms).</summary>
-    [FloatRange(10f, 60f, Order = 17, Section = "ninja_hide")]
+    [FloatRange(10f, 60f, Order = 18, Section = "ninja_hide")]
     public float KnowledgeThreatExitDistance { get; set; } = 20f;
 
     /// <summary>

@@ -282,13 +282,30 @@ public class FarmingPotChestsHandler
                 return;
             }
 
-            if (elixir.TryUse())
+            if (TryUseElixirOnFoot(farm))
             {
-                farm.ElixirAttempts++;
-                farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
-                farm.HintRevisionBaseline = hints.Revision;
+                return;
             }
         }
+    }
+
+    /// <summary>Use Magical Elixir only on foot — UseItem fails while mounted after the center approach.</summary>
+    private bool TryUseElixirOnFoot(PotChestFarmMemory farm)
+    {
+        if (DismountAssist.TryDismount(conditions) || ECommonsPlayer.IsJumping)
+        {
+            return true; // still preparing — caller should wait this tick
+        }
+
+        if (!elixir.TryUse())
+        {
+            return false;
+        }
+
+        farm.ElixirAttempts++;
+        farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
+        farm.HintRevisionBaseline = hints.Revision;
+        return true;
     }
 
     private void HandleSearchingCandidates(PotChestFarmMemory farm)
@@ -414,14 +431,12 @@ public class FarmingPotChestsHandler
             return;
         }
 
-        // Probe with elixir while at candidate.
+        // Probe with elixir while at candidate (feet — same as center cast).
         if (farm.ElixirAttempts < MaxElixirAttempts)
         {
-            if (elixir.TryUse())
+            if (TryUseElixirOnFoot(farm))
             {
-                farm.ElixirAttempts++;
-                farm.HintRevisionBaseline = hints.Revision;
-                farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
+                return;
             }
 
             return;

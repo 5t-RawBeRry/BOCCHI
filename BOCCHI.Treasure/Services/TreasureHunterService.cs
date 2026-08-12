@@ -1246,8 +1246,10 @@ public class TreasureHunterService
             }
 
             // Only trim pads we are standing on — do not wipe a dense cluster after Sight / peel.
+            // Same-floor only: 2D over a basement pad must not mark it checked.
             if (!IsLayoutPadEmpty(spot.Position, nodeId)
-                || player.Position.Distance2D(spot.Position) > HuntDistances.EmptyPadRegionTrustRadius)
+                || player.Position.Distance2D(spot.Position) > HuntDistances.EmptyPadRegionTrustRadius
+                || !IsSameFloor(spot.Position))
             {
                 continue;
             }
@@ -1348,12 +1350,10 @@ public class TreasureHunterService
                     return false;
                 }
 
-                if (!vnav.IsRunning() && !vnav.IsPathfinding())
-                {
-                    vnav.PathfindAndMoveCloseTo(via, false, OpenTreasureCofferChain.PathArrivalRange);
-                }
-
-                MaybeMount(via);
+                TryNavigateToward(
+                    via,
+                    viaArrival,
+                    OpenTreasureCofferChain.PathArrivalRange);
                 return false;
             }
 
@@ -1432,27 +1432,20 @@ public class TreasureHunterService
                 }
                 else
                 {
-                    if (!vnav.IsRunning() && !vnav.IsPathfinding()
-                        && dist2d > OpenTreasureCofferChain.PreferredOpenDistance)
-                    {
-                        vnav.PathfindAndMoveCloseTo(destination, false, OpenTreasureCofferChain.PathArrivalRange);
-                    }
-
-                    MaybeMount(destination);
-                    ApplyNinjaHideGate();
+                    TryNavigateToward(
+                        destination,
+                        OpenTreasureCofferChain.PreferredOpenDistance,
+                        OpenTreasureCofferChain.PathArrivalRange);
                     return false;
                 }
             }
 
             if (present == null)
             {
-                if (!vnav.IsRunning() && dist2d > OpenTreasureCofferChain.PreferredOpenDistance)
-                {
-                    vnav.PathfindAndMoveCloseTo(destination, false, OpenTreasureCofferChain.PathArrivalRange);
-                }
-
-                MaybeMount(destination);
-                ApplyNinjaHideGate();
+                TryNavigateToward(
+                    destination,
+                    OpenTreasureCofferChain.PreferredOpenDistance,
+                    OpenTreasureCofferChain.PathArrivalRange);
                 return false;
             }
         }
@@ -1467,16 +1460,10 @@ public class TreasureHunterService
             return true;
         }
 
-        if (!vnav.IsRunning()
-            && !vnav.IsPathfinding()
-            && dist2d > OpenTreasureCofferChain.PreferredOpenDistance)
-        {
-            vnav.PathfindAndMoveCloseTo(destination, false, OpenTreasureCofferChain.PathArrivalRange);
-        }
-
-        MaybeMount(destination);
-
-        if (!ApplyNinjaHideGate())
+        if (!TryNavigateToward(
+                destination,
+                OpenTreasureCofferChain.PreferredOpenDistance,
+                OpenTreasureCofferChain.PathArrivalRange))
         {
             return false;
         }
@@ -1491,9 +1478,9 @@ public class TreasureHunterService
             return false;
         }
 
-        // Match OpenTreasureCofferChain: 2D gate. 3D Y mismatch left people pathing at chests
-        // already in front of them.
-        if (dist2d > OpenTreasureCofferChain.PreferredOpenDistance)
+        // Match OpenTreasureCofferChain: 2D gate when on the same floor. Wrong-floor 2D
+        // "arrival" (surface above basement) must keep pathing instead of open/skip.
+        if (dist2d > OpenTreasureCofferChain.PreferredOpenDistance || !IsSameFloor(destination))
         {
             return false;
         }
@@ -1629,14 +1616,7 @@ public class TreasureHunterService
         }
 
         float arrival = AethernetNavigation.PathfindArrivalRadius;
-        if (!vnav.IsRunning())
-        {
-            vnav.PathfindAndMoveCloseTo(destination, false, arrival);
-        }
-
-        MaybeMount(destination);
-
-        if (!ApplyNinjaHideGate())
+        if (!TryNavigateToward(destination, arrival + 0.35f, arrival))
         {
             return false;
         }
@@ -1688,6 +1668,37 @@ public class TreasureHunterService
     }
 
     /// <summary>
+    /// Path + mount toward a point only after Ninja Hide is ready when required.
+    /// Calling path/mount before Hide caused repath spam on Hide CD and mount cancelling Hide.
+    /// </summary>
+    /// <returns>False while still preparing Hide (caller should wait).</returns>
+    private bool TryNavigateToward(Vector3 destination, float startPathBeyond, float arrivalRadius)
+    {
+        if (!ApplyNinjaHideGate())
+        {
+            return false;
+        }
+
+        // Different floor (basement under you): keep pathing even when 2D looks "arrived".
+        bool needPath = !IsSameFloor(destination)
+                        || player.Position.Distance2D(destination) > startPathBeyond;
+
+        if (needPath && !vnav.IsRunning() && !vnav.IsPathfinding())
+        {
+            vnav.PathfindAndMoveCloseTo(destination, false, arrivalRadius);
+        }
+
+        MaybeMount(destination);
+        return true;
+    }
+
+    private static bool IsSameFloor(Vector3 a, Vector3 b) =>
+        MathF.Abs(a.Y - b.Y) <= HuntDistances.SameFloorVerticalTolerance;
+
+    private bool IsSameFloor(Vector3 destination) =>
+        IsSameFloor(player.Position, destination);
+
+    /// <summary>
     ///     When enabled and a knowledge threat is in range: gearset → dismount → Hide before continuing on foot.
     ///     Returns false while still preparing (caller should wait).
     /// </summary>
@@ -1707,12 +1718,24 @@ public class TreasureHunterService
             return true;
         }
 
-        if (ninjaHide.EnsureReady(config.NinjaGearsetNumber))
+        // Always stop while preparing Hide — riding through a 10y bubble never finishes Hide.
+        // Combat: keep moving; Hide/gearset wait until out of combat (see EnsureReady).
+        if (conditions[ConditionFlag.InCombat])
         {
             return true;
         }
 
-        // Always stop — riding through a 10y bubble while dismounting never finishes Hide.
+        if (ninjaHide.EnsureReady(config.NinjaGearsetNumber))
+        {
+            // Best-effort speed buff — never blocks walking.
+            if (config.UseOccultSprintWhileHidden)
+            {
+                ninjaHide.TryOccultSprintWhileHidden();
+            }
+
+            return true;
+        }
+
         vnav.Stop();
         pathfinder.Stop();
         return false;
@@ -1768,6 +1791,12 @@ public class TreasureHunterService
     /// <summary>True when the player is close enough to trust that this pad has no live coffer.</summary>
     private bool CanTrustEmptyPad(Vector3 layoutDestination, uint nodeId)
     {
+        // Surface above a basement pad is "close" in 2D but not actually at the coffer.
+        if (!IsSameFloor(layoutDestination))
+        {
+            return false;
+        }
+
         float dist = player.Position.Distance2D(layoutDestination);
 
         if (emptyPadApproachNodeId != nodeId)
@@ -1780,7 +1809,7 @@ public class TreasureHunterService
             emptyPadSawOutsideSkipRadius = true;
         }
 
-        // Always trust emptiness when standing on the pad.
+        // Always trust emptiness when standing on the pad (same floor).
         if (dist <= HuntDistances.LayoutProximityRadius)
         {
             return true;

@@ -22,7 +22,7 @@
     },
     "show_percentage_active_treasure_count": {
       "label": "Show remaining coffers as %",
-      "tooltip": "Show how many coffers are left as a percentage next to the total."
+      "tooltip": "Adds a percentage next to Active bronze / Active silver on the Treasure tab (Treasure Sight totals)."
     },
     "return_to_base_camp_after_hunt": {
       "label": "Return after hunt",
@@ -39,11 +39,11 @@
     },
     "cast_treasure_sight_during_hunt": {
       "label": "Cast Treasure Sight during hunt",
-      "tooltip": "Cast Treasure Sight when the hunt starts, and again every N coffers. Stops the hunt early if Sight says no coffers are left."
+      "tooltip": "Cast Treasure Sight when the hunt starts, and again every N locations checked. Stops the hunt early if Sight says no coffers are left."
     },
     "treasure_sight_every_n_locations": {
-      "label": "Treasure Sight every N coffers",
-      "tooltip": "After the first cast, cast Treasure Sight again every this many coffers. Raise it to dismount and swap jobs less often in busy areas."
+      "label": "Treasure Sight every N locations",
+      "tooltip": "After the first cast, cast Treasure Sight again every this many hunt locations checked (opened or empty). Not only coffers you found."
     },
     "hunt_max_level": {
       "label": "Max coffer level",
@@ -64,6 +64,10 @@
     "use_ninja_hide_on_dangerous_routes": {
       "label": "Ninja Hide near strong enemies",
       "tooltip": "Experimental: if a high-Knowledge enemy is nearby, swap to your Ninja gearset, use Hide, and walk the last stretch to the coffer. Useful near max Knowledge."
+    },
+    "use_occult_sprint_while_hidden": {
+      "label": "Occult Sprint while Hidden",
+      "tooltip": "While Ninja Hide is up, switch to Phantom Thief and cast Occult Sprint for a big move-speed boost. Does not wait on Sprint before walking."
     },
     "ninja_gearset_number": {
       "label": "Ninja gearset number",

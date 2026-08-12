@@ -28,6 +28,12 @@ public static class HuntDistances
     public const float EmptyPadSkipRadius = 100f;
 
     /// <summary>
+    /// Empty-skip / open arrival require |ΔY| within this — otherwise a surface stand
+    /// above a basement coffer looks “on the pad” in 2D and the hunt turns around.
+    /// </summary>
+    public const float SameFloorVerticalTolerance = 12f;
+
+    /// <summary>
     /// After Sight, only trim empties this close — not the full skip radius —
     /// so a dense cluster is not wiped while standing in the middle of it.
     /// </summary>

@@ -1,8 +1,11 @@
+using BOCCHI.Common.Data.OccultCrescent;
+using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Data.Zones;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Ocelot.Actions;
 using Ocelot.Extensions;
@@ -12,8 +15,15 @@ using ECommonsPlayer = ECommons.GameHelpers.Player;
 
 namespace BOCCHI.Treasure.Services;
 
-/// <summary>Real Ninja Hide (2245 / status 614) + optional gearset swap for dangerous coffer approaches.</summary>
-public sealed class NinjaHideAssist(IPlayer player, ICondition conditions, IPluginLog log)
+/// <summary>
+///     Real Ninja Hide (2245 / status 614) + optional gearset swap for dangerous coffer approaches.
+///     Optional Phantom Thief Occult Sprint while stealthed.
+/// </summary>
+public sealed class NinjaHideAssist(
+    IPlayer player,
+    ICondition conditions,
+    ISupportJobFactory supportJobs,
+    IPluginLog log)
 {
     public const uint HideActionId = 2245;
 
@@ -23,7 +33,11 @@ public sealed class NinjaHideAssist(IPlayer player, ICondition conditions, IPlug
 
     private static readonly Ocelot.Actions.Action Hide = new(ActionType.Action, HideActionId);
 
+    private static readonly Ocelot.Actions.Action OccultSprint = new(ActionType.Action, PhantomActions.OccultSprint);
+
     private int? gearsetBeforeNinja;
+
+    private SupportJobId? supportJobBeforeThief;
 
     public bool IsStealthed =>
         player.PlayerCharacter?.StatusList.Has(HiddenStatusId) == true;
@@ -39,6 +53,12 @@ public sealed class NinjaHideAssist(IPlayer player, ICondition conditions, IPlug
     /// </summary>
     public bool EnsureReady(int ninjaGearsetNumber)
     {
+        // Hide / gearset mid-fight fails and fights with combat movement.
+        if (conditions[ConditionFlag.InCombat])
+        {
+            return false;
+        }
+
         if (!IsNinja)
         {
             if (ninjaGearsetNumber <= 0)
@@ -66,9 +86,40 @@ public sealed class NinjaHideAssist(IPlayer player, ICondition conditions, IPlug
         return false;
     }
 
+    /// <summary>
+    ///     Best-effort: Phantom Thief + Occult Sprint while Hide is up. Never blocks walking.
+    /// </summary>
+    public void TryOccultSprintWhileHidden()
+    {
+        if (!IsStealthed
+            || conditions[ConditionFlag.InCombat]
+            || conditions[ConditionFlag.Casting]
+            || conditions[ConditionFlag.Casting87]
+            || conditions[ConditionFlag.BetweenAreas]
+            || conditions[ConditionFlag.BetweenAreas51]
+            || ECommonsPlayer.IsJumping)
+        {
+            return;
+        }
+
+        if (!EnsurePhantomThief())
+        {
+            return;
+        }
+
+        if (!EzThrottler.Throttle("NinjaHide::OccultSprint", 750) || !OccultSprint.CanCast())
+        {
+            return;
+        }
+
+        OccultSprint.Cast();
+    }
+
     /// <summary>Swap back to the job/gearset used before the Ninja Hide flow, if we changed it.</summary>
     public void RestorePreviousGearsetIfNeeded()
     {
+        RestorePreviousSupportJobIfNeeded();
+
         if (gearsetBeforeNinja is not int previous || previous <= 0)
         {
             return;
@@ -85,6 +136,70 @@ public sealed class NinjaHideAssist(IPlayer player, ICondition conditions, IPlug
         {
             gearsetBeforeNinja = null;
         }
+    }
+
+    /// <summary>Restore phantom job remembered before Occult Sprint Thief swap.</summary>
+    public void RestorePreviousSupportJobIfNeeded()
+    {
+        if (supportJobBeforeThief is not { } restoreId)
+        {
+            return;
+        }
+
+        if (supportJobs.TryGetCurrent(out SupportJob current) && current.Id == restoreId)
+        {
+            supportJobBeforeThief = null;
+            return;
+        }
+
+        if (!TryChangeSupportJob(restoreId))
+        {
+            return;
+        }
+
+        if (supportJobs.TryGetCurrent(out SupportJob after) && after.Id == restoreId)
+        {
+            supportJobBeforeThief = null;
+        }
+    }
+
+    private bool EnsurePhantomThief()
+    {
+        if (supportJobs.TryGetCurrent(out SupportJob current)
+            && current.Id == SupportJobId.PhantomThief)
+        {
+            return true;
+        }
+
+        RememberSupportJobIfNeeded();
+        return TryChangeSupportJob(SupportJobId.PhantomThief)
+               && supportJobs.TryGetCurrent(out SupportJob after)
+               && after.Id == SupportJobId.PhantomThief;
+    }
+
+    private void RememberSupportJobIfNeeded()
+    {
+        if (supportJobBeforeThief != null)
+        {
+            return;
+        }
+
+        if (supportJobs.TryGetCurrent(out SupportJob current)
+            && current.Id != SupportJobId.PhantomThief)
+        {
+            supportJobBeforeThief = current.Id;
+        }
+    }
+
+    private unsafe bool TryChangeSupportJob(SupportJobId id)
+    {
+        if (!EzThrottler.Throttle($"NinjaHide::SupportJob::{id}", 750))
+        {
+            return false;
+        }
+
+        PublicContentOccultCrescent.ChangeSupportJob((byte)id);
+        return supportJobs.TryGetCurrent(out SupportJob current) && current.Id == id;
     }
 
     private void TryCastHide()

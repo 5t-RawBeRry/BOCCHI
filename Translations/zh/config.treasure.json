@@ -22,7 +22,7 @@
     },
     "show_percentage_active_treasure_count": {
       "label": "以百分比显示剩余宝箱",
-      "tooltip": "在总数旁边以百分比显示还剩多少宝箱。"
+      "tooltip": "在寻宝页的“活跃青铜 / 活跃白银”旁显示百分比（来自魔寻宝统计）。"
     },
     "return_to_base_camp_after_hunt": {
       "label": "寻宝结束后返回",
@@ -39,11 +39,11 @@
     },
     "cast_treasure_sight_during_hunt": {
       "label": "寻宝途中使用魔寻宝",
-      "tooltip": "寻宝开始时使用魔寻宝，并每隔 N 个宝箱再使用一次。若魔寻宝显示已无剩余宝箱，则提前结束寻宝。"
+      "tooltip": "寻宝开始时使用魔寻宝，并每隔 N 个已检查地点再使用一次。若魔寻宝显示已无剩余宝箱，则提前结束寻宝。"
     },
     "treasure_sight_every_n_locations": {
-      "label": "每隔 N 个宝箱使用魔寻宝",
-      "tooltip": "首次使用后，每经过这么多个宝箱再使用一次魔寻宝。调高可减少在人多区域下坐骑与切换职业的次数。"
+      "label": "每隔 N 个地点使用魔寻宝",
+      "tooltip": "首次使用后，每检查这么多个寻宝地点（含已开或空点）再使用一次魔寻宝。不是只统计找到的宝箱。"
     },
     "hunt_max_level": {
       "label": "宝箱最高等级",
@@ -64,6 +64,10 @@
     "use_ninja_hide_on_dangerous_routes": {
       "label": "强敌附近使用忍者隐遁",
       "tooltip": "实验性：附近有高知见敌人时，切换到忍者套装，使用隐遁，再步行接近宝箱的最后一段。知见较高时很有用。"
+    },
+    "use_occult_sprint_while_hidden": {
+      "label": "隐遁时使用魔疾跑",
+      "tooltip": "忍者隐遁期间切换到幻贼并施放魔疾跑以大幅加速。不等待疾跑完成再继续走路。"
     },
     "ninja_gearset_number": {
       "label": "忍者套装编号",
