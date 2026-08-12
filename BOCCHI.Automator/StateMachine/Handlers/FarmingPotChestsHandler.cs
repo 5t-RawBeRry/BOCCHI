@@ -673,8 +673,8 @@ public class FarmingPotChestsHandler
 
     private void TryOpenChest(IGameObject chest)
     {
-        // Mounted open matches Pandora / hunt coffers (#175). Wait out jump landings only.
-        if (ECommonsPlayer.IsJumping)
+        // Pot reveals need feet — normal hunt coffers stay mounted (#175).
+        if (DismountAssist.TryDismount(conditions) || ECommonsPlayer.IsJumping)
         {
             return;
         }
