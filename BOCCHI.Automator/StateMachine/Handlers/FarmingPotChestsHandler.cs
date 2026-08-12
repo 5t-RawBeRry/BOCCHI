@@ -434,11 +434,7 @@ public class FarmingPotChestsHandler
         // Probe with elixir while at candidate (feet — same as center cast).
         if (farm.ElixirAttempts < MaxElixirAttempts)
         {
-            if (TryUseElixirOnFoot(farm))
-            {
-                return;
-            }
-
+            TryUseElixirOnFoot(farm);
             return;
         }
 
@@ -765,16 +761,19 @@ public class FarmingPotChestsHandler
         );
     }
 
-    /// <summary>Rewrite bogus reveal altitudes so pathfinder/vnav land on the mesh (#170).</summary>
+    /// <summary>
+    ///     Rewrite only known-bogus reveal altitudes (Y ≈ -500) so vnav can land.
+    ///     Do not pull valid authored pads to the player's Y — that put North Horn
+    ///     candidates off-mesh (e.g. Y 49 → 90) and failed polygon lookup.
+    /// </summary>
     private Vector3 PathableTreasurePosition(Vector3 position)
     {
-        Vector3 normalized = NormalizeY(position);
-        if (MathF.Abs(normalized.Y - player.Position.Y) > 40f)
+        if (MathF.Abs(position.Y + 500f) < 0.5f)
         {
-            return normalized with { Y = player.Position.Y };
+            return position with { Y = player.Position.Y };
         }
 
-        return normalized;
+        return position;
     }
 
     private bool TryAcquireReveal(PotChestFarmMemory farm, out IGameObject? reveal)

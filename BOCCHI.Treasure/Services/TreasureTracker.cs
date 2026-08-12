@@ -4,6 +4,7 @@ using BOCCHI.Common.Services;
 using BOCCHI.Treasure.Data;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using Dalamud.Game.Chat;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
@@ -16,10 +17,12 @@ namespace BOCCHI.Treasure.Services;
 
 public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
 {
+    /// <summary>WideText / chat: “You sense the presence of X silver … and Y bronze …”.</summary>
     private const uint ActiveChestLogMessageId = 10965;
-    private readonly IAddonLifecycle addonLifecycle;
-    private readonly IDataManager data;
 
+    private readonly IAddonLifecycle addonLifecycle;
+    private readonly IChatGui chat;
+    private readonly IDataManager data;
     private readonly IObjectTable objects;
     private readonly TimeSpan parseWideTextCooldown = TimeSpan.FromSeconds(5);
     private readonly IPlayer player;
@@ -31,6 +34,7 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
     public TreasureTracker(
         IObjectTable objects,
         IAddonLifecycle addonLifecycle,
+        IChatGui chat,
         IDataManager data,
         IZoneProvider zones,
         IPlayer player
@@ -38,15 +42,19 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
     {
         this.objects = objects;
         this.addonLifecycle = addonLifecycle;
+        this.chat = chat;
         this.data = data;
         this.zones = zones;
         this.player = player;
         addonLifecycle.RegisterListener(AddonEvent.PostDraw, "_WideText", OnWideTextPostDraw);
+        // Chat is more reliable than scraping _WideText (empty first frames / cooldown misses).
+        chat.LogMessage += OnChatLogMessage;
     }
 
     public void Dispose()
     {
         addonLifecycle.UnregisterListener(AddonEvent.PostDraw, "_WideText", OnWideTextPostDraw);
+        chat.LogMessage -= OnChatLogMessage;
     }
 
     public void Update()
@@ -85,7 +93,7 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
 
         treasures = treasures.OrderBy(t => player.Position.Distance(t.GetPosition())).ToList();
 
-        foreach(TreasureCoffer treasure in treasures)
+        foreach (TreasureCoffer treasure in treasures)
         {
             if (!treasure.CheckOpened())
             {
@@ -113,8 +121,26 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
 
     public int SilverChests { get; private set; }
 
-    /// <summary>Increments on each successful Treasure Sight WideText parse.</summary>
+    /// <summary>Increments on each successful Treasure Sight count parse.</summary>
     public int SurveyRevision { get; private set; }
+
+    private void OnChatLogMessage(ILogMessage message)
+    {
+        if (message.LogMessageId != ActiveChestLogMessageId
+            || !zones.GetZone().IsOccultCrescentZone())
+        {
+            return;
+        }
+
+        // Excel order: silver then bronze (matches WideText group 1 / 2).
+        if (!message.TryGetIntParameter(0, out int silver)
+            || !message.TryGetIntParameter(1, out int bronze))
+        {
+            return;
+        }
+
+        ApplySightCounts(silver, bronze);
+    }
 
     private unsafe void OnWideTextPostDraw(AddonEvent type, AddonArgs args)
     {
@@ -129,23 +155,57 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
             return;
         }
 
+        // Only throttle successful parses — burning CD on empty/wrong banners missed Sight.
         if (DateTime.Now - lastParseWideText < parseWideTextCooldown)
         {
             return;
         }
 
-        lastParseWideText = DateTime.Now;
+        AtkTextNode* textNode = addon->GetNodeById(3)->GetAsAtkTextNode();
+        if (textNode == null)
+        {
+            return;
+        }
+
+        string text = textNode->NodeText.ToString();
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return;
+        }
 
         string pattern = LogMessageHelper.GetLogMessagePattern(data, ActiveChestLogMessageId);
-        string text = addon->GetNodeById(3)->GetAsAtkTextNode()->NodeText.ToString();
         Match match = Regex.Match(text, pattern);
         if (!match.Success)
         {
             return;
         }
 
-        SilverChests = int.Parse(match.Groups[1].Value);
-        BronzeChests = int.Parse(match.Groups[2].Value);
+        if (!int.TryParse(match.Groups[1].Value, out int silver)
+            || !int.TryParse(match.Groups[2].Value, out int bronze))
+        {
+            return;
+        }
+
+        lastParseWideText = DateTime.Now;
+        ApplySightCounts(silver, bronze);
+    }
+
+    private void ApplySightCounts(int silver, int bronze)
+    {
+        silver = Math.Clamp(silver, 0, 8);
+        bronze = Math.Clamp(bronze, 0, 30);
+
+        // Same banner can hit both chat + WideText — ignore duplicate within a moment.
+        if (CountInitialised
+            && SilverChests == silver
+            && BronzeChests == bronze
+            && DateTime.UtcNow - LastCountUpdateUtc < TimeSpan.FromSeconds(2))
+        {
+            return;
+        }
+
+        SilverChests = silver;
+        BronzeChests = bronze;
         CountInitialised = true;
         LastCountUpdateUtc = DateTime.UtcNow;
         SurveyRevision++;

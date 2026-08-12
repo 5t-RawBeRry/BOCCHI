@@ -1,11 +1,6 @@
-# 4.0.2.27
-
-### New
-- Optional Occult Sprint while Ninja Hide is up on Treasure Hunt — uses Phantom Thief for a big speed boost near strong enemies (off by default under Treasure → Ninja Hide).
+# 4.0.2.28
 
 ### Fixes
-- Treasure Hunt with Ninja Hide should no longer spam walking routes while Hide is on cooldown.
-- Treasure Hunt should no longer mount up and cancel Hide when approaching strong enemies.
-- Treasure Hunt waits until you leave combat before swapping to Ninja or casting Hide.
-- Treasure Hunt no longer skips a basement coffer just because you’re standing above it on the surface.
-- Pot chest farming dismounts before using Magical Elixir so the compass item actually gets used.
+- After casting Treasure Sight, Active bronze / Active silver on the Treasure tab should show up reliably (including the optional % display).
+- Pot chest farming should no longer send bad heights when you’re on a different floor than the chest (pathing failed with “no polygon”).
+- Dancer now walks up to melee range in Illegal Mode / Completionist so dance Steps and Finish are in range.
