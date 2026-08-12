@@ -19,7 +19,6 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.Interop;
 using FFXIVClientStructs.STD;
-using Ocelot.Actions;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Config;
@@ -1553,27 +1552,13 @@ public class TreasureHunterService
         }
 
         activeChain = chainManager.Manage(
-            chains.Create("TreasureHunt::Return")
-                .Then(_ =>
-                {
-                    if (Actions.Return.CanCast())
-                    {
-                        Actions.Return.Cast();
-                    }
-
-                    return StepResult.Success();
-                }, "TreasureHunt::CastReturn")
-                .WaitUntil(
-                    _ =>
-                    {
-                        TryConfirmReturnDialog();
-                        return ValueTask.FromResult(zones.GetZone().IsInBasecamp());
-                    },
-                    TimeSpan.FromSeconds(120),
-                    TimeSpan.FromMilliseconds(250),
-                    "TreasureHunt::WaitForBasecamp"
-                )
-        );
+            ReturnToBaseCamp.Append(
+                chains.Create("TreasureHunt::Return"),
+                zones,
+                conditions,
+                gui,
+                pathfinder,
+                vnav));
 
         return false;
     }
