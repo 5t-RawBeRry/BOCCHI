@@ -35,21 +35,6 @@ public class FatesConfig : IAutoConfig
         return isPotFate && (preferPotFates || shouldFarmPotChests);
     }
 
-    /// <summary>Keep Allowed FATEs checkboxes in sync when Prefer / Farm pots is on.</summary>
-    public void EnsurePotFatesAllowedWhenPreferred(bool preferPotFates, bool shouldFarmPotChests)
-    {
-        if (!preferPotFates && !shouldFarmPotChests)
-        {
-            return;
-        }
-
-        DisabledFateIds ??= [];
-        foreach (uint id in PotFateIds)
-        {
-            DisabledFateIds.Remove(id);
-        }
-    }
-
     /// <summary>
     ///     Pot fallback cutoffs only apply when pot farming is on AND the predicted next pot FATE is enabled.
     ///     Disabled pot FATEs must not idle the automator near spawn.

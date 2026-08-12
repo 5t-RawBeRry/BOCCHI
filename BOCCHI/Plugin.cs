@@ -207,9 +207,6 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         SanitizeTreasureConfig(cfg.TreasureConfig);
         SanitizeBuffConfig(cfg.BuffConfig);
         SanitizeUIConfig(cfg.UIConfig);
-        cfg.FatesConfig.EnsurePotFatesAllowedWhenPreferred(
-            cfg.AutomatorConfig.PreferPotFates,
-            cfg.AutomatorConfig.ShouldFarmPotChests);
     }
 
     /// <summary>
