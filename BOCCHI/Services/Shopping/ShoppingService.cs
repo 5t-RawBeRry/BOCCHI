@@ -5,9 +5,11 @@ using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
+using ECommons;
 using ECommons.Throttlers;
 using ECommons.UIHelpers.AddonMasterImplementations;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Ocelot.Extensions;
 using Ocelot.Ipc.VNavmesh;
@@ -75,14 +77,10 @@ public sealed class ShoppingService
                 || (config.GoldThreshold > 0 && gold >= config.GoldThreshold));
 
         // Still process an already-open shop even when below threshold (finish buys).
-        unsafe
+        if (AddonHelpers.IsShopExchangeOpen() && config.PreferredItemIds.Count > 0)
         {
-            AtkUnitBase* openShop = (AtkUnitBase*)gui.GetAddonByName("ShopExchangeCurrency", 1).Address;
-            if (openShop != null && openShop->IsVisible && config.PreferredItemIds.Count > 0)
-            {
-                TryHandleOpenShop(silver, gold);
-                return;
-            }
+            TryHandleOpenShop(silver, gold);
+            return;
         }
 
         if (!shouldShop && phase == Phase.Idle)
@@ -144,8 +142,8 @@ public sealed class ShoppingService
 
     private unsafe bool TryHandleOpenShop(ushort silver, ushort gold)
     {
-        AtkUnitBase* shop = (AtkUnitBase*)gui.GetAddonByName("ShopExchangeCurrency", 1).Address;
-        if (shop == null || !shop->IsVisible)
+        if (!GenericHelpers.TryGetAddonByName("ShopExchangeCurrency", out AtkUnitBase* shop)
+            || !GenericHelpers.IsAddonReady(shop))
         {
             return false;
         }
@@ -180,12 +178,11 @@ public sealed class ShoppingService
             FirePurchaseCallback(shop, entry.RowIndex, 1);
             buyCooldownUntil = DateTimeOffset.UtcNow + TimeSpan.FromMilliseconds(500);
 
-            nint yesPtr = gui.GetAddonByName("SelectYesno", 1).Address;
-            if (yesPtr != nint.Zero)
+            if (AddonHelpers.TryGetSelectYesno(out AddonSelectYesno* yesno))
             {
                 try
                 {
-                    new AddonMaster.SelectYesno(yesPtr).Yes();
+                    new AddonMaster.SelectYesno((nint)yesno).Yes();
                 }
                 catch
                 {

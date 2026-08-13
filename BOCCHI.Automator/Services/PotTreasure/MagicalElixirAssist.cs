@@ -1,101 +1,23 @@
-using ECommons.Throttlers;
-using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using BOCCHI.Common.Services;
 using Dalamud.Plugin.Services;
 
 namespace BOCCHI.Automator.Services.PotTreasure;
 
-/// <summary>Uses Magical Elixir (item 2003296) via inventory / key items.</summary>
+/// <summary>Uses Magical Elixir (key item 2003296) for pot compass hints.</summary>
 public sealed class MagicalElixirAssist(IPluginLog log)
 {
-    public unsafe bool HasElixir()
-    {
-        InventoryManager* inventory = InventoryManager.Instance();
-        if (inventory == null)
-        {
-            return false;
-        }
+    /// <summary>Game recast is ~5s — keep throttle slightly above so UseItem is not spammed on CD.</summary>
+    private const int UseThrottleMs = 5500;
 
-        if (inventory->GetInventoryItemCount(PotTreasureIds.MagicalElixirItemId, false) > 0)
-        {
-            return true;
-        }
+    public bool HasElixir() =>
+        InventoryItemAssist.Has(PotTreasureIds.MagicalElixirItemId, includeKeyItems: true);
 
-        InventoryContainer* keyItems = inventory->GetInventoryContainer(InventoryType.KeyItems);
-        if (keyItems == null)
-        {
-            return false;
-        }
-
-        for (int i = 0; i < keyItems->Size; i++)
-        {
-            InventoryItem* slot = keyItems->GetInventorySlot(i);
-            if (slot != null && !slot->IsEmpty() && slot->ItemId == PotTreasureIds.MagicalElixirItemId)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public unsafe bool TryUse()
-    {
-        if (!EzThrottler.Throttle("PotTreasure::MagicalElixir", 1000))
-        {
-            return false;
-        }
-
-        if (!HasElixir())
-        {
-            log.Warning("Pot treasure: Magical Elixir not in inventory");
-            return false;
-        }
-
-        AgentInventoryContext* agent = AgentInventoryContext.Instance();
-        if (agent == null)
-        {
-            log.Warning("Pot treasure: AgentInventoryContext unavailable");
-            return false;
-        }
-
-        // Prefer general UseItem path.
-        long result = agent->UseItem(PotTreasureIds.MagicalElixirItemId);
-        if (result is 0 or 1)
-        {
-            return true;
-        }
-
-        // Fallback: KeyItems slot.
-        InventoryManager* inventory = InventoryManager.Instance();
-        InventoryContainer* keyItems = inventory != null
-            ? inventory->GetInventoryContainer(InventoryType.KeyItems)
-            : null;
-        if (keyItems == null)
-        {
-            log.Warning("Pot treasure: UseItem({Item}) returned {Result}", PotTreasureIds.MagicalElixirItemId, result);
-            return false;
-        }
-
-        for (int i = 0; i < keyItems->Size; i++)
-        {
-            InventoryItem* slot = keyItems->GetInventorySlot(i);
-            if (slot == null || slot->IsEmpty() || slot->ItemId != PotTreasureIds.MagicalElixirItemId)
-            {
-                continue;
-            }
-
-            long keyResult = agent->UseItem(slot->ItemId, InventoryType.KeyItems, (uint)slot->Slot);
-            if (keyResult is 0 or 1)
-            {
-                return true;
-            }
-
-            log.Warning("Pot treasure: KeyItems UseItem returned {Result}", keyResult);
-            return false;
-        }
-
-        log.Warning("Pot treasure: UseItem({Item}) returned {Result}", PotTreasureIds.MagicalElixirItemId, result);
-        return false;
-    }
+    public bool TryUse() =>
+        InventoryItemAssist.TryUse(
+            PotTreasureIds.MagicalElixirItemId,
+            "PotTreasure::MagicalElixir",
+            UseThrottleMs,
+            log,
+            "Pot treasure",
+            tryKeyItems: true);
 }

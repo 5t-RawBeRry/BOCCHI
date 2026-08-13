@@ -381,8 +381,15 @@ public class Automator
         // Still mid-FATE (e.g. HasFate flicker) — wait until the pot is actually gone.
         if (fates.HasFate(fateId))
         {
-            memory.TryAdd(new PendingPotChestFarmMemory(fateId));
-            logger.Info("Pot FATE {FateId} still active — deferring chest farm", fateId.Value);
+            if (!memory.TryRemember<PendingPotChestFarmMemory>(out PendingPotChestFarmMemory _))
+            {
+                memory.TryAdd(new PendingPotChestFarmMemory(fateId));
+                // Stop next-goal travel immediately so we don't Return/TP before chests.
+                IllegalModeActivityWork.ForgetTravelLatches(memory);
+                SoftStopPathfinding();
+                logger.Info("Pot FATE {FateId} still active — deferring chest farm", fateId.Value);
+            }
+
             return;
         }
 

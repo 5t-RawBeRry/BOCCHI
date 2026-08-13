@@ -12,6 +12,7 @@ using Ocelot.Chain.Middleware.Step;
 using Ocelot.Extensions;
 using Ocelot.Ipc.VNavmesh;
 using Ocelot.Services.PlayerState;
+using BOCCHI.Treasure.Services;
 using System.Numerics;
 using DalamudObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 using TreasureFlags = FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.TreasureFlags;
@@ -163,20 +164,8 @@ public class OpenTreasureCofferChain
         }
     }
 
-    /// <summary>
-    ///     Pot Magic Pot reveals sometimes sit at Y ≈ -500. Path/interact using player altitude
-    ///     so vnav and 3D gates do not treat the coffer as underground.
-    /// </summary>
-    private Vector3 PathableTreasurePosition(Vector3 position)
-    {
-        float y = position.Y;
-        if (MathF.Abs(y + 500f) < 0.5f || MathF.Abs(y - player.Position.Y) > 80f)
-        {
-            y = player.Position.Y;
-        }
-
-        return new Vector3(position.X, y, position.Z);
-    }
+    private Vector3 PathableTreasurePosition(Vector3 position) =>
+        TreasurePathing.PathablePosition(position, player.Position.Y);
 
     /// <summary>Pandora success: Opened/FadedOut flags, or already listed in the Loot window.</summary>
     public static unsafe bool IsOpenedOrLooted(IGameObject chest)

@@ -32,7 +32,6 @@ public class ReturningHandler
     ICriticalEncounterRepository criticalEncounters,
     IPlayer player,
     IGateService gate,
-    IGameGui gui,
     AutoRotationController autoRotation
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Returning)
 {
@@ -202,8 +201,7 @@ public class ReturningHandler
             return false;
         }
 
-        AddonSelectYesno* yesno = gui.GetAddonByName<AddonSelectYesno>("SelectYesno");
-        if (yesno == null)
+        if (!AddonHelpers.TryGetSelectYesno(out AddonSelectYesno* yesno))
         {
             return false;
         }
@@ -213,8 +211,7 @@ public class ReturningHandler
 
     private unsafe bool IsReturnDialogVisible()
     {
-        AddonSelectYesno* yesno = gui.GetAddonByName<AddonSelectYesno>("SelectYesno");
-        if (yesno == null)
+        if (!AddonHelpers.TryGetSelectYesno(out AddonSelectYesno* yesno))
         {
             return false;
         }

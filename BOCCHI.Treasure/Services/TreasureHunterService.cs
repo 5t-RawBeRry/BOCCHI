@@ -957,6 +957,13 @@ public class TreasureHunterService
             currentDist = float.MaxValue;
         }
 
+        // Already at/near the pad — don't U-turn to another coffer mid-open.
+        if (current.Type == HuntPathfinderStepType.WalkToNode
+            && currentDist <= HuntDistances.NearbyLiveDivertMinCurrentDistance)
+        {
+            return false;
+        }
+
         HashSet<uint> candidates = GetDivertCandidateNodes(current);
         if (authoredStickyHalf != null)
         {
@@ -1012,6 +1019,13 @@ public class TreasureHunterService
             {
                 return false;
             }
+        }
+        else if (current.Type == HuntPathfinderStepType.WalkToNode
+                 && currentDist <= HuntDistances.EmptyPadSkipRadius)
+        {
+            // Committed approach to this pad — wait for stream / empty-skip; don't peel away
+            // (false empty → divert caused silver U-turns when the coffer hadn't loaded yet).
+            return false;
         }
         else if (nearbyDist + HuntDistances.NearbyLiveDivertClearAdvantage >= currentDist
                  && currentDist <= HuntDistances.NearbyLiveDivertRange)
@@ -1585,8 +1599,7 @@ public class TreasureHunterService
             return;
         }
 
-        AddonSelectYesno* yesno = gui.GetAddonByName<AddonSelectYesno>("SelectYesno");
-        if (yesno == null)
+        if (!AddonHelpers.TryGetSelectYesno(out AddonSelectYesno* yesno))
         {
             return;
         }
@@ -1799,25 +1812,19 @@ public class TreasureHunterService
 
         float dist = player.Position.Distance2D(layoutDestination);
 
+        // Track approach for ConfirmEmptyPad / ClearEmptyPadCandidate bookkeeping.
         if (emptyPadApproachNodeId != nodeId)
         {
             emptyPadApproachNodeId = nodeId;
-            emptyPadSawOutsideSkipRadius = dist > HuntDistances.EmptyPadSkipRadius;
+            emptyPadSawOutsideSkipRadius = dist > HuntDistances.LayoutProximityRadius;
         }
-        else if (dist > HuntDistances.EmptyPadSkipRadius)
+        else if (dist > HuntDistances.LayoutProximityRadius)
         {
             emptyPadSawOutsideSkipRadius = true;
         }
 
-        // Always trust emptiness when standing on the pad (same floor).
-        if (dist <= HuntDistances.LayoutProximityRadius)
-        {
-            return true;
-        }
-
-        // Within load range only after walking in from outside — avoids cascade skips
-        // when peel-off drops you in the middle of a dense authored cluster.
-        return emptyPadSawOutsideSkipRadius && dist <= HuntDistances.EmptyPadSkipRadius;
+        // Only trust emptiness on the pad — ~100y skips fired before silver streamed in.
+        return dist <= HuntDistances.LayoutProximityRadius;
     }
 
     private bool ConfirmEmptyPad(uint nodeId)
@@ -1867,13 +1874,16 @@ public class TreasureHunterService
     /// </summary>
     private IGameObject? FindTreasureForLayout(Vector3 layoutDestination, uint nodeId)
     {
-        IGameObject? close = FindTreasureNear(layoutDestination, HuntDistances.LayoutProximityRadius);
+        // Prefer unopened — an opened ghost on the pad must not hide a live silver neighbor match.
+        IGameObject? close = FindUnopenedTreasureNear(layoutDestination, HuntDistances.LayoutProximityRadius)
+                             ?? FindTreasureNear(layoutDestination, HuntDistances.LayoutProximityRadius);
         if (close != null && LiveCofferBelongsToLayout(close, nodeId, layoutDestination))
         {
             return close;
         }
 
-        IGameObject? drifted = FindTreasureNear(layoutDestination, HuntDistances.MatchRadius);
+        IGameObject? drifted = FindUnopenedTreasureNear(layoutDestination, HuntDistances.MatchRadius)
+                               ?? FindTreasureNear(layoutDestination, HuntDistances.MatchRadius);
         if (drifted == null || !LiveCofferBelongsToLayout(drifted, nodeId, layoutDestination))
         {
             return null;

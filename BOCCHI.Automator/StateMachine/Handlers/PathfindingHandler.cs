@@ -89,6 +89,13 @@ public class PathfindingHandler
             return StatePriority.Never;
         }
 
+        // Hold still for pot chest farm — leftover GoalPathStep must not Return/TP away first.
+        if (memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _)
+            || memory.TryRemember<PendingPotChestFarmMemory>(out PendingPotChestFarmMemory _))
+        {
+            return StatePriority.Never;
+        }
+
         return memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _) ? StatePriority.High : StatePriority.Never;
     }
 

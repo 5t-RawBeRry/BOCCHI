@@ -57,6 +57,16 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
         dropAt = DateTime.MinValue;
     }
 
+    /// <summary>Drop samples and baseline so a zone/OC reload does not inflate per-hour rates.</summary>
+    public void Reset()
+    {
+        snapshots.Clear();
+        lastValue = 0;
+        HasValue = false;
+        valueBeforeDrop = null;
+        dropAt = DateTime.MinValue;
+    }
+
     public void RecordPositiveDelta(long current)
     {
         Prune();

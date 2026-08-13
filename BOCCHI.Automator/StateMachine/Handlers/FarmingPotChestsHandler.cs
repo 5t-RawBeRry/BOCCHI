@@ -435,10 +435,11 @@ public class FarmingPotChestsHandler
         if (farm.ElixirAttempts < MaxElixirAttempts)
         {
             TryUseElixirOnFoot(farm);
-            return;
         }
 
-        if (DateTimeOffset.UtcNow - farm.PhaseStartedUtc < HintWaitTimeout)
+        // Wait from when we settled on this pad — don't softlock if UseItem never succeeds,
+        // and don't use PhaseStartedUtc (that starts when the whole search begins).
+        if (DateTimeOffset.UtcNow - farm.SettledAtUtc < HintWaitTimeout)
         {
             return;
         }
@@ -459,6 +460,7 @@ public class FarmingPotChestsHandler
         farm.RefineTarget = null;
         farm.SettledAtUtc = DateTimeOffset.MinValue;
         farm.WaitingForSpawnSince = DateTimeOffset.MinValue;
+        farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
         ResetApproachWatch();
         pathfinder.Stop();
     }
@@ -761,20 +763,8 @@ public class FarmingPotChestsHandler
         );
     }
 
-    /// <summary>
-    ///     Rewrite only known-bogus reveal altitudes (Y ≈ -500) so vnav can land.
-    ///     Do not pull valid authored pads to the player's Y — that put North Horn
-    ///     candidates off-mesh (e.g. Y 49 → 90) and failed polygon lookup.
-    /// </summary>
-    private Vector3 PathableTreasurePosition(Vector3 position)
-    {
-        if (MathF.Abs(position.Y + 500f) < 0.5f)
-        {
-            return position with { Y = player.Position.Y };
-        }
-
-        return position;
-    }
+    private Vector3 PathableTreasurePosition(Vector3 position) =>
+        TreasurePathing.PathablePosition(position, player.Position.Y);
 
     private bool TryAcquireReveal(PotChestFarmMemory farm, out IGameObject? reveal)
     {
