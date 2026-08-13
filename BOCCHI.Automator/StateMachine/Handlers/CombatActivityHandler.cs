@@ -33,8 +33,7 @@ internal static class CombatActivityHandler
         string throttlePrefix,
         bool shouldApproachTarget,
         bool stopPathfinderInCombat = false,
-        bool deferCombatToBossModAi = false,
-        ITargetManager? targetManager = null
+        bool deferCombatToBossModAi = false
     )
     {
         List<IBattleNpc> list = targets as List<IBattleNpc> ?? targets.ToList();
@@ -43,10 +42,6 @@ internal static class CombatActivityHandler
         {
             return false;
         }
-
-        // Seed / keep a hard target from the activity list. CE bosses often never enter
-        // BossMod's potential-target / aggro table, so AutoTarget alone can leave you idle.
-        SeedActivityTarget(targetManager, list, target, throttlePrefix);
 
         bool isMelee = playerState.IsMelee();
         float distance = player.Position.Distance2D(target.Position) - target.HitboxRadius;
@@ -100,29 +95,6 @@ internal static class CombatActivityHandler
 
         PathToEngagement(player, target, isMelee, pathfinder);
         return false;
-    }
-
-    private static void SeedActivityTarget(
-        ITargetManager? targetManager,
-        List<IBattleNpc> activityTargets,
-        IBattleNpc preferred,
-        string throttlePrefix
-    )
-    {
-        if (targetManager == null
-            || !EzThrottler.Throttle($"{throttlePrefix}::Target", 250))
-        {
-            return;
-        }
-
-        if (targetManager.Target is IBattleNpc current
-            && !current.IsDead
-            && activityTargets.Any(t => t.Address == current.Address))
-        {
-            return;
-        }
-
-        targetManager.Target = preferred;
     }
 
     private static bool IsInEngagementRange(float distancePastHitbox, bool isMelee)

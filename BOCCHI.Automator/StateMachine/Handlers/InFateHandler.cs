@@ -27,7 +27,6 @@ public class InFateHandler
     AutoRotationController autoRotation,
     IPlayer playerState,
     AutomatorConfig config,
-    ITargetManager targetManager,
     ILogger<InFateHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InFate)
 {
@@ -80,8 +79,7 @@ public class InFateHandler
                 "InFate",
                 approach.IsPending,
                 stopPathfinderInCombat: true,
-                deferCombatToBossModAi: config.ToggleAiProvider,
-                targetManager: targetManager))
+                deferCombatToBossModAi: config.ToggleAiProvider))
         {
             approach.Complete();
         }

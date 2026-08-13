@@ -7,6 +7,7 @@
 - After a Magic Pot FATE, Illegal Mode should stay to open pot chests instead of Returning or teleporting away too early.
 - Dancer now walks up to melee range in Illegal Mode / Completionist so dance Steps and Finish are in range.
 - Illegal Mode AI Mode should turn on for FATEs and Critical Encounters, and turn off when they end. (#182)
+- Illegal Mode no longer forces its own enemy target in FATEs/CEs — BossMod AI Mode handles targeting so the two don’t fight each other.
 - Treasure Hunt should no longer try to walk through a bad point near Suspended Masonry that made pathfinding fail.
 - Treasure Hunt is less likely to skip or turn away from silver coffers before they finish appearing.
 - Occult silver/gold per hour should no longer spike hugely just from entering an instance.
