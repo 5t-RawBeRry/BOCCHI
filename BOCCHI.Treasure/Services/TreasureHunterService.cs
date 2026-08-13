@@ -113,13 +113,6 @@ public class TreasureHunterService
     private uint? emptyPadCandidateNodeId;
     private DateTime emptyPadCandidateSinceUtc = DateTime.MinValue;
 
-    /// <summary>
-    /// Empty-skip at 100y only if we walked toward this pad from outside that radius.
-    /// Prevents peel-off in a dense cluster from cascade-skipping every nearby empty pad.
-    /// </summary>
-    private uint? emptyPadApproachNodeId;
-    private bool emptyPadSawOutsideSkipRadius;
-
     /// <summary>Force this pad as TSP start on the next plan (Nearby divert / reclaim).</summary>
     private uint? pendingPreferStartNode;
 
@@ -1340,7 +1333,22 @@ public class TreasureHunterService
             return true;
         }
 
-        Vector3 layoutDestination = layoutTreasure.First(t => t.Id == step.NodeId).Position;
+        // Every other lookup in this file tolerates a missing pad; this one used to throw out of
+        // Update() if a layout refresh dropped the node mid-route.
+        TreasureLayoutDatum layout = layoutTreasure.FirstOrDefault(t => t.Id == step.NodeId);
+        if (layout.Id != step.NodeId)
+        {
+            log.Warning(
+                "Treasure hunt: node {NodeId} is no longer in the layout — skipping and recalculating",
+                step.NodeId);
+            checkedNodeIds.Add(step.NodeId);
+            LastCheckedNodeId = step.NodeId;
+            ResetStuckWatch();
+            RecalculateRoute();
+            return false;
+        }
+
+        Vector3 layoutDestination = layout.Position;
 
         // Already opened (us or another plugin like VBM) — skip before finishing vias / path spam.
         if (TryCompleteOpenedLayoutCoffer(layoutDestination, step.NodeId))
@@ -1418,7 +1426,7 @@ public class TreasureHunterService
         if (present == null)
         {
             // Empty-skip first: a live coffer elsewhere on radar must not pin us to an empty pad (#168).
-            if (CanTrustEmptyPad(layoutDestination, step.NodeId) && ConfirmEmptyPad(step.NodeId))
+            if (CanTrustEmptyPad(layoutDestination) && ConfirmEmptyPad(step.NodeId))
             {
                 log.Info(
                     "Treasure hunt: no live coffer at layout {NodeId} — skipping and recalculating",
@@ -1802,30 +1810,11 @@ public class TreasureHunterService
         FindTreasureForLayout(layoutDestination, nodeId) == null;
 
     /// <summary>True when the player is close enough to trust that this pad has no live coffer.</summary>
-    private bool CanTrustEmptyPad(Vector3 layoutDestination, uint nodeId)
-    {
+    private bool CanTrustEmptyPad(Vector3 layoutDestination) =>
         // Surface above a basement pad is "close" in 2D but not actually at the coffer.
-        if (!IsSameFloor(layoutDestination))
-        {
-            return false;
-        }
-
-        float dist = player.Position.Distance2D(layoutDestination);
-
-        // Track approach for ConfirmEmptyPad / ClearEmptyPadCandidate bookkeeping.
-        if (emptyPadApproachNodeId != nodeId)
-        {
-            emptyPadApproachNodeId = nodeId;
-            emptyPadSawOutsideSkipRadius = dist > HuntDistances.LayoutProximityRadius;
-        }
-        else if (dist > HuntDistances.LayoutProximityRadius)
-        {
-            emptyPadSawOutsideSkipRadius = true;
-        }
-
+        IsSameFloor(layoutDestination)
         // Only trust emptiness on the pad — ~100y skips fired before silver streamed in.
-        return dist <= HuntDistances.LayoutProximityRadius;
-    }
+        && player.Position.Distance2D(layoutDestination) <= HuntDistances.LayoutProximityRadius;
 
     private bool ConfirmEmptyPad(uint nodeId)
     {
@@ -1844,8 +1833,6 @@ public class TreasureHunterService
     {
         emptyPadCandidateNodeId = null;
         emptyPadCandidateSinceUtc = DateTime.MinValue;
-        emptyPadApproachNodeId = null;
-        emptyPadSawOutsideSkipRadius = false;
     }
 
     private IGameObject? FindTreasureNear(Vector3 layoutDestination, float radius)
@@ -2137,7 +2124,10 @@ public class TreasureHunterService
         int bestOrder = int.MaxValue;
         foreach (uint id in remaining)
         {
-            if (authoredNodeHalves.TryGetValue(id, out string? half) && half != stickyHalf)
+            // Fail closed on untagged pads, same as the divert filter in
+            // TryReprioritizeNearbyLiveCoffer — otherwise the frontier can land on a pad that
+            // filter already removed, and RemoveWhere(id != frontier) empties the candidate set.
+            if (!authoredNodeHalves.TryGetValue(id, out string? half) || half != stickyHalf)
             {
                 continue;
             }

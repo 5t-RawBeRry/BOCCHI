@@ -38,6 +38,8 @@ public class FarmingPotChestsHandler
     MagicalElixirAssist elixir,
     AutoRotationController autoRotation,
     AutomatorConfig config,
+    PotsConfig potsConfig,
+    IAutomatorContext context,
     PandoraAutoOpenHold pandoraAutoOpen,
     ILogger<FarmingPotChestsHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.FarmingPotChests)
@@ -806,8 +808,15 @@ public class FarmingPotChestsHandler
             positions.AddRange(chests.Select(c => c.Position));
         }
 
+        // Same reroll opt-in the blind-start path uses (Automator.TryStartPotChestFarm) — smart runs
+        // that degrade to a sweep were silently dropping every reroll pad.
+        if (context.IsPotsAndTreasure || potsConfig.ShouldFarmRerollPotChests)
+        {
+            positions.AddRange(zone.GetRerollPotChestData().Select(c => c.Position));
+        }
+
         positions = positions
-            .OrderBy(p => player.Position.Distance(p))
+            .OrderBy(p => player.Position.Distance2D(p))
             .ToList();
 
         if (positions.Count == 0)
@@ -869,23 +878,24 @@ public class FarmingPotChestsHandler
             && PotTreasureIds.RevealCofferBaseIds.Contains(o.BaseId));
     }
 
+    // 2D throughout: reveal objects sometimes sit at Y ≈ -500, so any 3D compare against a real
+    // pad (Y 3..203) blew past these radii and the reveal was never found. Same reason
+    // HandleOpeningReveal measures with Distance2D (#170).
     private IGameObject? FindChestNear(Vector3 position)
     {
         return GetValidChests()
-            .OrderBy(o => Vector3.DistanceSquared(NormalizeY(o.Position), NormalizeY(position)))
-            .FirstOrDefault(o => Vector3.Distance(NormalizeY(o.Position), NormalizeY(position)) <= ChestSearchRadius);
+            .OrderBy(o => o.Position.Distance2D(position))
+            .FirstOrDefault(o => o.Position.Distance2D(position) <= ChestSearchRadius);
     }
 
     private IGameObject? FindRevealNear(Vector3 origin)
     {
         IGameObject? best = null;
         float bestDist = float.MaxValue;
-        Vector3 from = NormalizeY(origin);
 
         foreach (IGameObject obj in GetValidChests())
         {
-            Vector3 pos = NormalizeY(obj.Position);
-            float dist = Vector3.Distance(from, pos);
+            float dist = obj.Position.Distance2D(origin);
             if (dist > RevealSearchRadius || dist >= bestDist)
             {
                 continue;
@@ -896,17 +906,6 @@ public class FarmingPotChestsHandler
         }
 
         return best;
-    }
-
-    private static Vector3 NormalizeY(Vector3 position)
-    {
-        // Reveal objects sometimes sit at Y ≈ -500.
-        if (MathF.Abs(position.Y + 500f) < 0.5f)
-        {
-            return position with { Y = 0f };
-        }
-
-        return position;
     }
 
     private bool IsChestOpened(Vector3 position)

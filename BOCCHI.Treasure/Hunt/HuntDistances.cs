@@ -21,9 +21,10 @@ public static class HuntDistances
     public const float SamePadRecheckRadiusSq = SamePadRecheckRadius * SamePadRecheckRadius;
 
     /// <summary>
-    /// Player within this of a pad with no live object ⇒ treat as empty,
-    /// but only after walking in from outside this radius (see hunt service).
-    /// ~100y matches when coffers stream in so absence can be trusted.
+    /// ~100y — the range at which objects have streamed in, so absence starts to mean something.
+    /// Carrot hunt uses it to trust an empty pad. Treasure hunt no longer skips on it (that fired
+    /// before silver streamed in — <see cref="LayoutProximityRadius"/> owns the skip now); it only
+    /// marks the approach as "committed" so a divert cannot peel away from a pad we are closing on.
     /// </summary>
     public const float EmptyPadSkipRadius = 100f;
 

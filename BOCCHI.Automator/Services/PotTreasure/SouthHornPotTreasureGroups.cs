@@ -26,7 +26,7 @@ public static class SouthHornPotTreasureGroups
                     new("E1", new Vector3(803.661f, 96f, -354.181f), 4),
                     new("E2", new Vector3(684.4223f, 96.10129f, -165.4811f), 4),
                     new("E3", new Vector3(878.113f, 108.29f, -91.106f), 5),
-                    new("E4", new Vector3(885.93f, 120f, -23.25f), 5),
+                    new("E4", new Vector3(891.2597f, 120f, -20.672f), 5),
                 ],
                 ["southeast"] =
                 [
@@ -39,15 +39,17 @@ public static class SouthHornPotTreasureGroups
                 [
                     new("S1", new Vector3(341.4413f, 95.99999f, 194.7507f), 4),
                     new("S2", new Vector3(263.256f, 100.385f, 326.683f), 10),
-                    new("S3", new Vector3(46.03f, 102.4f, 373f), 10),
-                    new("S4", new Vector3(242.52f, 58.84f, 535.85f), 15),
+                    new("S3", new Vector3(80.19762f, 101.27949f, 391.2263f), 10),
+                    new("S4", new Vector3(224.7233f, 68.7328f, 518.668f), 15),
+                    // Bears south from the pot center (200, -215) — was filed under southwest,
+                    // so a "south" hint never offered it.
+                    new("S5", new Vector3(-54.69518f, 99.40573f, 405.0261f), 10),
                 ],
                 ["southwest"] =
                 [
-                    new("SW1", new Vector3(-54.69518f, 99.40573f, 405.0261f), 10),
-                    new("SW2", new Vector3(-165.2374f, 95.33837f, 437.4505f), 10),
-                    new("SW3", new Vector3(-324.2736f, 121f, 203.2017f), 11),
-                    new("SW4", new Vector3(-313.2906f, 108.10962f, 70.76207f), 12),
+                    new("SW1", new Vector3(-165.2374f, 95.33837f, 437.4505f), 10),
+                    new("SW2", new Vector3(-324.2736f, 121f, 203.2017f), 11),
+                    new("SW3", new Vector3(-313.2906f, 108.10962f, 70.76207f), 12),
                 ],
                 ["west"] =
                 [
@@ -89,7 +91,7 @@ public static class SouthHornPotTreasureGroups
                 ],
                 ["east"] =
                 [
-                    new("E1", new Vector3(8.9f, 65.44f, 664.74f), 15),
+                    new("E1", new Vector3(17.60418f, 65.93209f, 674.6207f), 15),
                     new("E2", new Vector3(67.45271f, 69.477974f, 745.8658f), 15),
                     new("E3", new Vector3(200.1241f, 56f, 624.2285f), 15),
                     new("E4", new Vector3(393.2685f, 57.545956f, 844.6924f), 17),
@@ -110,8 +112,8 @@ public static class SouthHornPotTreasureGroups
                 [
                     new("SW1", new Vector3(-746.132f, 172f, 828.881f), 27),
                     new("SW2", new Vector3(-734.1434f, 170.99998f, 683.7238f), 28),
-                    new("SW3", new Vector3(-707.7f, 203f, 702.15f), 28),
-                    new("SW4", new Vector3(-848.56f, 107f, 751.23f), 26),
+                    new("SW3", new Vector3(-713.6796f, 203f, 710.08f), 28),
+                    new("SW4", new Vector3(-836.1612f, 107f, 770.2822f), 26),
                 ],
                 ["west"] =
                 [

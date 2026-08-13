@@ -332,7 +332,10 @@ public static class PotFallbackWindow
         TimeSpan timeUntilDeparture = departureAt - now;
 
         // Overdue prediction (missed spawn) must not block FATEs / force preposition forever.
-        if (timeUntilDeparture < -PotCycleTracker.PredictionStaleGrace)
+        // Staleness is measured from the predicted *spawn*, same as PotCycleTracker.RollIdlePrediction
+        // and GoalValidator. Measuring it from departureAt made the window close spawnLead minutes
+        // early, so a lead above the 5m grace stopped prepositioning before the pot even popped.
+        if (now > cycle.PredictedNextSpawnAt + PotCycleTracker.PredictionStaleGrace)
         {
             return new(
                 true,
@@ -369,12 +372,7 @@ public static class PotFallbackWindow
             return false;
         }
 
-        DateTimeOffset departureAt = cycle.PredictedNextSpawnAt - TimeSpan.FromMinutes(Math.Max(0, spawnLeadMinutes));
-        if (departureAt - now < -PotCycleTracker.PredictionStaleGrace)
-        {
-            return false;
-        }
-
+        // Staleness is handled inside Evaluate (which allows the start, so !AllowStart is false here).
         PotFallbackStartDecision decision = Evaluate(
             cycle,
             now,

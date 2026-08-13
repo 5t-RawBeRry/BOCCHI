@@ -30,7 +30,13 @@ public sealed class TreasureLocationsExportPanel
 {
     private const string Filename = "treasure_locations.json";
 
-    private const string RouteFilename = "treasure_route.json";
+    /// <summary>
+    ///     Deliberately NOT treasure_route.json. This panel emits a flat schema-v1 tour, but the hunt
+    ///     planner only accepts schema v2 with segments — writing over the hand-authored file (in the
+    ///     plugin dir *and* the repo) silently dropped South Horn to nearest-neighbor TSP with no
+    ///     red/blue halves. Export here, then hand-merge into treasure_route.json.
+    /// </summary>
+    private const string RouteFilename = "treasure_route.suggested.json";
 
     private static readonly JsonSerializerOptions WriteJson = new()
     {
@@ -63,7 +69,8 @@ public sealed class TreasureLocationsExportPanel
             "Reads bronze/silver pads from the game layout, then writes treasure_locations.json.",
             branding.DalamudGrey);
         ui.Text(
-            "Write treasure_route.json builds a nearest-neighbor tour from base camp (2D; layout if refreshed, else authored).",
+            "Write route suggestion builds a nearest-neighbor tour from base camp (2D; layout if refreshed, else authored). "
+            + "Writes treasure_route.suggested.json — merge into treasure_route.json by hand.",
             branding.DalamudGrey);
         ui.Text("No Worker — layout already has exact coffer positions.", branding.DalamudGrey);
 
@@ -126,7 +133,7 @@ public sealed class TreasureLocationsExportPanel
             }
         }
 
-        if (ImGui.Button("Write treasure_route.json"))
+        if (ImGui.Button("Write treasure_route.suggested.json"))
         {
             try
             {

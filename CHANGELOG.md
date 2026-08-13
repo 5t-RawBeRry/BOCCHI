@@ -10,3 +10,7 @@
 - Treasure Hunt should no longer try to walk through a bad point near Suspended Masonry that made pathfinding fail.
 - Treasure Hunt is less likely to skip or turn away from silver coffers before they finish appearing.
 - Occult silver/gold per hour should no longer spike hugely just from entering an instance.
+- Pot chest farming now finds revealed coffers again — the game reports some of them at a bogus height, which was putting them outside the search range everywhere except near sea level.
+- Pot chest farming falls back to the full sweep correctly: reroll pot chests are now included (the "Farm reroll pot chests" setting had no effect in practice), and a few South Horn compass-group positions were up to 39y off.
+- The South Horn coffer near the west coast of The Wanderer's Haven is now included in Treasure Hunt routes (it had a bad level and was silently skipped every run).
+- Prepositioning for the next Magic Pot no longer gives up early when "Minutes before predicted pot spawn" is set above 5.
