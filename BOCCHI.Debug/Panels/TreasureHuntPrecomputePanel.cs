@@ -16,6 +16,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using TreasureSheet = Lumina.Excel.Sheets.Treasure;
 
 namespace BOCCHI.Debug.Panels;
@@ -48,6 +49,12 @@ public sealed class TreasureHuntPrecomputePanel
     private uint progress;
 
     private uint maxProgress;
+
+    /// <summary>
+    ///     Emit the full walk polyline per pair. Nothing reads it — it was ~170k points and most of a
+    ///     ~6.9 MB file — so the bake leaves it out unless you explicitly want it for inspection.
+    /// </summary>
+    private bool includeFullPaths;
 
     public string Name => "Treasure Hunt Bake";
 
@@ -103,6 +110,8 @@ public sealed class TreasureHuntPrecomputePanel
         ui.Text("Bakes node↔node and node↔aethernet walk distances via vnav (same as South Horn).", branding.DalamudGrey);
         ui.Text("Stay in the zone with navmesh loaded. Can take a long time (~5k pathfinds).", branding.DalamudGrey);
 
+        ImGui.Checkbox("Include full walk paths (huge, unused by routing)", ref includeFullPaths);
+
         if (ImGui.Button("Run bake"))
         {
             RefreshTreasures(zone);
@@ -150,7 +159,7 @@ public sealed class TreasureHuntPrecomputePanel
             int a = shards.Count;
             maxProgress = (uint)(t * (t - 1 + 2 * a));
 
-            HuntNodeDataSchema schema = new();
+            HuntNodeBakeSchema schema = new();
             foreach((HuntAethernet hunt, Vector3 _) in shards)
             {
                 schema.AethernetToNodeDistances[hunt] = [];
@@ -189,7 +198,13 @@ public sealed class TreasureHuntPrecomputePanel
                 }
             }
 
-            string json = JsonSerializer.Serialize(schema, new JsonSerializerOptions { WriteIndented = false });
+            string json = JsonSerializer.Serialize(
+                schema,
+                new JsonSerializerOptions
+                {
+                    WriteIndented = false,
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                });
             List<string> written = WriteOutputs(zone.ZoneId, json);
             lastOutputPath = string.Join(" | ", written);
             finished = true;
@@ -260,11 +275,16 @@ public sealed class TreasureHuntPrecomputePanel
 
     private List<string> WriteOutputs(ZoneId zoneId, string json)
     {
-        return TreasureDataPaths.WriteZoneDataFile(
+        List<string> written = TreasureDataPaths.WriteZoneDataFile(
             plugin.AssemblyLocation.DirectoryName,
             zoneId.TreasureDataFolder(),
             "precomputed_treasure_hunt_data.json",
             json);
+
+        // The hunt planner caches this file per zone for the session — drop it so a regenerated
+        // bake takes effect without a plugin reload.
+        HuntRoutePlanner.InvalidateCaches();
+        return written;
     }
 
     private static float PathLength(List<Vector3> path)
@@ -278,8 +298,10 @@ public sealed class TreasureHuntPrecomputePanel
         return length;
     }
 
-    private static List<HuntPosition> ToHuntPath(List<Vector3> path) =>
-        path.Select(p => new HuntPosition { X = p.X, Y = p.Y, Z = p.Z }).ToList();
+    private List<HuntPosition>? ToHuntPath(List<Vector3> path) =>
+        includeFullPaths
+            ? path.Select(p => new HuntPosition { X = p.X, Y = p.Y, Z = p.Z }).ToList()
+            : null;
 
     private readonly record struct TreasureSpot(uint Id, Vector3 Position, uint SgbId);
 }

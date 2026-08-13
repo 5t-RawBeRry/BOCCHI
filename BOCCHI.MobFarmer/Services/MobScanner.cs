@@ -1,4 +1,5 @@
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Mobs;
 using BOCCHI.Common.Extensions;
 using Dalamud.Game.ClientState.Objects.SubKinds;
@@ -15,7 +16,8 @@ public class MobScanner
 (
     MobFarmerConfig config,
     IObjectTable objects,
-    IPlayer player
+    IPlayer player,
+    IZoneProvider zones
 ) : IMobScanner
 {
     public IReadOnlyList<IBattleNpc> Mobs { get; private set; } = [];
@@ -33,6 +35,20 @@ public class MobScanner
 
     public unsafe void Update()
     {
+        // MobFarmerService calls this before its own Running check, and the Mob Farmer panel
+        // previews live counts while stopped — so this used to run everywhere in the game with the
+        // farmer off: a full object-table pass with an unsafe ForayInfo read per mob.
+        // Mob Farmer is Occult Crescent only, so nothing outside it needs the scan.
+        if (!zones.GetZone().IsOccultCrescentZone())
+        {
+            if (Mobs.Count > 0)
+            {
+                Mobs = [];
+            }
+
+            return;
+        }
+
         if (objects.LocalPlayer is not { } localPlayer)
         {
             Mobs = [];

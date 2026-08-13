@@ -52,7 +52,7 @@ public class CriticalEncounterContext
         return id == null ? [] : GetTargetsFor(id.Value);
     }
 
-    public unsafe IEnumerable<IBattleNpc> GetTargetsFor(CriticalEncounterId id)
+    public IEnumerable<IBattleNpc> GetTargetsFor(CriticalEncounterId id)
     {
         IPlayerCharacter? player = objects.LocalPlayer;
         if (player == null)
@@ -60,6 +60,14 @@ public class CriticalEncounterContext
             return [];
         }
 
+        return EnumerateEncounterEnemies(id).OrderBy(o => o.Position.Distance2D(player.Position));
+    }
+
+    /// <summary>Existence check only — skips the distance ordering a full target list needs.</summary>
+    public bool HasEncounterEnemies(CriticalEncounterId id) => EnumerateEncounterEnemies(id).Any();
+
+    private unsafe IEnumerable<IBattleNpc> EnumerateEncounterEnemies(CriticalEncounterId id)
+    {
         ushort ceId = id.Value;
 
         return objects.OfType<IBattleNpc>()
@@ -70,9 +78,6 @@ public class CriticalEncounterContext
                 BattleChara* battleChara = (BattleChara*)o.Address;
 
                 return o.SubKind == (byte)BattleNpcSubKind.Combatant && battleChara->EventId.EntryId == ceId;
-            })
-            .OrderBy(o => o.Position.Distance2D(player.Position));
+            });
     }
-
-    public bool HasEncounterEnemies(CriticalEncounterId id) => GetTargetsFor(id).Any();
 }

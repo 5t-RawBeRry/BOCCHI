@@ -60,9 +60,7 @@ public class GraphConfig(IPathfinder pathfinder, ILogger logger)
         DebugPathLines.Add(result.Nodes.ToList());
 #endif
 
-        // Unreachable paths report Distance 0 — treat as infinite so graph routing
-        // does not prefer island shards (e.g. Unhallowed Hamlet → Eye to Eye).
-        return result.Nodes.Count < 2 ? float.PositiveInfinity : result.Distance;
+        return result.CostOrUnreachable();
     }
 
     public async Task<float> GetWalkingCost(Node from, Node to) => await GetWalkingCost(from.Position, to.Position);

@@ -88,6 +88,17 @@ public class TreasureHunterService
     private const float StuckDetectionMinDistance = OpenTreasureCofferChain.PreferredOpenDistance;
 
     private readonly List<TreasureLayoutDatum> layoutTreasure = [];
+
+    /// <summary>
+    ///     Id index over <see cref="layoutTreasure"/>. Pad lookup happens several times per tick and
+    ///     once per remaining node during planning; the linear scans made that O(n²).
+    ///     Rebuilt whenever the list changes (see <see cref="RebuildLayoutIndex"/>).
+    /// </summary>
+    private readonly Dictionary<uint, TreasureLayoutDatum> layoutById = [];
+
+    /// <summary>Treasure objects for the current tick (see <see cref="RefreshTickTreasures"/>).</summary>
+    private readonly List<IGameObject> tickTreasures = [];
+
     private readonly List<HuntPathfinderStep> steps = [];
     private readonly HashSet<uint> checkedNodeIds = [];
     /// <summary>Stuck / geometry skips — never reclaim via Nearby divert (#173).</summary>
@@ -180,6 +191,8 @@ public class TreasureHunterService
             return;
         }
 
+        RefreshTickTreasures();
+
         if (activeChain is { IsCompleted: false })
         {
             return;
@@ -201,7 +214,7 @@ public class TreasureHunterService
             List<uint> validNodes = GetValidNodesForNextPlan();
             if (pendingPreferStartNode is uint preferLatch
                 && !validNodes.Contains(preferLatch)
-                && layoutTreasure.Any(t => t.Id == preferLatch))
+                && layoutById.ContainsKey(preferLatch))
             {
                 // Divert latch — pad may have been checked empty while still live.
                 checkedNodeIds.Remove(preferLatch);
@@ -269,7 +282,7 @@ public class TreasureHunterService
 
             steps.AddRange(
                 pathPlanner
-                    .FindPath(player.Position, validNodes, nearbyPrefix, stickyHalf)
+                    .FindPath(player.Position, validNodes, nearbyPrefix, stickyHalf, LastCheckedNodeId)
                     .GetAwaiter()
                     .GetResult());
 
@@ -465,6 +478,9 @@ public class TreasureHunterService
             return false;
         }
 
+        // Also reachable from Pots & Treasure outside our own Update tick.
+        RefreshTickTreasures();
+
         TreasureHuntPathfinder? planner = CreatePathPlanner();
         if (planner == null || planner.State != HuntPathfinderState.FileLoaded)
         {
@@ -502,6 +518,7 @@ public class TreasureHunterService
         Paused = false;
         steps.Clear();
         layoutTreasure.Clear();
+        layoutById.Clear();
         pendingStartSight = false;
         waitingForSightCounts = false;
         sessionStartSightArmed = false;
@@ -615,14 +632,13 @@ public class TreasureHunterService
                 continue;
             }
 
-            int layoutIndex = layoutTreasure.FindIndex(t => t.Id == step.NodeId);
-            if (layoutIndex < 0)
+            if (!TryGetLayout(step.NodeId, out TreasureLayoutDatum layout))
             {
                 continue;
             }
 
             nodeId = step.NodeId;
-            position = layoutTreasure[layoutIndex].Position;
+            position = layout.Position;
             return true;
         }
 
@@ -704,8 +720,9 @@ public class TreasureHunterService
 
     private void TryIssueStuckNudge(HuntPathfinderStep step)
     {
-        TreasureLayoutDatum layout = layoutTreasure.FirstOrDefault(t => t.Id == step.NodeId);
-        Vector3 dest = layout.Id == step.NodeId ? layout.Position : player.Position;
+        Vector3 dest = TryGetLayout(step.NodeId, out TreasureLayoutDatum layout)
+            ? layout.Position
+            : player.Position;
         Vector3 toDest = dest - player.Position;
         toDest.Y = 0f;
         if (toDest.LengthSquared() < 0.25f)
@@ -891,8 +908,7 @@ public class TreasureHunterService
                 continue;
             }
 
-            TreasureLayoutDatum layout = layoutTreasure.FirstOrDefault(t => t.Id == nodeId);
-            if (layout.Id != nodeId)
+            if (!TryGetLayout(nodeId, out TreasureLayoutDatum layout))
             {
                 continue;
             }
@@ -957,6 +973,13 @@ public class TreasureHunterService
             return false;
         }
 
+        // Throttle before the expensive part, not after. Everything below rescans the object table
+        // once per remaining pad; running that every frame to divert at most every 1.5s was pure waste.
+        if (!EzThrottler.Throttle("TreasureHuntReprioritize", 1500))
+        {
+            return false;
+        }
+
         HashSet<uint> candidates = GetDivertCandidateNodes(current);
         if (authoredStickyHalf != null)
         {
@@ -987,8 +1010,7 @@ public class TreasureHunterService
 
         uint nearbyId = nearby[0];
 
-        TreasureLayoutDatum layout = layoutTreasure.FirstOrDefault(t => t.Id == nearbyId);
-        if (layout.Id != nearbyId)
+        if (!TryGetLayout(nearbyId, out TreasureLayoutDatum layout))
         {
             return false;
         }
@@ -1028,11 +1050,6 @@ public class TreasureHunterService
         }
         // else: current goal is far / not live Nearby → always peel to the live Nearby.
 
-        if (!EzThrottler.Throttle("TreasureHuntReprioritize", 1500))
-        {
-            return false;
-        }
-
         // Stuck / unpathable pads must stay skipped — reclaiming them loops the wind jump (#173).
         if (stuckSkippedNodeIds.Contains(nearbyId))
         {
@@ -1063,8 +1080,7 @@ public class TreasureHunterService
     /// <summary>True when the walk goal still has an unopened live coffer within divert range of the player.</summary>
     private bool IsWalkGoalLiveNearby(uint nodeId)
     {
-        TreasureLayoutDatum layout = layoutTreasure.FirstOrDefault(t => t.Id == nodeId);
-        if (layout.Id != nodeId)
+        if (!TryGetLayout(nodeId, out TreasureLayoutDatum layout))
         {
             return false;
         }
@@ -1120,8 +1136,7 @@ public class TreasureHunterService
 
     private float GetWalkNodeGoalDistance(uint nodeId)
     {
-        TreasureLayoutDatum layout = layoutTreasure.FirstOrDefault(t => t.Id == nodeId);
-        if (layout.Id != nodeId)
+        if (!TryGetLayout(nodeId, out TreasureLayoutDatum layout))
         {
             return StepDistance;
         }
@@ -1232,7 +1247,14 @@ public class TreasureHunterService
             tracker.BronzeChests,
             tracker.SilverChests,
             trimmed);
-        RecalculateRoute();
+
+        // Sight only changes the route when it actually trimmed pads — a refresh that found nothing
+        // was re-solving the whole tour (and re-walking the layout) for an identical result.
+        if (trimmed > 0)
+        {
+            RecalculateRoute();
+        }
+
         return true;
     }
 
@@ -1246,8 +1268,7 @@ public class TreasureHunterService
         int trimmed = 0;
         foreach (uint nodeId in GetValidNodesForNextPlan().ToList())
         {
-            TreasureLayoutDatum spot = layoutTreasure.FirstOrDefault(t => t.Id == nodeId);
-            if (spot.Id != nodeId)
+            if (!TryGetLayout(nodeId, out TreasureLayoutDatum spot))
             {
                 continue;
             }
@@ -1335,8 +1356,7 @@ public class TreasureHunterService
 
         // Every other lookup in this file tolerates a missing pad; this one used to throw out of
         // Update() if a layout refresh dropped the node mid-route.
-        TreasureLayoutDatum layout = layoutTreasure.FirstOrDefault(t => t.Id == step.NodeId);
-        if (layout.Id != step.NodeId)
+        if (!TryGetLayout(step.NodeId, out TreasureLayoutDatum layout))
         {
             log.Warning(
                 "Treasure hunt: node {NodeId} is no longer in the layout — skipping and recalculating",
@@ -1545,8 +1565,15 @@ public class TreasureHunterService
         if (inCombat && !vnav.IsRunning())
         {
             SprintAssist.MaybeCast(automatorConfig.SprintOnAetheryteApproach, zone.IsInBasecamp());
-            Vector3 standOff = zone.GetMainAetheryte().GetCampStandOffPosition(player.Position);
-            vnav.PathfindAndMoveCloseTo(standOff, false, AethernetNavigation.PathfindArrivalRadius);
+
+            // IsPathfinding too: vnav is neither running nor idle while it computes, so guarding on
+            // IsRunning alone re-issued the request every frame for the whole computation.
+            if (!vnav.IsPathfinding())
+            {
+                Vector3 standOff = zone.GetMainAetheryte().GetCampStandOffPosition(player.Position);
+                vnav.PathfindAndMoveCloseTo(standOff, false, AethernetNavigation.PathfindArrivalRadius);
+            }
+
             return false;
         }
 
@@ -1835,25 +1862,52 @@ public class TreasureHunterService
         emptyPadCandidateSinceUtc = DateTime.MinValue;
     }
 
-    private IGameObject? FindTreasureNear(Vector3 layoutDestination, float radius)
+    /// <summary>
+    ///     Rebuild <see cref="tickTreasures"/>. Planning calls the pad matchers once per remaining
+    ///     node, and each call used to re-scan the whole object table and LINQ-sort it; a single
+    ///     filtered pass per tick turns that into a walk over a handful of coffers.
+    /// </summary>
+    private void RefreshTickTreasures()
     {
-        return objects
-            .Where(o => o is { ObjectKind: ObjectKind.Treasure, IsDead: false }
-                        && o.IsValid()
-                        && layoutDestination.Distance2D(o.Position) <= radius)
-            .OrderBy(o => layoutDestination.Distance2D(o.Position))
-            .FirstOrDefault();
+        tickTreasures.Clear();
+        foreach (IGameObject obj in objects)
+        {
+            if (obj is { ObjectKind: ObjectKind.Treasure, IsDead: false } && obj.IsValid())
+            {
+                tickTreasures.Add(obj);
+            }
+        }
     }
 
-    private IGameObject? FindUnopenedTreasureNear(Vector3 layoutDestination, float radius)
+    private IGameObject? FindTreasureNear(Vector3 layoutDestination, float radius) =>
+        FindNearestTreasure(layoutDestination, radius, unopenedOnly: false);
+
+    private IGameObject? FindUnopenedTreasureNear(Vector3 layoutDestination, float radius) =>
+        FindNearestTreasure(layoutDestination, radius, unopenedOnly: true);
+
+    private IGameObject? FindNearestTreasure(Vector3 layoutDestination, float radius, bool unopenedOnly)
     {
-        return objects
-            .Where(o => o is { ObjectKind: ObjectKind.Treasure, IsDead: false }
-                        && o.IsValid()
-                        && layoutDestination.Distance2D(o.Position) <= radius
-                        && !OpenTreasureCofferChain.IsOpenedOrLooted(o))
-            .OrderBy(o => layoutDestination.Distance2D(o.Position))
-            .FirstOrDefault();
+        IGameObject? best = null;
+        float bestDist = float.MaxValue;
+
+        foreach (IGameObject obj in tickTreasures)
+        {
+            float dist = layoutDestination.Distance2D(obj.Position);
+            if (dist > radius || dist >= bestDist)
+            {
+                continue;
+            }
+
+            if (unopenedOnly && OpenTreasureCofferChain.IsOpenedOrLooted(obj))
+            {
+                continue;
+            }
+
+            best = obj;
+            bestDist = dist;
+        }
+
+        return best;
     }
 
     /// <summary>
@@ -1949,8 +2003,8 @@ public class TreasureHunterService
             .Select(node => (uint)node.Id)
             .Where(id =>
             {
-                TreasureLayoutDatum layout = layoutTreasure.FirstOrDefault(t => t.Id == id);
-                return layout.Id == id && MatchesHuntCofferFilter(layout.ModelId);
+                return TryGetLayout(id, out TreasureLayoutDatum layout)
+                       && MatchesHuntCofferFilter(layout.ModelId);
             })
             .ToList();
     }
@@ -1983,8 +2037,7 @@ public class TreasureHunterService
     /// <summary>True when a live opened/looted coffer sits on this layout node (skip when resuming).</summary>
     private bool IsLayoutCofferOpened(uint nodeId)
     {
-        TreasureLayoutDatum layout = layoutTreasure.FirstOrDefault(t => t.Id == nodeId);
-        if (layout.Id != nodeId)
+        if (!TryGetLayout(nodeId, out TreasureLayoutDatum layout))
         {
             return false;
         }
@@ -1996,6 +2049,7 @@ public class TreasureHunterService
     private TreasureHuntPathfinder? CreatePathPlanner()
     {
         layoutTreasure.Clear();
+        layoutById.Clear();
 
         unsafe
         {
@@ -2049,6 +2103,7 @@ public class TreasureHunterService
         }
 
         layoutTreasure.Sort((a, b) => a.Id.CompareTo(b.Id));
+        RebuildLayoutIndex();
 
         IZone zone = zones.GetZone();
         TreasureHuntPathfinder planner = new(
@@ -2060,6 +2115,19 @@ public class TreasureHunterService
         RefreshAuthoredHalfCache(planner);
         return planner;
     }
+
+    private void RebuildLayoutIndex()
+    {
+        layoutById.Clear();
+        foreach (TreasureLayoutDatum layout in layoutTreasure)
+        {
+            layoutById[layout.Id] = layout;
+        }
+    }
+
+    /// <summary>Layout pad for a node id, or false when the snapshot no longer has it.</summary>
+    private bool TryGetLayout(uint nodeId, out TreasureLayoutDatum layout) =>
+        layoutById.TryGetValue(nodeId, out layout);
 
     /// <summary>
     /// Layout only loads nearby pads — without baked positions, replans near camp drop the rest of
@@ -2334,6 +2402,8 @@ public class TreasureHunterService
         }
 
         layoutTreasure.Clear();
+        layoutById.Clear();
+        tickTreasures.Clear();
         pathPlanner = null;
         stuckSkippedNodeIds.Clear();
         pandoraAutoOpen.Release();

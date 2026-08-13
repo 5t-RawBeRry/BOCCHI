@@ -1,4 +1,6 @@
 using BOCCHI.Common.Data;
+using BOCCHI.Common.Data.Zones;
+using BOCCHI.Common.Services;
 using BOCCHI.Treasure.Data;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Plugin.Services;
@@ -13,12 +15,24 @@ public interface ICarrotTracker
     IReadOnlyList<Carrot> Carrots { get; }
 }
 
-public class CarrotTracker(IObjectTable objects, IPlayer player) : ICarrotTracker, IOnUpdate
+public class CarrotTracker(IObjectTable objects, IPlayer player, IZoneProvider zones) : ICarrotTracker, IOnUpdate
 {
     public IReadOnlyList<Carrot> Carrots { get; private set; } = [];
 
     public void Update()
     {
+        // Carrots only exist in Occult Crescent — this used to scan, sort and allocate a wrapper per
+        // hit on every frame everywhere in the game.
+        if (!zones.GetZone().IsOccultCrescentZone())
+        {
+            if (Carrots.Count > 0)
+            {
+                Carrots = [];
+            }
+
+            return;
+        }
+
         if (player.PlayerCharacter == null)
         {
             Carrots = [];

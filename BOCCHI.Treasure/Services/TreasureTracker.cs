@@ -59,6 +59,18 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
 
     public void Update()
     {
+        // Occult coffers only — this used to scan and group the whole object table every frame
+        // everywhere in the game.
+        if (!zones.GetZone().IsOccultCrescentZone())
+        {
+            if (treasures.Count > 0)
+            {
+                treasures.Clear();
+            }
+
+            return;
+        }
+
         // Key by GameObjectId — BaseId is shared by every bronze/silver of that type,
         // so a dictionary on BaseId kept only one coffer and dropped the rest (no radar line).
         Dictionary<ulong, IGameObject> worldTreasures = objects

@@ -1,21 +1,10 @@
 using System.Numerics;
 using Dalamud.Game.ClientState.Objects.Types;
-using Dalamud.Plugin.Services;
-using ECommons.GameFunctions;
-using Ocelot.Extensions;
 
 namespace BOCCHI.Common.Targeting;
 
 public static class TargetHelper
 {
-    public static IEnumerable<IBattleNpc> GetHostileEnemies(IObjectTable objects, Vector3 from)
-    {
-        return objects.OfType<IBattleNpc>()
-            .Where(o => o is { IsDead: false, IsTargetable: true })
-            .Where(o => o.IsHostile())
-            .OrderBy(o => o.Position.Distance2D(from));
-    }
-
     public static IBattleNpc? Closest(this IEnumerable<IBattleNpc> enemies)
     {
         return enemies.FirstOrDefault();

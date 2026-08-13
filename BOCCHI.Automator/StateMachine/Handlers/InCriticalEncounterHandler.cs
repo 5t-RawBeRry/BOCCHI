@@ -4,13 +4,10 @@ using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
-using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
-using ECommons.Throttlers;
-using Ocelot.Actions;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
@@ -69,18 +66,12 @@ public class InCriticalEncounterHandler
             return;
         }
 
-        if (conditions[ConditionFlag.Mounted]
-            && EzThrottler.Throttle("InCriticalEncounter::Unmount")
-            && Actions.Unmount.CanCast())
+        // Materialise once. GetTargets is a lazy OrderBy over the whole object table, so calling
+        // Any() and then enumerating again ran two full scans (each with an unsafe deref + a sort).
+        List<IBattleNpc> targets = context.GetTargets().ToList();
+        if (targets.Count == 0 && TryGetCommittedBattleEncounter(out CriticalEncounter committed))
         {
-            Actions.Unmount.Cast();
-            pathfinder.Stop();
-        }
-
-        IEnumerable<IBattleNpc> targets = context.GetTargets();
-        if (!targets.Any() && TryGetCommittedBattleEncounter(out CriticalEncounter committed))
-        {
-            targets = context.GetTargetsFor(committed.Id);
+            targets = context.GetTargetsFor(committed.Id).ToList();
         }
 
         CombatActivityHandler.HandleTargets(

@@ -114,6 +114,13 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
             AllowFlying = false
         });
 
+        // Unreachable departure is no departure. Returning its Distance (0 when vnav fails) made
+        // walking to that shard look free and dragged the whole candidate's cost down with it.
+        if (!walkToNearestTeleportPath.IsReachable())
+        {
+            return null;
+        }
+
         return (nearest, walkToNearestTeleportPath.Distance);
     }
 

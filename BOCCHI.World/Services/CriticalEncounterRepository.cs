@@ -21,13 +21,19 @@ public class CriticalEncounterRepository
 
     public event Action<CriticalEncounterId>? CriticalEncounterRemoved;
 
-    public IReadOnlyList<CriticalEncounter> Snapshot() => data.GetAll().ToList();
+    /// <summary>Materialised once per Update — see <see cref="FateRepository"/> for the rationale.</summary>
+    private IReadOnlyList<CriticalEncounter> snapshot = [];
 
-    public IReadOnlyList<CriticalEncounter> SnapshotWithoutForkedTower()
-    {
-        ushort forkedTowerId = zones.GetZone().ForkedTowerEventId;
-        return data.Where(e => e.Id.Value != forkedTowerId).ToList().AsReadOnly();
-    }
+    /// <summary>
+    ///     Also materialised per Update. This is the variant nearly everything reads (goal
+    ///     validation, CE handlers from both GetScore and Handle, the CE context, renderers), and
+    ///     it used to build a filtered list plus a read-only wrapper on every single call.
+    /// </summary>
+    private IReadOnlyList<CriticalEncounter> snapshotWithoutForkedTower = [];
+
+    public IReadOnlyList<CriticalEncounter> Snapshot() => snapshot;
+
+    public IReadOnlyList<CriticalEncounter> SnapshotWithoutForkedTower() => snapshotWithoutForkedTower;
 
     public CriticalEncounter? TryGetForkedTower()
     {
@@ -52,26 +58,44 @@ public class CriticalEncounterRepository
                 data.Remove(id);
             }
 
+            snapshot = [];
+            snapshotWithoutForkedTower = [];
             return;
         }
 
+        // One pass: the refresh loop below used to re-scan the event array per tracked encounter.
         DynamicEvent[] events = oc->DynamicEventContainer.Events.ToArray();
-        Dictionary<CriticalEncounterId, CriticalEncounter> current = events
-            .Where(e => e.State != DynamicEventState.Inactive)
-            .Select(factory.Create)
-            .ToDictionary(k => k.Id, v => v);
-
-        RepositorySync.ApplySnapshot(data, current, CriticalEncounterAdded, CriticalEncounterRemoved);
-
-        foreach (CriticalEncounter criticalEncounter in data.GetAll())
+        Dictionary<uint, DynamicEvent> live = [];
+        Dictionary<CriticalEncounterId, CriticalEncounter> current = [];
+        foreach (DynamicEvent ev in events)
         {
-            DynamicEvent? ev = events.FirstOrNull(e => e.DynamicEventId == criticalEncounter.Id.Value);
-            if (ev == null)
+            live[ev.DynamicEventId] = ev;
+
+            if (ev.State == DynamicEventState.Inactive)
             {
                 continue;
             }
 
-            criticalEncounter.Update(ev.Value);
+            CriticalEncounter created = factory.Create(ev);
+            current[created.Id] = created;
         }
+
+        RepositorySync.ApplySnapshot(data, current, CriticalEncounterAdded, CriticalEncounterRemoved);
+
+        List<CriticalEncounter> tracked = data.GetAll().ToList();
+        foreach (CriticalEncounter criticalEncounter in tracked)
+        {
+            if (live.TryGetValue(criticalEncounter.Id.Value, out DynamicEvent ev))
+            {
+                criticalEncounter.Update(ev);
+            }
+        }
+
+        snapshot = tracked;
+
+        ushort forkedTowerId = zones.GetZone().ForkedTowerEventId;
+        snapshotWithoutForkedTower = forkedTowerId == 0
+            ? tracked
+            : tracked.Where(e => e.Id.Value != forkedTowerId).ToList();
     }
 }

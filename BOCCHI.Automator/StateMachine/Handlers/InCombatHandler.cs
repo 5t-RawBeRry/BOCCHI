@@ -48,8 +48,8 @@ public class InCombatHandler
             return;
         }
 
-        // Illegal Mode open combat: BOCCHI AI owns targeting when enabled; otherwise leave target alone.
-        // (ShouldHandleTargeting is Mob Farmer only.)
+        // Open-world trash only — FATE/CE combat is InFate / InCriticalEncounter.
+        // Targeting stays with the player / BossMod; we only dismount here.
 
         if (conditions[ConditionFlag.Mounted])
         {

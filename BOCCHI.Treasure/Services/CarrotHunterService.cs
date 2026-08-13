@@ -400,7 +400,7 @@ public sealed class CarrotHunterService
         if (conditions[ConditionFlag.InCombat])
         {
             // Walk toward camp pad until combat clears (same idea as treasure hunt Return).
-            if (!vnav.IsRunning())
+            if (!vnav.IsRunning() && !vnav.IsPathfinding())
             {
                 Vector3 standOff = zone.GetMainAetheryte().GetCampStandOffPosition(player.Position);
                 vnav.PathfindAndMoveCloseTo(standOff, false, AethernetNavigation.PathfindArrivalRadius);
@@ -470,7 +470,7 @@ public sealed class CarrotHunterService
             return;
         }
 
-        if (!vnav.IsRunning())
+        if (!vnav.IsRunning() && !vnav.IsPathfinding())
         {
             vnav.PathfindAndMoveCloseTo(standOff, false, AethernetNavigation.PathfindArrivalRadius);
         }
@@ -587,7 +587,7 @@ public sealed class CarrotHunterService
             return;
         }
 
-        if (!vnav.IsRunning())
+        if (!vnav.IsRunning() && !vnav.IsPathfinding())
         {
             vnav.PathfindAndMoveCloseTo(currentTargetPosition, false, OpenTreasureCofferChain.PathArrivalRange);
         }
@@ -686,7 +686,7 @@ public sealed class CarrotHunterService
         if (dist3d > HuntDistances.BunnyInteractRadius
             && !(dist2d <= HuntDistances.StuckNearRadius && IsStuckNearTarget(dist2d)))
         {
-            if (!vnav.IsRunning())
+            if (!vnav.IsRunning() && !vnav.IsPathfinding())
             {
                 vnav.PathfindAndMoveCloseTo(bunny.Position, false, OpenTreasureCofferChain.PathArrivalRange);
             }

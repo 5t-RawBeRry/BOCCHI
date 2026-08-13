@@ -45,7 +45,8 @@ public class GatheringHandler
             return inCombat.Count > 0 ? FarmerPhase.Stacking : FarmerPhase.Waiting;
         }
 
-        if (targets.Target?.IsTargetingPlayer(objects.LocalPlayer) == true)
+        if (config.ShouldHandleTargeting
+            && targets.Target?.IsTargetingPlayer(objects.LocalPlayer) == true)
         {
             targets.Target = null;
             pathfinder.Stop();
@@ -64,7 +65,10 @@ public class GatheringHandler
             return null;
         }
 
-        targets.Target = next;
+        if (config.ShouldHandleTargeting)
+        {
+            targets.Target = next;
+        }
 
         if (pathfinder.GetState() != PathfindingState.Idle)
         {

@@ -73,6 +73,9 @@ public class FarmingPotChestsHandler
 
     private Task<ChainResult>? activeChain;
 
+    /// <summary>Reveal coffers for the current tick (see <see cref="RefreshTickChests"/>).</summary>
+    private readonly List<IGameObject> tickChests = [];
+
     private Vector3? approachTarget;
 
     private DateTimeOffset approachSince = DateTimeOffset.MinValue;
@@ -111,6 +114,7 @@ public class FarmingPotChestsHandler
         chainManager.CancelAll();
         pathfinder.Stop();
         activeChain = null;
+        tickChests.Clear();
         hints.Disarm();
         pandoraAutoOpen.Release();
     }
@@ -134,6 +138,8 @@ public class FarmingPotChestsHandler
             pathfinder.Stop();
             return;
         }
+
+        RefreshTickChests();
 
         // Cache Me clears when pot chests are done or the pot dies — that is the farm end signal.
         if (farm.Phase != PotChestFarmPhase.WaitingForBuff && !HasTreasureBuff())
@@ -869,34 +875,44 @@ public class FarmingPotChestsHandler
     private bool HasTreasureBuff() =>
         player.PlayerCharacter?.StatusList.Has(PotTreasureIds.TreasureBuffStatusId) == true;
 
-    private IEnumerable<IGameObject> GetValidChests()
+    /// <summary>
+    ///     Rebuild <see cref="tickChests"/>. The matchers below run several times per tick
+    ///     (TryAcquireReveal alone can trigger three, plus two per candidate in the exhaustion loop),
+    ///     and each used to re-scan the whole object table.
+    /// </summary>
+    private void RefreshTickChests()
     {
-        // Only Magic Pot reveal coffer BaseIds — layout bronze/silver can sit on the same spot.
-        return objects.Where(o =>
-            o.IsValid()
-            && !o.IsDead
-            && PotTreasureIds.RevealCofferBaseIds.Contains(o.BaseId));
+        tickChests.Clear();
+        foreach (IGameObject obj in objects)
+        {
+            // Only Magic Pot reveal coffer BaseIds — layout bronze/silver can sit on the same spot.
+            if (!obj.IsDead
+                && PotTreasureIds.RevealCofferBaseIds.Contains(obj.BaseId)
+                && obj.IsValid())
+            {
+                tickChests.Add(obj);
+            }
+        }
     }
 
     // 2D throughout: reveal objects sometimes sit at Y ≈ -500, so any 3D compare against a real
     // pad (Y 3..203) blew past these radii and the reveal was never found. Same reason
     // HandleOpeningReveal measures with Distance2D (#170).
-    private IGameObject? FindChestNear(Vector3 position)
-    {
-        return GetValidChests()
-            .OrderBy(o => o.Position.Distance2D(position))
-            .FirstOrDefault(o => o.Position.Distance2D(position) <= ChestSearchRadius);
-    }
+    private IGameObject? FindChestNear(Vector3 position) =>
+        FindNearestChest(position, ChestSearchRadius);
 
-    private IGameObject? FindRevealNear(Vector3 origin)
+    private IGameObject? FindRevealNear(Vector3 origin) =>
+        FindNearestChest(origin, RevealSearchRadius);
+
+    private IGameObject? FindNearestChest(Vector3 origin, float radius)
     {
         IGameObject? best = null;
         float bestDist = float.MaxValue;
 
-        foreach (IGameObject obj in GetValidChests())
+        foreach (IGameObject obj in tickChests)
         {
             float dist = obj.Position.Distance2D(origin);
-            if (dist > RevealSearchRadius || dist >= bestDist)
+            if (dist > radius || dist >= bestDist)
             {
                 continue;
             }

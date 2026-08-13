@@ -45,9 +45,11 @@ internal static class CombatActivityHandler
 
         bool isMelee = playerState.IsMelee();
         float distance = player.Position.Distance2D(target.Position) - target.HitboxRadius;
+        bool nearTarget = distance <= DismountRange;
 
+        // Near the pack, or already in combat under BossMod AI (may be kiting past DismountRange).
         if (conditions[ConditionFlag.Mounted]
-            && distance <= DismountRange
+            && (nearTarget || (deferCombatToBossModAi && conditions[ConditionFlag.InCombat]))
             && EzThrottler.Throttle($"{throttlePrefix}::Unmount")
             && Actions.Unmount.CanCast())
         {
@@ -59,18 +61,7 @@ internal static class CombatActivityHandler
         if (deferCombatToBossModAi)
         {
             // Release vnav — StayCloseToTarget / NormalMovement own combat movement.
-            // Issuing PathToEngagement here fights the AI and causes edge stutter (in/out of FATE).
             pathfinder.Stop();
-
-            if (conditions[ConditionFlag.Mounted]
-                && (conditions[ConditionFlag.InCombat] || distance <= DismountRange)
-                && EzThrottler.Throttle($"{throttlePrefix}::Unmount")
-                && Actions.Unmount.CanCast())
-            {
-                Actions.Unmount.Cast();
-                return false;
-            }
-
             return true;
         }
 

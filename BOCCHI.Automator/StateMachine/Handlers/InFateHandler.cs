@@ -8,8 +8,6 @@ using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
-using ECommons.Throttlers;
-using Ocelot.Actions;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
@@ -56,15 +54,6 @@ public class InFateHandler
         if (objects.LocalPlayer is not { } player)
         {
             return;
-        }
-
-        if (conditions[ConditionFlag.Mounted]
-            && EzThrottler.Throttle("InFate::Unmount")
-            && Actions.Unmount.CanCast())
-        {
-            logger.Debug("In FATE — dismounting");
-            Actions.Unmount.Cast();
-            pathfinder.Stop();
         }
 
         List<IBattleNpc> fateTargets = context.GetTargets().ToList();

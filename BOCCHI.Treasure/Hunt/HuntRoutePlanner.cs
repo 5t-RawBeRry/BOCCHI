@@ -29,11 +29,17 @@ public interface IHuntRoutePlanner
     /// <param name="stickyHalf">
     ///     When set (e.g. red/blue), finish that half before the other — survives empty skips.
     /// </param>
+    /// <param name="continueAfterNodeId">
+    ///     Last pad we finished. On an untagged authored route the tour resumes at the next authored
+    ///     pad after this one instead of re-entering at whatever is geographically nearest, which
+    ///     rotated the whole remaining route every replan.
+    /// </param>
     Task<List<HuntPathfinderStep>> FindPath(
         Vector3 start,
         List<uint> nodes,
         IReadOnlyList<uint>? preferStartNodes = null,
-        string? stickyHalf = null);
+        string? stickyHalf = null,
+        uint? continueAfterNodeId = null);
 }
 
 /// <summary>
@@ -62,6 +68,16 @@ public abstract class HuntRoutePlanner
         PropertyNameCaseInsensitive = true,
     };
 
+    /// <summary>
+    ///     Parsed hunt data, keyed by zone. The node/aethernet distance file is multi-megabyte and a
+    ///     planner is rebuilt on every RecalculateRoute (after every coffer, empty skip, divert...),
+    ///     so re-reading it each time cost a disk read plus a large parse on the framework thread.
+    ///     Both payloads are read-only after load, so one parse per zone per session is enough.
+    /// </summary>
+    private static readonly Dictionary<(ZoneId Zone, string File), HuntNodeDataSchema> NodeDataCache = [];
+
+    private static readonly Dictionary<ZoneId, List<AuthoredRouteEntry>> AuthoredRouteCache = [];
+
     private HuntNodeDataSchema data = new();
 
     /// <summary>Flattened authored pads in order; empty when falling back to TSP.</summary>
@@ -82,7 +98,8 @@ public abstract class HuntRoutePlanner
         Vector3 start,
         List<uint> nodes,
         IReadOnlyList<uint>? preferStartNodes = null,
-        string? stickyHalf = null)
+        string? stickyHalf = null,
+        uint? continueAfterNodeId = null)
     {
         if (State != HuntPathfinderState.FileLoaded && State != HuntPathfinderState.PathfindingDone)
         {
@@ -127,7 +144,7 @@ public abstract class HuntRoutePlanner
 
         uint? primaryPrefer = preferPrefix.Count > 0 ? preferPrefix[0] : null;
         List<uint> tour = authoredEntries.Count > 0
-            ? BuildAuthoredTour(start, remaining, primaryPrefer, stickyHalf)
+            ? BuildAuthoredTour(start, remaining, primaryPrefer, stickyHalf, continueAfterNodeId)
             : BuildTspTour(start, remaining, primaryPrefer);
 
         if (preferPrefix.Count > 0)
@@ -212,9 +229,26 @@ public abstract class HuntRoutePlanner
 
     protected abstract Vector3 GetNodePosition(uint nodeId);
 
+    /// <summary>Drop the cached parse (zone data changed on disk / plugin reload).</summary>
+    public static void InvalidateCaches()
+    {
+        NodeDataCache.Clear();
+        AuthoredRouteCache.Clear();
+    }
+
     protected void LoadFile(string filename)
     {
         State = HuntPathfinderState.LoadingFile;
+
+        if (NodeDataCache.TryGetValue((zoneId, filename), out HuntNodeDataSchema? cached))
+        {
+            data = cached;
+            authoredEntries = AuthoredRouteCache.TryGetValue(zoneId, out List<AuthoredRouteEntry>? route)
+                ? route
+                : [];
+            State = HuntPathfinderState.FileLoaded;
+            return;
+        }
 
         string file = GetDataFile(plugin, zoneId, filename);
         if (!File.Exists(file))
@@ -226,6 +260,15 @@ public abstract class HuntRoutePlanner
         string json = File.ReadAllText(file);
         data = JsonSerializer.Deserialize<HuntNodeDataSchema>(json) ?? new HuntNodeDataSchema();
         LoadAuthoredRoute();
+
+        NodeDataCache[(zoneId, filename)] = data;
+        AuthoredRouteCache[zoneId] = authoredEntries;
+        log.Info(
+            "Cached hunt route data for {Zone}: {Nodes} node(s), {Pads} authored pad(s)",
+            zoneId,
+            data.NodeToNodeDistances.Count,
+            authoredEntries.Count);
+
         State = HuntPathfinderState.FileLoaded;
     }
 
@@ -301,14 +344,86 @@ public abstract class HuntRoutePlanner
 
         Dictionary<uint, Dictionary<uint, (float Cost, List<HuntPathfinderStep> Steps)>> graph =
             BuildCostGraph(remaining);
-        return SolveTspNearestNeighbor(startNode, remaining, graph);
+        List<uint> route = SolveTspNearestNeighbor(startNode, remaining, graph);
+        return ImproveWithTwoOpt(route, graph);
+    }
+
+    /// <summary>
+    ///     2-opt pass over the nearest-neighbour tour. NN routinely leaves long crossing edges;
+    ///     repeatedly reversing a segment when that shortens the path removes them. The start pad is
+    ///     pinned (it is where we are / the pad we were told to prefer) and only strict improvements
+    ///     are taken, so this can never make the tour longer.
+    /// </summary>
+    private static List<uint> ImproveWithTwoOpt(
+        List<uint> route,
+        Dictionary<uint, Dictionary<uint, (float Cost, List<HuntPathfinderStep> Steps)>> graph)
+    {
+        const int maxPasses = 40;
+        const float minGain = 0.01f;
+
+        if (route.Count < 4)
+        {
+            return route;
+        }
+
+        for (int pass = 0; pass < maxPasses; pass++)
+        {
+            bool improved = false;
+
+            for (int i = 0; i < route.Count - 2; i++)
+            {
+                for (int k = i + 2; k < route.Count; k++)
+                {
+                    float before = EdgeCost(graph, route[i], route[i + 1]);
+                    float after = EdgeCost(graph, route[i], route[k]);
+
+                    // Open path: the tail edge only exists when k is not the last pad.
+                    if (k + 1 < route.Count)
+                    {
+                        before += EdgeCost(graph, route[k], route[k + 1]);
+                        after += EdgeCost(graph, route[i + 1], route[k + 1]);
+                    }
+
+                    if (after + minGain >= before)
+                    {
+                        continue;
+                    }
+
+                    route.Reverse(i + 1, k - i);
+                    improved = true;
+                }
+            }
+
+            if (!improved)
+            {
+                break;
+            }
+        }
+
+        return route;
+    }
+
+    private static float EdgeCost(
+        Dictionary<uint, Dictionary<uint, (float Cost, List<HuntPathfinderStep> Steps)>> graph,
+        uint from,
+        uint to)
+    {
+        if (graph.TryGetValue(from, out Dictionary<uint, (float Cost, List<HuntPathfinderStep> Steps)>? edges)
+            && edges.TryGetValue(to, out (float Cost, List<HuntPathfinderStep> Steps) edge))
+        {
+            return edge.Cost;
+        }
+
+        // Missing pair — treat as very expensive but finite so the comparison stays well defined.
+        return 1e9f;
     }
 
     private List<uint> BuildAuthoredTour(
         Vector3 start,
         List<uint> remaining,
         uint? preferStartNode,
-        string? stickyHalf)
+        string? stickyHalf,
+        uint? continueAfterNodeId = null)
     {
         HashSet<uint> remainingSet = remaining.ToHashSet();
         Dictionary<uint, int> orderIndex = [];
@@ -339,19 +454,20 @@ public abstract class HuntRoutePlanner
 
         if (preferStartNode is uint prefer && orderIndex.ContainsKey(prefer))
         {
-            List<uint> baseTour = BuildHalfAwareTour(start, orderedUnique, stickyHalf);
+            List<uint> baseTour = BuildHalfAwareTour(start, orderedUnique, stickyHalf, continueAfterNodeId);
             baseTour.Remove(prefer);
             baseTour.Insert(0, prefer);
             return baseTour;
         }
 
-        return BuildHalfAwareTour(start, orderedUnique, stickyHalf);
+        return BuildHalfAwareTour(start, orderedUnique, stickyHalf, continueAfterNodeId);
     }
 
     private List<uint> BuildHalfAwareTour(
         Vector3 start,
         List<AuthoredRouteEntry> orderedUnique,
-        string? stickyHalf)
+        string? stickyHalf,
+        uint? continueAfterNodeId = null)
     {
         List<string> halves = orderedUnique
             .Select(e => e.Half)
@@ -405,17 +521,59 @@ public abstract class HuntRoutePlanner
                 .ToList();
         }
 
-        // Single / no half: enter at nearest remaining, continue authored order with wrap.
-        uint entry = orderedUnique
+        // Single / no half: continue authored order with wrap.
+        // Prefer resuming right after the pad we just finished. Re-entering at whatever is nearest
+        // rotated the entire remaining tour on every replan (one per coffer), so a pad that happened
+        // to sit closer across a region boundary dragged the route back and forth.
+        uint? resume = continueAfterNodeId is uint after
+            ? TryGetNextAuthoredAfter(after, orderedUnique)
+            : null;
+
+        uint entry = resume ?? orderedUnique
             .OrderBy(e => Vector3.DistanceSquared(start, GetNodePosition(e.NodeId)))
             .First()
             .NodeId;
+
         if (halves.Count == 1)
         {
             LastPrimaryHalf = halves[0];
         }
 
         return OrderFromEntry(orderedUnique, entry);
+    }
+
+    /// <summary>
+    ///     First still-remaining authored pad after <paramref name="afterNodeId"/>, wrapping.
+    ///     Null when that pad is not in the authored route or nothing after it remains.
+    /// </summary>
+    private uint? TryGetNextAuthoredAfter(uint afterNodeId, List<AuthoredRouteEntry> remaining)
+    {
+        int start = -1;
+        for (int i = 0; i < authoredEntries.Count; i++)
+        {
+            if (authoredEntries[i].NodeId == afterNodeId)
+            {
+                start = i;
+                break;
+            }
+        }
+
+        if (start < 0)
+        {
+            return null;
+        }
+
+        HashSet<uint> remainingIds = remaining.Select(e => e.NodeId).ToHashSet();
+        for (int step = 1; step <= authoredEntries.Count; step++)
+        {
+            uint id = authoredEntries[(start + step) % authoredEntries.Count].NodeId;
+            if (remainingIds.Contains(id))
+            {
+                return id;
+            }
+        }
+
+        return null;
     }
 
     private static List<uint> OrderFromEntry(List<AuthoredRouteEntry> orderedUnique, uint entry)
