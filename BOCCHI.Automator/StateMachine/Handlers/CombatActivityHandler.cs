@@ -37,7 +37,7 @@ internal static class CombatActivityHandler
     )
     {
         List<IBattleNpc> list = targets as List<IBattleNpc> ?? targets.ToList();
-        IBattleNpc? target = TargetHelper.Select(list, preferCentroid: false);
+        IBattleNpc? target = TargetHelper.Select(list, player.Position, preferCentroid: false);
         if (target == null)
         {
             return false;

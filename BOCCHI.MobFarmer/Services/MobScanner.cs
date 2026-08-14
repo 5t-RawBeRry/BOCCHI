@@ -35,10 +35,7 @@ public class MobScanner
 
     public unsafe void Update()
     {
-        // MobFarmerService calls this before its own Running check, and the Mob Farmer panel
-        // previews live counts while stopped — so this used to run everywhere in the game with the
-        // farmer off: a full object-table pass with an unsafe ForayInfo read per mob.
-        // Mob Farmer is Occult Crescent only, so nothing outside it needs the scan.
+        // Occult Crescent only (the farmer panel still previews counts while stopped).
         if (!zones.GetZone().IsOccultCrescentZone())
         {
             if (Mobs.Count > 0)

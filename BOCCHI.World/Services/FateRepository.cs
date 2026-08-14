@@ -24,11 +24,7 @@ public class FateRepository
 
     public event Action<FateId>? FateRemoved;
 
-    /// <summary>
-    ///     Materialised once per Update rather than per call — this is read from a dozen places each
-    ///     tick (goal validation, path calculation, pot cycle, activity choice) and every one of them
-    ///     used to allocate its own copy of the list.
-    /// </summary>
+    /// <summary>Materialised once per Update — consumers share this list instead of copying it.</summary>
     private IReadOnlyList<Fate> snapshot = [];
 
     public IReadOnlyList<Fate> Snapshot() => snapshot;
@@ -37,9 +33,7 @@ public class FateRepository
 
     public void Update()
     {
-        // Every consumer of this repository is Occult Crescent only, but the rebuild ran everywhere
-        // in the game — and the overworld is full of FATEs. Drop what we have (so subscribers see
-        // the removals once) and skip the work outside OC.
+        // Occult Crescent only — drop tracked FATEs so subscribers see the removals once.
         if (!zones.GetZone().IsOccultCrescentZone())
         {
             if (snapshot.Count > 0)
@@ -51,8 +45,7 @@ public class FateRepository
             return;
         }
 
-        // One pass over the fate table. The refresh loop below used to re-scan it per tracked fate
-        // (FirstOrDefault by id), which is O(n^2) every frame.
+        // One pass over the fate table; refresh tracked entries from a dictionary, not a rescan.
         Dictionary<ushort, IFate> live = [];
         Dictionary<FateId, Fate> current = [];
         foreach (IFate fate in fates)

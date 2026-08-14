@@ -59,8 +59,7 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
 
     public void Update()
     {
-        // Occult coffers only — this used to scan and group the whole object table every frame
-        // everywhere in the game.
+        // Occult Crescent only.
         if (!zones.GetZone().IsOccultCrescentZone())
         {
             if (treasures.Count > 0)

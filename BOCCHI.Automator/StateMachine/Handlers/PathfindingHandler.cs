@@ -172,7 +172,6 @@ public class PathfindingHandler
                     else if (result.IsCanceled)
                     {
                         // Soft-stop / CE wait handoff / combat cancel — keep the goal and replan.
-                        // Soft-pausing here left Illegal Mode idle until toggled.
                         ReplanAfterPathCancel("Path step canceled");
                         return;
                     }

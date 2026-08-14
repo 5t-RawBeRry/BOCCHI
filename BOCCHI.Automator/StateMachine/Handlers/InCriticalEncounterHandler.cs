@@ -66,8 +66,7 @@ public class InCriticalEncounterHandler
             return;
         }
 
-        // Materialise once. GetTargets is a lazy OrderBy over the whole object table, so calling
-        // Any() and then enumerating again ran two full scans (each with an unsafe deref + a sort).
+        // Materialise once — GetTargets is a lazy OrderBy over the object table.
         List<IBattleNpc> targets = context.GetTargets().ToList();
         if (targets.Count == 0 && TryGetCommittedBattleEncounter(out CriticalEncounter committed))
         {

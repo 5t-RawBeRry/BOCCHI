@@ -24,10 +24,8 @@ public class GraphTraverser(ZoneGraph graph, IPathfinder pathfinder, ILogger log
     {
         List<TraversalCandidate> candidates = new();
 
-        // Calculators that can bound themselves cheaply run last, so the ones already evaluated
-        // set the bar. That lets an expensive candidate (a long vnav query) be skipped when its
-        // lower bound proves it cannot win — instead of gating it on a fixed distance, which threw
-        // away the correct answer whenever you were already partway to the goal.
+        // Calculators with a cheap lower bound run last, and are skipped when they cannot beat
+        // a candidate already found.
         List<(IGraphCandidateCalculator Calculator, float Bound)> deferred = [];
 
         foreach(IGraphCandidateCalculator calculator in calculators)

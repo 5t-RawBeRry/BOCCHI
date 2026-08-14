@@ -35,7 +35,7 @@ public class FightingHandler
             && inCombat.Count > 0
             && EzThrottler.Throttle("MobFarmer::Fighting::Target", 250))
         {
-            IBattleNpc? target = TargetHelper.Select(inCombat, config.ForceTargetCentralEnemy);
+            IBattleNpc? target = TargetHelper.Select(inCombat, player.Position, config.ForceTargetCentralEnemy);
             if (target != null)
             {
                 targets.Target = target;

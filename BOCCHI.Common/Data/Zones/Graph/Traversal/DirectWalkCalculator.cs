@@ -11,12 +11,8 @@ public class DirectWalkCalculator : IGraphCandidateCalculator
     public string Key() => "DirectWalk";
 
     /// <summary>
-    ///     Straight-line distance is never longer than the walk vnav would build, so it is an
-    ///     admissible bound. The approach point is offset from the goal centre by at most the CE
-    ///     combat radius (or the FATE stand-off), so subtract that to stay a true lower bound.
-    ///     This replaces a flat 80y cutoff that removed walking from consideration entirely — which
-    ///     is why veering off a long route made Illegal Mode Return to camp and start over, even
-    ///     when it was already most of the way there.
+    ///     Straight-line distance minus the approach offset (CE combat radius or FATE stand-off)
+    ///     is an admissible lower bound on the walk vnav would build.
     /// </summary>
     public float? LowerBoundCost(ZoneGraph graph, Vector3 start, Node goal)
     {
@@ -36,8 +32,6 @@ public class DirectWalkCalculator : IGraphCandidateCalculator
             AllowFlying = false
         });
 
-        // No candidate at all when vnav cannot build the walk — scoring it by Distance meant an
-        // unreachable direct walk came back as cost 0 and won the cheapest-candidate pick.
         if (!path.IsReachable())
         {
             return null;

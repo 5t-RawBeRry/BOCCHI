@@ -3,11 +3,8 @@ using BOCCHI.Treasure.Hunt;
 namespace BOCCHI.Debug.Panels;
 
 /// <summary>
-///     Write model for the treasure hunt bake. Kept separate from the runtime
-///     <see cref="HuntNodeDataSchema"/>, which deliberately has no <c>Path</c>: routing only reads
-///     the id and distance, and the polylines were ~170k points (the bulk of a ~6.9 MB file) that
-///     the runtime parsed on every load and never touched.
-///     Paths are omitted unless explicitly requested, so a normal re-bake stays small.
+///     Write model for the treasure hunt bake. Separate from runtime
+///     <see cref="HuntNodeDataSchema"/>, which has no <c>Path</c>. Paths are omitted unless requested.
 /// </summary>
 public sealed class HuntNodeBakeSchema
 {

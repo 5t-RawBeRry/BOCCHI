@@ -109,7 +109,7 @@ public sealed class BaseTeleportDelayMemory(TimeSpan delay)
 }
 
 /// <summary>
-///     One initial combat approach per FATE/CE. Re-arms when the activity id changes.
+///     One initial combat approach per FATE. Re-arms when the activity id changes.
 /// </summary>
 public sealed class InitialCombatApproachMemory<TActivityId>
     where TActivityId : struct

@@ -10,10 +10,8 @@ public struct HuntPosition
 }
 
 /// <summary>
-///     Runtime read model. The bake also emits a <c>path</c> polyline per pair, but routing only ever
-///     needs the id and the distance — System.Text.Json skips the unread property, so those ~170k
-///     points are never materialised. Keep it that way: adding <c>Path</c> back here costs a large
-///     allocation on every load for data nothing consumes.
+///     Runtime read model. Routing only needs id and distance — do not add <c>Path</c>
+///     (the bake may still emit unused polylines; System.Text.Json skips unread properties).
 /// </summary>
 public struct HuntToNode(uint id, float distance)
 {

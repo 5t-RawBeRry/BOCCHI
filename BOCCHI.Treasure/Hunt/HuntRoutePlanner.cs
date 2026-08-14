@@ -30,9 +30,8 @@ public interface IHuntRoutePlanner
     ///     When set (e.g. red/blue), finish that half before the other — survives empty skips.
     /// </param>
     /// <param name="continueAfterNodeId">
-    ///     Last pad we finished. On an untagged authored route the tour resumes at the next authored
-    ///     pad after this one instead of re-entering at whatever is geographically nearest, which
-    ///     rotated the whole remaining route every replan.
+    ///     Last finished pad. Untagged authored routes resume at the next pad after this
+    ///     instead of the geographically nearest remaining one.
     /// </param>
     Task<List<HuntPathfinderStep>> FindPath(
         Vector3 start,
@@ -69,10 +68,8 @@ public abstract class HuntRoutePlanner
     };
 
     /// <summary>
-    ///     Parsed hunt data, keyed by zone. The node/aethernet distance file is multi-megabyte and a
-    ///     planner is rebuilt on every RecalculateRoute (after every coffer, empty skip, divert...),
-    ///     so re-reading it each time cost a disk read plus a large parse on the framework thread.
-    ///     Both payloads are read-only after load, so one parse per zone per session is enough.
+    ///     Cached per zone. The planner is rebuilt on every RecalculateRoute; payloads are
+    ///     read-only after load, so one parse per zone per session is enough.
     /// </summary>
     private static readonly Dictionary<(ZoneId Zone, string File), HuntNodeDataSchema> NodeDataCache = [];
 
@@ -511,7 +508,6 @@ public abstract class HuntRoutePlanner
         }
 
         // Sticky half: only that color, even when the remaining set only has one half loaded.
-        // Returning the other half here used to flip camp starts (red → first blue).
         if (NormalizeHalf(stickyHalf) is string stickyNorm)
         {
             LastPrimaryHalf = stickyNorm;
@@ -522,9 +518,7 @@ public abstract class HuntRoutePlanner
         }
 
         // Single / no half: continue authored order with wrap.
-        // Prefer resuming right after the pad we just finished. Re-entering at whatever is nearest
-        // rotated the entire remaining tour on every replan (one per coffer), so a pad that happened
-        // to sit closer across a region boundary dragged the route back and forth.
+        // Resume after the pad we just finished; otherwise enter at the nearest remaining.
         uint? resume = continueAfterNodeId is uint after
             ? TryGetNextAuthoredAfter(after, orderedUnique)
             : null;

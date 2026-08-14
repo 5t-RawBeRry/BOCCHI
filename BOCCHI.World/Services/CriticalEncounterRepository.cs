@@ -24,11 +24,7 @@ public class CriticalEncounterRepository
     /// <summary>Materialised once per Update — see <see cref="FateRepository"/> for the rationale.</summary>
     private IReadOnlyList<CriticalEncounter> snapshot = [];
 
-    /// <summary>
-    ///     Also materialised per Update. This is the variant nearly everything reads (goal
-    ///     validation, CE handlers from both GetScore and Handle, the CE context, renderers), and
-    ///     it used to build a filtered list plus a read-only wrapper on every single call.
-    /// </summary>
+    /// <summary>Forked Tower excluded — the variant most readers use.</summary>
     private IReadOnlyList<CriticalEncounter> snapshotWithoutForkedTower = [];
 
     public IReadOnlyList<CriticalEncounter> Snapshot() => snapshot;
@@ -63,7 +59,7 @@ public class CriticalEncounterRepository
             return;
         }
 
-        // One pass: the refresh loop below used to re-scan the event array per tracked encounter.
+        // One pass: index live events, then refresh tracked encounters from the dictionary.
         DynamicEvent[] events = oc->DynamicEventContainer.Events.ToArray();
         Dictionary<uint, DynamicEvent> live = [];
         Dictionary<CriticalEncounterId, CriticalEncounter> current = [];

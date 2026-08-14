@@ -21,8 +21,7 @@ public class CarrotTracker(IObjectTable objects, IPlayer player, IZoneProvider z
 
     public void Update()
     {
-        // Carrots only exist in Occult Crescent — this used to scan, sort and allocate a wrapper per
-        // hit on every frame everywhere in the game.
+        // Occult Crescent only.
         if (!zones.GetZone().IsOccultCrescentZone())
         {
             if (Carrots.Count > 0)

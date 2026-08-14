@@ -1446,17 +1446,7 @@ public sealed class CarrotHunterService
 
     private void TryIssueStuckNudge()
     {
-        Vector3 toDest = currentTargetPosition - player.Position;
-        toDest.Y = 0f;
-        if (toDest.LengthSquared() < 0.25f)
-        {
-            toDest = new Vector3(1f, 0f, 0f);
-        }
-
-        Vector3 forward = Vector3.Normalize(toDest);
-        Vector3 lateral = new(-forward.Z, 0f, forward.X);
-        Vector3 nudge = player.Position + (lateral * 8f);
-        nudge = new Vector3(nudge.X, player.Position.Y, nudge.Z);
+        Vector3 nudge = PathfindingNudge.LateralFrom(player.Position, currentTargetPosition);
 
         log.Information(
             "Carrot hunt: stuck approaching authored {Id} — nudging sideways",

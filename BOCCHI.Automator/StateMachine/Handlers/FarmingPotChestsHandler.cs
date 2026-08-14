@@ -6,6 +6,7 @@ using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Common.Services;
+using BOCCHI.Common.Targeting;
 using BOCCHI.Treasure.ChainRecipes;
 using BOCCHI.Treasure.Services;
 using Dalamud.Game.ClientState.Conditions;
@@ -875,54 +876,28 @@ public class FarmingPotChestsHandler
     private bool HasTreasureBuff() =>
         player.PlayerCharacter?.StatusList.Has(PotTreasureIds.TreasureBuffStatusId) == true;
 
-    /// <summary>
-    ///     Rebuild <see cref="tickChests"/>. The matchers below run several times per tick
-    ///     (TryAcquireReveal alone can trigger three, plus two per candidate in the exhaustion loop),
-    ///     and each used to re-scan the whole object table.
-    /// </summary>
+    /// <summary>Rebuild <see cref="tickChests"/> once per tick for reveal matching.</summary>
     private void RefreshTickChests()
     {
         tickChests.Clear();
         foreach (IGameObject obj in objects)
         {
             // Only Magic Pot reveal coffer BaseIds — layout bronze/silver can sit on the same spot.
-            if (!obj.IsDead
-                && PotTreasureIds.RevealCofferBaseIds.Contains(obj.BaseId)
-                && obj.IsValid())
+            if (obj.IsValid()
+                && !obj.IsDead
+                && PotTreasureIds.RevealCofferBaseIds.Contains(obj.BaseId))
             {
                 tickChests.Add(obj);
             }
         }
     }
 
-    // 2D throughout: reveal objects sometimes sit at Y ≈ -500, so any 3D compare against a real
-    // pad (Y 3..203) blew past these radii and the reveal was never found. Same reason
-    // HandleOpeningReveal measures with Distance2D (#170).
+    // Distance2D — reveal objects can sit at a bogus Y, so 3D compares miss them (#170).
     private IGameObject? FindChestNear(Vector3 position) =>
-        FindNearestChest(position, ChestSearchRadius);
+        GameObjectNearest.Find2D(tickChests, position, ChestSearchRadius);
 
     private IGameObject? FindRevealNear(Vector3 origin) =>
-        FindNearestChest(origin, RevealSearchRadius);
-
-    private IGameObject? FindNearestChest(Vector3 origin, float radius)
-    {
-        IGameObject? best = null;
-        float bestDist = float.MaxValue;
-
-        foreach (IGameObject obj in tickChests)
-        {
-            float dist = obj.Position.Distance2D(origin);
-            if (dist > radius || dist >= bestDist)
-            {
-                continue;
-            }
-
-            best = obj;
-            bestDist = dist;
-        }
-
-        return best;
-    }
+        GameObjectNearest.Find2D(tickChests, origin, RevealSearchRadius);
 
     private bool IsChestOpened(Vector3 position)
     {

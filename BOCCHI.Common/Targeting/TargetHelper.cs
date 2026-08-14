@@ -1,13 +1,28 @@
 using System.Numerics;
 using Dalamud.Game.ClientState.Objects.Types;
+using Ocelot.Extensions;
 
 namespace BOCCHI.Common.Targeting;
 
 public static class TargetHelper
 {
-    public static IBattleNpc? Closest(this IEnumerable<IBattleNpc> enemies)
+    public static IBattleNpc? Closest(this IEnumerable<IBattleNpc> enemies, Vector3 from)
     {
-        return enemies.FirstOrDefault();
+        IBattleNpc? best = null;
+        float bestDist = float.MaxValue;
+        foreach (IBattleNpc npc in enemies)
+        {
+            float dist = from.Distance2D(npc.Position);
+            if (dist >= bestDist)
+            {
+                continue;
+            }
+
+            best = npc;
+            bestDist = dist;
+        }
+
+        return best;
     }
 
     public static IBattleNpc? Centroid(this IEnumerable<IBattleNpc> enemies)
@@ -31,7 +46,7 @@ public static class TargetHelper
             .FirstOrDefault();
     }
 
-    public static IBattleNpc? Select(IEnumerable<IBattleNpc> enemies, bool preferCentroid)
+    public static IBattleNpc? Select(IEnumerable<IBattleNpc> enemies, Vector3 from, bool preferCentroid)
     {
         List<IBattleNpc> list = enemies as List<IBattleNpc> ?? enemies.ToList();
         if (list.Count == 0)
@@ -39,6 +54,6 @@ public static class TargetHelper
             return null;
         }
 
-        return preferCentroid ? list.Centroid() : list.Closest();
+        return preferCentroid ? list.Centroid() : list.Closest(from);
     }
 }

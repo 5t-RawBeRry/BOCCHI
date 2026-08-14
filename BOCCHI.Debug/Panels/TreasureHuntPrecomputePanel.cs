@@ -50,10 +50,7 @@ public sealed class TreasureHuntPrecomputePanel
 
     private uint maxProgress;
 
-    /// <summary>
-    ///     Emit the full walk polyline per pair. Nothing reads it — it was ~170k points and most of a
-    ///     ~6.9 MB file — so the bake leaves it out unless you explicitly want it for inspection.
-    /// </summary>
+    /// <summary>Emit the full walk polyline per pair (unused by routing; for inspection only).</summary>
     private bool includeFullPaths;
 
     public string Name => "Treasure Hunt Bake";

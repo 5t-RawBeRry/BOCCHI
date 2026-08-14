@@ -3,10 +3,8 @@ using Path = Ocelot.Services.Pathfinding.Path;
 namespace BOCCHI.Common.Data.Zones.Graph;
 
 /// <summary>
-///     vnav reports <c>Distance 0</c> for a path it could not build (fewer than two nodes), which is
-///     indistinguishable from "already there" by cost alone. Traversal picks the cheapest candidate,
-///     so an unreachable route scored 0 beat every real one — that is how island shards used to win
-///     (e.g. Unhallowed Hamlet to Eye to Eye).
+///     vnav reports <c>Distance 0</c> for a path it could not build (fewer than two nodes).
+///     Treat that as unreachable so traversal does not prefer a failed path as free.
 /// </summary>
 public static class PathReachability
 {

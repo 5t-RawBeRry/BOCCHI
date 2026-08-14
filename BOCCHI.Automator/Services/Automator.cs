@@ -258,8 +258,7 @@ public class Automator
             return;
         }
 
-        // Zone lock even while suspended for treasure — leaving OC must fully turn the mode off
-        // (Pots & Treasure hunt phase sets SuspendedForTreasure, which used to skip this).
+        // Zone lock even while suspended for treasure — leaving OC must fully turn the mode off.
         if (!zones.GetZone().IsOccultCrescentZone())
         {
             DisableDueToLeavingOccultCrescent();
