@@ -33,7 +33,8 @@ internal static class CombatActivityHandler
         string throttlePrefix,
         bool shouldApproachTarget,
         bool stopPathfinderInCombat = false,
-        bool deferCombatToBossModAi = false
+        bool deferCombatToBossModAi = false,
+        ITargetManager? targetManager = null
     )
     {
         List<IBattleNpc> list = targets as List<IBattleNpc> ?? targets.ToList();
@@ -43,11 +44,16 @@ internal static class CombatActivityHandler
             return false;
         }
 
+        // Seed a hard target from the activity list. FATE/CE enemies often never enter
+        // BossMod AutoTarget's table, so StayCloseToTarget / NormalMovement have nothing
+        // to dodge around unless we set one. Keep the current target if it is already
+        // one of the activity enemies.
+        SeedActivityTarget(targetManager, list, target, throttlePrefix);
+
         bool isMelee = playerState.IsMelee();
         float distance = player.Position.Distance2D(target.Position) - target.HitboxRadius;
         bool nearTarget = distance <= DismountRange;
 
-        // Near the pack, or already in combat under BossMod AI (may be kiting past DismountRange).
         if (conditions[ConditionFlag.Mounted]
             && (nearTarget || (deferCombatToBossModAi && conditions[ConditionFlag.InCombat]))
             && EzThrottler.Throttle($"{throttlePrefix}::Unmount")
@@ -60,8 +66,8 @@ internal static class CombatActivityHandler
 
         if (deferCombatToBossModAi)
         {
-            // Release vnav — StayCloseToTarget / NormalMovement own combat movement.
-            pathfinder.Stop();
+            // Travel vnav was stopped on Enter. Do not Stop every tick — FATE AI
+            // dodges via vnav Pathfind, and Stop() would cancel those steps.
             return true;
         }
 
@@ -88,9 +94,31 @@ internal static class CombatActivityHandler
         return false;
     }
 
+    private static void SeedActivityTarget(
+        ITargetManager? targetManager,
+        List<IBattleNpc> activityTargets,
+        IBattleNpc preferred,
+        string throttlePrefix
+    )
+    {
+        if (targetManager == null
+            || !EzThrottler.Throttle($"{throttlePrefix}::Target", 250))
+        {
+            return;
+        }
+
+        if (targetManager.Target is IBattleNpc current
+            && !current.IsDead
+            && activityTargets.Any(t => t.Address == current.Address))
+        {
+            return;
+        }
+
+        targetManager.Target = preferred;
+    }
+
     private static bool IsInEngagementRange(float distancePastHitbox, bool isMelee)
     {
-        // Melee: at hitbox edge. Ranged: reached (or inside) the 15y ring — BossMod maintains it.
         return isMelee
             ? distancePastHitbox <= HitboxEdgeTolerance
             : distancePastHitbox <= RangedStandoffRange + 0.5f;
@@ -113,7 +141,6 @@ internal static class CombatActivityHandler
             return;
         }
 
-        // Path to a point on the 15y ring (past hitbox), not into the center.
         Vector3 standOff = target.Position.GetApproachPosition(
             player.Position,
             target.HitboxRadius + RangedStandoffRange);

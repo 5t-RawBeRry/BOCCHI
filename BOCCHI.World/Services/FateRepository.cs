@@ -27,7 +27,18 @@ public class FateRepository
     /// <summary>Materialised once per Update — consumers share this list instead of copying it.</summary>
     private IReadOnlyList<Fate> snapshot = [];
 
-    public IReadOnlyList<Fate> Snapshot() => snapshot;
+    public IReadOnlyList<Fate> Snapshot()
+    {
+        // Rebuild when the cache is empty but the repository is not — not every reader runs inside
+        // the update pass (commands and mode toggles do not), and before this was cached the method
+        // read the repository live, so those callers worked by accident.
+        if (snapshot.Count == 0 && data.GetAll().Any())
+        {
+            snapshot = data.GetAll().ToList();
+        }
+
+        return snapshot;
+    }
 
     public bool HasFate(FateId id) => data.ContainsKey(id);
 

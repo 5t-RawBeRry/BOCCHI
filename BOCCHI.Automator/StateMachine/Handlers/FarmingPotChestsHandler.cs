@@ -101,7 +101,7 @@ public class FarmingPotChestsHandler
     {
         base.Enter();
         // BossMod AI from the pot FATE otherwise keeps AutoTarget / movement during chest pathing.
-        autoRotation.DisableForTravel();
+        autoRotation.DisableAi();
         chainManager.CancelAll();
         pathfinder.Stop();
         activeChain = null;

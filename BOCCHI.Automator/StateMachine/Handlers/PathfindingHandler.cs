@@ -50,7 +50,7 @@ public class PathfindingHandler
         base.Enter();
         // Drop leftover combat target so rotations don't pull trash mid-path.
         targetManager.Target = null;
-        autoRotation.DisableForTravel();
+        autoRotation.DisableAi();
     }
 
     public override void Exit(AutomatorState next)

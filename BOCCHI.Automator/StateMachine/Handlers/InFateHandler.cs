@@ -25,6 +25,7 @@ public class InFateHandler
     AutoRotationController autoRotation,
     IPlayer playerState,
     AutomatorConfig config,
+    ITargetManager targetManager,
     ILogger<InFateHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InFate)
 {
@@ -41,10 +42,10 @@ public class InFateHandler
     public override void Enter()
     {
         base.Enter();
-        // Latch until the FATE ends — avoids travel replan / edge stutter.
         memory.TryAdd(new SuspendTravelForActivityMemory());
         memory.Forget<GoalPathStepMemory>();
         pathfinder.Stop();
+        // The FATE preset is what does targeting, range and dodging — arm it, don't disable it.
         autoRotation.EnableForFate();
         logger.Info("Entered FATE {Id} — travel suspended", context.GetFateId()?.Value.ToString() ?? "?");
     }
@@ -57,8 +58,24 @@ public class InFateHandler
         }
 
         List<IBattleNpc> fateTargets = context.GetTargets().ToList();
-        InitialCombatApproachMemory<FateId> approach = GetApproachMemory(context.GetFateId());
+        bool ai = config.ToggleAiProvider;
 
+        if (ai)
+        {
+            CombatActivityHandler.HandleTargets(
+                player,
+                playerState,
+                fateTargets,
+                conditions,
+                pathfinder,
+                "InFate",
+                shouldApproachTarget: false,
+                deferCombatToBossModAi: true,
+                targetManager: targetManager);
+            return;
+        }
+
+        InitialCombatApproachMemory<FateId> approach = GetApproachMemory(context.GetFateId());
         if (CombatActivityHandler.HandleTargets(
                 player,
                 playerState,
@@ -68,7 +85,7 @@ public class InFateHandler
                 "InFate",
                 approach.IsPending,
                 stopPathfinderInCombat: true,
-                deferCombatToBossModAi: config.ToggleAiProvider))
+                targetManager: targetManager))
         {
             approach.Complete();
         }

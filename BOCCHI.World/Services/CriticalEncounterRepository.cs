@@ -27,9 +27,44 @@ public class CriticalEncounterRepository
     /// <summary>Forked Tower excluded — the variant most readers use.</summary>
     private IReadOnlyList<CriticalEncounter> snapshotWithoutForkedTower = [];
 
-    public IReadOnlyList<CriticalEncounter> Snapshot() => snapshot;
+    public IReadOnlyList<CriticalEncounter> Snapshot()
+    {
+        EnsureSnapshots();
+        return snapshot;
+    }
 
-    public IReadOnlyList<CriticalEncounter> SnapshotWithoutForkedTower() => snapshotWithoutForkedTower;
+    public IReadOnlyList<CriticalEncounter> SnapshotWithoutForkedTower()
+    {
+        EnsureSnapshots();
+        return snapshotWithoutForkedTower;
+    }
+
+    /// <summary>
+    ///     Rebuild when the cache is empty but the repository is not. These are normally produced by
+    ///     Update, but not every reader runs inside the update pass — Illegal Mode arms its AI preset
+    ///     from the toggle itself, and an empty cache there reads as "not in a Critical Encounter".
+    ///     Before the snapshots were cached this method read the repository live, so that case worked
+    ///     by accident.
+    /// </summary>
+    private void EnsureSnapshots()
+    {
+        if (snapshot.Count > 0 || !data.GetAll().Any())
+        {
+            return;
+        }
+
+        BuildSnapshots(data.GetAll().ToList());
+    }
+
+    private void BuildSnapshots(List<CriticalEncounter> tracked)
+    {
+        snapshot = tracked;
+
+        ushort forkedTowerId = zones.GetZone().ForkedTowerEventId;
+        snapshotWithoutForkedTower = forkedTowerId == 0
+            ? tracked
+            : tracked.Where(e => e.Id.Value != forkedTowerId).ToList();
+    }
 
     public CriticalEncounter? TryGetForkedTower()
     {
@@ -87,11 +122,6 @@ public class CriticalEncounterRepository
             }
         }
 
-        snapshot = tracked;
-
-        ushort forkedTowerId = zones.GetZone().ForkedTowerEventId;
-        snapshotWithoutForkedTower = forkedTowerId == 0
-            ? tracked
-            : tracked.Where(e => e.Id.Value != forkedTowerId).ToList();
+        BuildSnapshots(tracked);
     }
 }

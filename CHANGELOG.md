@@ -16,7 +16,9 @@
 - Prepositioning for the next Magic Pot no longer gives up early when "Minutes before predicted pot spawn" is set above 5.
 - Dancer now walks up to melee range in Illegal Mode / Completionist so dance Steps and Finish are in range.
 - Illegal Mode AI Mode should turn on for FATEs and Critical Encounters, and turn off when they end. (#182)
-- Illegal Mode no longer forces its own enemy target in FATEs/CEs — BossMod AI Mode handles targeting so the two don’t fight each other.
+- Dodging works again in FATEs. Illegal Mode was cancelling the AI's movement every frame, so BOCCHI AI FATE could never finish a dodge — you had to switch Illegal Mode off for it to work.
+- Turning Illegal Mode on mid-fight now arms the right preset instead of leaving the AI off until the fight ends.
+- Using an action in a FATE or Critical Encounter no longer cancels the AI's movement. This only used to be handled for the activity Illegal Mode had picked itself, so walking into any other FATE/CE broke dodging on every action.
 - Illegal Mode no longer Returns to base camp when you step off the route to a FATE/CE, if walking there is actually quicker.
 - Illegal Mode no longer picks a route it cannot walk.
 - Mob Farmer only auto-targets enemies when “Handle targeting” is enabled (including while pulling packs).

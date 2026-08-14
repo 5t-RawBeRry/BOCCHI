@@ -33,6 +33,8 @@ public sealed unsafe class CombatPathfindCancelService
     IAutomatorMemory memory,
     IAutomator automator,
     IZoneProvider zones,
+    IFateContext fates,
+    ICriticalEncounterContext criticalEncounters,
     ILogger<CombatPathfindCancelService> logger
 ) : IOnStart, IOnStop, IDisposable
 {
@@ -116,6 +118,21 @@ public sealed unsafe class CombatPathfindCancelService
         // Travel utility actions — not combat. General Sprint is ActionType.GeneralAction and
         // never reaches here; Occult Sprint is a normal action id (#157).
         if (actionId == PhantomActions.OccultSprint)
+        {
+            return false;
+        }
+
+        // FATE/CE combat: BossMod owns movement (including vnav Pathfind dodges).
+        // Cancelling on every GCD freezes you in place.
+        //
+        // Ask the game where we are, not what Illegal Mode is doing. SuspendTravelForActivityMemory
+        // is only set by InFate/InCriticalEncounter, and those states require a GoalMemory pointing
+        // at *this* activity — so walking into any FATE/CE that was not Illegal Mode's chosen goal
+        // left this cancel armed, and every action killed BossMod's dodge path. That is why dodging
+        // only worked with Illegal Mode switched off.
+        if (memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _)
+            || fates.IsInFate()
+            || criticalEncounters.IsInCriticalEncounter())
         {
             return false;
         }

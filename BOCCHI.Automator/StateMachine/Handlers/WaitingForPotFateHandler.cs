@@ -78,7 +78,7 @@ public class WaitingForPotFateHandler
     public override void Enter()
     {
         base.Enter();
-        autoRotation.DisableForTravel();
+        autoRotation.DisableAi();
         manager.CancelAll();
         memory.Forget<GoalPathStepMemory>();
         memory.TryAdd<WaitingForPotFateMemory>();

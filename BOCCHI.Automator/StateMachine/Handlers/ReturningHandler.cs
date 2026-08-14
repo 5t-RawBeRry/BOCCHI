@@ -105,7 +105,7 @@ public class ReturningHandler
     public override void Enter()
     {
         base.Enter();
-        autoRotation.DisableForTravel();
+        autoRotation.DisableAi();
         addons.RegisterListener(AddonEvent.PostSetup, "SelectYesno", SelectYesNoListener);
     }
 

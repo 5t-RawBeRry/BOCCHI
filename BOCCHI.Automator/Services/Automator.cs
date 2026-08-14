@@ -87,7 +87,7 @@ public class Automator
         // Keep GoalMemory; Treasure Hunt owns vnav while suspended.
         IllegalModeActivityWork.ForgetTravelLatches(memory);
         SoftStopPathfinding();
-        autoRotation.DisableForTravel();
+        autoRotation.DisableAi();
     }
 
     public void SoftStopPathfinding()

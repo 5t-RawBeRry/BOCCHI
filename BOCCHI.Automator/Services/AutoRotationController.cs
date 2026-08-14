@@ -3,6 +3,7 @@ using BOCCHI.Common.Config;
 using BOCCHI.Common.Services;
 using Dalamud.Plugin.Services;
 using Ocelot.Rotation.Services.BossMod;
+using Ocelot.Services.Logger;
 using Ocelot.Services.PlayerState;
 
 namespace BOCCHI.Automator.Services;
@@ -15,9 +16,12 @@ public class AutoRotationController(
     IPlayer player,
     IChatGui chat,
     ICriticalEncounterContext criticalEncounters,
-    IFateContext fates
+    IFateContext fates,
+    ILogger<AutoRotationController> logger
 )
 {
+    private string? lastAiDecision;
+
     public void PrepareForIllegalMode()
     {
         if (!config.ToggleAiProvider)
@@ -64,9 +68,23 @@ public class AutoRotationController(
         bossMod.EnableForActivity(BocchiAiActivity.CriticalEncounter);
     }
 
-    public void DisableForTravel()
+    /// <summary>
+    ///     Hand control back to plain BossMod while travelling. Do not call this inside a FATE/CE —
+    ///     the preset is what provides targeting, range and dodging, so deactivating it there stops
+    ///     the character dodging at all.
+    /// </summary>
+    public void DisableAi()
     {
         if (!config.ToggleAiProvider)
+        {
+            return;
+        }
+
+        // Never strip the preset while we are actually in a FATE/CE. Travel states call this from
+        // Enter(), and they can briefly win the score — most obviously when Illegal Mode is switched
+        // on mid-fight, because InFate/InCriticalEncounter need a GoalMemory that does not exist yet,
+        // so Pathfinding/Idle enters first and deactivated the preset we had just armed.
+        if (criticalEncounters.IsInCriticalEncounter() || fates.IsInFate())
         {
             return;
         }
@@ -89,16 +107,31 @@ public class AutoRotationController(
 
     private void SyncActivityAi()
     {
+        string decision;
+
         if (criticalEncounters.IsInCriticalEncounter())
         {
             bossMod.EnableForActivity(BocchiAiActivity.CriticalEncounter);
+            decision = "in CE — arming BOCCHI AI CE preset";
+        }
+        else if (fates.IsInFate())
+        {
+            bossMod.EnableForActivity(BocchiAiActivity.Fate);
+            decision = "in FATE — arming BOCCHI AI FATE preset";
+        }
+        else
+        {
+            decision = "not in a FATE or CE — AI preset left alone";
+        }
+
+        // Edge-triggered: this runs every tick, so only log when the answer changes.
+        if (decision == lastAiDecision)
+        {
             return;
         }
 
-        if (fates.IsInFate())
-        {
-            bossMod.EnableForActivity(BocchiAiActivity.Fate);
-        }
+        lastAiDecision = decision;
+        logger.Info("BOCCHI AI: {Decision}", decision);
     }
 
     private void PrintNotReady()

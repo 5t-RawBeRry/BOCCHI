@@ -45,7 +45,7 @@ public class IdleHandler(
             StopMovement();
         }
 
-        autoRotation.DisableForTravel();
+        autoRotation.DisableAi();
         memory.TryAdd(new IdleStateMemory(ReturnDelay.Roll(config)));
     }
 
