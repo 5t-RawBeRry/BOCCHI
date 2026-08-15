@@ -21,12 +21,16 @@ public static class HuntDistances
     public const float SamePadRecheckRadiusSq = SamePadRecheckRadius * SamePadRecheckRadius;
 
     /// <summary>
-    /// ~100y — the range at which objects have streamed in, so absence starts to mean something.
-    /// Carrot hunt uses it to trust an empty pad. Treasure hunt no longer skips on it (that fired
-    /// before silver streamed in — <see cref="LayoutProximityRadius"/> owns the skip now); it only
-    /// marks the approach as "committed" so a divert cannot peel away from a pad we are closing on.
+    ///     Carrot empty-pad trust, and treasure hunt "committed approach" (no peel).
+    ///     Treasure hunt does not skip empties at this range — silvers may not have streamed yet.
     /// </summary>
     public const float EmptyPadSkipRadius = 100f;
+
+    /// <summary>
+    ///     Treasure hunt may skip an empty pad this far out only when a nearby coffer
+    ///     proves the region has streamed.
+    /// </summary>
+    public const float EmptyPadEarlySkipRadius = 60f;
 
     /// <summary>
     /// Empty-skip / open arrival require |ΔY| within this — otherwise a surface stand
@@ -45,10 +49,7 @@ public static class HuntDistances
     /// <summary>Require a short empty confirmation so object-table flicker does not false-skip.</summary>
     public static readonly TimeSpan EmptyPadConfirmDelay = TimeSpan.FromMilliseconds(600);
 
-    /// <summary>
-    /// Close enough (2D) to use a Fortune Carrot. Keep near Pandora/chest interact range —
-    /// 5–12y was stopping short of the pad.
-    /// </summary>
+    /// <summary>Close enough (2D) to use a Fortune Carrot. Keep near chest interact range.</summary>
     public const float UseRadius = 2.0f;
 
     /// <summary>3D interact range for bunny chests (same as coffer open).</summary>

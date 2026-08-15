@@ -32,9 +32,9 @@
       "label": "执行紧急遭遇战",
       "tooltip": "前往并完成紧急遭遇战。在等待或战斗中的紧急遭遇战期间，不会仅为刷新增益或待机而提前返回。"
     },
-    "toggle_ai_provider": {
-      "label": "使用 BOCCHI AI",
-      "tooltip": "在危命任务与紧急遭遇战战斗中，启用 BossMod / BossMod Reborn 里的 BOCCHI AI 自动循环预设，用于选取目标与战斗走位。不会开启职业战斗循环（Wrath / Rotation Solver），也不会使用旧版 ai:on。赶路途中会关闭，抵达后重新开启。"
+    "combat_autorotation": {
+      "label": "战斗自动循环",
+      "tooltip": "非法模式在危命/紧急遭遇战中的战斗方式。Wrath Combo + BOCCHI AI / Rotation Solver + BOCCHI AI：BossMod 选目标与走位，并由对应插件打职业技能（RSR 使用 Henched，只打技能）。BossMod / BossMod Reborn 自动循环：包含职业模块、职能 AI、幻影职业 AI、自动选目标与自动移动的完整预设。赶路时关闭。None 为手动。"
     },
     "should_auto_mount": {
       "label": "赶路时上坐骑",

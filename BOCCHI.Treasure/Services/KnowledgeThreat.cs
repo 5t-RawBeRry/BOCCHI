@@ -18,10 +18,8 @@ public static class KnowledgeThreat
     /// <summary>Crescent Haunt (NH) — sees through Hide; do not dismount/Hide for it (#175).</summary>
     public static readonly uint CrescentHauntNameId = (uint)Mob.Haunt;
 
-    /// <summary>
-    /// Extra enter radius while mounted so we stop / dismount before riding through the foot enter bubble.
-    /// </summary>
-    public const float MountedThreatEnterBonus = 15f;
+    /// <summary>Mounted Hide starts this much earlier so we can dismount first.</summary>
+    public const float MountedThreatEnterBonus = 5f;
 
     /// <summary>Occult Crescent Knowledge cap (North Horn / 7.55+).</summary>
     public const int MaxKnowledgeLevel = 40;

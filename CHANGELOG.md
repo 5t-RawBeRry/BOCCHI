@@ -1,30 +1,26 @@
 # 4.0.2.28
 
+### New
+- Illegal Mode combat can now use Wrath Combo or Rotation Solver together with BOCCHI AI, or a full BossMod / BossMod Reborn autorotation. Pick one under General → Combat. It turns off while traveling.
+
 ### Fixes
-- After casting Treasure Sight, Active bronze / Active silver on the Treasure tab should show up reliably (including the optional % display).
-- Treasure Hunt should no longer try to walk through a bad point near Suspended Masonry that made pathfinding fail.
-- Treasure Hunt is less likely to skip or turn away from silver coffers before they finish appearing.
-- The South Horn coffer near the west coast of The Wanderer's Haven is now included in Treasure Hunt routes.
-- North Horn Treasure Hunt now clears each area in one go instead of bouncing between them.
-- Treasure Hunt routes walk less: about 26% on South Horn and 14% on North Horn. Each area is still visited in the same order and entered at the same pad — only the order of coffers within an area changed.
-- Treasure Hunt and Carrot Hunt no longer keep asking for a new path while one is still being calculated (most noticeable on long Returns to camp).
-- Pot chest farming should path correctly when the chest is on a different floor than you.
-- Pot chest farming should use Magical Elixir more reliably (dismounts first, respects the elixir cooldown, and moves on if a spot fails). (#181)
-- After a Magic Pot FATE, Illegal Mode should stay to open pot chests instead of leaving too early.
-- Pot chest farming now finds revealed coffers again — the game reports some of them at a bogus height, which hid them everywhere except near sea level.
-- Pot chest farming falls back to the full sweep correctly: reroll pot chests are now included (the "Farm reroll pot chests" setting had no effect), and a few South Horn compass-group positions were off.
-- Prepositioning for the next Magic Pot no longer gives up early when "Minutes before predicted pot spawn" is set above 5.
-- Dancer now walks up to melee range in Illegal Mode / Completionist so dance Steps and Finish are in range.
-- Illegal Mode AI Mode should turn on for FATEs and Critical Encounters, and turn off when they end. (#182)
-- Dodging works again in FATEs. Illegal Mode was cancelling the AI's movement every frame, so BOCCHI AI FATE could never finish a dodge — you had to switch Illegal Mode off for it to work.
-- Turning Illegal Mode on mid-fight now arms the right preset instead of leaving the AI off until the fight ends.
-- Using an action in a FATE or Critical Encounter no longer cancels the AI's movement. This only used to be handled for the activity Illegal Mode had picked itself, so walking into any other FATE/CE broke dodging on every action.
-- Illegal Mode no longer Returns to base camp when you step off the route to a FATE/CE, if walking there is actually quicker.
-- Illegal Mode no longer picks a route it cannot walk.
-- Mob Farmer only auto-targets enemies when “Handle targeting” is enabled (including while pulling packs).
+- Treasure Hunt is more reliable: Sight counts show up after casting, silvers are less likely to be skipped, the Wanderer's Haven west-coast coffer is included, North Horn no longer bounces between areas, and a bad path near Suspended Masonry is avoided.
+- Treasure Hunt routes walk a lot less. Coffer order was rebuilt from measured walk distances, and a Return picks the nearest shard to the next area rather than walking from camp. Hunt and Carrot Hunt no longer ask for a new path while one is still calculating.
+- South Horn is now divided into seven area routes (base camp, Wanderer's Haven, Crystallized Caverns, Eldergrowth, Stonemarsh) instead of the red and blue halves, which criss-crossed the whole map. Areas are ordered by coffer level, so a lower "Max level" setting stops at a nearby area instead of zig-zagging past it — roughly a quarter less walking at level 15, and 5% less on a full run.
+- Each South Horn hunt now opens on the next area in turn rather than alternating red/blue, so consecutive runs never start in the same place and every area gets a turn at being cleared first.
+- The Return and aethernet hop between areas no longer goes missing. It was attached to the last coffer of an area, so it was skipped whenever that coffer was already looted or above your "Max level" — at level 25 that silently dropped four of North Horn's five area hops and made the hunt walk between areas instead. The hop now belongs to the area boundary itself.
+- Areas that are cheaper to hop to are no longer walked to. North Horn walked base camp to the Crown of Karnak the long way round when the aethernet was less than half the distance.
+- South Horn picks up coffers that appear next to the route again. It previously followed the route coffer-by-coffer with no detours at all; detours are now allowed inside the current area, the same as North Horn.
+- Pot chest farming paths between floors, finds revealed coffers again, includes reroll chests, uses Magical Elixir more reliably, and stays after a Magic Pot FATE instead of leaving early. (#181)
+- Prepositioning for the next Magic Pot no longer gives up early when “Minutes before predicted pot spawn” is above 5.
+- Dancer and Sage now walk up to melee range in Illegal Mode / Completionist so dance Steps / Finish and Sage’s 6-yalm skills connect.
+- Illegal Mode AI turns on for FATEs and Critical Encounters, and off when they end. Dodging in FATEs works without turning the mode off. (#182)
+- Illegal Mode no longer Returns to camp when walking to a FATE/CE is quicker, and no longer picks a route it cannot walk.
+- Mob Farmer only auto-targets when “Handle targeting” is enabled, and no longer hitch-cancels movement on every pull skill.
+- Ninja Hide uses your Knowledge offset and yalm range (mounted Hide no longer starts a long way early).
+- Carrot Hunt no longer mount-spams on tall climbs, and skips a pad if it stays stuck after a few recoveries. North Horn now clears the center first, then northwest, then northeast, so the death-zone stretch is one block.
 - Occult silver/gold per hour should no longer spike just from entering an instance.
 
 ### Performance
-- Treasure Hunt should no longer hitch between coffers. Route data is loaded once per zone instead of after every coffer, and the bundled files are much smaller.
-- Treasure Hunt, pot chest farming, and Illegal Mode do less work each frame.
-- BOCCHI now does almost nothing outside Occult Crescent. It was still scanning in cities, including with Mob Farmer switched off.
+- Treasure Hunt should no longer hitch between coffers. Route data loads once per zone, and the bundled files are much smaller.
+- Treasure Hunt, pot chest farming, and Illegal Mode do less work each frame. Outside Occult Crescent, BOCCHI now does almost nothing.

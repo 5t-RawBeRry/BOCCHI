@@ -45,7 +45,6 @@ public class InFateHandler
         memory.TryAdd(new SuspendTravelForActivityMemory());
         memory.Forget<GoalPathStepMemory>();
         pathfinder.Stop();
-        // The FATE preset is what does targeting, range and dodging — arm it, don't disable it.
         autoRotation.EnableForFate();
         logger.Info("Entered FATE {Id} — travel suspended", context.GetFateId()?.Value.ToString() ?? "?");
     }
@@ -58,7 +57,7 @@ public class InFateHandler
         }
 
         List<IBattleNpc> fateTargets = context.GetTargets().ToList();
-        bool ai = config.ToggleAiProvider;
+        bool ai = config.CombatAutorotation.UsesCombatAutomation();
 
         if (ai)
         {

@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using BOCCHI.Automator.Services;
 using BOCCHI.Common.Data.OccultCrescent;
 using BOCCHI.Common.Data.Paths;
@@ -6,6 +5,8 @@ using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.Services.Paths;
+using BOCCHI.MobFarmer.Services;
+using BOCCHI.Treasure.Services;
 using Dalamud.Hooking;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -20,8 +21,8 @@ namespace BOCCHI.Services;
 
 /// <summary>
 ///     In Occult Crescent only: if the player uses a combat action while pathfinding, stop
-///     BOCCHI movement (World Path / Illegal Mode). Must not touch vnav outside OC — other
-///     plugins (e.g. AutoDuty) own pathfinding there.
+///     World Path / Illegal Mode travel. Must not touch vnav outside OC, and must not cancel
+///     Mob Farmer / Treasure Hunt / Carrot Hunt (those own movement during combat).
 /// </summary>
 public sealed unsafe class CombatPathfindCancelService
 (
@@ -35,6 +36,9 @@ public sealed unsafe class CombatPathfindCancelService
     IZoneProvider zones,
     IFateContext fates,
     ICriticalEncounterContext criticalEncounters,
+    Func<IMobFarmer> farmerFactory,
+    Func<ITreasureHunter> hunterFactory,
+    Func<ICarrotHunter> carrotHunterFactory,
     ILogger<CombatPathfindCancelService> logger
 ) : IOnStart, IOnStop, IDisposable
 {
@@ -122,17 +126,8 @@ public sealed unsafe class CombatPathfindCancelService
             return false;
         }
 
-        // FATE/CE combat: BossMod owns movement (including vnav Pathfind dodges).
-        // Cancelling on every GCD freezes you in place.
-        //
-        // Ask the game where we are, not what Illegal Mode is doing. SuspendTravelForActivityMemory
-        // is only set by InFate/InCriticalEncounter, and those states require a GoalMemory pointing
-        // at *this* activity — so walking into any FATE/CE that was not Illegal Mode's chosen goal
-        // left this cancel armed, and every action killed BossMod's dodge path. That is why dodging
-        // only worked with Illegal Mode switched off.
-        if (memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _)
-            || fates.IsInFate()
-            || criticalEncounters.IsInCriticalEncounter())
+        // Activity combat owns movement — cancelling on every GCD freezes dodges / pulls.
+        if (ActivityOwnsMovement())
         {
             return false;
         }
@@ -155,6 +150,14 @@ public sealed unsafe class CombatPathfindCancelService
         return zones.GetZone().IsOccultCrescentZone();
     }
 
+    private bool ActivityOwnsMovement() =>
+        memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _)
+        || fates.IsInFate()
+        || criticalEncounters.IsInCriticalEncounter()
+        || farmerFactory().Running
+        || hunterFactory().Running
+        || carrotHunterFactory().Running;
+
     private void CancelPathfinding()
     {
         // Don't abort aethernet Teleport mid-hop — combat while walking to the camp pad
@@ -165,7 +168,7 @@ public sealed unsafe class CombatPathfindCancelService
             return;
         }
 
-        logger.Info("Combat action used — canceling pathfinding");
+        logger.Debug("Combat action used — canceling pathfinding");
         pathfinder.Stop();
         vnav.Stop();
         chains.CancelWhere(name =>

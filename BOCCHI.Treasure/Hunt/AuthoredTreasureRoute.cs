@@ -14,23 +14,30 @@ public sealed class AuthoredTreasureSegment
 {
     public string Id { get; set; } = "";
 
-    /// <summary>Optional half tag (e.g. red / blue for South Horn).</summary>
-    public string? Half { get; set; }
-
     public List<uint> Nodes { get; set; } = [];
 
-    /// <summary>Hop before the next segment. Omit or type "auto" to use bake GetBestSteps.</summary>
+    /// <summary>Hop toward the next segment. Omit or type "auto" to use the cheapest bake hop.</summary>
     public AuthoredTreasureTransition? TransitionAfter { get; set; }
 }
 
 public sealed class AuthoredTreasureTransition
 {
-    /// <summary>return | teleport | auto | none</summary>
+    /// <summary>return | teleport | auto | walk | none</summary>
     public string Type { get; set; } = "auto";
 
     /// <summary>HuntAethernet enum name when Type is teleport.</summary>
     public string? To { get; set; }
 }
 
-/// <summary>Flattened authored pad with optional transition that applies after this pad toward the next.</summary>
-public readonly record struct AuthoredRouteEntry(uint NodeId, string? Half, AuthoredTreasureTransition? TransitionAfter);
+/// <summary>
+///     Flattened authored pad. <paramref name="SegmentIndex"/> indexes into the planner's segment
+///     list; -1 for pads that are live but absent from treasure_route.json.
+/// </summary>
+public readonly record struct AuthoredRouteEntry(uint NodeId, int SegmentIndex);
+
+/// <summary>
+///     One authored segment, minus its pads. The transition belongs to the segment boundary rather
+///     than to the pad that happens to be authored last — that pad is routinely absent from a plan
+///     (already looted, or above HuntMaxLevel), and keying on it silently dropped the hop.
+/// </summary>
+public readonly record struct AuthoredRouteSegment(string Id, AuthoredTreasureTransition? TransitionAfter);

@@ -32,9 +32,9 @@
       "label": "クリティカルエンカウントをやる",
       "tooltip": "CE へ向かい、完了します。CE の待機中・戦闘中は、バフ再付与やアイドルのために途中で帰還しません。"
     },
-    "toggle_ai_provider": {
-      "label": "BOCCHI AI を使う",
-      "tooltip": "FATE / CE 戦闘中、BossMod / BossMod Reborn の BOCCHI AI オートローテーションプリセットを有効にし、ターゲットと戦闘移動を行います。ジョブのコンバットローテーション（Wrath / Rotation Solver）は有効にしません。旧式の ai:on も使いません。移動中はオフ、到着するとオンに戻します。"
+    "combat_autorotation": {
+      "label": "戦闘オートローテーション",
+      "tooltip": "不正モードの FATE / CE 戦闘方法。Wrath Combo + BOCCHI AI / Rotation Solver + BOCCHI AI: BossMod のターゲット・移動＋各プラグインのジョブスキル（RSR は Henched＝スキルのみ）。BossMod / BossMod Reborn オートローテーション: ジョブ・ロールAI・ファントムジョブAI・オートターゲット・オートムーブ付きフルプリセット。移動中はオフ。None は手動。"
     },
     "should_auto_mount": {
       "label": "移動中はマウント",

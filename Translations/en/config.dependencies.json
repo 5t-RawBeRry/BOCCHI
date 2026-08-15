@@ -4,7 +4,7 @@
     "status": {
       "label": "Status",
       "tooltip": "Whether helper plugins are installed and working.",
-      "intro": "Required plugins must be installed and loaded for traveling and aethernet teleports. Optional ones unlock BOCCHI AI (a BossMod / BMR autorotation preset for targeting and movement — not a job rotation, and not the legacy ai:on) and a separate job autorotation (Wrath / Rotation Solver) — you only need one from each group. “Linked” means BOCCHI can talk to that plugin.",
+      "intro": "Required plugins must be installed and loaded for traveling and aethernet teleports. Optional ones unlock combat automation under General → Combat → Combat autorotation: Wrath or Rotation Solver together with BOCCHI AI (BossMod targeting/movement), or full BossMod / BossMod Reborn autorotation. Pick one path. “Linked” means BOCCHI can talk to that plugin.",
       "required": "Required",
       "optional": "Optional",
       "optional_intro": "Pick one plugin per group (either is fine).",

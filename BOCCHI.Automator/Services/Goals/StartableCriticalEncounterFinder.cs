@@ -3,7 +3,6 @@ using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
-using Ocelot.Services.Logger;
 
 namespace BOCCHI.Automator.Services.Goals;
 
@@ -16,8 +15,7 @@ public class StartableCriticalEncounterFinder
     CriticalEncountersConfig criticalEncountersConfig,
     ICriticalEncounterRepository criticalEncounterRepository,
     IPotCycleTracker potCycle,
-    IFieldNoteTracker fieldNotes,
-    ILogger<StartableCriticalEncounterFinder> logger
+    IFieldNoteTracker fieldNotes
 ) : IStartableCriticalEncounterFinder
 {
     public CriticalEncounter? FindStartable()
@@ -45,7 +43,6 @@ public class StartableCriticalEncounterFinder
 
             if (automatorContext.IsCompletionist && !fieldNotes.ShouldPursueCriticalEncounter(ce.Id.Value))
             {
-                logger.Debug("CE {Id} skipped — completionist already has field note", ce.Id.Value);
                 continue;
             }
 
@@ -58,7 +55,6 @@ public class StartableCriticalEncounterFinder
                 "CE");
             if (!decision.AllowStart)
             {
-                logger.Debug(decision.Reason);
                 continue;
             }
 

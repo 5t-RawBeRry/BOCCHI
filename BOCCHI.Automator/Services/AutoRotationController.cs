@@ -1,146 +1,180 @@
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Services;
 using Dalamud.Plugin.Services;
-using Ocelot.Rotation.Services.BossMod;
-using Ocelot.Services.Logger;
+using Ocelot.Rotation.Services;
 using Ocelot.Services.PlayerState;
+using Ocelot.Services.PluginStatus;
 
 namespace BOCCHI.Automator.Services;
 
-/// <summary>Owns ephemeral BOCCHI AI BossMod/VBM presets while Illegal Mode is on.</summary>
+/// <summary>
+///     Illegal Mode adapter: config → <see cref="ICombatRotationSession"/> plus FATE/CE/travel hooks.
+/// </summary>
 public class AutoRotationController(
-    BossModRotationService bossMod,
+    ICombatRotationSession session,
     AutomatorConfig config,
     UIConfig uiConfig,
     IPlayer player,
     IChatGui chat,
     ICriticalEncounterContext criticalEncounters,
     IFateContext fates,
-    ILogger<AutoRotationController> logger
+    IPluginStatus pluginStatus,
+    ISupportJobFactory supportJobs
 )
 {
-    private string? lastAiDecision;
-
     public void PrepareForIllegalMode()
     {
-        if (!config.ToggleAiProvider)
+        if (!config.CombatAutorotation.UsesCombatAutomation() || !ValidatePluginsForConfig())
         {
             return;
         }
 
-        if (!bossMod.TryEnsureBocchiAiPreset(out _))
-        {
-            PrintNotReady();
-        }
-
-        // Hot reload mid-CE/FATE: Enter may have already run (or EventId lags). Arm AI now.
-        SyncActivityAi();
+        session.Prepare(ToRecipe(config.CombatAutorotation));
+        session.Tick(CurrentPhantomJobId());
+        SyncActivityCombat();
     }
 
-    public void TeardownForIllegalMode()
-    {
-        if (!config.ToggleAiProvider)
-        {
-            return;
-        }
+    public void TeardownForIllegalMode() => session.Teardown();
 
-        bossMod.DestroyAutoRotationPreset();
-    }
+    public void EnableForFate() => session.Enable(CombatActivity.Fate);
 
-    public void EnableForFate()
-    {
-        if (!config.ToggleAiProvider)
-        {
-            return;
-        }
+    public void EnableForCriticalEncounter() => session.Enable(CombatActivity.CriticalEncounter);
 
-        bossMod.EnableForActivity(BocchiAiActivity.Fate);
-    }
-
-    public void EnableForCriticalEncounter()
-    {
-        if (!config.ToggleAiProvider)
-        {
-            return;
-        }
-
-        bossMod.EnableForActivity(BocchiAiActivity.CriticalEncounter);
-    }
-
-    /// <summary>
-    ///     Hand control back to plain BossMod while travelling. Do not call this inside a FATE/CE —
-    ///     the preset is what provides targeting, range and dodging, so deactivating it there stops
-    ///     the character dodging at all.
-    /// </summary>
+    /// <summary>Drop combat automation while travelling. No-op if already in a FATE/CE.</summary>
     public void DisableAi()
     {
-        if (!config.ToggleAiProvider)
-        {
-            return;
-        }
-
-        // Never strip the preset while we are actually in a FATE/CE. Travel states call this from
-        // Enter(), and they can briefly win the score — most obviously when Illegal Mode is switched
-        // on mid-fight, because InFate/InCriticalEncounter need a GoalMemory that does not exist yet,
-        // so Pathfinding/Idle enters first and deactivated the preset we had just armed.
         if (criticalEncounters.IsInCriticalEncounter() || fates.IsInFate())
         {
             return;
         }
 
-        bossMod.DisableAutoRotation();
+        session.Disable();
     }
 
     public void Tick()
     {
-        if (!config.ToggleAiProvider)
+        SyncActivityCombat();
+        session.Tick(CurrentPhantomJobId());
+    }
+
+    private void SyncActivityCombat()
+    {
+        if (criticalEncounters.IsInCriticalEncounter())
         {
+            session.Enable(CombatActivity.CriticalEncounter);
             return;
         }
 
-        // Pathfinding Enter disables AI; if EventId already says we're in the CE/FATE,
-        // re-arm so a plugin reload mid-fight does not leave the preset inactive.
-        SyncActivityAi();
-        bossMod.Refresh();
+        if (fates.IsInFate())
+        {
+            session.Enable(CombatActivity.Fate);
+        }
     }
 
-    private void SyncActivityAi()
+    private static CombatRotationRecipe ToRecipe(CombatAutorotation value) => value switch
     {
-        string decision;
+        CombatAutorotation.WrathCombo => new(
+            JobRotationBackendKind.Wrath,
+            CombatAiKind.MiscAi,
+            ManualTargeting: true),
+        CombatAutorotation.RotationSolverReborn => new(
+            JobRotationBackendKind.RotationSolverReborn,
+            CombatAiKind.MiscAi,
+            ManualTargeting: true),
+        CombatAutorotation.BossMod => new(JobRotationBackendKind.BossMod, CombatAiKind.None),
+        CombatAutorotation.BossModReborn => new(JobRotationBackendKind.BossModReborn, CombatAiKind.None),
+        _ => CombatRotationRecipe.None,
+    };
 
-        if (criticalEncounters.IsInCriticalEncounter())
+    private bool ValidatePluginsForConfig()
+    {
+        switch (config.CombatAutorotation)
         {
-            bossMod.EnableForActivity(BocchiAiActivity.CriticalEncounter);
-            decision = "in CE — arming BOCCHI AI CE preset";
+            case CombatAutorotation.WrathCombo:
+                if (!pluginStatus.IsLoaded(JobRotationBackendKeys.Wrath))
+                {
+                    PrintJobProviderMissing("Wrath Combo");
+                    return false;
+                }
+
+                WarnIfBossModMissing();
+                return true;
+
+            case CombatAutorotation.RotationSolverReborn:
+                if (!pluginStatus.IsLoaded(JobRotationBackendKeys.RotationSolverReborn))
+                {
+                    PrintJobProviderMissing("Rotation Solver Reborn");
+                    return false;
+                }
+
+                WarnIfBossModMissing();
+                return true;
+
+            case CombatAutorotation.BossMod:
+                return ValidateBossModFork(
+                    required: JobRotationBackendKeys.BossMod,
+                    other: JobRotationBackendKeys.BossModReborn,
+                    requiredLabel: "BossMod",
+                    otherLabel: "BossMod Reborn");
+
+            case CombatAutorotation.BossModReborn:
+                return ValidateBossModFork(
+                    required: JobRotationBackendKeys.BossModReborn,
+                    other: JobRotationBackendKeys.BossMod,
+                    requiredLabel: "BossMod Reborn",
+                    otherLabel: "BossMod");
+
+            default:
+                return false;
         }
-        else if (fates.IsInFate())
+    }
+
+    private bool ValidateBossModFork(string required, string other, string requiredLabel, string otherLabel)
+    {
+        if (pluginStatus.IsLoaded(required))
         {
-            bossMod.EnableForActivity(BocchiAiActivity.Fate);
-            decision = "in FATE — arming BOCCHI AI FATE preset";
+            return true;
+        }
+
+        if (pluginStatus.IsLoaded(other))
+        {
+            BocchiChat.PrintError(
+                chat,
+                uiConfig,
+                $"Combat autorotation is set to {requiredLabel}, but only {otherLabel} is loaded.");
         }
         else
         {
-            decision = "not in a FATE or CE — AI preset left alone";
+            PrintJobProviderMissing(requiredLabel);
         }
 
-        // Edge-triggered: this runs every tick, so only log when the answer changes.
-        if (decision == lastAiDecision)
-        {
-            return;
-        }
-
-        lastAiDecision = decision;
-        logger.Info("BOCCHI AI: {Decision}", decision);
+        return false;
     }
 
-    private void PrintNotReady()
+    private void WarnIfBossModMissing()
     {
-        var job = player.GetClassJob();
+        if (!pluginStatus.IsLoaded(JobRotationBackendKeys.BossMod)
+            && !pluginStatus.IsLoaded(JobRotationBackendKeys.BossModReborn))
+        {
+            var job = player.GetClassJob();
+            BocchiChat.PrintError(
+                chat,
+                uiConfig,
+                $"BOCCHI AI / BossMod autorotation not ready (is BossMod / BMR loaded?). "
+                + $"job={job?.Abbreviation.ToString() ?? "?"} melee={player.IsMelee()}");
+        }
+    }
+
+    private uint? CurrentPhantomJobId() =>
+        supportJobs.TryGetCurrent(out SupportJob current) ? current.Id.RowId() : null;
+
+    private void PrintJobProviderMissing(string name)
+    {
         BocchiChat.PrintError(
             chat,
             uiConfig,
-            $"BOCCHI AI not ready (is BossMod / BMR loaded?). "
-            + $"job={job?.Abbreviation.ToString() ?? "?"} melee={player.IsMelee()}");
+            $"Combat autorotation needs {name}, but that plugin is not loaded.");
     }
 }

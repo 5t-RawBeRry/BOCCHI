@@ -82,7 +82,7 @@ public class InCriticalEncounterHandler
             pathfinder,
             "InCriticalEncounter",
             shouldApproachTarget: false,
-            deferCombatToBossModAi: config.ToggleAiProvider,
+            deferCombatToBossModAi: config.CombatAutorotation.UsesCombatAutomation(),
             targetManager: targetManager);
     }
 

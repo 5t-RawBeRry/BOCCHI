@@ -2,6 +2,7 @@ using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Debug;
 using Dalamud.Plugin.Services;
+using Ocelot.Rotation.Services;
 using Ocelot.Rotation.Services.BossMod;
 using Ocelot.Services.Commands;
 using Ocelot.Services.PlayerState;
@@ -12,7 +13,8 @@ namespace BOCCHI.Commands;
 public class DebugCommand
 (
     IDebugWindow debugWindow,
-    BossModRotationService bossModRotation,
+    BossModMiscAiBackend bossModMiscAi,
+    CombatAiPresetNaming presetNaming,
     IPlayer player,
     IChatGui chat,
     UIConfig uiConfig,
@@ -61,7 +63,7 @@ public class DebugCommand
             $"Base job={job?.Abbreviation.ToString() ?? "?"} Role={job?.Role.ToString() ?? "?"} "
             + $"IsMelee={player.IsMelee()} IsMeleeDps={player.IsMeleeDps()}");
 
-        if (!bossModRotation.TryEnsureBocchiAiPreset(out string? storedJson))
+        if (!bossModMiscAi.TryEnsurePresets(out string? storedJson))
         {
             BocchiChat.PrintError(chat, uiConfig, "Failed to create BOCCHI AI preset (is BossMod / BMR loaded?)");
             return;
@@ -70,7 +72,7 @@ public class DebugCommand
         BocchiChat.Print(
             chat,
             uiConfig,
-            $"Created/updated presets '{BossModRotationService.FatePresetName}' and '{BossModRotationService.CePresetName}'.");
+            $"Created/updated presets '{presetNaming.FateMiscAi}' and '{presetNaming.CeMiscAi}'.");
         if (string.IsNullOrWhiteSpace(storedJson))
         {
             BocchiChat.PrintError(

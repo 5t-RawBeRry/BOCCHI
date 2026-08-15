@@ -32,9 +32,9 @@
       "label": "비상 조우 수행",
       "tooltip": "비상 조우로 가서 완료합니다. 대기 중이거나 전투 중인 비상 조우에서는 버프 갱신이나 대기 때문에 중간에 귀환하지 않습니다."
     },
-    "toggle_ai_provider": {
-      "label": "BOCCHI AI 사용",
-      "tooltip": "돌발·비상 조우 전투에서 BossMod / BossMod Reborn의 BOCCHI AI 자동 로테이션 프리셋을 켜 대상 지정과 전투 이동을 합니다. 잡 전투 로테이션(Wrath / Rotation Solver)은 켜지 않으며, 구식 ai:on도 사용하지 않습니다. 이동 중에는 끄고 도착하면 다시 켭니다."
+    "combat_autorotation": {
+      "label": "전투 자동 로테이션",
+      "tooltip": "Illegal Mode에서 돌발·비상 조우를 싸우는 방식. Wrath Combo + BOCCHI AI / Rotation Solver + BOCCHI AI: BossMod 대상·이동 + 해당 플러그인의 잡 스킬(RSR은 Henched — 스킬만). BossMod / BossMod Reborn 자동 로테이션: 잡·역할 AI·팬텀 잡 AI·자동 대상·자동 이동이 포함된 전체 프리셋. 이동 중에는 끔. None은 수동."
     },
     "should_auto_mount": {
       "label": "이동 중 탈것 탑승",

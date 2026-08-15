@@ -5,7 +5,7 @@ namespace BOCCHI.Config;
 
 public class Configuration : IConfiguration
 {
-    public const int CurrentVersion = 19;
+    public const int CurrentVersion = 21;
 
     [ConfigHidden] public int Version { get; set; } = CurrentVersion;
 

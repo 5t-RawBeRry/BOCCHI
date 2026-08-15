@@ -82,6 +82,8 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<IFieldRenderer<Mp3SoundSelectAttribute>, Mp3SoundSelectRenderer>();
         services.AddSingleton<UILanguageDisplay>();
         services.AddSingleton<NoOpFilter<UILanguage>>();
+        services.AddSingleton<CombatAutorotationDisplay>();
+        services.AddSingleton<NoOpFilter<CombatAutorotation>>();
         services.AddSingleton<IFieldRenderer<TriageRaiseJobAttribute>, TriageRaiseJobRenderer>();
 
         services.AddSingleton<MessageOfTheDayService>();

@@ -10,35 +10,38 @@ public interface IHuntRoutePlanner
 {
     HuntPathfinderState State { get; }
 
-    /// <summary>Half chosen as primary on the last authored FindPath (red/blue), if any.</summary>
-    string? LastPrimaryHalf { get; }
+    /// <summary>Authored segment ids in route order; empty when there is no authored route.</summary>
+    IReadOnlyList<string> SegmentIds { get; }
 
-    string? TryGetNodeHalf(uint nodeId);
+    /// <summary>Authored segment owning this pad, or null when the pad is not in the route.</summary>
+    string? TryGetNodeSegment(uint nodeId);
 
     /// <summary>Authored route order index (0-based), or null if not in treasure_route.json.</summary>
     int? TryGetNodeOrderIndex(uint nodeId);
 
-    bool HalfHasRemaining(string half, IReadOnlyList<uint> remainingNodes);
+    /// <summary>First authored pad of a segment, or null when the id is unknown.</summary>
+    uint? TryGetSegmentFirstNode(string segmentId);
 
-    /// <summary>Other tagged half that still has remaining pads, if any.</summary>
-    string? TryGetAlternateHalf(string half, IReadOnlyList<uint> remainingNodes);
+    /// <summary>Return to camp, then hop to the cheapest shard for <paramref name="toNodeId"/>.</summary>
+    List<HuntPathfinderStep> BuildEntryLeg(uint toNodeId);
 
     /// <param name="preferStartNodes">
     ///     When set, visit these remaining pads first (closest Nearby peel-off chain), then the rest.
     /// </param>
-    /// <param name="stickyHalf">
-    ///     When set (e.g. red/blue), finish that half before the other — survives empty skips.
-    /// </param>
     /// <param name="continueAfterNodeId">
-    ///     Last finished pad. Untagged authored routes resume at the next pad after this
-    ///     instead of the geographically nearest remaining one.
+    ///     Last finished pad. Authored routes resume at the next pad after this instead of the
+    ///     geographically nearest remaining one.
+    /// </param>
+    /// <param name="entryNodeId">
+    ///     Forces the tour to start here and wrap (session-start segment rotation). Wins over
+    ///     <paramref name="continueAfterNodeId"/>.
     /// </param>
     Task<List<HuntPathfinderStep>> FindPath(
         Vector3 start,
         List<uint> nodes,
         IReadOnlyList<uint>? preferStartNodes = null,
-        string? stickyHalf = null,
-        uint? continueAfterNodeId = null);
+        uint? continueAfterNodeId = null,
+        uint? entryNodeId = null);
 }
 
 /// <summary>
@@ -73,15 +76,22 @@ public abstract class HuntRoutePlanner
     /// </summary>
     private static readonly Dictionary<(ZoneId Zone, string File), HuntNodeDataSchema> NodeDataCache = [];
 
-    private static readonly Dictionary<ZoneId, List<AuthoredRouteEntry>> AuthoredRouteCache = [];
+    private static readonly Dictionary<ZoneId, AuthoredRoutePayload> AuthoredRouteCache = [];
+
+    /// <summary>Parsed treasure_route.json, cached per zone.</summary>
+    private readonly record struct AuthoredRoutePayload(
+        List<AuthoredRouteEntry> Entries,
+        List<AuthoredRouteSegment> Segments);
 
     private HuntNodeDataSchema data = new();
 
     /// <summary>Flattened authored pads in order; empty when falling back to TSP.</summary>
     private List<AuthoredRouteEntry> authoredEntries = [];
 
-    /// <summary>Half chosen as primary on the last authored FindPath (red/blue), if any.</summary>
-    public string? LastPrimaryHalf { get; private set; }
+    /// <summary>Authored segments in route order; indexed by <see cref="AuthoredRouteEntry.SegmentIndex"/>.</summary>
+    private List<AuthoredRouteSegment> authoredSegments = [];
+
+    public IReadOnlyList<string> SegmentIds => authoredSegments.Select(seg => seg.Id).ToList();
 
     private HuntAethernet BaseCampAethernet => zoneId switch
     {
@@ -95,8 +105,8 @@ public abstract class HuntRoutePlanner
         Vector3 start,
         List<uint> nodes,
         IReadOnlyList<uint>? preferStartNodes = null,
-        string? stickyHalf = null,
-        uint? continueAfterNodeId = null)
+        uint? continueAfterNodeId = null,
+        uint? entryNodeId = null)
     {
         if (State != HuntPathfinderState.FileLoaded && State != HuntPathfinderState.PathfindingDone)
         {
@@ -104,7 +114,6 @@ public abstract class HuntRoutePlanner
         }
 
         State = HuntPathfinderState.Pathfinding;
-        LastPrimaryHalf = null;
 
         List<uint> remaining = nodes.Distinct().ToList();
         if (remaining.Count == 0)
@@ -116,32 +125,19 @@ public abstract class HuntRoutePlanner
         List<uint> preferPrefix = [];
         if (preferStartNodes != null)
         {
-            string? stickyNorm = NormalizeHalf(stickyHalf);
             HashSet<uint> seen = [];
             foreach (uint id in preferStartNodes)
             {
-                if (!remaining.Contains(id) || !seen.Add(id))
+                if (remaining.Contains(id) && seen.Add(id))
                 {
-                    continue;
+                    preferPrefix.Add(id);
                 }
-
-                // While a half is sticky, only peel to lives on that half.
-                if (stickyNorm != null)
-                {
-                    string? idHalf = TryGetNodeHalf(id);
-                    if (idHalf != stickyNorm)
-                    {
-                        continue;
-                    }
-                }
-
-                preferPrefix.Add(id);
             }
         }
 
         uint? primaryPrefer = preferPrefix.Count > 0 ? preferPrefix[0] : null;
         List<uint> tour = authoredEntries.Count > 0
-            ? BuildAuthoredTour(start, remaining, primaryPrefer, stickyHalf, continueAfterNodeId)
+            ? BuildAuthoredTour(start, remaining, primaryPrefer, continueAfterNodeId, entryNodeId)
             : BuildTspTour(start, remaining, primaryPrefer);
 
         if (preferPrefix.Count > 0)
@@ -159,25 +155,49 @@ public abstract class HuntRoutePlanner
 
         log.Info(
             authoredEntries.Count > 0
-                ? "Treasure hunt authored route: {Count} remaining (start {Start}, nearbyPrefix {Prefix}, half {Half})"
-                : "Treasure hunt nearest-neighbor route: {Count} remaining (start {Start}, nearbyPrefix {Prefix})",
+                ? "Treasure hunt authored route: {Count} remaining (start {Start}, nearbyPrefix {Prefix}, segment {Segment})"
+                : "Treasure hunt nearest-neighbor route: {Count} remaining (start {Start}, nearbyPrefix {Prefix}, segment {Segment})",
             tour.Count,
             tour[0],
             preferPrefix.Count,
-            LastPrimaryHalf ?? stickyHalf ?? "-");
+            TryGetNodeSegment(tour[0]) ?? "-");
 
         List<HuntPathfinderStep> steps = BuildStepsForTour(tour);
         State = HuntPathfinderState.PathfindingDone;
         return Task.FromResult(steps);
     }
 
-    public string? TryGetNodeHalf(uint nodeId)
+    public string? TryGetNodeSegment(uint nodeId) =>
+        TryGetSegmentIndex(nodeId) is int index ? authoredSegments[index].Id : null;
+
+    public uint? TryGetSegmentFirstNode(string segmentId)
+    {
+        int index = authoredSegments.FindIndex(seg =>
+            string.Equals(seg.Id, segmentId, StringComparison.OrdinalIgnoreCase));
+        if (index < 0)
+        {
+            return null;
+        }
+
+        foreach (AuthoredRouteEntry entry in authoredEntries)
+        {
+            if (entry.SegmentIndex == index)
+            {
+                return entry.NodeId;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Index into <see cref="authoredSegments"/>, or null for pads outside the route.</summary>
+    private int? TryGetSegmentIndex(uint nodeId)
     {
         foreach (AuthoredRouteEntry entry in authoredEntries)
         {
             if (entry.NodeId == nodeId)
             {
-                return entry.Half;
+                return entry.SegmentIndex >= 0 ? entry.SegmentIndex : null;
             }
         }
 
@@ -191,33 +211,6 @@ public abstract class HuntRoutePlanner
             if (authoredEntries[i].NodeId == nodeId)
             {
                 return i;
-            }
-        }
-
-        return null;
-    }
-
-    public bool HalfHasRemaining(string half, IReadOnlyList<uint> remainingNodes)
-    {
-        string normalized = NormalizeHalf(half) ?? half;
-        HashSet<uint> remaining = remainingNodes.ToHashSet();
-        return authoredEntries.Any(e => e.Half == normalized && remaining.Contains(e.NodeId));
-    }
-
-    public string? TryGetAlternateHalf(string half, IReadOnlyList<uint> remainingNodes)
-    {
-        string? normalized = NormalizeHalf(half);
-        HashSet<uint> remaining = remainingNodes.ToHashSet();
-        foreach (string? candidate in authoredEntries.Select(e => e.Half).Distinct())
-        {
-            if (candidate == null || candidate == normalized)
-            {
-                continue;
-            }
-
-            if (authoredEntries.Any(e => e.Half == candidate && remaining.Contains(e.NodeId)))
-            {
-                return candidate;
             }
         }
 
@@ -240,9 +233,17 @@ public abstract class HuntRoutePlanner
         if (NodeDataCache.TryGetValue((zoneId, filename), out HuntNodeDataSchema? cached))
         {
             data = cached;
-            authoredEntries = AuthoredRouteCache.TryGetValue(zoneId, out List<AuthoredRouteEntry>? route)
-                ? route
-                : [];
+            if (AuthoredRouteCache.TryGetValue(zoneId, out AuthoredRoutePayload route))
+            {
+                authoredEntries = route.Entries;
+                authoredSegments = route.Segments;
+            }
+            else
+            {
+                authoredEntries = [];
+                authoredSegments = [];
+            }
+
             State = HuntPathfinderState.FileLoaded;
             return;
         }
@@ -259,7 +260,7 @@ public abstract class HuntRoutePlanner
         LoadAuthoredRoute();
 
         NodeDataCache[(zoneId, filename)] = data;
-        AuthoredRouteCache[zoneId] = authoredEntries;
+        AuthoredRouteCache[zoneId] = new AuthoredRoutePayload(authoredEntries, authoredSegments);
         log.Info(
             "Cached hunt route data for {Zone}: {Nodes} node(s), {Pads} authored pad(s)",
             zoneId,
@@ -272,6 +273,7 @@ public abstract class HuntRoutePlanner
     private void LoadAuthoredRoute()
     {
         authoredEntries = [];
+        authoredSegments = [];
         string file = GetDataFile(plugin, zoneId, "treasure_route.json");
         if (!File.Exists(file))
         {
@@ -298,13 +300,11 @@ public abstract class HuntRoutePlanner
                     continue;
                 }
 
-                for (int i = 0; i < segment.Nodes.Count; i++)
+                int segmentIndex = authoredSegments.Count;
+                authoredSegments.Add(new AuthoredRouteSegment(segment.Id, segment.TransitionAfter));
+                foreach (uint nodeId in segment.Nodes)
                 {
-                    bool lastInSegment = i == segment.Nodes.Count - 1;
-                    authoredEntries.Add(new AuthoredRouteEntry(
-                        segment.Nodes[i],
-                        NormalizeHalf(segment.Half),
-                        lastInSegment ? segment.TransitionAfter : null));
+                    authoredEntries.Add(new AuthoredRouteEntry(nodeId, segmentIndex));
                 }
             }
 
@@ -317,18 +317,9 @@ public abstract class HuntRoutePlanner
         catch (Exception ex)
         {
             authoredEntries = [];
+            authoredSegments = [];
             log.Warning(ex, "Failed to load treasure_route.json for {Zone}; using TSP", zoneId);
         }
-    }
-
-    private static string? NormalizeHalf(string? half)
-    {
-        if (string.IsNullOrWhiteSpace(half))
-        {
-            return null;
-        }
-
-        return half.Trim().ToLowerInvariant();
     }
 
     private List<uint> BuildTspTour(Vector3 start, List<uint> remaining, uint? preferStartNode)
@@ -419,15 +410,14 @@ public abstract class HuntRoutePlanner
         Vector3 start,
         List<uint> remaining,
         uint? preferStartNode,
-        string? stickyHalf,
-        uint? continueAfterNodeId = null)
+        uint? continueAfterNodeId = null,
+        uint? entryNodeId = null)
     {
         HashSet<uint> remainingSet = remaining.ToHashSet();
         Dictionary<uint, int> orderIndex = [];
         List<AuthoredRouteEntry> orderedUnique = [];
-        for (int i = 0; i < authoredEntries.Count; i++)
+        foreach (AuthoredRouteEntry entry in authoredEntries)
         {
-            AuthoredRouteEntry entry = authoredEntries[i];
             if (!remainingSet.Contains(entry.NodeId) || orderIndex.ContainsKey(entry.NodeId))
             {
                 continue;
@@ -437,11 +427,11 @@ public abstract class HuntRoutePlanner
             orderedUnique.Add(entry);
         }
 
-        // Pads in remaining but missing from authored file — append by distance from last.
+        // Pads in remaining but missing from authored file — append after the authored tail.
         foreach (uint id in remaining.Where(id => !orderIndex.ContainsKey(id)))
         {
             orderIndex[id] = orderedUnique.Count;
-            orderedUnique.Add(new AuthoredRouteEntry(id, null, null));
+            orderedUnique.Add(new AuthoredRouteEntry(id, -1));
         }
 
         if (orderedUnique.Count == 0)
@@ -449,91 +439,43 @@ public abstract class HuntRoutePlanner
             return [];
         }
 
+        List<uint> tour = BuildOrderedTour(start, orderedUnique, continueAfterNodeId, entryNodeId);
         if (preferStartNode is uint prefer && orderIndex.ContainsKey(prefer))
         {
-            List<uint> baseTour = BuildHalfAwareTour(start, orderedUnique, stickyHalf, continueAfterNodeId);
-            baseTour.Remove(prefer);
-            baseTour.Insert(0, prefer);
-            return baseTour;
+            tour.Remove(prefer);
+            tour.Insert(0, prefer);
         }
 
-        return BuildHalfAwareTour(start, orderedUnique, stickyHalf, continueAfterNodeId);
+        return tour;
     }
 
-    private List<uint> BuildHalfAwareTour(
+    /// <summary>
+    ///     Authored order, entered at the rotation pad when one is requested, else resumed after the
+    ///     pad we just finished, else at the nearest remaining pad. Wraps in every case, so the run
+    ///     still covers every segment regardless of where it started.
+    /// </summary>
+    private List<uint> BuildOrderedTour(
         Vector3 start,
         List<AuthoredRouteEntry> orderedUnique,
-        string? stickyHalf,
-        uint? continueAfterNodeId = null)
+        uint? continueAfterNodeId,
+        uint? entryNodeId)
     {
-        List<string> halves = orderedUnique
-            .Select(e => e.Half)
-            .Where(h => h != null)
-            .Cast<string>()
-            .Distinct()
-            .ToList();
+        HashSet<uint> remainingIds = orderedUnique.Select(e => e.NodeId).ToHashSet();
 
-        if (halves.Count >= 2)
-        {
-            string? normalizedSticky = NormalizeHalf(stickyHalf);
-            // Sticky wins; otherwise keep authored segment order (South: red before blue)
-            // so camp starts on red instead of whichever half is geographically closer.
-            string firstHalf = normalizedSticky != null
-                               && halves.Contains(normalizedSticky)
-                               && orderedUnique.Any(e => e.Half == normalizedSticky)
-                ? normalizedSticky
-                : halves[0];
-            string otherHalf = halves.First(h => h != firstHalf);
-            LastPrimaryHalf = firstHalf;
+        uint? entry = entryNodeId is uint rotation && remainingIds.Contains(rotation)
+            ? rotation
+            : null;
 
-            List<uint> tour = orderedUnique
-                .Where(e => e.Half == firstHalf)
-                .Select(e => e.NodeId)
-                .ToList();
-
-            // Sticky half: only that half this plan. The hunter switches sticky + Returns
-            // when the half is exhausted — do not append the other half into the same tour
-            // (that caused mid-route turnarounds into blue while still "on red").
-            if (normalizedSticky == null)
-            {
-                tour.AddRange(orderedUnique
-                    .Where(e => e.Half == otherHalf)
-                    .Select(e => e.NodeId));
-                tour.AddRange(orderedUnique
-                    .Where(e => e.Half == null)
-                    .Select(e => e.NodeId));
-            }
-
-            return tour;
-        }
-
-        // Sticky half: only that color, even when the remaining set only has one half loaded.
-        if (NormalizeHalf(stickyHalf) is string stickyNorm)
-        {
-            LastPrimaryHalf = stickyNorm;
-            return orderedUnique
-                .Where(e => e.Half == stickyNorm)
-                .Select(e => e.NodeId)
-                .ToList();
-        }
-
-        // Single / no half: continue authored order with wrap.
-        // Resume after the pad we just finished; otherwise enter at the nearest remaining.
-        uint? resume = continueAfterNodeId is uint after
+        entry ??= continueAfterNodeId is uint after
             ? TryGetNextAuthoredAfter(after, orderedUnique)
             : null;
 
-        uint entry = resume ?? orderedUnique
+        entry ??= orderedUnique
             .OrderBy(e => Vector3.DistanceSquared(start, GetNodePosition(e.NodeId)))
             .First()
             .NodeId;
 
-        if (halves.Count == 1)
-        {
-            LastPrimaryHalf = halves[0];
-        }
-
-        return OrderFromEntry(orderedUnique, entry);
+        return OrderFromEntry(orderedUnique, entry.Value);
     }
 
     /// <summary>
@@ -601,36 +543,32 @@ public abstract class HuntRoutePlanner
         return steps;
     }
 
+    /// <summary>
+    ///     Transitions belong to the segment boundary, not to the pad authored last in the segment:
+    ///     that pad drops out of the plan whenever it is already looted or above HuntMaxLevel, and
+    ///     keying on it silently downgraded the hop to a cross-map walk.
+    /// </summary>
     private AuthoredTreasureTransition? FindTransitionBetween(uint from, uint to)
     {
-        // NH (and any untagged segments): honor authored Return/TP on the last pad of a region.
-        // Previously only half-tagged SH boundaries applied these, so NH walked between areas (#169).
-        for (int i = 0; i < authoredEntries.Count; i++)
-        {
-            AuthoredRouteEntry entry = authoredEntries[i];
-            if (entry.NodeId != from || entry.TransitionAfter == null)
-            {
-                continue;
-            }
+        int? fromSegment = TryGetSegmentIndex(from);
+        int? toSegment = TryGetSegmentIndex(to);
 
-            string boundaryType = entry.TransitionAfter.Type?.Trim().ToLowerInvariant() ?? "";
-            if (boundaryType is "teleport" or "return" or "auto")
-            {
-                return entry.TransitionAfter;
-            }
+        // Interior of one segment — the authored order already walks it.
+        if (fromSegment != null && fromSegment == toSegment)
+        {
+            return new AuthoredTreasureTransition { Type = "walk" };
         }
 
-        string? fromHalf = TryGetNodeHalf(from);
-        string? toHalf = TryGetNodeHalf(to);
-
-        // Crossing halves always Returns when no explicit boundary was authored on `from`.
-        if (fromHalf != null && toHalf != null && fromHalf != toHalf)
+        // Pads outside the authored route (layout-only) have no boundary to honor; let the bake pick.
+        if (fromSegment is not int index)
         {
-            return new AuthoredTreasureTransition { Type = "return" };
+            return new AuthoredTreasureTransition { Type = "auto" };
         }
 
-        // Same half (or untagged interior): walk only.
-        return new AuthoredTreasureTransition { Type = "walk" };
+        // A wrapped tour ends on the last segment and continues into the first, which has no
+        // authored transition — "auto" costs walk against hop and Return and takes the cheapest.
+        return authoredSegments[index].TransitionAfter
+               ?? new AuthoredTreasureTransition { Type = "auto" };
     }
 
     private List<HuntPathfinderStep> ResolveLeg(uint fromId, uint toId, AuthoredTreasureTransition? transition)
@@ -639,11 +577,7 @@ public abstract class HuntRoutePlanner
         switch (type)
         {
             case "return":
-                return
-                [
-                    HuntPathfinderStep.ReturnToBaseCamp(),
-                    HuntPathfinderStep.WalkToDestination(toId)
-                ];
+                return BuildEntryLeg(toId);
             case "teleport" when TryParseAethernet(transition?.To, out HuntAethernet shard):
                 return
                 [
@@ -655,37 +589,69 @@ public abstract class HuntRoutePlanner
             case "walk":
                 return [HuntPathfinderStep.WalkToDestination(toId)];
             default:
-                // auto — within a half prefer walk; otherwise cheapest bake hop.
-                string? fromHalf = TryGetNodeHalf(fromId);
-                string? toHalf = TryGetNodeHalf(toId);
-                if (fromHalf != null && fromHalf == toHalf)
-                {
-                    return [HuntPathfinderStep.WalkToDestination(toId)];
-                }
-
-                if (TryGetWalkSteps(fromId, toId, out List<HuntPathfinderStep> walk))
-                {
-                    return walk;
-                }
-
+                // auto — cheapest of walk, aethernet hop, or Return. This used to short-circuit to
+                // a walk whenever the bake had the pair, which it always does, so no "auto"
+                // boundary ever hopped (North Horn walked base camp -> crown at 365 over a 160 hop).
                 return GetBestSteps(fromId, toId).Steps;
         }
     }
 
-    private bool TryGetWalkSteps(uint fromId, uint toId, out List<HuntPathfinderStep> steps)
+    /// <summary>
+    ///     Return to camp, then hop to the cheapest aethernet for the next pad (or walk from camp).
+    /// </summary>
+    public List<HuntPathfinderStep> BuildEntryLeg(uint toId)
     {
-        steps = [];
-        if (data.NodeToNodeDistances.TryGetValue(fromId, out List<HuntToNode>? directList))
+        HuntAethernet baseCamp = BaseCampAethernet;
+
+        float bestCost = float.MaxValue;
+        if (data.AethernetToNodeDistances.TryGetValue(baseCamp, out List<HuntToNode>? fromBase))
         {
-            HuntToNode direct = directList.FirstOrDefault(x => x.Id == toId);
-            if (direct.Id == toId)
+            HuntToNode walkFromCamp = fromBase.FirstOrDefault(x => x.Id == toId);
+            if (walkFromCamp.Id == toId)
             {
-                steps = [HuntPathfinderStep.WalkToDestination(toId)];
-                return true;
+                bestCost = walkFromCamp.Distance;
             }
         }
 
-        return false;
+        HuntAethernet? bestShard = null;
+        foreach ((HuntAethernet aethernet, List<HuntToNode> list) in data.AethernetToNodeDistances)
+        {
+            if (aethernet == baseCamp)
+            {
+                continue;
+            }
+
+            HuntToNode to = list.FirstOrDefault(x => x.Id == toId);
+            if (to.Id != toId)
+            {
+                continue;
+            }
+
+            float cost = AethernetHopCost + to.Distance;
+            if (cost >= bestCost)
+            {
+                continue;
+            }
+
+            bestCost = cost;
+            bestShard = aethernet;
+        }
+
+        if (bestShard is not HuntAethernet shard)
+        {
+            return
+            [
+                HuntPathfinderStep.ReturnToBaseCamp(),
+                HuntPathfinderStep.WalkToDestination(toId)
+            ];
+        }
+
+        return
+        [
+            HuntPathfinderStep.ReturnToBaseCamp(),
+            HuntPathfinderStep.TeleportToAethernet(shard),
+            HuntPathfinderStep.WalkToDestination(toId)
+        ];
     }
 
     private static bool TryParseAethernet(string? name, out HuntAethernet aethernet)

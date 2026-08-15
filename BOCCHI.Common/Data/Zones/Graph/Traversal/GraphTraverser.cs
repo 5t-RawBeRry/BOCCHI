@@ -47,7 +47,7 @@ public class GraphTraverser(ZoneGraph graph, IPathfinder pathfinder, ILogger log
 
             if (bound >= best)
             {
-                logger.Info(
+                logger.Debug(
                     $"Skipping Calculator: {calculator.Key()} (lower bound {bound:F0} >= best {best:F0})");
                 continue;
             }
@@ -64,16 +64,16 @@ public class GraphTraverser(ZoneGraph graph, IPathfinder pathfinder, ILogger log
         Node goal,
         List<TraversalCandidate> candidates)
     {
-        logger.Info($"Running Calculator: {calculator.Key()}");
+        logger.Debug($"Running Calculator: {calculator.Key()}");
         TraversalCandidate? candidate = await calculator.CalculateAsync(graph, start, goal, pathfinder);
         if (candidate != null)
         {
-            logger.Info($"  Cost:  {candidate.TotalCost}");
+            logger.Debug($"  Cost:  {candidate.TotalCost}");
             candidates.Add(candidate);
         }
         else
         {
-            logger.Info("  Cost: N/A");
+            logger.Debug("  Cost: N/A");
         }
     }
 }

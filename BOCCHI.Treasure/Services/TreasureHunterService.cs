@@ -127,19 +127,16 @@ public class TreasureHunterService
     /// <summary>Force this pad as TSP start on the next plan (Nearby divert / reclaim).</summary>
     private uint? pendingPreferStartNode;
 
-    /// <summary>South Horn red/blue (etc.): finish this half before switching after empty skips.</summary>
-    private string? authoredStickyHalf;
-
     /// <summary>South Horn session start: prepend Return before first walk (cleared after first plan).</summary>
     private bool pendingSessionCampReturn;
 
-    /// <summary>Prepend Return once when sticky half switches (red ↔ blue).</summary>
-    private bool pendingHalfSwitchReturn;
+    /// <summary>South Horn segment rotation: enter the authored route here on the first plan.</summary>
+    private uint? pendingEntryNodeId;
 
-    /// <summary>Node → half from the last loaded authored route (for divert while planner is null).</summary>
-    private readonly Dictionary<uint, string> authoredNodeHalves = [];
+    /// <summary>Node → authored segment id (for divert while the planner is null).</summary>
+    private readonly Dictionary<uint, string> authoredNodeSegments = [];
 
-    /// <summary>Node → authored order index (for sticky half: do not peel ahead of the route).</summary>
+    /// <summary>Node → authored order index (peel-off must not jump ahead of the route).</summary>
     private readonly Dictionary<uint, int> authoredNodeOrder = [];
 
     /// <summary>Hysteresis: Hide required until threats leave exit distance.</summary>
@@ -222,16 +219,11 @@ public class TreasureHunterService
             }
 
             steps.Clear();
-            List<uint> nearbyPrefix = [];
-            // South Horn: exact authored order only — no Nearby peel / prefer-prefix detours.
-            if (!UseStrictAuthoredRoute)
+            List<uint> nearbyPrefix = FindAllLiveNearbyPreferNodes(validNodes);
+            if (pendingPreferStartNode is uint latch && validNodes.Contains(latch))
             {
-                nearbyPrefix = FindAllLiveNearbyPreferNodes(validNodes);
-                if (pendingPreferStartNode is uint latch && validNodes.Contains(latch))
-                {
-                    nearbyPrefix.Remove(latch);
-                    nearbyPrefix.Insert(0, latch);
-                }
+                nearbyPrefix.Remove(latch);
+                nearbyPrefix.Insert(0, latch);
             }
 
             pendingPreferStartNode = null;
@@ -244,52 +236,41 @@ public class TreasureHunterService
                 }
             }
 
-            string? stickyHalf = authoredStickyHalf;
-            if (stickyHalf != null && !pathPlanner.HalfHasRemaining(stickyHalf, validNodes))
-            {
-                string? nextHalf = pathPlanner.TryGetAlternateHalf(stickyHalf, validNodes);
-                log.Info(
-                    "Treasure hunt finished sticky half {Half}; switching to {Next}",
-                    stickyHalf,
-                    nextHalf ?? "(none)");
-                if (nextHalf != null)
-                {
-                    pendingHalfSwitchReturn = !zones.GetZone().IsInBasecamp();
-                }
+            RefreshAuthoredSegmentCache(pathPlanner);
 
-                authoredStickyHalf = stickyHalf = nextHalf;
-            }
+            uint? entryNodeId = pendingEntryNodeId;
+            pendingEntryNodeId = null;
 
-            // First plan / recovery: lock to last checked pad's half while it still has work.
-            if (stickyHalf == null && LastCheckedNodeId is uint lastId)
+            // Peel-off stays inside the segment this plan will work, and never jumps ahead of the
+            // route. The rotation entry has to be known first — otherwise a run opening on a late
+            // segment would filter the prefix against the first segment instead.
+            string? currentSegment = TryGetCurrentSegment(validNodes, entryNodeId);
+            if (currentSegment != null)
             {
-                string? lastHalf = pathPlanner.TryGetNodeHalf(lastId);
-                if (lastHalf != null && pathPlanner.HalfHasRemaining(lastHalf, validNodes))
-                {
-                    stickyHalf = lastHalf;
-                }
-            }
-
-            // Non-strict zones: Nearby peel-off only within sticky half / authored frontier.
-            if (!UseStrictAuthoredRoute && stickyHalf != null)
-            {
-                string stickyNorm = stickyHalf;
                 nearbyPrefix = nearbyPrefix
-                    .Where(id => pathPlanner.TryGetNodeHalf(id) == stickyNorm)
+                    .Where(id => authoredNodeSegments.GetValueOrDefault(id) == currentSegment)
                     .ToList();
-                nearbyPrefix = FilterNearbyPrefixToAuthoredFrontier(nearbyPrefix, validNodes, stickyNorm);
+                nearbyPrefix = FilterNearbyPrefixToAuthoredFrontier(nearbyPrefix, validNodes, currentSegment);
             }
 
             steps.AddRange(
                 pathPlanner
-                    .FindPath(player.Position, validNodes, nearbyPrefix, stickyHalf, LastCheckedNodeId)
+                    .FindPath(player.Position, validNodes, nearbyPrefix, LastCheckedNodeId, entryNodeId)
                     .GetAwaiter()
                     .GetResult());
 
             if (pendingSessionCampReturn)
             {
                 pendingSessionCampReturn = false;
-                if (steps.Count == 0 || steps[0].Type != HuntPathfinderStepType.ReturnToBaseCamp)
+                if (steps.Count > 0 && steps[0].Type == HuntPathfinderStepType.WalkToNode)
+                {
+                    // Replace the opening walk with Return + the cheapest shard hop to the same pad,
+                    // so a rotation that starts far from camp does not walk the whole way there.
+                    uint firstNode = steps[0].NodeId;
+                    steps.RemoveAt(0);
+                    steps.InsertRange(0, pathPlanner.BuildEntryLeg(firstNode));
+                }
+                else if (steps.Count == 0 || steps[0].Type != HuntPathfinderStepType.ReturnToBaseCamp)
                 {
                     steps.Insert(0, HuntPathfinderStep.ReturnToBaseCamp());
                 }
@@ -297,26 +278,6 @@ public class TreasureHunterService
                 log.Info("Treasure hunt: prepended session-start Return to base camp");
             }
 
-            if (pendingHalfSwitchReturn)
-            {
-                pendingHalfSwitchReturn = false;
-                if (steps.Count == 0 || steps[0].Type != HuntPathfinderStepType.ReturnToBaseCamp)
-                {
-                    steps.Insert(0, HuntPathfinderStep.ReturnToBaseCamp());
-                }
-
-                log.Info(
-                    "Treasure hunt: prepended Return before starting half {Half}",
-                    authoredStickyHalf ?? "-");
-            }
-
-            if (pathPlanner.LastPrimaryHalf != null)
-            {
-                // Never let a partial layout snapshot flip sticky (e.g. camp red→blue).
-                authoredStickyHalf ??= pathPlanner.LastPrimaryHalf;
-            }
-
-            RefreshAuthoredHalfCache(pathPlanner);
             pathPlanner = null;
             StepIndex = 0;
             // Treasure Sight once per session start (not on mid-hunt replans).
@@ -379,11 +340,8 @@ public class TreasureHunterService
                 LastCheckedNodeId = completed.NodeId;
                 checkedNodeIds.Add(completed.NodeId);
                 locationsSinceLastSight++;
-                walkViaStepIndex = -1;
-                walkVias.Clear();
-                walkViaIndex = 0;
-                StepDistance = 0f;
-                RecalculateRoute();
+                FinishCurrentPad();
+
                 if (activeChain is { IsCompleted: true })
                 {
                     activeChain = null;
@@ -403,6 +361,39 @@ public class TreasureHunterService
         {
             activeChain = null;
         }
+    }
+
+    /// <summary>
+    ///     True when the plan's next step is an authored area transition (Return / aethernet hop)
+    ///     rather than another coffer. Those steps only exist on the leg leaving a segment's last
+    ///     pad, so they must survive the pad completing.
+    /// </summary>
+    private bool NextStepIsTravelHop()
+    {
+        int next = StepIndex + 1;
+        return next < steps.Count
+               && steps[next].Type is HuntPathfinderStepType.ReturnToBaseCamp
+                   or HuntPathfinderStepType.TeleportToAethernet
+                   or HuntPathfinderStepType.WalkToAethernet;
+    }
+
+    /// <summary>
+    ///     Pad done. Advance onto the following Return / aethernet hop if there is one, else replan.
+    /// </summary>
+    private void FinishCurrentPad()
+    {
+        walkViaStepIndex = -1;
+        walkVias.Clear();
+        walkViaIndex = 0;
+        StepDistance = 0f;
+
+        if (NextStepIsTravelHop())
+        {
+            StepIndex++;
+            return;
+        }
+
+        RecalculateRoute();
     }
 
     public bool Running { get; private set; }
@@ -526,10 +517,9 @@ public class TreasureHunterService
         locationsSinceLastSight = 0;
         ninjaHideRequired = false;
         pendingPreferStartNode = null;
-        authoredStickyHalf = null;
         pendingSessionCampReturn = false;
-        pendingHalfSwitchReturn = false;
-        authoredNodeHalves.Clear();
+        pendingEntryNodeId = null;
+        authoredNodeSegments.Clear();
         authoredNodeOrder.Clear();
         checkedNodeIds.Clear();
         stuckSkippedNodeIds.Clear();
@@ -553,13 +543,21 @@ public class TreasureHunterService
         IZone zone = zones.GetZone();
         if (zone.ZoneId == ZoneId.SouthHorn)
         {
-            authoredStickyHalf = AlternateSouthHornStartHalf(config.LastSouthHornStartHalf);
-            config.LastSouthHornStartHalf = authoredStickyHalf;
-            configSaver.Save();
-            pendingSessionCampReturn = !zone.IsInBasecamp();
+            string? startSegment = NextRotationSegment(
+                pathPlanner.SegmentIds,
+                config.LastSouthHornStartSegment);
+            if (startSegment != null)
+            {
+                config.LastSouthHornStartSegment = startSegment;
+                configSaver.Save();
+                pendingEntryNodeId = pathPlanner.TryGetSegmentFirstNode(startSegment);
+                pendingSessionCampReturn = !zone.IsInBasecamp();
+            }
+
             log.Info(
-                "Treasure hunt South Horn: start half {Half}; camp Return {Return}",
-                authoredStickyHalf,
+                "Treasure hunt South Horn: start segment {Segment} (pad {Pad}); camp Return {Return}",
+                startSegment ?? "-",
+                pendingEntryNodeId?.ToString() ?? "-",
                 pendingSessionCampReturn ? "pending" : "skip (already in camp)");
         }
 
@@ -568,15 +566,36 @@ public class TreasureHunterService
         pandoraAutoOpen.Hold();
     }
 
-    private static string AlternateSouthHornStartHalf(string? lastStartHalf)
+    /// <summary>
+    ///     Next authored segment after the one the previous session opened on, wrapping. Consecutive
+    ///     runs therefore never start in the same place, and each start point is only revisited once
+    ///     the whole rotation has been used. Unknown ids (route re-cut) restart at the first segment.
+    /// </summary>
+    private static string? NextRotationSegment(IReadOnlyList<string> segmentIds, string? lastStartSegment)
     {
-        if (string.Equals(lastStartHalf, "red", StringComparison.OrdinalIgnoreCase))
+        if (segmentIds.Count == 0)
         {
-            return "blue";
+            return null;
         }
 
-        // null / blue / anything else → red
-        return "red";
+        int last = lastStartSegment == null
+            ? -1
+            : IndexOfSegment(segmentIds, lastStartSegment);
+
+        return last < 0 ? segmentIds[0] : segmentIds[(last + 1) % segmentIds.Count];
+    }
+
+    private static int IndexOfSegment(IReadOnlyList<string> segmentIds, string segmentId)
+    {
+        for (int i = 0; i < segmentIds.Count; i++)
+        {
+            if (string.Equals(segmentIds[i], segmentId, StringComparison.OrdinalIgnoreCase))
+            {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     public void Pause()
@@ -715,7 +734,8 @@ public class TreasureHunterService
         stuckSkippedNodeIds.Add(step.NodeId);
         LastCheckedNodeId = step.NodeId;
         ResetStuckWatch();
-        return RecalculateRoute();
+        FinishCurrentPad();
+        return true;
     }
 
     private void TryIssueStuckNudge(HuntPathfinderStep step)
@@ -840,10 +860,6 @@ public class TreasureHunterService
 
             claimedPads.Add(id);
             result.Add(id);
-            log.Info(
-                "Treasure hunt nearby peel candidate {NodeId} at {Distance:F1}y",
-                id,
-                distToPlayer);
         }
 
         return result;
@@ -920,12 +936,6 @@ public class TreasureHunterService
     /// <summary>Divert mid-route when a nearer live coffer remains (including Return / aethernet).</summary>
     private bool TryReprioritizeNearbyLiveCoffer()
     {
-        // South Horn: follow treasure_route.json exactly — no Nearby detours.
-        if (UseStrictAuthoredRoute)
-        {
-            return false;
-        }
-
         if (planningRoute || pathPlanner != null || activeChain != null)
         {
             return false;
@@ -970,18 +980,17 @@ public class TreasureHunterService
         }
 
         HashSet<uint> candidates = GetDivertCandidateNodes(current);
-        if (authoredStickyHalf != null)
+        List<uint> remaining = GetValidNodesForNextPlan();
+        if (TryGetCurrentSegment(remaining, null) is string segment)
         {
-            // Stay on the sticky half — don't peel across red/blue.
-            // Missing half tags are excluded (fail closed) so uncached pads can't leak through.
-            string sticky = authoredStickyHalf;
+            // Stay inside the segment we are working — don't peel into the next region.
+            // Pads with no cached segment are excluded (fail closed) so they can't leak through.
             candidates.RemoveWhere(id =>
-                !authoredNodeHalves.TryGetValue(id, out string? half) || half != sticky);
+                authoredNodeSegments.GetValueOrDefault(id) != segment);
 
             // Only the next remaining authored pad — never peel back into checked/passed pads
-            // or ahead to a later live chest on the same half.
-            HashSet<uint> remaining = GetValidNodesForNextPlan().ToHashSet();
-            if (TryGetAuthoredFrontier(remaining, sticky) is uint frontier)
+            // or ahead to a later live chest in the same segment.
+            if (TryGetAuthoredFrontier(remaining, segment) is uint frontier)
             {
                 candidates.RemoveWhere(id => id != frontier);
             }
@@ -1351,7 +1360,7 @@ public class TreasureHunterService
             checkedNodeIds.Add(step.NodeId);
             LastCheckedNodeId = step.NodeId;
             ResetStuckWatch();
-            RecalculateRoute();
+            FinishCurrentPad();
             return false;
         }
 
@@ -1419,7 +1428,7 @@ public class TreasureHunterService
             checkedNodeIds.Add(step.NodeId);
             LastCheckedNodeId = step.NodeId;
             ResetStuckWatch();
-            RecalculateRoute();
+            FinishCurrentPad();
             return false;
         }
 
@@ -1436,13 +1445,18 @@ public class TreasureHunterService
             if (CanTrustEmptyPad(layoutDestination) && ConfirmEmptyPad(step.NodeId))
             {
                 log.Info(
-                    "Treasure hunt: no live coffer at layout {NodeId} — skipping and recalculating",
-                    step.NodeId);
+                    "Treasure hunt: no live coffer at layout {NodeId} at {Dist:F0}y — skipping "
+                    + "({Nearby} coffer(s) streamed within {Radius:F0}y, {Total} in object table)",
+                    step.NodeId,
+                    dist2d,
+                    CountTreasuresNear(layoutDestination, HuntDistances.EmptyPadEarlySkipRadius),
+                    HuntDistances.EmptyPadEarlySkipRadius,
+                    tickTreasures.Count);
                 checkedNodeIds.Add(step.NodeId);
                 LastCheckedNodeId = step.NodeId;
                 ClearEmptyPadCandidate();
                 ResetStuckWatch();
-                RecalculateRoute();
+                FinishCurrentPad();
                 return false;
             }
 
@@ -1823,11 +1837,40 @@ public class TreasureHunterService
         FindTreasureForLayout(layoutDestination, nodeId) == null;
 
     /// <summary>True when the player is close enough to trust that this pad has no live coffer.</summary>
-    private bool CanTrustEmptyPad(Vector3 layoutDestination) =>
+    private bool CanTrustEmptyPad(Vector3 layoutDestination)
+    {
         // Surface above a basement pad is "close" in 2D but not actually at the coffer.
-        IsSameFloor(layoutDestination)
-        // Only trust emptiness on the pad — ~100y skips fired before silver streamed in.
-        && player.Position.Distance2D(layoutDestination) <= HuntDistances.LayoutProximityRadius;
+        if (!IsSameFloor(layoutDestination))
+        {
+            return false;
+        }
+
+        float dist = player.Position.Distance2D(layoutDestination);
+
+        if (dist <= HuntDistances.LayoutProximityRadius)
+        {
+            return true;
+        }
+
+        // Further out, only skip if a neighbour coffer proves this region has streamed.
+        return dist <= HuntDistances.EmptyPadEarlySkipRadius
+               && CountTreasuresNear(layoutDestination, HuntDistances.EmptyPadEarlySkipRadius) > 0;
+    }
+
+    /// <summary>Treasure objects currently streamed within <paramref name="radius"/> of a point.</summary>
+    private int CountTreasuresNear(Vector3 origin, float radius)
+    {
+        int count = 0;
+        foreach (IGameObject obj in tickTreasures)
+        {
+            if (origin.Distance2D(obj.Position) <= radius)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
 
     private bool ConfirmEmptyPad(uint nodeId)
     {
@@ -1872,7 +1915,7 @@ public class TreasureHunterService
             static o => !OpenTreasureCofferChain.IsOpenedOrLooted(o));
 
     /// <summary>
-    /// Live coffer owned by this layout node (not a neighbor pad on the other half).
+    /// Live coffer owned by this layout node (not a neighbor pad in the next segment).
     /// </summary>
     private IGameObject? FindTreasureForLayout(Vector3 layoutDestination, uint nodeId)
     {
@@ -2073,7 +2116,7 @@ public class TreasureHunterService
             layoutTreasure,
             log
         );
-        RefreshAuthoredHalfCache(planner);
+        RefreshAuthoredSegmentCache(planner);
         return planner;
     }
 
@@ -2092,7 +2135,7 @@ public class TreasureHunterService
 
     /// <summary>
     /// Layout only loads nearby pads — without baked positions, replans near camp drop the rest of
-    /// the sticky half and the hunt flips to the other color. Fill gaps from zone treasure data.
+    /// the route and the hunt skips whole segments. Fill gaps from zone treasure data.
     /// </summary>
     private void MergeBakedTreasurePads(List<TreasureData> treasureData)
     {
@@ -2116,20 +2159,15 @@ public class TreasureHunterService
         }
     }
 
-    /// <summary>
-    /// South Horn follows the authored red/blue route pad-by-pad — no Nearby peel-off.
-    /// </summary>
-    private bool UseStrictAuthoredRoute => zones.GetZone().ZoneId == ZoneId.SouthHorn;
-
-    private void RefreshAuthoredHalfCache(IHuntRoutePlanner planner)
+    private void RefreshAuthoredSegmentCache(IHuntRoutePlanner planner)
     {
-        authoredNodeHalves.Clear();
+        authoredNodeSegments.Clear();
         authoredNodeOrder.Clear();
         foreach (TreasureLayoutDatum layout in layoutTreasure)
         {
-            if (planner.TryGetNodeHalf(layout.Id) is string half)
+            if (planner.TryGetNodeSegment(layout.Id) is string segment)
             {
-                authoredNodeHalves[layout.Id] = half;
+                authoredNodeSegments[layout.Id] = segment;
             }
 
             if (planner.TryGetNodeOrderIndex(layout.Id) is int order)
@@ -2139,24 +2177,94 @@ public class TreasureHunterService
         }
 
         log.Info(
-            "Treasure hunt authored halves cached: {Count} pads, sticky={Sticky}",
-            authoredNodeHalves.Count,
-            authoredStickyHalf ?? "-");
+            "Treasure hunt authored segments cached: {Count} pads",
+            authoredNodeSegments.Count);
     }
 
     /// <summary>
-    /// First remaining pad in authored order on the sticky half — peel must not jump past this.
+    ///     Segment this plan is working. Null when the zone has no authored route.
     /// </summary>
-    private uint? TryGetAuthoredFrontier(IEnumerable<uint> remaining, string stickyHalf)
+    private string? TryGetCurrentSegment(IReadOnlyList<uint> remaining, uint? entryNodeId)
+    {
+        if (authoredNodeSegments.Count == 0)
+        {
+            return null;
+        }
+
+        // Session-start rotation — this is where the tour will begin.
+        if (entryNodeId is uint entry && authoredNodeSegments.TryGetValue(entry, out string? entrySegment))
+        {
+            return entrySegment;
+        }
+
+        // Mid-route: the pad we are heading to. Travel hops (Return / teleport) carry no pad,
+        // so look ahead to the next walk.
+        for (int i = Math.Max(StepIndex, 0); i < steps.Count; i++)
+        {
+            if (steps[i].Type == HuntPathfinderStepType.WalkToNode
+                && authoredNodeSegments.TryGetValue(steps[i].NodeId, out string? heading))
+            {
+                return heading;
+            }
+        }
+
+        return TryGetResumeNode(remaining) is uint resume
+            ? authoredNodeSegments.GetValueOrDefault(resume)
+            : null;
+    }
+
+    /// <summary>
+    ///     Mirrors the planner's resume: first remaining pad after the one we last checked, wrapping
+    ///     to the earliest remaining pad. Replanning near camp must not decide we are back in the
+    ///     first segment just because it still has skipped pads left in it.
+    /// </summary>
+    private uint? TryGetResumeNode(IReadOnlyList<uint> remaining)
+    {
+        int after = LastCheckedNodeId is uint last && authoredNodeOrder.TryGetValue(last, out int lastOrder)
+            ? lastOrder
+            : -1;
+
+        uint? next = null;
+        int nextOrder = int.MaxValue;
+        uint? earliest = null;
+        int earliestOrder = int.MaxValue;
+
+        foreach (uint id in remaining)
+        {
+            if (!authoredNodeOrder.TryGetValue(id, out int order))
+            {
+                continue;
+            }
+
+            if (order < earliestOrder)
+            {
+                earliestOrder = order;
+                earliest = id;
+            }
+
+            if (order > after && order < nextOrder)
+            {
+                nextOrder = order;
+                next = id;
+            }
+        }
+
+        return next ?? earliest;
+    }
+
+    /// <summary>
+    /// First remaining pad in authored order inside the segment — peel must not jump past this.
+    /// </summary>
+    private uint? TryGetAuthoredFrontier(IEnumerable<uint> remaining, string segmentId)
     {
         uint? best = null;
         int bestOrder = int.MaxValue;
         foreach (uint id in remaining)
         {
-            // Fail closed on untagged pads, same as the divert filter in
+            // Fail closed on pads with no cached segment, same as the divert filter in
             // TryReprioritizeNearbyLiveCoffer — otherwise the frontier can land on a pad that
             // filter already removed, and RemoveWhere(id != frontier) empties the candidate set.
-            if (!authoredNodeHalves.TryGetValue(id, out string? half) || half != stickyHalf)
+            if (authoredNodeSegments.GetValueOrDefault(id) != segmentId)
             {
                 continue;
             }
@@ -2176,14 +2284,14 @@ public class TreasureHunterService
     private List<uint> FilterNearbyPrefixToAuthoredFrontier(
         List<uint> nearbyPrefix,
         IReadOnlyList<uint> validNodes,
-        string stickyHalf)
+        string segmentId)
     {
         if (nearbyPrefix.Count == 0 || authoredNodeOrder.Count == 0)
         {
             return nearbyPrefix;
         }
 
-        if (TryGetAuthoredFrontier(validNodes, stickyHalf) is not uint frontier)
+        if (TryGetAuthoredFrontier(validNodes, segmentId) is not uint frontier)
         {
             return nearbyPrefix;
         }
@@ -2334,10 +2442,9 @@ public class TreasureHunterService
         locationsSinceLastSight = 0;
         ninjaHideRequired = false;
         pendingPreferStartNode = null;
-        authoredStickyHalf = null;
         pendingSessionCampReturn = false;
-        pendingHalfSwitchReturn = false;
-        authoredNodeHalves.Clear();
+        pendingEntryNodeId = null;
+        authoredNodeSegments.Clear();
         authoredNodeOrder.Clear();
         ClearEmptyPadCandidate();
         ninjaHide.RestorePreviousGearsetIfNeeded();

@@ -44,10 +44,7 @@ internal static class CombatActivityHandler
             return false;
         }
 
-        // Seed a hard target from the activity list. FATE/CE enemies often never enter
-        // BossMod AutoTarget's table, so StayCloseToTarget / NormalMovement have nothing
-        // to dodge around unless we set one. Keep the current target if it is already
-        // one of the activity enemies.
+        // Seed a hard target so BossMod StayCloseToTarget / NormalMovement have something to dodge around.
         SeedActivityTarget(targetManager, list, target, throttlePrefix);
 
         bool isMelee = playerState.IsMelee();
@@ -66,8 +63,7 @@ internal static class CombatActivityHandler
 
         if (deferCombatToBossModAi)
         {
-            // Travel vnav was stopped on Enter. Do not Stop every tick — FATE AI
-            // dodges via vnav Pathfind, and Stop() would cancel those steps.
+            // Travel was stopped on Enter. Don't Stop every tick — FATE AI dodges via vnav.
             return true;
         }
 

@@ -79,7 +79,7 @@
     },
     "knowledge_threat_enter_distance": {
       "label": "Start Hide within (yalms)",
-      "tooltip": "Begin the Hide flow when a dangerous enemy is this close."
+      "tooltip": "Begin the Hide flow when a dangerous enemy is this close. While mounted, Hide starts a few yalms earlier so you can dismount first."
     },
     "knowledge_threat_exit_distance": {
       "label": "Keep Hide until farther than (yalms)",

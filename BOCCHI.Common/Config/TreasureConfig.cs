@@ -80,8 +80,9 @@ public class TreasureConfig : IAutoConfig
     public float KnowledgeThreatExitDistance { get; set; } = 20f;
 
     /// <summary>
-    /// Last South Horn half started ("red" / "blue"). Next hunt starts on the other half.
+    /// Authored segment id the last South Horn hunt opened on. The next hunt rotates to the
+    /// following segment so consecutive runs never start in the same place.
     /// </summary>
     [ConfigHidden]
-    public string? LastSouthHornStartHalf { get; set; }
+    public string? LastSouthHornStartSegment { get; set; }
 }

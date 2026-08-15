@@ -65,6 +65,9 @@ public sealed class CarrotHunterService
     /// <summary>Re-path to the pad after a nudge if still not progressing.</summary>
     private static readonly TimeSpan StuckRepathTimeout = TimeSpan.FromSeconds(18);
 
+    /// <summary>Give up on a pad after this many nudge+repath cycles (interior mesh, etc.).</summary>
+    private const int MaxStuckRepaths = 2;
+
     private const float StuckProgressThreshold = 1.5f;
 
     private const string FinishedRouteMessage = "Carrot Hunt finished the authored route.";
@@ -121,6 +124,8 @@ public sealed class CarrotHunterService
 
     private bool stuckNudgeIssued;
 
+    private int stuckRepathCount;
+
     public bool Running { get; private set; }
 
     public CarrotHuntPhase Phase { get; private set; } = CarrotHuntPhase.Idle;
@@ -174,7 +179,8 @@ public sealed class CarrotHunterService
         pandoraAutoOpen.Hold();
         RecalculateAndAdvance();
         log.Information(
-            "Carrot hunt started (nearest-neighbor TSP, {Count} spots)",
+            "Carrot hunt started ({Kind}, {Count} spots)",
+            zones.GetZone().ZoneId == ZoneId.NorthHorn ? "North Horn Middle→NW→NE" : "nearest-neighbor TSP",
             tour.Count);
     }
 
@@ -827,6 +833,11 @@ public sealed class CarrotHunterService
                 continue;
             }
 
+            if (!IsAllowedOnNorthHornTour(pad))
+            {
+                continue;
+            }
+
             float dist = from.Distance2D(pad.Position);
             if (dist > radius)
             {
@@ -867,7 +878,7 @@ public sealed class CarrotHunterService
             }
 
             CarrotData? pad = FindUnfinishedAuthoredPadForLive(live);
-            if (pad == null)
+            if (pad == null || !IsAllowedOnNorthHornTour(pad))
             {
                 continue;
             }
@@ -908,15 +919,60 @@ public sealed class CarrotHunterService
         AethernetData main = zone.GetMainAetheryte();
         Vector3 start = player.Position;
 
-        CarrotData current;
-        if (preferStartId is int prefId && remaining.Any(c => c.Id == prefId))
+        if (NorthHornCarrotRegions.AppliesTo(zone.ZoneId))
         {
-            current = remaining.First(c => c.Id == prefId);
+            RebuildNorthHornRegionTour(remaining, preferStartId, start, aetherytes, main);
+            return;
         }
-        else
+
+        AppendNearestNeighborTour(remaining, preferStartId, start, aetherytes, main);
+        log.Information(
+            "Carrot hunt nearest-neighbor tour: {Count} remaining (start {Start})",
+            tour.Count,
+            tour[0].Id);
+    }
+
+    /// <summary>Finish Middle, then NW, then NE — death-zone babysitting is one stretch.</summary>
+    private void RebuildNorthHornRegionTour(
+        List<CarrotData> remaining,
+        int? preferStartId,
+        Vector3 start,
+        List<AethernetData> aetherytes,
+        AethernetData main)
+    {
+        foreach (NorthHornCarrotRegion region in NorthHornCarrotRegions.TourOrder)
         {
-            current = PickCheapestStart(remaining, start, aetherytes, main);
+            List<CarrotData> inRegion = remaining
+                .Where(c => NorthHornCarrotRegions.Classify(c.Position) == region)
+                .ToList();
+            if (inRegion.Count == 0)
+            {
+                continue;
+            }
+
+            int? prefer = preferStartId is int id && inRegion.Any(c => c.Id == id)
+                ? id
+                : null;
+            AppendNearestNeighborTour(inRegion, prefer, start, aetherytes, main);
+            start = tour[^1].Position;
         }
+
+        log.Information(
+            "Carrot hunt North Horn tour: {Count} remaining (start {Start}, Middle→NW→NE)",
+            tour.Count,
+            tour.Count > 0 ? tour[0].Id : 0);
+    }
+
+    private void AppendNearestNeighborTour(
+        List<CarrotData> remaining,
+        int? preferStartId,
+        Vector3 start,
+        List<AethernetData> aetherytes,
+        AethernetData main)
+    {
+        CarrotData current = preferStartId is int prefId && remaining.Any(c => c.Id == prefId)
+            ? remaining.First(c => c.Id == prefId)
+            : PickCheapestStart(remaining, start, aetherytes, main);
 
         tour.Add(current);
         HashSet<int> unvisited = remaining.Select(c => c.Id).Where(id => id != current.Id).ToHashSet();
@@ -924,8 +980,7 @@ public sealed class CarrotHunterService
 
         while (unvisited.Count > 0)
         {
-            Vector3 from = current.Position;
-            int? nearestId = PickNextTourPad(from, unvisited, byId, aetherytes, main);
+            int? nearestId = PickNextTourPad(current.Position, unvisited, byId, aetherytes, main);
             if (nearestId is not int nextId)
             {
                 break;
@@ -935,11 +990,6 @@ public sealed class CarrotHunterService
             tour.Add(current);
             unvisited.Remove(nextId);
         }
-
-        log.Information(
-            "Carrot hunt nearest-neighbor tour: {Count} remaining (start {Start})",
-            tour.Count,
-            tour[0].Id);
     }
 
     /// <summary>Clear the local cluster on foot before Return / aethernet hops to distant pads.</summary>
@@ -1156,7 +1206,7 @@ public sealed class CarrotHunterService
             }
 
             CarrotData? pad = FindUnfinishedAuthoredPadForLive(live);
-            if (pad == null)
+            if (pad == null || !IsAllowedOnNorthHornTour(pad, current))
             {
                 continue;
             }
@@ -1210,6 +1260,47 @@ public sealed class CarrotHunterService
 
         RecalculateAndAdvance(bestPad.Id);
         return true;
+    }
+
+    /// <summary>
+    ///     North Horn: stay in the current region, or the first unfinished region in
+    ///     Middle → NW → NE when replanning.
+    /// </summary>
+    private bool IsAllowedOnNorthHornTour(CarrotData pad, CarrotData? currentPad = null)
+    {
+        if (!NorthHornCarrotRegions.AppliesTo(zones.GetZone().ZoneId))
+        {
+            return true;
+        }
+
+        if (currentPad != null)
+        {
+            return NorthHornCarrotRegions.Classify(pad.Position)
+                   == NorthHornCarrotRegions.Classify(currentPad.Position);
+        }
+
+        NorthHornCarrotRegion? active = GetActiveNorthHornRegion();
+        return active == null || NorthHornCarrotRegions.Classify(pad.Position) == active;
+    }
+
+    private NorthHornCarrotRegion? GetActiveNorthHornRegion()
+    {
+        NorthHornCarrotRegion? active = null;
+        foreach (CarrotData remaining in zones.GetZone().GetCarrotData())
+        {
+            if (finishedAuthoredIds.Contains(remaining.Id))
+            {
+                continue;
+            }
+
+            NorthHornCarrotRegion region = NorthHornCarrotRegions.Classify(remaining.Position);
+            if (active == null || region < active)
+            {
+                active = region;
+            }
+        }
+
+        return active;
     }
 
     private CarrotData? FindUnfinishedAuthoredPadForLive(Carrot live)
@@ -1410,6 +1501,7 @@ public sealed class CarrotHunterService
             stuckWatchBestDistance = distance;
             stuckWatchStartedUtc = now;
             stuckNudgeIssued = false;
+            stuckRepathCount = 0;
             return false;
         }
 
@@ -1430,6 +1522,17 @@ public sealed class CarrotHunterService
 
         if (stuckNudgeIssued && now - stuckWatchStartedUtc >= StuckRepathTimeout)
         {
+            stuckRepathCount++;
+            if (stuckRepathCount > MaxStuckRepaths)
+            {
+                log.Information(
+                    "Carrot hunt: giving up on authored {Id} after {Count} stuck recoveries",
+                    authoredId,
+                    stuckRepathCount);
+                SkipCurrentAuthored();
+                return true;
+            }
+
             log.Information(
                 "Carrot hunt: still stuck on authored {Id} after nudge — repathing",
                 authoredId);
@@ -1462,11 +1565,18 @@ public sealed class CarrotHunterService
         stuckWatchBestDistance = float.MaxValue;
         stuckWatchStartedUtc = DateTime.MinValue;
         stuckNudgeIssued = false;
+        stuckRepathCount = 0;
     }
 
     private bool MaybeDismountNear(float distance)
     {
         if (distance > HuntDistances.DismountRadius)
+        {
+            return false;
+        }
+
+        // Still climbing — 2D looks close. Stay mounted.
+        if (MathF.Abs(player.Position.Y - currentTargetPosition.Y) > HuntDistances.SameFloorVerticalTolerance)
         {
             return false;
         }

@@ -109,12 +109,7 @@ public class ChoosingActivityHandler
             return;
         }
 
-        if (TryChoosePotPreposition())
-        {
-            return;
-        }
-
-        logger.Debug("ChoosingActivity: no eligible goal this tick");
+        TryChoosePotPreposition();
     }
 
     private Fate? FindStartableFate()

@@ -24,11 +24,10 @@ public class AutomatorConfig : IAutoConfig
     public bool ShouldDoCriticalEncounters { get; set; } = true;
 
     /// <summary>
-    ///     Activate the BOCCHI AI BossMod/BMR autorotation preset in FATE/CE combat (off while pathfinding).
-    ///     Does not enable Wrath/RSR job rotation or legacy ai:on.
+    ///     Illegal Mode combat automation: Wrath/RSR + BOCCHI AI, or full BossMod / BMR autorotation.
     /// </summary>
-    [Checkbox(Order = 5, Section = "combat")]
-    public bool ToggleAiProvider { get; set; } = true;
+    [EnumSelectDisplay<CombatAutorotation, CombatAutorotationDisplay>(Order = 5, Section = "combat")]
+    public CombatAutorotation CombatAutorotation { get; set; } = CombatAutorotation.WrathCombo;
 
     [Checkbox(Order = 6, Section = "travel")]
     public bool ShouldAutoMount { get; set; } = true;
