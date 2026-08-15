@@ -4,7 +4,7 @@
     "status": {
       "label": "状态",
       "tooltip": "辅助插件是否已安装并正常工作。",
-      "intro": "移动与以太网传送需要安装并加载必需插件。可选战斗自动化在「常规 → 战斗 → 战斗自动循环」中选择：Wrath 或 Rotation Solver 搭配 BOCCHI AI，或完整的 BossMod / BossMod Reborn 自动循环。任选一条路径即可。“已关联”表示 BOCCHI 能与该插件通信。",
+      "intro": "移动与以太网传送需要安装并加载必需插件。可选战斗自动化在「常规 → 战斗 → 战斗自动循环」中选择：Wrath 或 Rotation Solver Reborn 搭配 BOCCHI AI，或完整的 BossMod / BossMod Reborn 自动循环。任选一条路径即可。“已关联”表示 BOCCHI 能与该插件通信。",
       "required": "必需",
       "optional": "可选",
       "optional_intro": "每组任选一个插件即可。",

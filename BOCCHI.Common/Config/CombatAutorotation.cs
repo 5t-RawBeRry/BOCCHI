@@ -17,7 +17,7 @@ public class CombatAutorotationDisplay : IEnumDisplay<CombatAutorotation>
     public string Display(CombatAutorotation value) => value switch
     {
         CombatAutorotation.WrathCombo => "Wrath Combo + BOCCHI AI",
-        CombatAutorotation.RotationSolverReborn => "Rotation Solver + BOCCHI AI",
+        CombatAutorotation.RotationSolverReborn => "Rotation Solver Reborn + BOCCHI AI",
         CombatAutorotation.BossMod => "BossMod autorotation",
         CombatAutorotation.BossModReborn => "BossMod Reborn autorotation",
         _ => "None",

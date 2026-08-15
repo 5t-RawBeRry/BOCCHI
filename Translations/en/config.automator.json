@@ -34,7 +34,7 @@
     },
     "combat_autorotation": {
       "label": "Combat autorotation",
-      "tooltip": "How Illegal Mode fights in FATEs and CEs. Wrath Combo + BOCCHI AI / Rotation Solver + BOCCHI AI: BossMod targeting and movement plus that plugin for job skills (RSR uses Henched mode — skills only). BossMod / BossMod Reborn autorotation: full presets with job modules, role AI, phantom job AI, autotarget, and automove. Turns off while traveling. None = manual."
+      "tooltip": "How Illegal Mode fights in FATEs and CEs. Wrath Combo + BOCCHI AI / Rotation Solver Reborn + BOCCHI AI: BossMod targeting and movement plus that plugin for job skills (RSR uses Henched mode — skills only). BossMod / BossMod Reborn autorotation: full presets with job modules, role AI, phantom job AI, autotarget, and automove. Turns off while traveling. None = manual."
     },
     "should_auto_mount": {
       "label": "Mount while traveling",

@@ -34,7 +34,7 @@
     },
     "combat_autorotation": {
       "label": "전투 자동 로테이션",
-      "tooltip": "Illegal Mode에서 돌발·비상 조우를 싸우는 방식. Wrath Combo + BOCCHI AI / Rotation Solver + BOCCHI AI: BossMod 대상·이동 + 해당 플러그인의 잡 스킬(RSR은 Henched — 스킬만). BossMod / BossMod Reborn 자동 로테이션: 잡·역할 AI·팬텀 잡 AI·자동 대상·자동 이동이 포함된 전체 프리셋. 이동 중에는 끔. None은 수동."
+      "tooltip": "Illegal Mode에서 돌발·비상 조우를 싸우는 방식. Wrath Combo + BOCCHI AI / Rotation Solver Reborn + BOCCHI AI: BossMod 대상·이동 + 해당 플러그인의 잡 스킬(RSR은 Henched — 스킬만). BossMod / BossMod Reborn 자동 로테이션: 잡·역할 AI·팬텀 잡 AI·자동 대상·자동 이동이 포함된 전체 프리셋. 이동 중에는 끔. None은 수동."
     },
     "should_auto_mount": {
       "label": "이동 중 탈것 탑승",

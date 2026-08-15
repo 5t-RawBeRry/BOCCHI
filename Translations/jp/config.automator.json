@@ -34,7 +34,7 @@
     },
     "combat_autorotation": {
       "label": "戦闘オートローテーション",
-      "tooltip": "不正モードの FATE / CE 戦闘方法。Wrath Combo + BOCCHI AI / Rotation Solver + BOCCHI AI: BossMod のターゲット・移動＋各プラグインのジョブスキル（RSR は Henched＝スキルのみ）。BossMod / BossMod Reborn オートローテーション: ジョブ・ロールAI・ファントムジョブAI・オートターゲット・オートムーブ付きフルプリセット。移動中はオフ。None は手動。"
+      "tooltip": "不正モードの FATE / CE 戦闘方法。Wrath Combo + BOCCHI AI / Rotation Solver Reborn + BOCCHI AI: BossMod のターゲット・移動＋各プラグインのジョブスキル（RSR は Henched＝スキルのみ）。BossMod / BossMod Reborn オートローテーション: ジョブ・ロールAI・ファントムジョブAI・オートターゲット・オートムーブ付きフルプリセット。移動中はオフ。None は手動。"
     },
     "should_auto_mount": {
       "label": "移動中はマウント",
