@@ -289,21 +289,20 @@ public class FarmingPotChestsHandler
                 return;
             }
 
-            if (TryUseElixirOnFoot(farm))
+            if (TryUseElixir(farm))
             {
                 return;
             }
         }
     }
 
-    /// <summary>Use Magical Elixir only on foot — UseItem fails while mounted after the center approach.</summary>
-    private bool TryUseElixirOnFoot(PotChestFarmMemory farm)
+    /// <summary>
+    ///     Magical Elixir is a key item, so UseItem takes the KeyItems inventory path and works while
+    ///     mounted — dismounting here only cost the dismount and its landing beat. Reveals still need
+    ///     feet, but TryOpenChest dismounts itself once one actually appears (#175).
+    /// </summary>
+    private bool TryUseElixir(PotChestFarmMemory farm)
     {
-        if (DismountAssist.TryDismount(conditions) || ECommonsPlayer.IsJumping)
-        {
-            return true; // still preparing — caller should wait this tick
-        }
-
         if (!elixir.TryUse())
         {
             return false;
@@ -438,10 +437,10 @@ public class FarmingPotChestsHandler
             return;
         }
 
-        // Probe with elixir while at candidate (feet — same as center cast).
+        // Probe with elixir at the candidate — mounted is fine, it is a key item.
         if (farm.ElixirAttempts < MaxElixirAttempts)
         {
-            TryUseElixirOnFoot(farm);
+            TryUseElixir(farm);
         }
 
         // Wait from when we settled on this pad — don't softlock if UseItem never succeeds,
