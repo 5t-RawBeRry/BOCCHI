@@ -37,16 +37,19 @@ public class FatesConfig : IAutoConfig
     }
 
     /// <summary>
-    ///     Pot fallback cutoffs / preposition only apply when farm pot chests is on and that pot is allowed.
-    ///     Prefer pot FATEs alone does not turn on wait-near-pots or pot timing.
+    ///     Pot fallback cutoffs / preposition apply when either farm pot chests or wait-near-pots is
+    ///     on, and that pot is allowed. Both reasons need the same window: something has to stop a
+    ///     FATE/CE starting right before the pot, or there is no time to get there.
+    ///     Prefer pot FATEs alone does not turn on pot timing.
     /// </summary>
     public bool IsPotFallbackGatingEnabled(
         uint predictedNextPotFateId,
         bool shouldDoFates,
         bool preferPotFates,
-        bool shouldFarmPotChests)
+        bool shouldFarmPotChests,
+        bool shouldPrepositionToPots)
     {
-        if (!shouldDoFates || !shouldFarmPotChests)
+        if (!shouldDoFates || (!shouldFarmPotChests && !shouldPrepositionToPots))
         {
             return false;
         }

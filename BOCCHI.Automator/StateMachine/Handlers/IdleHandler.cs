@@ -52,7 +52,15 @@ public class IdleHandler(
     public override void Exit(AutomatorState next)
     {
         base.Exit(next);
-        memory.Forget<IdleStateMemory>();
+
+        // Keep the latch when handing off to Returning: ReturningHandler re-scores from it on the
+        // next tick, and dropping it here made that tick score Never, bounce straight back to Idle
+        // and roll a brand new wait — so the opportunistic Return could never actually fire.
+        if (next != AutomatorState.Returning)
+        {
+            memory.Forget<IdleStateMemory>();
+        }
+
         if (!IsNavigationInterrupted())
         {
             StopMovement();

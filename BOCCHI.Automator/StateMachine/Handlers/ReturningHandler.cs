@@ -123,7 +123,9 @@ public class ReturningHandler
             return;
         }
 
-        if (gate.Milliseconds(this, "ReturningHandler::Gate", 500))
+        // Milliseconds() returns true when the interval has elapsed (true = run), same contract as
+        // UpdateLimit.ShouldUpdate. This used to return on true, so it ran every tick except one.
+        if (!gate.Milliseconds(this, "ReturningHandler::Gate", 500))
         {
             return;
         }
@@ -179,6 +181,10 @@ public class ReturningHandler
     public override void Exit(AutomatorState next)
     {
         base.Exit(next);
+
+        // The idle latch is spent once we leave Returning — either the Return cast, or something
+        // (triage / a live FATE goal) pulled us off it and the next idle stretch rolls its own wait.
+        memory.Forget<IdleStateMemory>();
         addons.UnregisterListener(AddonEvent.PostSetup, "SelectYesno", SelectYesNoListener);
     }
 

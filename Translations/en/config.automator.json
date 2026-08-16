@@ -26,7 +26,7 @@
     },
     "should_preposition_to_pots": {
       "label": "Wait near pots before they spawn",
-      "tooltip": "Leave early and stand near where the next pot FATE should appear. Timing is under Pot timing."
+      "tooltip": "Leave early and stand near where the next pot FATE should appear. Timing is under Pot timing. Needs \"Do FATEs\" on, and that pot FATE allowed under Allowed FATEs (or \"Prefer pot FATEs\" on)."
     },
     "should_do_critical_encounters": {
       "label": "Do Critical Encounters",
@@ -81,7 +81,7 @@
     },
     "max_remote_idle_time_seconds": {
       "label": "Max wait before Return (seconds)",
-      "tooltip": "After a FATE or CE, wait a random time between 2 seconds and this before Return."
+      "tooltip": "After a FATE or CE, wait a random time between 2 seconds and this before Return. Skipped when a Treasure Sight survey is queued — that Returns straight away so Sight lands before the next activity."
     },
     "max_base_teleport_delay_seconds": {
       "label": "Max wait before leaving camp (seconds)",

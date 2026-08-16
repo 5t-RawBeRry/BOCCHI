@@ -61,12 +61,6 @@ internal static class CombatActivityHandler
             return false;
         }
 
-        if (deferCombatToBossModAi)
-        {
-            // Travel was stopped on Enter. Don't Stop every tick — FATE AI dodges via vnav.
-            return true;
-        }
-
         if (stopPathfinderInCombat && conditions[ConditionFlag.InCombat])
         {
             pathfinder.Stop();
@@ -75,13 +69,26 @@ internal static class CombatActivityHandler
 
         if (IsInEngagementRange(distance, isMelee))
         {
+            // In range — release vnav so BossMod StayCloseToTarget / NormalMovement owns movement
+            // (and dodging) from here. This is the hand-off point, not FATE entry: deferring the
+            // whole activity meant nobody walked from the FATE ring to the mobs.
             pathfinder.Stop();
             return true;
         }
 
-        if (!shouldApproachTarget
-            || !EzThrottler.Throttle($"{throttlePrefix}::Approach", 500)
-            || !pathfinder.IsIdle())
+        if (!shouldApproachTarget)
+        {
+            // Not ours to close (CE, or the initial approach already finished). Make sure we are
+            // not sitting on vnav while the AI wants it.
+            if (deferCombatToBossModAi && !pathfinder.IsIdle())
+            {
+                pathfinder.Stop();
+            }
+
+            return false;
+        }
+
+        if (!EzThrottler.Throttle($"{throttlePrefix}::Approach", 500) || !pathfinder.IsIdle())
         {
             return false;
         }

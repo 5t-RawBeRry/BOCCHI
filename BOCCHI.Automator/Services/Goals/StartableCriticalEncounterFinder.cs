@@ -31,7 +31,8 @@ public class StartableCriticalEncounterFinder
             (uint)cycle.PredictedNextPotFateId,
             automatorConfig.ShouldDoFates,
             automatorConfig.PreferPotFates,
-            automatorConfig.ShouldFarmPotChests);
+            automatorConfig.ShouldFarmPotChests,
+            automatorConfig.ShouldPrepositionToPots);
 
         // Include Warmup so Choosing does not stall on a visible CE.
         foreach (CriticalEncounter ce in criticalEncounterRepository.SnapshotWithoutForkedTower())

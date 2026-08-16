@@ -134,7 +134,8 @@ public class ChoosingActivityHandler
                 (uint)cycle.PredictedNextPotFateId,
                 automatorConfig.ShouldDoFates,
                 automatorConfig.PreferPotFates,
-                automatorConfig.ShouldFarmPotChests);
+                automatorConfig.ShouldFarmPotChests,
+                automatorConfig.ShouldPrepositionToPots);
         IZone zone = zones.GetZone();
 
         foreach (Fate fate in snapshot)
@@ -206,52 +207,78 @@ public class ChoosingActivityHandler
         return true;
     }
 
+    /// <summary>Last reason prepositioning was skipped — logged only when it changes (called per tick).</summary>
+    private string? lastPrepositionSkip;
+
     private bool CanPrepositionToPot(out FateId potId)
     {
         potId = default;
+
         if (!PotsOnly && !automatorConfig.ShouldPrepositionToPots)
         {
-            return false;
+            return SkipPreposition("\"Wait near pots before they spawn\" is off");
         }
 
         PotCycleSnapshot cycle = potCycle.Snapshot;
         if (!cycle.HasPredictedNextPot)
         {
-            return false;
+            return SkipPreposition("no pot spawn predicted yet");
         }
 
         if (!PotsOnly && !fatesConfig.IsPotFallbackGatingEnabled(
                 (uint)cycle.PredictedNextPotFateId,
                 automatorConfig.ShouldDoFates,
                 automatorConfig.PreferPotFates,
-                automatorConfig.ShouldFarmPotChests))
+                automatorConfig.ShouldFarmPotChests,
+                automatorConfig.ShouldPrepositionToPots))
         {
-            return false;
+            return SkipPreposition(
+                !automatorConfig.ShouldDoFates
+                    ? "\"Do FATEs\" is off"
+                    : $"pot FATE {cycle.PredictedNextPotFateId} is not an allowed FATE "
+                      + "(tick it under Allowed FATEs, or turn on \"Prefer pot FATEs\")");
         }
 
         if (CompletionistBlocksFate((uint)cycle.PredictedNextPotFateId))
         {
-            return false;
+            return SkipPreposition($"Completionist has nothing left to log on pot FATE {cycle.PredictedNextPotFateId}");
         }
 
         FateId predicted = new((ushort)cycle.PredictedNextPotFateId);
         if (fateRepository.HasFate(predicted))
         {
-            return false;
+            return SkipPreposition("pot FATE is already live — going to it, not prepositioning");
         }
 
-        if (!PotFallbackWindow.ShouldPreposition(
-                cycle,
-                DateTimeOffset.UtcNow,
-                GetPotPrepositionCutoff(),
-                GetPotPrepositionLead(),
-                true))
+        PotFallbackStartDecision decision = PotFallbackWindow.Evaluate(
+            cycle,
+            DateTimeOffset.UtcNow,
+            GetPotPrepositionCutoff(),
+            GetPotPrepositionLead(),
+            true,
+            "preposition");
+
+        // ShouldPreposition is !AllowStart — the same window that blocks starting a FATE/CE.
+        if (decision.AllowStart)
         {
-            return false;
+            return SkipPreposition(decision.Reason);
         }
 
+        lastPrepositionSkip = null;
         potId = predicted;
         return true;
+    }
+
+    /// <summary>Always false; records why so the reason can be logged once per change.</summary>
+    private bool SkipPreposition(string reason)
+    {
+        if (lastPrepositionSkip != reason)
+        {
+            lastPrepositionSkip = reason;
+            logger.Info("Not prepositioning to pot: {Reason}", reason);
+        }
+
+        return false;
     }
 
     private (TimeSpan Cutoff, int Lead) GetIllegalPotWindow() =>

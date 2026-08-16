@@ -26,7 +26,7 @@
     },
     "should_preposition_to_pots": {
       "label": "刷新前在魔法罐附近等待",
-      "tooltip": "提前动身，在下一个魔法罐危命任务预计出现的位置附近等待。时机由“魔法罐计时”决定。"
+      "tooltip": "提前出发，在下一个魔药锅 FATE 预计出现的位置附近待命。时间设置见\"魔药锅时间\"。需要开启\"执行 FATE\"，并在\"允许的 FATE\"中允许该魔药锅 FATE（或开启\"优先魔药锅 FATE\"）。"
     },
     "should_do_critical_encounters": {
       "label": "执行紧急遭遇战",
@@ -81,7 +81,7 @@
     },
     "max_remote_idle_time_seconds": {
       "label": "返回前最长等待（秒）",
-      "tooltip": "危命任务或紧急遭遇结束后，在 2 秒到该数值之间随机等待，然后返回。"
+      "tooltip": "完成 FATE 或 CE 后，等待 2 秒到此数值之间的随机时间再使用回归。当已排入探宝术勘查时会跳过等待，直接回归，以便在下一个活动前使用探宝术。"
     },
     "max_base_teleport_delay_seconds": {
       "label": "离开营地前最长等待（秒）",

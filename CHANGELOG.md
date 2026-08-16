@@ -9,8 +9,10 @@
 - Treasure Hunt walks less. Routes use measured distances, Returns and aethernet hops between areas actually fire, and a Return hops to the nearest shard instead of walking from camp. Hunt and Carrot Hunt no longer ask for a new path while one is still calculating.
 - South Horn Treasure Hunt uses area routes instead of the old red and blue halves. Consecutive runs start in a different area, nearby coffers can be picked up, and a lower “Max level” stops at a nearby area instead of crossing the map.
 - Pot chest farming paths between floors, finds revealed coffers again, includes reroll chests, uses Magical Elixir more reliably, and stays after a Magic Pot FATE. Waiting near the next pot no longer gives up early when “Minutes before predicted pot spawn” is above 5. (#181)
+- “Wait near pots before they spawn” now works on its own. It used to do nothing unless “Farm pot chests after pot FATEs” was also on, and said nothing about it. When it does skip a pot the log now gives the reason (pot not on your FATE list, pot already up, outside the window) instead of staying quiet.
+- The random wait before Return after a FATE/CE works again — it was being dropped on the handoff and re-rolled from scratch, so it never ran down. It is still skipped on purpose when a Treasure Sight survey is queued so Sight lands before the next activity, and the setting now says so.
 - Dancer and Sage now walk up to melee range in Illegal Mode / Completionist so dance Steps / Finish and Sage’s 6-yalm skills connect.
-- Illegal Mode AI turns on for FATEs and Critical Encounters, and off when they end. Dodging in FATEs works without turning the mode off. (#182)
+- Illegal Mode AI turns on for FATEs and Critical Encounters, and off when they end. FATE dodging uses the same targeting as CEs, so it works without turning the mode off. (#182)
 - Illegal Mode no longer Returns to camp when walking to a FATE/CE is quicker, and no longer picks a route it cannot walk.
 - Mob Farmer only auto-targets when “Handle targeting” is enabled, and no longer hitch-cancels movement on every pull skill.
 - Ninja Hide uses your Knowledge offset and yalm range (mounted Hide no longer starts a long way early).
@@ -19,6 +21,7 @@
 - Setting and main-window descriptions are shorter and easier to read.
 - The Dependencies page now says Ready / Not enabled / Not installed instead of Loaded and Linked, and shows which combat plugins your General → Combat pick uses.
 - Stopping Illegal Mode no longer errors when Combat is set to Wrath Combo.
+- Illegal Mode locks Wrath Combo auto-rotation to the recommended combat, targeting, and healer settings while it is running.
 
 ### Performance
 - Treasure Hunt should no longer hitch between coffers. Route data loads once per zone, and the bundled files are much smaller.

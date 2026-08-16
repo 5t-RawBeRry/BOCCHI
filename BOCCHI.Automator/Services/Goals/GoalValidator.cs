@@ -186,7 +186,8 @@ public class GoalValidator
             (uint)cycle.PredictedNextPotFateId,
             automatorConfig.ShouldDoFates,
             automatorConfig.PreferPotFates,
-            automatorConfig.ShouldFarmPotChests);
+            automatorConfig.ShouldFarmPotChests,
+            automatorConfig.ShouldPrepositionToPots);
         (TimeSpan cutoff, int lead) = GetIllegalPotWindow();
         PotFallbackStartDecision decision = PotFallbackWindow.Evaluate(
             cycle,
@@ -228,7 +229,8 @@ public class GoalValidator
                 (uint)cycle.PredictedNextPotFateId,
                 automatorConfig.ShouldDoFates,
                 automatorConfig.PreferPotFates,
-                automatorConfig.ShouldFarmPotChests))
+                automatorConfig.ShouldFarmPotChests,
+                automatorConfig.ShouldPrepositionToPots))
         {
             return false;
         }

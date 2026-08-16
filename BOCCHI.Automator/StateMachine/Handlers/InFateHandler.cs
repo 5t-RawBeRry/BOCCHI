@@ -58,23 +58,12 @@ public class InFateHandler
 
         List<IBattleNpc> fateTargets = context.GetTargets().ToList();
         bool ai = config.CombatAutorotation.UsesCombatAutomation();
-
-        if (ai)
-        {
-            CombatActivityHandler.HandleTargets(
-                player,
-                playerState,
-                fateTargets,
-                conditions,
-                pathfinder,
-                "InFate",
-                shouldApproachTarget: false,
-                deferCombatToBossModAi: true,
-                targetManager: targetManager);
-            return;
-        }
-
         InitialCombatApproachMemory<FateId> approach = GetApproachMemory(context.GetFateId());
+
+        // The AI path used to skip the approach entirely, but we enter InFate the moment we cross
+        // the FATE ring — which can be well outside engagement range — and travel is suspended by
+        // then. So we walk in ourselves either way, and hand vnav over once we are in range.
+        // With AI on, combat starting is not the cue to stop: it may have started at range.
         if (CombatActivityHandler.HandleTargets(
                 player,
                 playerState,
@@ -83,7 +72,8 @@ public class InFateHandler
                 pathfinder,
                 "InFate",
                 approach.IsPending,
-                stopPathfinderInCombat: true,
+                stopPathfinderInCombat: !ai,
+                deferCombatToBossModAi: ai,
                 targetManager: targetManager))
         {
             approach.Complete();
