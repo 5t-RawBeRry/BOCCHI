@@ -692,10 +692,14 @@ public class TreasureHunterService
             return false;
         }
 
-        // Progress is distance to the goal, not absolute movement.
+        // Progress is distance to the goal, not absolute movement. Restart the clock with it —
+        // otherwise the timeout measures "time since the walk began" and any pad further away than
+        // StuckNodeTimeout of travel gets skipped while still closing on it.
         if (distance < stuckWatchBestDistance - StuckProgressThreshold)
         {
             stuckWatchBestDistance = distance;
+            stuckWatchStartedUtc = now;
+            stuckNudgeIssued = false;
             return false;
         }
 

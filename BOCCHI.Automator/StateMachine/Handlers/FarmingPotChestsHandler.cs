@@ -485,7 +485,11 @@ public class FarmingPotChestsHandler
 
         if (distance < approachBestDist - ApproachProgressThreshold)
         {
+            // Restart the clock on progress: the timeout means "not getting closer for 20s", not
+            // "20s since we set off". Without this every candidate more than 20s of travel away is
+            // reported stuck mid-run, however well the approach is going.
             approachBestDist = distance;
+            approachSince = DateTimeOffset.UtcNow;
             return false;
         }
 

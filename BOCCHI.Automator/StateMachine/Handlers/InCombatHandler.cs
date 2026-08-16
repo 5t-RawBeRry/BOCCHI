@@ -32,6 +32,14 @@ public class InCombatHandler
             return StatePriority.Never;
         }
 
+        // Pot chest farming also scores High, and this handler only dismounts and stops the
+        // pathfinder — so winning the tie just interrupts the farm on every combat flicker.
+        if (memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _)
+            || memory.TryRemember<PendingPotChestFarmMemory>(out PendingPotChestFarmMemory _))
+        {
+            return StatePriority.Never;
+        }
+
         // Don't abandon Fate/CE transit to fight random trash on the road.
         if (memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _))
         {
