@@ -1,28 +1,18 @@
 # 4.0.2.28
 
 ### New
-- Illegal Mode combat can use Wrath Combo or Rotation Solver Reborn together with BOCCHI AI, or a full BossMod / BossMod Reborn autorotation. Pick one under Illegal Mode → General → Combat. It turns off while traveling.
+- Illegal Mode combat can use Wrath Combo or Rotation Solver Reborn with BOCCHI AI, or a full BossMod / BossMod Reborn autorotation. Pick one under Illegal Mode → General → Combat. It turns off while traveling.
+- Skip FATEs at or above a progress % is on the FATEs page and applies to every FATE, not only Magic Pots. Your old pot-timing value is kept.
 
 ### Fixes
-- Prefer pot FATEs always does Magic Pots and picks them first. On the FATEs tab those pots stay checked and show as required. It no longer turns on Wait near pots or Farm pot chests, and Farm pot chests only runs pots that are on your list.
-- Treasure Hunt is more reliable: Sight counts show up after casting, silvers are less likely to be skipped, the Wanderer's Haven west-coast coffer is included, North Horn no longer bounces between areas, and a bad path near Suspended Masonry is avoided.
-- Treasure Hunt walks less. Routes use measured distances, Returns and aethernet hops between areas actually fire, and a Return hops to the nearest shard instead of walking from camp. Hunt and Carrot Hunt no longer ask for a new path while one is still calculating.
-- South Horn Treasure Hunt uses area routes instead of the old red and blue halves. Consecutive runs start in a different area, nearby coffers can be picked up, and a lower “Max level” stops at a nearby area instead of crossing the map.
-- Pot chest farming paths between floors, finds revealed coffers again, includes reroll chests, uses Magical Elixir more reliably, and stays after a Magic Pot FATE. Waiting near the next pot no longer gives up early when “Minutes before predicted pot spawn” is above 5. (#181)
-- “Wait near pots before they spawn” now works on its own. It used to do nothing unless “Farm pot chests after pot FATEs” was also on, and said nothing about it. When it does skip a pot the log now gives the reason (pot not on your FATE list, pot already up, outside the window) instead of staying quiet.
-- The random wait before Return after a FATE/CE works again — it was being dropped on the handoff and re-rolled from scratch, so it never ran down. It is still skipped on purpose when a Treasure Sight survey is queued so Sight lands before the next activity, and the setting now says so.
-- Dancer and Sage now walk up to melee range in Illegal Mode / Completionist so dance Steps / Finish and Sage’s 6-yalm skills connect.
-- Illegal Mode AI turns on for FATEs and Critical Encounters, and off when they end. FATE dodging uses the same targeting as CEs, so it works without turning the mode off. (#182)
-- Illegal Mode no longer Returns to camp when walking to a FATE/CE is quicker, and no longer picks a route it cannot walk.
-- Mob Farmer only auto-targets when “Handle targeting” is enabled, and no longer hitch-cancels movement on every pull skill.
-- Ninja Hide uses your Knowledge offset and yalm range (mounted Hide no longer starts a long way early).
-- Carrot Hunt no longer mount-spams on tall climbs, and skips a pad if it stays stuck after a few recoveries. North Horn now clears the center first, then the west ridge, then northwest and northeast, so the death-zone stretch is one block.
+- Treasure Hunt is more reliable and walks less: Sight counts after casting, fewer skipped silvers, the Wanderer's Haven west-coast coffer is included, North Horn no longer bounces between areas, South Horn uses area routes instead of red and blue halves, and Returns / aethernet hops actually fire.
+- Carrot Hunt no longer mount-spams on tall climbs, skips a pad if it stays stuck, and clears North Horn in a better order.
+- Prefer pot FATEs always does Magic Pots first and no longer turns on Wait near pots or Farm pot chests. Wait near pots works on its own. Pot chest farming paths between floors, finds revealed and reroll chests, and no longer gives up early on a long wait. (#181)
+- Illegal Mode AI turns on for FATEs and Critical Encounters (FATE dodging included), walks up to the mobs instead of standing at the ring, and no longer Returns when walking is quicker. Dancer and Sage close to melee range. (#182)
+- Illegal Mode locks Wrath Combo to the recommended settings while it is running, and stopping no longer errors with Wrath selected.
+- The random wait before Return after a FATE/CE works again. Mob Farmer only auto-targets when “Handle targeting” is on. Ninja Hide uses your Knowledge offset and range.
+- Setting and Dependencies copy is shorter. Dependencies now says Ready / Not enabled / Not installed, and shows which combat plugins your Combat pick uses.
 - Occult silver/gold per hour should no longer spike just from entering an instance.
-- Setting and main-window descriptions are shorter and easier to read.
-- The Dependencies page now says Ready / Not enabled / Not installed instead of Loaded and Linked, and shows which combat plugins your General → Combat pick uses.
-- Stopping Illegal Mode no longer errors when Combat is set to Wrath Combo.
-- Illegal Mode locks Wrath Combo auto-rotation to the recommended combat, targeting, and healer settings while it is running.
 
 ### Performance
-- Treasure Hunt should no longer hitch between coffers. Route data loads once per zone, and the bundled files are much smaller.
-- Treasure Hunt, pot chest farming, and Illegal Mode do less work each frame. Outside Occult Crescent, BOCCHI now does almost nothing.
+- Treasure Hunt should no longer hitch between coffers. Route data is smaller and loads once. Outside Occult Crescent, BOCCHI does almost nothing.

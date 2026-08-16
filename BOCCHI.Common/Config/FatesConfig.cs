@@ -4,7 +4,7 @@ using Ocelot.Config.Fields;
 
 namespace BOCCHI.Common.Config;
 
-/// <summary>Illegal Mode FATE allowlist (not used by Pots &amp; Treasure for pot selection).</summary>
+/// <summary>Illegal Mode FATE allowlist and skip-by-progress (Pots &amp; Treasure uses progress skip only).</summary>
 [Serializable]
 [ConfigGroup("automation", GroupOrder = 0, Order = 2)]
 public class FatesConfig : IAutoConfig
@@ -12,7 +12,13 @@ public class FatesConfig : IAutoConfig
     /// <summary>South / North Horn Magic Pot FATE ids (Persistent / Pleading / Daylight / Pot of Bother).</summary>
     public static readonly uint[] PotFateIds = [1976, 1977, 2072, 2073];
 
-    [DisabledFateIds(Order = 0, Section = "allowlist")]
+    /// <summary>
+    ///     Skip FATEs at or above this progress % (0 = disabled). Once you are in the FATE, it is finished.
+    /// </summary>
+    [IntRange(0, 100, Order = 0, Section = "skip")]
+    public int MaxFateProgressPercent { get; set; } = 50;
+
+    [DisabledFateIds(Order = 1, Section = "allowlist")]
     public HashSet<uint> DisabledFateIds { get; set; } =
     [
         // South Horn — dangerous / usually skipped by default
@@ -20,6 +26,10 @@ public class FatesConfig : IAutoConfig
     ];
 
     public bool IsFateEnabled(uint fateId) => !DisabledFateIds.Contains(fateId);
+
+    /// <summary>True when a live FATE should not be started / pathing to — already registered FATEs stay.</summary>
+    public bool ShouldSkipByProgress(byte progress) =>
+        MaxFateProgressPercent > 0 && progress >= MaxFateProgressPercent;
 
     /// <summary>
     ///     Prefer pot FATEs force-includes Magic Pots for Illegal Mode (shown locked on in Allowed FATEs).

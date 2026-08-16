@@ -6,13 +6,9 @@
     "chests": "Chests"
   },
   "fields": {
-    "max_pot_fate_progress_percent": {
-      "label": "Skip pots at or above (% progress)",
-      "tooltip": "Skip a pot FATE that is already this far along. 0 = never skip."
-    },
     "min_pot_fate_minutes_remaining": {
       "label": "Skip pots with under (minutes left)",
-      "tooltip": "Also skip a pot with fewer minutes left than this. 0 = off."
+      "tooltip": "Skip a pot with fewer minutes left than this. 0 = off."
     },
     "pot_spawn_lead_minutes": {
       "label": "Leave for pots this many minutes early",

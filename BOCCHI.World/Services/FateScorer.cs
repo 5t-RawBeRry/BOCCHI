@@ -31,7 +31,7 @@ public class FateScorer
             return score;
         }
 
-        if (ShouldSkipPot(fate))
+        if (ShouldSkip(fate))
         {
             return score;
         }
@@ -74,7 +74,7 @@ public class FateScorer
                 continue;
             }
 
-            if (ShouldSkipPot(fate))
+            if (ShouldSkip(fate))
             {
                 continue;
             }
@@ -90,7 +90,8 @@ public class FateScorer
         return best;
     }
 
-    private bool ShouldSkipPot(Fate fate) =>
-        zones.GetZone().IsPotFate(fate.Id.Value)
-        && potsConfig.ShouldSkipLivePot(fate.Progress, fate.TimeRemainingSeconds);
+    private bool ShouldSkip(Fate fate) =>
+        config.ShouldSkipByProgress(fate.Progress)
+        || (zones.GetZone().IsPotFate(fate.Id.Value)
+            && potsConfig.ShouldSkipLivePot(fate.TimeRemainingSeconds));
 }

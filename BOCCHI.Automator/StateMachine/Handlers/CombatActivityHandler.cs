@@ -67,28 +67,25 @@ internal static class CombatActivityHandler
             return true;
         }
 
+        // Once the AI owns movement, never touch vnav again. BossMod NormalMovement dodges via vnav
+        // Pathfind and Stop() cancels those steps, so a per-tick Stop here reads as "never evades".
+        // The approach below is the one exception, and it only runs until we arrive.
+        if (deferCombatToBossModAi && !shouldApproachTarget)
+        {
+            return true;
+        }
+
         if (IsInEngagementRange(distance, isMelee))
         {
-            // In range — release vnav so BossMod StayCloseToTarget / NormalMovement owns movement
-            // (and dodging) from here. This is the hand-off point, not FATE entry: deferring the
-            // whole activity meant nobody walked from the FATE ring to the mobs.
+            // Arrived. Stop our own approach path exactly once — returning true latches the caller's
+            // InitialCombatApproachMemory, so the branch above owns every later tick.
             pathfinder.Stop();
             return true;
         }
 
-        if (!shouldApproachTarget)
-        {
-            // Not ours to close (CE, or the initial approach already finished). Make sure we are
-            // not sitting on vnav while the AI wants it.
-            if (deferCombatToBossModAi && !pathfinder.IsIdle())
-            {
-                pathfinder.Stop();
-            }
-
-            return false;
-        }
-
-        if (!EzThrottler.Throttle($"{throttlePrefix}::Approach", 500) || !pathfinder.IsIdle())
+        if (!shouldApproachTarget
+            || !EzThrottler.Throttle($"{throttlePrefix}::Approach", 500)
+            || !pathfinder.IsIdle())
         {
             return false;
         }

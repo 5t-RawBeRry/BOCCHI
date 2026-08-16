@@ -1,18 +1,14 @@
 {
   "label": "魔法罐计时",
-  "tooltip": "何时动身前往魔法罐、何时跳过进度过高的魔法罐，以及刷新宝箱。",
+  "tooltip": "何时动身前往魔法罐、何时跳过剩余时间过短的魔法罐，以及刷新宝箱。",
   "sections": {
     "timing": "计时",
     "chests": "宝箱"
   },
   "fields": {
-    "max_pot_fate_progress_percent": {
-      "label": "进度达到（%）则跳过魔法罐",
-      "tooltip": "已达到该进度的魔法罐危命任务会跳过。0＝不跳过。"
-    },
     "min_pot_fate_minutes_remaining": {
       "label": "剩余不足（分钟）则跳过魔法罐",
-      "tooltip": "剩余时间少于此值的魔法罐也会跳过。0＝关闭。"
+      "tooltip": "剩余时间少于此值的魔法罐会跳过。0＝关闭。"
     },
     "pot_spawn_lead_minutes": {
       "label": "提前多少分钟动身前往魔法罐",

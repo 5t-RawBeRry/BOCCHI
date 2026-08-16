@@ -127,27 +127,35 @@ public class GoalValidator
             return false;
         }
 
-        // Live pot — stay until despawn (chest farm starts then). Keep pot goals over CEs.
-        // Skip late pots while still pathing; once registered, finish for Cache Me / chests (#174).
-        if (isPot)
-        {
-            if (fateContext.GetFateId() == id)
-            {
-                return true;
-            }
+        Fate? live = fateRepository.Snapshot().FirstOrDefault(f => f.Id == id);
+        bool registered = fateContext.GetFateId() == id;
 
-            Fate? live = fateRepository.Snapshot().FirstOrDefault(f => f.Id == id);
-            if (live != null
-                && potsConfig.ShouldSkipLivePot(live.Progress, live.TimeRemainingSeconds))
+        // Skip late FATEs while still pathing; once registered, finish (#174).
+        if (!registered && live != null)
+        {
+            if (fatesConfig.ShouldSkipByProgress(live.Progress))
             {
                 logger.Info(
-                    "Dropping pot FATE {FateId} — progress {Progress}% / {Minutes:F1}m left (skip thresholds)",
+                    "Dropping FATE {FateId} — progress {Progress}% (skip at {Threshold}%)",
                     id.Value,
                     live.Progress,
-                    live.TimeRemainingSeconds / 60.0);
+                    fatesConfig.MaxFateProgressPercent);
                 return false;
             }
 
+            if (isPot && potsConfig.ShouldSkipLivePot(live.TimeRemainingSeconds))
+            {
+                logger.Info(
+                    "Dropping pot FATE {FateId} — {Minutes:F1}m left (skip threshold)",
+                    id.Value,
+                    live.TimeRemainingSeconds / 60.0);
+                return false;
+            }
+        }
+
+        // Live pot — stay until despawn (chest farm starts then). Keep pot goals over CEs.
+        if (isPot)
+        {
             return true;
         }
 
@@ -273,7 +281,8 @@ public class GoalValidator
         IZone zone = zones.GetZone();
         Fate? live = fateRepository.Snapshot()
             .Where(f => zone.IsPotFate(f.Id.Value))
-            .Where(f => !potsConfig.ShouldSkipLivePot(f.Progress, f.TimeRemainingSeconds))
+            .Where(f => !fatesConfig.ShouldSkipByProgress(f.Progress)
+                        && !potsConfig.ShouldSkipLivePot(f.TimeRemainingSeconds))
             .FirstOrDefault(f => fatesConfig.IsFateEnabledForIllegalMode(
                 f.Id.Value,
                 isPotFate: true,

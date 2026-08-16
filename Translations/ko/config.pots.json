@@ -1,18 +1,14 @@
 {
   "label": "항아리 타이밍",
-  "tooltip": "항아리 돌발로 떠날 시점, 진행이 많이 된 항아리 건너뛰기, 리롤 상자.",
+  "tooltip": "항아리 돌발로 떠날 시점, 남은 시간이 짧은 항아리 건너뛰기, 리롤 상자.",
   "sections": {
     "timing": "타이밍",
     "chests": "상자"
   },
   "fields": {
-    "max_pot_fate_progress_percent": {
-      "label": "진행도 (%) 이상 항아리는 건너뛰기",
-      "tooltip": "이미 이 진행도인 항아리 돌발은 건너뜁니다. 0 = 건너뛰지 않음."
-    },
     "min_pot_fate_minutes_remaining": {
       "label": "남은 (분) 미만 항아리는 건너뛰기",
-      "tooltip": "남은 시간이 이보다 짧은 항아리도 건너뜁니다. 0 = 끔."
+      "tooltip": "남은 시간이 이보다 짧은 항아리는 건너뜁니다. 0 = 끔."
     },
     "pot_spawn_lead_minutes": {
       "label": "항아리 몇 분 전에 떠날지",
