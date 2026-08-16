@@ -57,6 +57,13 @@ public sealed class PotCycleSyncService
 
     private long lastUploadedSpawnUnix;
 
+    /// <summary>
+    ///     Instance key the current anchor was last published under. The fingerprint FATE ending
+    ///     rekeys everyone, and an anchor left under the old key is invisible to every later fetch,
+    ///     so the same anchor has to be re-uploaded whenever the key rotates.
+    /// </summary>
+    private string? lastUploadedInstanceKey;
+
     private string? lastFetchedInstanceKey;
 
     private DateTime nextUploadAttemptUtc = DateTime.MinValue;
@@ -118,6 +125,7 @@ public sealed class PotCycleSyncService
                 lastUploadedTerritory = upload.TerritoryId;
                 lastUploadedPotFateId = upload.PotFateId;
                 lastUploadedSpawnUnix = upload.SpawnUnix;
+                lastUploadedInstanceKey = upload.InstanceKey;
                 nextUploadAttemptUtc = DateTime.UtcNow;
                 logger.Info(
                     "[PotCycleSync] uploaded pot={PotId} spawn={Spawn} key={KeyPrefix}…",
@@ -196,15 +204,16 @@ public sealed class PotCycleSyncService
             return;
         }
 
-        long spawnUnix = snap.AnchorSpawnAt.ToUnixTimeSeconds();
-        if (lastUploadedTerritory == territory
-            && lastUploadedPotFateId == snap.AnchorPotFateId
-            && lastUploadedSpawnUnix == spawnUnix)
+        if (DateTime.UtcNow < nextUploadAttemptUtc || instanceKey == null)
         {
             return;
         }
 
-        if (DateTime.UtcNow < nextUploadAttemptUtc || instanceKey == null)
+        long spawnUnix = snap.AnchorSpawnAt.ToUnixTimeSeconds();
+        if (lastUploadedTerritory == territory
+            && lastUploadedPotFateId == snap.AnchorPotFateId
+            && lastUploadedSpawnUnix == spawnUnix
+            && lastUploadedInstanceKey == instanceKey)
         {
             return;
         }
@@ -229,14 +238,14 @@ public sealed class PotCycleSyncService
         });
 
         uploadInFlight = true;
-        _ = UploadAsync(territory, snap.AnchorPotFateId, spawnUnix, key[..8], json);
+        _ = UploadAsync(territory, snap.AnchorPotFateId, spawnUnix, key, json);
     }
 
     private async Task UploadAsync(
         ushort territory,
         int potFateId,
         long spawnUnix,
-        string keyPrefix,
+        string instanceKeyValue,
         string json)
     {
         try
@@ -250,7 +259,7 @@ public sealed class PotCycleSyncService
             Interlocked.Exchange(
                 ref completedUpload,
                 response.IsSuccessStatusCode
-                    ? UploadOutcome.Ok(territory, potFateId, spawnUnix, keyPrefix)
+                    ? UploadOutcome.Ok(territory, potFateId, spawnUnix, instanceKeyValue)
                     : UploadOutcome.Rejected(response.StatusCode.ToString()));
         }
         catch (Exception ex)
@@ -399,6 +408,7 @@ public sealed class PotCycleSyncService
         fingerprintFateId = 0;
         fingerprintStartEpoch = 0;
         lastFetchedInstanceKey = null;
+        lastUploadedInstanceKey = null;
         nextFetchAttemptUtc = DateTime.MinValue;
 
         // Entering a zone (or returning after leave) must not keep a previous instance's pot clock.
@@ -420,6 +430,7 @@ public sealed class PotCycleSyncService
         fingerprintFateId = 0;
         fingerprintStartEpoch = 0;
         lastFetchedInstanceKey = null;
+        lastUploadedInstanceKey = null;
         nextFetchAttemptUtc = DateTime.MinValue;
     }
 
@@ -433,19 +444,22 @@ public sealed class PotCycleSyncService
 
         public long SpawnUnix { get; init; }
 
+        public string InstanceKey { get; init; } = "";
+
         public string KeyPrefix { get; init; } = "";
 
         public string? Status { get; init; }
 
         public string? Error { get; init; }
 
-        public static UploadOutcome Ok(ushort territory, int potFateId, long spawnUnix, string keyPrefix) => new()
+        public static UploadOutcome Ok(ushort territory, int potFateId, long spawnUnix, string instanceKey) => new()
         {
             Success = true,
             TerritoryId = territory,
             PotFateId = potFateId,
             SpawnUnix = spawnUnix,
-            KeyPrefix = keyPrefix,
+            InstanceKey = instanceKey,
+            KeyPrefix = instanceKey.Length >= 8 ? instanceKey[..8] : instanceKey,
         };
 
         public static UploadOutcome Rejected(string status) => new()
