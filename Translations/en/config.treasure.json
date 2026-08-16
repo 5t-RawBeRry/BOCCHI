@@ -47,7 +47,7 @@
     },
     "hunt_max_level": {
       "label": "Max coffer level",
-      "tooltip": "Skip coffers above this level on the hunt route."
+      "tooltip": "Skip coffers whose nearby enemies are above this level. 50 = no limit."
     },
     "hunt_silver_chests_only": {
       "label": "Silver coffers only",

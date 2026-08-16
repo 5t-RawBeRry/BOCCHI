@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "territoryId": 1252,
   "zone": "SouthHorn",
-  "source": "shard-regions-v1+kmeans+2opt+oropt+levelorder",
+  "source": "shard-regions-v2+kmeans+2opt+oropt+levelorder+stonemarsh-swap",
   "segments": [
     {
       "id": "base-camp",
@@ -98,15 +98,15 @@
       "id": "eldergrowth-2",
       "nodes": [
         1790,
-        1815,
-        1854,
-        1824,
-        1826,
-        1835,
-        1831,
+        1833,
         1832,
-        1850,
-        1849
+        1831,
+        1835,
+        1826,
+        1824,
+        1854,
+        1815,
+        1855
       ],
       "transitionAfter": {
         "type": "auto"
@@ -115,11 +115,11 @@
     {
       "id": "stonemarsh",
       "nodes": [
-        1855,
-        1833,
         1834,
         1848,
         1847,
+        1850,
+        1849,
         1852,
         1851,
         1796

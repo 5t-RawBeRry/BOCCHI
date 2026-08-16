@@ -9,6 +9,22 @@ namespace BOCCHI.Treasure.Hunt;
 /// </summary>
 public static class TreasureHuntPathOverrides
 {
+    /// <summary>
+    ///     Pads vnav cannot path to at all because the approach needs a jump, which BOCCHI has no
+    ///     support for (movement is entirely vnav pathfinding). Excluded from the hunt so the run
+    ///     does not burn the 30s stuck timeout on them every time.
+    ///     These stay in treasure_route.json — deleting the entry here is all it takes to re-enable
+    ///     one, which is the plan if vnavmesh gains jump support.
+    /// </summary>
+    private static readonly HashSet<(ZoneId Zone, uint NodeId)> UnreachableNodes =
+    [
+        // South Horn, wanderers-haven pad 2 — ledge at (-884.1, 3.8, -682.0), needs a short hop up.
+        (ZoneId.SouthHorn, 1842u),
+    ];
+
+    /// <summary>True when this pad is knowingly unreachable and must be left out of the route.</summary>
+    public static bool IsUnreachable(ZoneId zone, uint nodeId) => UnreachableNodes.Contains((zone, nodeId));
+
     /// <summary>Reach before opening the coffer.</summary>
     private static readonly Dictionary<(ZoneId Zone, uint NodeId), Vector3[]> ApproachByNode = new()
     {

@@ -5,7 +5,8 @@
 - Skip FATEs at or above a progress % is on the FATEs page and applies to every FATE, not only Magic Pots. Your old pot-timing value is kept.
 
 ### Fixes
-- Treasure Hunt is more reliable and walks less: Sight counts after casting, fewer skipped silvers, the Wanderer's Haven west-coast coffer is included, North Horn no longer bounces between areas, South Horn uses area routes instead of red and blue halves, and Returns / aethernet hops actually fire.
+- Treasure Hunt is more reliable and walks less: Sight counts after casting, fewer skipped silvers, North Horn no longer bounces between areas, South Horn uses area routes instead of red and blue halves, and Returns / aethernet hops actually fire.
+- The Wanderer's Haven west-coast coffer stays out of the South Horn route. It sits on a ledge that can only be reached with a jump, which BOCCHI cannot do, so including it just stalled the hunt for half a minute near the start of every run.
 - Carrot Hunt no longer mount-spams on tall climbs, skips a pad if it stays stuck, and clears North Horn in a better order.
 - Prefer pot FATEs always does Magic Pots first and no longer turns on Wait near pots or Farm pot chests. Wait near pots works on its own. Pot chest farming paths between floors, finds revealed and reroll chests, and no longer gives up early on a long wait. (#181)
 - Illegal Mode AI turns on for FATEs and Critical Encounters, and dodges in FATEs again. BOCCHI was re-activating its BossMod preset every frame, which restarted the AI's movement decision before it could run — so it neither closed on the mobs nor evaded. The preset is activated once per activity now, and the AI walks melee into range itself. Illegal Mode also no longer Returns when walking is quicker, and Dancer and Sage close to melee range. (#182)

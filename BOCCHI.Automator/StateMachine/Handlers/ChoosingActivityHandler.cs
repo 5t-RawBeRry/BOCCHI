@@ -258,15 +258,32 @@ public class ChoosingActivityHandler
             true,
             "preposition");
 
-        // ShouldPreposition is !AllowStart — the same window that blocks starting a FATE/CE.
+        // ShouldPreposition is !AllowStart — the same window that blocks starting a FATE/CE. The
+        // decision's own Reason is worded from that angle ("allowed"), which reads backwards here.
         if (decision.AllowStart)
         {
-            return SkipPreposition(decision.Reason);
+            return SkipPreposition(DescribeOutsideWindow(decision));
         }
 
         lastPrepositionSkip = null;
         potId = predicted;
         return true;
+    }
+
+    private static string DescribeOutsideWindow(PotFallbackStartDecision decision)
+    {
+        if (decision.DepartureAt == default)
+        {
+            return "no pot departure predicted";
+        }
+
+        // Past departure but still allowed means Evaluate took its staleness escape hatch.
+        if (decision.TimeUntilDeparture <= TimeSpan.Zero)
+        {
+            return "pot prediction is stale (spawn never observed)";
+        }
+
+        return $"outside the window — pot departure in {decision.TimeUntilDeparture.TotalMinutes:0}m";
     }
 
     /// <summary>Always false; records why so the reason can be logged once per change.</summary>

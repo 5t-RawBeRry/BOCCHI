@@ -141,9 +141,9 @@ public sealed class PotCycleTracker
         }
 
         logger.Info(
-            "[PotCycleTracker] cleared schedule for territory {Territory}{Reason}",
+            "[PotCycleTracker] cleared schedule for territory {Territory} ({Reason})",
             territoryTypeId,
-            string.IsNullOrEmpty(reason) ? "" : $": {reason}");
+            string.IsNullOrEmpty(reason) ? "unspecified" : reason);
     }
 
     public bool TryApplyRemoteAnchor(int potFateId, DateTimeOffset spawnAt, ushort territoryTypeId)

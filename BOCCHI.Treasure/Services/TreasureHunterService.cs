@@ -1992,11 +1992,13 @@ public class TreasureHunterService
 
     private List<uint> GetValidNodes(int maxLevel)
     {
-        List<TreasureData> treasureData = zones.GetZone().GetTreasureData();
+        IZone zone = zones.GetZone();
+        List<TreasureData> treasureData = zone.GetTreasureData();
         if (treasureData.Exists(d => d.Position.HasValue))
         {
             return layoutTreasure
                 .Where(t => MatchesHuntCofferFilter(t.ModelId))
+                .Where(t => !TreasureHuntPathOverrides.IsUnreachable(zone.ZoneId, t.Id))
                 .Where(t => treasureData.Any(d => d.Level <= maxLevel && d.Matches(t.Id, t.Position)))
                 .Select(t => t.Id)
                 .ToList();
@@ -2005,6 +2007,7 @@ public class TreasureHunterService
         return treasureData
             .Where(node => node.Level <= maxLevel)
             .Select(node => (uint)node.Id)
+            .Where(id => !TreasureHuntPathOverrides.IsUnreachable(zone.ZoneId, id))
             .Where(id =>
             {
                 return TryGetLayout(id, out TreasureLayoutDatum layout)

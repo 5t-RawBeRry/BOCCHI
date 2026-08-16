@@ -47,7 +47,7 @@
     },
     "hunt_max_level": {
       "label": "宝箱最高等级",
-      "tooltip": "跳过寻宝路线上高于该等级的宝箱。"
+      "tooltip": "跳过周围敌人等级高于此数值的宝箱。50 = 不限制。"
     },
     "hunt_silver_chests_only": {
       "label": "仅白银宝箱",

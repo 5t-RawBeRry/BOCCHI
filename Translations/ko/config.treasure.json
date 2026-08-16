@@ -47,7 +47,7 @@
     },
     "hunt_max_level": {
       "label": "상자 최대 레벨",
-      "tooltip": "이 레벨보다 높은 상자는 보물 찾기 경로에서 뺍니다."
+      "tooltip": "주변 적의 레벨이 이 값을 넘는 상자를 건너뜁니다. 50 = 제한 없음."
     },
     "hunt_silver_chests_only": {
       "label": "백은 상자만",
