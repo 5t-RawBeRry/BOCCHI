@@ -16,10 +16,13 @@ public sealed class PluginDependencyStatusRenderer(
     IPluginStatus pluginStatus,
     IVNavmeshIpc vnav,
     IBossModIpc bossMod,
-    ILifestreamIpc lifestream
+    ILifestreamIpc lifestream,
+    AutomatorConfig automator
 ) : IFieldRenderer<PluginDependencyStatusAttribute>
 {
     private const string StatusKey = "config.dependencies.fields.status";
+
+    private static readonly CombatAutorotationDisplay CombatDisplay = new();
 
     public bool Render(object target, PropertyInfo prop, PluginDependencyStatusAttribute attr, Type owner, ITranslator translator)
     {
@@ -27,95 +30,101 @@ public sealed class PluginDependencyStatusRenderer(
         ImGui.Spacing();
 
         DrawSection(T(translator, "required"));
-        Draw("vnavmesh", "vnavmesh", translator, VnavIpc);
-        Draw("Lifestream", "Lifestream", translator, (_, t) => Ipc(lifestream.IsAvailable, t));
+        Draw("vnavmesh", "vnavmesh", translator, VnavStatus);
+        Draw("Lifestream", "Lifestream", translator, (_, t) => IpcStatus(lifestream.IsAvailable, t));
 
         ImGui.Spacing();
         DrawSection(T(translator, "optional"));
+        if (automator.CombatAutorotation.UsesCombatAutomation())
+        {
+            ImGui.TextWrapped(string.Format(T(translator, "using"), CombatDisplay.Display(automator.CombatAutorotation)));
+        }
+
         ImGui.TextWrapped(T(translator, "optional_intro"));
         ImGui.Spacing();
 
-        DrawSubsection(T(translator, "optional_ai"));
-        // Shared BossMod.Presets.* IPC — only show when that specific plugin is loaded.
-        Draw("BossMod", "BossMod", translator, BossModIpcIfLoaded);
-        Draw("BossMod Reborn", "BossModReborn", translator, BossModIpcIfLoaded);
-
-        ImGui.Spacing();
-        DrawSubsection(T(translator, "optional_autorotation"));
-        Draw("Wrath Combo", "WrathCombo", translator);
+        Draw("Wrath Combo", "WrathCombo", translator, inUse: InUse("WrathCombo"));
         // Dalamud InternalName is still "RotationSolver" (display name is Rotation Solver Reborn).
-        Draw("Rotation Solver Reborn", "RotationSolver", translator);
+        Draw("Rotation Solver Reborn", "RotationSolver", translator, inUse: InUse("RotationSolver"));
+        Draw("BossMod", "BossMod", translator, BossModIpcIfLoaded, InUse("BossMod"));
+        Draw("BossMod Reborn", "BossModReborn", translator, BossModIpcIfLoaded, InUse("BossModReborn"));
 
         return false;
     }
 
-    private (string? Detail, bool? Ok) VnavIpc(string _, ITranslator translator)
+    private bool InUse(string internalName) => automator.CombatAutorotation switch
+    {
+        CombatAutorotation.WrathCombo => internalName is "WrathCombo" or "BossMod" or "BossModReborn",
+        CombatAutorotation.RotationSolverReborn => internalName is "RotationSolver" or "BossMod" or "BossModReborn",
+        CombatAutorotation.BossMod => internalName == "BossMod",
+        CombatAutorotation.BossModReborn => internalName == "BossModReborn",
+        _ => false,
+    };
+
+    private (string Label, bool Ok, bool Pending) VnavStatus(string _, ITranslator translator)
     {
         if (!vnav.IsAvailable())
         {
-            return (T(translator, "ipc_missing"), false);
+            return (T(translator, "not_working"), false, false);
         }
 
         return vnav.IsNavmeshReady()
-            ? (T(translator, "ready"), true)
-            : (T(translator, "ipc_ok_mesh_pending"), true);
+            ? (T(translator, "ready"), true, false)
+            : (T(translator, "map_loading"), true, true);
     }
 
-    private (string? Detail, bool? Ok) BossModIpcIfLoaded(string internalName, ITranslator translator)
-    {
-        if (!pluginStatus.IsLoaded(internalName))
-        {
-            return (null, null);
-        }
+    private (string Label, bool Ok, bool Pending) BossModIpcIfLoaded(string _, ITranslator translator) =>
+        IpcStatus(bossMod.IsAvailable, translator);
 
-        return Ipc(bossMod.IsAvailable, translator);
-    }
-
-    private static (string? Detail, bool? Ok) Ipc(bool available, ITranslator translator) =>
-        available ? (T(translator, "ipc_ok"), true) : (T(translator, "ipc_missing"), false);
+    private static (string Label, bool Ok, bool Pending) IpcStatus(bool available, ITranslator translator) =>
+        available
+            ? (T(translator, "ready"), true, false)
+            : (T(translator, "not_working"), false, false);
 
     private void Draw(
         string displayName,
         string internalName,
         ITranslator translator,
-        Func<string, ITranslator, (string? Detail, bool? Ok)>? ipc = null)
+        Func<string, ITranslator, (string Label, bool Ok, bool Pending)>? ipc = null,
+        bool inUse = false)
     {
-        var (installLabel, installOk) = InstallLoadStatus(internalName, translator);
-        var (ipcDetail, ipcOk) = ipc?.Invoke(internalName, translator) ?? (null, null);
-
-        var status = ipcDetail is null ? installLabel : $"{installLabel} · {ipcDetail}";
-        var ok = ipcOk is null ? installOk : installOk && ipcOk.Value;
+        var (label, ok, pending) = ResolveStatus(internalName, translator, ipc);
+        if (inUse && ok)
+        {
+            label = $"{label} · {T(translator, "in_use")}";
+        }
 
         ImGui.TextUnformatted(displayName);
-        ImGui.SameLine(240f);
-        ImGui.TextColored(ok ? Color.Green.ToRgba() : Color.Red.ToRgba(), status);
+        ImGui.SameLine(280f);
+        ImGui.TextColored(StatusColor(ok, pending), label);
     }
 
-    private (string Label, bool Ok) InstallLoadStatus(string internalName, ITranslator translator)
+    private (string Label, bool Ok, bool Pending) ResolveStatus(
+        string internalName,
+        ITranslator translator,
+        Func<string, ITranslator, (string Label, bool Ok, bool Pending)>? ipc)
     {
         if (pluginStatus.IsLoaded(internalName))
         {
-            return (T(translator, "loaded"), true);
+            return ipc?.Invoke(internalName, translator) ?? (T(translator, "ready"), true, false);
         }
 
         if (plugin.InstalledPlugins.Any(p => p.InternalName == internalName))
         {
-            return (T(translator, "installed_not_loaded"), false);
+            return (T(translator, "not_enabled"), false, false);
         }
 
-        return (T(translator, "not_installed"), false);
+        return (T(translator, "not_installed"), false, false);
     }
+
+    private static uint StatusColor(bool ok, bool pending) =>
+        pending ? new Color(255, 196, 0).ToRgba() : (ok ? Color.Green : Color.Red).ToRgba();
 
     private static void DrawSection(string title)
     {
         ImGui.Separator();
         ImGui.TextUnformatted(title);
         ImGui.Spacing();
-    }
-
-    private static void DrawSubsection(string title)
-    {
-        ImGui.TextUnformatted(title);
     }
 
     private static string T(ITranslator translator, string field) =>

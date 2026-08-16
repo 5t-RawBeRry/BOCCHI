@@ -8,7 +8,7 @@
   "fields": {
     "should_automate_buffs": {
       "label": "Automate buffs",
-      "tooltip": "In Illegal Mode, automatically keep the buffs you select below refreshed at knowledge crystals. Will not leave a CE you are already waiting for or fighting just to rebuff."
+      "tooltip": "In Illegal Mode, keep the buffs below refreshed at knowledge crystals."
     },
     "apply_romeos_ballad": {
       "label": "Romeo's Ballad",
@@ -28,7 +28,7 @@
     },
     "apply_buffs_using_inquiring_mind": {
       "label": "Use Inquiring Mind when you can",
-      "tooltip": "Near a knowledge crystal, Freelancer can cast Inquiring Mind once to apply all selected unlocked buffs. If anything is still missing, BOCCHI switches jobs and applies those one by one."
+      "tooltip": "Near a knowledge crystal, Freelancer can apply all selected unlocked buffs at once."
     },
     "reapply_threshold": {
       "label": "Refresh when under (minutes left)",

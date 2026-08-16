@@ -22,7 +22,7 @@
     },
     "show_percentage_active_treasure_count": {
       "label": "남은 상자를 %로 표시",
-      "tooltip": "보물 탭의 Active bronze / Active silver 옆에 퍼센트(마기 보물 탐색 합계)를 표시합니다."
+      "tooltip": "보물 탭의 Active bronze / Active silver 옆에 퍼센트를 표시합니다."
     },
     "return_to_base_camp_after_hunt": {
       "label": "보물 찾기 후 귀환",
@@ -30,7 +30,7 @@
     },
     "play_sound_on_hunt_complete": {
       "label": "보물 찾기 끝나면 소리 재생",
-      "tooltip": "보물 찾기가 끝나면 MP3를 재생합니다(재물당근 찾기는 사용하지 않음)."
+      "tooltip": "보물 찾기가 끝나면 MP3를 재생합니다."
     },
     "hunt_complete_sound": {
       "label": "보물 찾기 완료 소리",
@@ -39,11 +39,11 @@
     },
     "cast_treasure_sight_during_hunt": {
       "label": "보물 찾기 중 마기 보물 탐색",
-      "tooltip": "보물 찾기 시작 시와, 이후 확인한 지점 N개마다 마기 보물 탐색을 씁니다. 탐색 결과가 남은 상자 0이면 보물 찾기를 일찍 멈춥니다."
+      "tooltip": "시작 시와 이후 N지점마다 마기 보물 탐색을 씁니다. 탐색 결과가 남은 상자 없음이면 일찍 멈춥니다."
     },
     "treasure_sight_every_n_locations": {
       "label": "마기 보물 탐색 N지점마다",
-      "tooltip": "첫 사용 후, 연 상자·빈 지점을 포함해 확인한 경로 지점이 이 개수일 때마다 다시 씁니다. 찾은 상자만 세지 않습니다."
+      "tooltip": "첫 사용 후, 연 상자·빈 지점을 포함해 확인한 지점이 이 개수일 때마다 다시 씁니다."
     },
     "hunt_max_level": {
       "label": "상자 최대 레벨",
@@ -59,15 +59,15 @@
     },
     "enable_automatic_treasure_hunt_during_illegal_mode": {
       "label": "자동 모드 자동 보물 찾기",
-      "tooltip": "비상 조우/돌발 후(자동 모드 사용 중 또는 당신이 완벽주의자라면, 다른 유저 부활 모드 사용 중이라면 그 다음) : 마기 보물 탐색을 알고 있으면 캠프로 귀환해 사용합니다. 상자가 남아 있으면 보물 찾기를 시작하고, 탐색을 아직 모르면 플러그인에 내장된 지도로 보물 찾기합니다."
+      "tooltip": "돌발/비상 조우 후 캠프로 귀환하고, 마기 보물 탐색을 알고 있으면 사용한 뒤 남은 상자를 찾습니다."
     },
     "use_ninja_hide_on_dangerous_routes": {
       "label": "강한 적 근처에서 닌자 은신",
-      "tooltip": "실험적: 지식이 높은 적이 가까우면 닌자 장비세트로 바꾸고, 은신 스킬을 사용한 뒤 마지막 구간을 걸어 상자로 갑니다. 지식 레벨이 높을 때 유용합니다."
+      "tooltip": "지식이 높은 적이 가까우면 닌자로 바꾸고, 은신을 사용한 뒤 마지막 구간을 걸어 상자로 갑니다."
     },
     "use_occult_sprint_while_hidden": {
       "label": "은신 중 오컬트 스프린트",
-      "tooltip": "닌자 은신 중에 팬텀 시프로 바꿔 오컬트 스프린트를 써서 이동 속도를 올립니다. 스프린트가 끝날 때까지 기다리지 않고 계속 걷습니다."
+      "tooltip": "은신 중에 팬텀 시프로 바꿔 오컬트 스프린트를 써서 이동 속도를 올립니다."
     },
     "ninja_gearset_number": {
       "label": "닌자 기어셋 번호",
@@ -75,7 +75,7 @@
     },
     "knowledge_hide_offset": {
       "label": "지식이 이만큼 높으면 은신",
-      "tooltip": "근처 적의 지식이 현재(동기화된) 내 지식레벨 + 이 값 이상일 때 Hide를 씁니다. 0 = 같거나 더 높음. 남부에서는 지식이 20으로 동기화되므로, 실제 지식이 더 높아도 20대 적에게 은신이 탄로날 수 있습니다."
+      "tooltip": "근처 적의 지식이 내 지식 + 이 값 이상일 때 은신을 씁니다. 0 = 같거나 더 높음."
     },
     "knowledge_threat_enter_distance": {
       "label": "이 거리 이내에서 은신 시작(일름)",
@@ -83,7 +83,7 @@
     },
     "knowledge_threat_exit_distance": {
       "label": "이 거리보다 멀어질 때까지 은신 유지(일름)",
-      "tooltip": "은신이 켜진 뒤에는 적이 이보다 멀어질 때까지 유지합니다. 「은신 시작」보다 크게 해서 켜졌다 꺼졌다 하지 않게 합니다."
+      "tooltip": "은신이 켜진 뒤에는 적이 이보다 멀어질 때까지 유지합니다."
     }
   }
 }

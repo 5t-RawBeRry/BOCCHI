@@ -27,15 +27,15 @@
     },
     "only_start_out_of_combat": {
       "label": "전투가 완전히 끝날 때까지 대기",
-      "tooltip": "완전히 비전투가 된 뒤에야 다음 끌어오기를 시작합니다. 이미 맞고 있으면 전투로 들어갑니다."
+      "tooltip": "완전히 비전투가 된 뒤에야 다음 끌어오기를 시작합니다."
     },
     "max_mob_level": {
       "label": "최대 적 레벨",
-      "tooltip": "이 레벨보다 높은 적은 무시합니다. 특수나 레벨이 섞인 무리에 유용합니다."
+      "tooltip": "이 레벨보다 높은 적은 무시합니다."
     },
     "max_euclidean_distance": {
       "label": "최대 끌어오기 거리",
-      "tooltip": "이 거리(일름)보다 먼 적은 무시합니다. 먼 특수 때문에 맵을 가로질러 끌려가는 일을 막습니다."
+      "tooltip": "이 거리(일름)보다 먼 적은 무시합니다."
     },
     "min_euclidean_distance_to_return_home": {
       "label": "이 거리보다 멀면 시작점으로",
@@ -43,7 +43,7 @@
     },
     "return_to_start_in_waiting_phase": {
       "label": "전투 후 시작점으로 복귀",
-      "tooltip": "시작점은 Start를 눌렀을 때 서 있던 곳입니다. 자동 탑승이 켜져 있으면 탈것으로 돌아갑니다."
+      "tooltip": "시작점은 Start를 눌렀을 때 서 있던 곳입니다."
     },
     "render_debug_lines": {
       "label": "디버그 선 표시",
@@ -51,7 +51,7 @@
     },
     "apply_battle_bell": {
       "label": "전투의 종 사용",
-      "tooltip": "끌어오기 전마다 서포트 풍수사로 바꿔 전투의 종을 쓰고(버프가 남아 있어도 재사용) 그다음 질주합니다. 아래 대기보다 쿨이 길 때만 건너뜁니다."
+      "tooltip": "풀 전에 서포트 풍수사로 바꿔 전투의 종을 다시 걸고, 전력 질주한 뒤 돌아갑니다."
     },
     "maximum_battle_bell_wait_time": {
       "label": "전투의 종 최대 대기",
@@ -63,7 +63,7 @@
     },
     "minimum_mobs_to_start_fight": {
       "label": "전투 전 모을 적 수",
-      "tooltip": "싸우기 전에 몇 마리를 모을지입니다. 근처에 더 끌어올 적이 없으면 부족해도 전투를 시작합니다."
+      "tooltip": "싸우기 전에 몇 마리를 모을지입니다."
     },
     "stacking_timeout_seconds": {
       "label": "모으기 제한 시간(초)",

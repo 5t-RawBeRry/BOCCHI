@@ -18,7 +18,10 @@ internal static class DisabledActivityIdsHelper
         IUIService ui,
         string rendererName,
         IReadOnlyList<ActivityData> activities,
-        Func<uint, string> nameForId)
+        Func<uint, string> nameForId,
+        Func<uint, string?>? forcedOnReason = null,
+        string? forcedOnNote = null,
+        string? forcedOnSuffix = null)
     {
         if (prop.PropertyType != typeof(HashSet<uint>))
         {
@@ -43,15 +46,30 @@ internal static class DisabledActivityIdsHelper
             return false;
         }
 
+        if (!string.IsNullOrEmpty(forcedOnNote))
+        {
+            ui.Text(forcedOnNote);
+        }
+
         bool changed = false;
         foreach (ActivityData activity in activities)
         {
             uint id = (uint)activity.Id;
             string name = nameForId(id);
-            bool enabled = !disabled.Contains(id);
+            string? forcedReason = forcedOnReason?.Invoke(id);
+            bool forcedOn = !string.IsNullOrEmpty(forcedReason);
+            bool enabled = forcedOn || !disabled.Contains(id);
+            string label = forcedOn && !string.IsNullOrEmpty(forcedOnSuffix)
+                ? $"{name} (#{activity.Id}){forcedOnSuffix}"
+                : $"{name} (#{activity.Id})";
 
             ImGui.PushID(activity.Id);
-            if (ImGui.Checkbox($"{name} (#{activity.Id})", ref enabled))
+            if (forcedOn)
+            {
+                ImGui.BeginDisabled();
+            }
+
+            if (ImGui.Checkbox(label, ref enabled) && !forcedOn)
             {
                 if (enabled)
                 {
@@ -60,6 +78,15 @@ internal static class DisabledActivityIdsHelper
                 else
                 {
                     changed |= disabled.Add(id);
+                }
+            }
+
+            if (forcedOn)
+            {
+                ImGui.EndDisabled();
+                if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+                {
+                    Ocelot.Extensions.PropertyInfoExtensions.DrawWrappedTooltip(forcedReason!);
                 }
             }
 

@@ -27,15 +27,15 @@
     },
     "only_start_out_of_combat": {
       "label": "Wait until combat fully ends",
-      "tooltip": "Do not start a new pull until you are fully out of combat. If something is already attacking you, fighting still starts."
+      "tooltip": "Do not start a new pull until you are fully out of combat."
     },
     "max_mob_level": {
       "label": "Max enemy level",
-      "tooltip": "Ignore enemies above this level. Handy when specials or mixed-level packs are around."
+      "tooltip": "Ignore enemies above this level."
     },
     "max_euclidean_distance": {
       "label": "Max pull range",
-      "tooltip": "Ignore enemies farther than this (yalms). Stops a far-away special from dragging you across the map."
+      "tooltip": "Ignore enemies farther than this (yalms)."
     },
     "min_euclidean_distance_to_return_home": {
       "label": "Go home if farther than",
@@ -43,7 +43,7 @@
     },
     "return_to_start_in_waiting_phase": {
       "label": "Return to start after combat",
-      "tooltip": "Your start point is where you stood when you pressed Start. Uses a mount on the way back if auto-mount is on."
+      "tooltip": "Your start point is where you stood when you pressed Start."
     },
     "render_debug_lines": {
       "label": "Show debug lines",
@@ -51,7 +51,7 @@
     },
     "apply_battle_bell": {
       "label": "Use Battle Bell",
-      "tooltip": "Before every pull: switch to Geomancer, cast Battle Bell (even if the buff is still up), then Sprint, and switch back. Skips Bell only if its cooldown is longer than the wait below."
+      "tooltip": "Before each pull, switch to Geomancer, recast Battle Bell, Sprint, then switch back."
     },
     "maximum_battle_bell_wait_time": {
       "label": "Max wait for Battle Bell",
@@ -63,7 +63,7 @@
     },
     "minimum_mobs_to_start_fight": {
       "label": "Minimum enemies before fighting",
-      "tooltip": "How many enemies to gather before stopping to fight. If nothing else is left to pull nearby, fighting starts early."
+      "tooltip": "How many enemies to gather before stopping to fight."
     },
     "stacking_timeout_seconds": {
       "label": "Gather timeout (seconds)",

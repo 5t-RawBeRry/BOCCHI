@@ -4,18 +4,16 @@
     "status": {
       "label": "状态",
       "tooltip": "辅助插件是否已安装并正常工作。",
-      "intro": "移动与以太网传送需要安装并加载必需插件。可选战斗自动化在「常规 → 战斗 → 战斗自动循环」中选择：Wrath 或 Rotation Solver Reborn 搭配 BOCCHI AI，或完整的 BossMod / BossMod Reborn 自动循环。任选一条路径即可。“已关联”表示 BOCCHI 能与该插件通信。",
-      "required": "必需",
-      "optional": "可选",
-      "optional_intro": "每组任选一个插件即可。",
-      "optional_ai": "BOCCHI AI — BossMod 预设（任选其一）",
-      "optional_autorotation": "职业自动循环（任选其一）",
+      "intro": "赶路插件必须就绪。战斗只需「常规 → 战斗」中所选的插件就绪即可。",
+      "required": "赶路",
+      "optional": "战斗",
+      "optional_intro": "Wrath Combo 和 Rotation Solver Reborn 还需要 BossMod 或 BossMod Reborn。",
+      "using": "正在使用 {0}",
+      "in_use": "使用中",
       "ready": "就绪",
-      "ipc_ok": "已关联",
-      "ipc_ok_mesh_pending": "已关联（地图尚未就绪）",
-      "ipc_missing": "未关联",
-      "loaded": "已加载",
-      "installed_not_loaded": "已安装（未加载）",
+      "map_loading": "地图仍在加载",
+      "not_working": "无法使用",
+      "not_enabled": "未启用",
       "not_installed": "未安装"
     }
   }

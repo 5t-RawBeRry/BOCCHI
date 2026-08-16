@@ -27,15 +27,15 @@
     },
     "only_start_out_of_combat": {
       "label": "等完全脱离战斗后再开始",
-      "tooltip": "完全脱离战斗后才开始新一轮拉怪。若已有敌人在攻击你，仍会直接进入战斗。"
+      "tooltip": "完全脱离战斗后才开始新一轮拉怪。"
     },
     "max_mob_level": {
       "label": "敌人最高等级",
-      "tooltip": "忽略高于该等级的敌人。附近有特殊怪或等级混杂的怪群时很有用。"
+      "tooltip": "忽略高于该等级的敌人。"
     },
     "max_euclidean_distance": {
       "label": "最大拉怪距离",
-      "tooltip": "忽略超过该距离（米）的敌人。避免远处特殊怪把你拽去跑图。"
+      "tooltip": "忽略超过该距离（米）的敌人。"
     },
     "min_euclidean_distance_to_return_home": {
       "label": "超过该距离才回家",
@@ -43,7 +43,7 @@
     },
     "return_to_start_in_waiting_phase": {
       "label": "战斗结束后返回起点",
-      "tooltip": "起点是你按下“开始”时所站的位置。若开启自动上坐骑，返回时会骑乘。"
+      "tooltip": "起点是你按下“开始”时所站的位置。"
     },
     "render_debug_lines": {
       "label": "显示调试连线",
@@ -51,7 +51,7 @@
     },
     "apply_battle_bell": {
       "label": "使用战斗之铃",
-      "tooltip": "每次拉怪前都切换到辅助风水师并施放战斗之铃（即使增益仍在也会重施），然后冲刺。仅当冷却长于下方等待时间时才跳过。"
+      "tooltip": "每次拉怪前切换到风水师，重施战斗之铃、冲刺，再切回。"
     },
     "maximum_battle_bell_wait_time": {
       "label": "等待战斗之铃的最长时间",
@@ -63,7 +63,7 @@
     },
     "minimum_mobs_to_start_fight": {
       "label": "开战前最少敌人",
-      "tooltip": "聚集到多少只敌人后停下来开打。附近已没有可拉的敌人时会提前开战。"
+      "tooltip": "聚集到多少只敌人后停下来开打。"
     },
     "stacking_timeout_seconds": {
       "label": "聚怪超时（秒）",

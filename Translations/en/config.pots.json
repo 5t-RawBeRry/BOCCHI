@@ -1,6 +1,6 @@
 {
   "label": "Pot timing",
-  "tooltip": "When to leave for pots, when to skip late pots, and reroll chests. The next-pot prediction clears if you leave Occult Crescent or change instance.",
+  "tooltip": "When to leave for pots, when to skip late pots, and reroll chests.",
   "sections": {
     "timing": "Timing",
     "chests": "Chests"
@@ -8,15 +8,15 @@
   "fields": {
     "max_pot_fate_progress_percent": {
       "label": "Skip pots at or above (% progress)",
-      "tooltip": "Do not path to a pot FATE that is already this far along. Once you are in the pot, BOCCHI stays to finish. 0 = never skip for progress. Default 50%."
+      "tooltip": "Skip a pot FATE that is already this far along. 0 = never skip."
     },
     "min_pot_fate_minutes_remaining": {
       "label": "Skip pots with under (minutes left)",
-      "tooltip": "Optional extra skip: do not path to a pot with fewer minutes left than this. 0 = off (progress % above is enough for most people)."
+      "tooltip": "Also skip a pot with fewer minutes left than this. 0 = off."
     },
     "pot_spawn_lead_minutes": {
       "label": "Leave for pots this many minutes early",
-      "tooltip": "Minutes before the predicted pot spawn to stop other work and head to pots (Illegal Mode and Pots & Treasure). Timer resets when you leave OC or hop instances."
+      "tooltip": "How many minutes before the next pot to stop other work and head there."
     },
     "fate_fallback_cutoff_minutes": {
       "label": "Do not start FATEs within (minutes of pots)",

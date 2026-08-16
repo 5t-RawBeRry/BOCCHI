@@ -7,8 +7,11 @@
   "fields": {
     "disabled_fate_ids": {
       "label": "Allowed FATEs",
-      "tooltip": "Uncheck a FATE to skip it. Prefer pot FATEs / Farm pot chests still run Magic Pot FATEs even if those are unchecked here.",
-      "empty": "No FATEs listed for this zone."
+      "tooltip": "Check a FATE to do it. Uncheck to skip. While Prefer pot FATEs is on, Magic Pots stay on and show as required.",
+      "empty": "No FATEs listed for this zone.",
+      "forced_note": "Prefer pot FATEs is on — Magic Pots are required.",
+      "forced_suffix": " — required",
+      "forced_by_prefer": "Required while Prefer pot FATEs is on. Turn that off if you want to skip this pot."
     }
   }
 }

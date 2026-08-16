@@ -22,7 +22,7 @@
     },
     "show_percentage_active_treasure_count": {
       "label": "Show remaining coffers as %",
-      "tooltip": "Adds a percentage next to Active bronze / Active silver on the Treasure tab (Treasure Sight totals)."
+      "tooltip": "Adds a percentage next to Active bronze / Active silver on the Treasure tab."
     },
     "return_to_base_camp_after_hunt": {
       "label": "Return after hunt",
@@ -30,7 +30,7 @@
     },
     "play_sound_on_hunt_complete": {
       "label": "Play sound when Treasure Hunt finishes",
-      "tooltip": "Play an MP3 when Treasure Hunt finishes (Carrot Hunt does not use this)."
+      "tooltip": "Play an MP3 when Treasure Hunt finishes."
     },
     "hunt_complete_sound": {
       "label": "Hunt finished sound",
@@ -39,11 +39,11 @@
     },
     "cast_treasure_sight_during_hunt": {
       "label": "Cast Treasure Sight during hunt",
-      "tooltip": "Cast Treasure Sight when the hunt starts, and again every N locations checked. Stops the hunt early if Sight says no coffers are left."
+      "tooltip": "Cast Treasure Sight at the start, then every N locations. Stops early if Sight says nothing is left."
     },
     "treasure_sight_every_n_locations": {
       "label": "Treasure Sight every N locations",
-      "tooltip": "After the first cast, cast Treasure Sight again every this many hunt locations checked (opened or empty). Not only coffers you found."
+      "tooltip": "After the first cast, recast every this many locations checked (opened or empty)."
     },
     "hunt_max_level": {
       "label": "Max coffer level",
@@ -59,15 +59,15 @@
     },
     "enable_automatic_treasure_hunt_during_illegal_mode": {
       "label": "Auto treasure hunt in Illegal Mode",
-      "tooltip": "After a CE or FATE in Illegal Mode or Completionist (and after Triage Mode, if it ran): Return to camp and use Treasure Sight when you know it. Then start a treasure hunt if coffers remain — or hunt from the built-in map if you do not have Treasure Sight yet."
+      "tooltip": "After a FATE or CE, Return to camp, cast Treasure Sight if you know it, then hunt remaining coffers."
     },
     "use_ninja_hide_on_dangerous_routes": {
       "label": "Ninja Hide near strong enemies",
-      "tooltip": "Experimental: if a high-Knowledge enemy is nearby, swap to your Ninja gearset, use Hide, and walk the last stretch to the coffer. Useful near max Knowledge."
+      "tooltip": "Near a high-Knowledge enemy, swap to Ninja, Hide, and walk the last stretch to the coffer."
     },
     "use_occult_sprint_while_hidden": {
       "label": "Occult Sprint while Hidden",
-      "tooltip": "While Ninja Hide is up, switch to Phantom Thief and cast Occult Sprint for a big move-speed boost. Does not wait on Sprint before walking."
+      "tooltip": "While Hidden, switch to Phantom Thief and cast Occult Sprint for a big speed boost."
     },
     "ninja_gearset_number": {
       "label": "Ninja gearset number",
@@ -75,15 +75,15 @@
     },
     "knowledge_hide_offset": {
       "label": "Hide when Knowledge is this much higher",
-      "tooltip": "Use Hide when a nearby enemy's Knowledge is at least your current (synced) Knowledge plus this number. 0 = same Knowledge or higher. On South Horn you are synced to Knowledge 20 even if your real Knowledge is higher — so mid-20s enemies can still trigger Hide there."
+      "tooltip": "Hide when a nearby enemy's Knowledge is at least yours plus this. 0 = same or higher."
     },
     "knowledge_threat_enter_distance": {
       "label": "Start Hide within (yalms)",
-      "tooltip": "Begin the Hide flow when a dangerous enemy is this close. While mounted, Hide starts a few yalms earlier so you can dismount first."
+      "tooltip": "Begin Hide when a dangerous enemy is this close."
     },
     "knowledge_threat_exit_distance": {
       "label": "Keep Hide until farther than (yalms)",
-      "tooltip": "Once Hide is on, keep it until enemies are farther than this. Use a larger value than “Start Hide” so it does not flicker on and off."
+      "tooltip": "Once Hide is on, keep it until enemies are farther than this."
     }
   }
 }

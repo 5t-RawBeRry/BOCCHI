@@ -932,7 +932,7 @@ public sealed class CarrotHunterService
             tour[0].Id);
     }
 
-    /// <summary>Finish Middle, then NW, then NE — death-zone babysitting is one stretch.</summary>
+    /// <summary>Walk the regions in TourOrder — death-zone babysitting stays one stretch.</summary>
     private void RebuildNorthHornRegionTour(
         List<CarrotData> remaining,
         int? preferStartId,
@@ -958,9 +958,10 @@ public sealed class CarrotHunterService
         }
 
         log.Information(
-            "Carrot hunt North Horn tour: {Count} remaining (start {Start}, Middle→NW→NE)",
+            "Carrot hunt North Horn tour: {Count} remaining (start {Start}, {Order})",
             tour.Count,
-            tour.Count > 0 ? tour[0].Id : 0);
+            tour.Count > 0 ? tour[0].Id : 0,
+            string.Join("→", NorthHornCarrotRegions.TourOrder));
     }
 
     private void AppendNearestNeighborTour(
@@ -1264,7 +1265,7 @@ public sealed class CarrotHunterService
 
     /// <summary>
     ///     North Horn: stay in the current region, or the first unfinished region in
-    ///     Middle → NW → NE when replanning.
+    ///     <see cref="NorthHornCarrotRegions.TourOrder"/> when replanning.
     /// </summary>
     private bool IsAllowedOnNorthHornTour(CarrotData pad, CarrotData? currentPad = null)
     {
@@ -1286,6 +1287,7 @@ public sealed class CarrotHunterService
     private NorthHornCarrotRegion? GetActiveNorthHornRegion()
     {
         NorthHornCarrotRegion? active = null;
+        int activeOrder = int.MaxValue;
         foreach (CarrotData remaining in zones.GetZone().GetCarrotData())
         {
             if (finishedAuthoredIds.Contains(remaining.Id))
@@ -1293,9 +1295,13 @@ public sealed class CarrotHunterService
                 continue;
             }
 
+            // Order by TourOrder position, not by enum value — RebuildNorthHornRegionTour walks
+            // TourOrder, so comparing raw enum values desyncs the moment that array is reordered.
             NorthHornCarrotRegion region = NorthHornCarrotRegions.Classify(remaining.Position);
-            if (active == null || region < active)
+            int order = NorthHornCarrotRegions.TourIndex(region);
+            if (order < activeOrder)
             {
+                activeOrder = order;
                 active = region;
             }
         }

@@ -4,18 +4,16 @@
     "status": {
       "label": "状態",
       "tooltip": "補助プラグインがインストールされ、動いているかです。",
-      "intro": "移動とエーテルネットのテレポには必須プラグインのインストールと読み込みが必要です。任意は「一般 → 戦闘 → 戦闘オートローテーション」の戦闘自動化です（Wrath / Rotation Solver Reborn + BOCCHI AI、または BossMod / BossMod Reborn のフルオートローテーション）。いずれか1つを選びます。「連携済み」は BOCCHI がそのプラグインと話せている状態です。",
-      "required": "必須",
-      "optional": "任意",
-      "optional_intro": "グループごとにプラグインを1つ選べば十分です（どちらでも可）。",
-      "optional_ai": "BOCCHI AI — BossMod プリセット（1つ選択）",
-      "optional_autorotation": "ジョブオートローテーション（1つ選択）",
+      "intro": "移動用プラグインは準備完了である必要があります。戦闘は「一般 → 戦闘」で選んだものだけ準備完了なら十分です。",
+      "required": "移動",
+      "optional": "戦闘",
+      "optional_intro": "Wrath Combo と Rotation Solver Reborn には BossMod または BossMod Reborn も必要です。",
+      "using": "使用中：{0}",
+      "in_use": "使用中",
       "ready": "準備完了",
-      "ipc_ok": "連携済み",
-      "ipc_ok_mesh_pending": "連携済み（マップ未準備）",
-      "ipc_missing": "未連携",
-      "loaded": "読み込み済み",
-      "installed_not_loaded": "インストール済み（未読み込み）",
+      "map_loading": "マップ読み込み中",
+      "not_working": "動作していません",
+      "not_enabled": "無効",
       "not_installed": "未インストール"
     }
   }

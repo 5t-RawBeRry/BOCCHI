@@ -18,8 +18,8 @@
       },
       "ECommons": {
         "type": "Transitive",
-        "resolved": "3.2.1.16",
-        "contentHash": "Ifq1cHrBXL9h+94hWhocehklrl3DamafhYTfxgwzOGc6yc/3AkDvwLjYQG2EHEv1Rrgrf5FkdxlnJzcVfiBesQ=="
+        "resolved": "3.2.1.17",
+        "contentHash": "gIjvCFzqJApeyncqDegjvs2QFAVoXuwkrfFimhXWhu6x8zAloh8Wyu1Qu8BSym79HuTu4v5/U/HhNqkFy6uwoA=="
       },
       "KamiToolKit": {
         "type": "Transitive",
@@ -175,7 +175,7 @@
       "FFXIVOcelot": {
         "type": "Project",
         "dependencies": {
-          "ECommons": "[3.2.1.16, )",
+          "ECommons": "[3.2.1.17, )",
           "Microsoft.Extensions.DependencyInjection": "[10.0.7, )"
         }
       },
@@ -189,7 +189,7 @@
       "FFXIVOcelot.ECommons": {
         "type": "Project",
         "dependencies": {
-          "ECommons": "[3.2.1.16, )",
+          "ECommons": "[3.2.1.17, )",
           "FFXIVOcelot": "[1.0.0, )"
         }
       },

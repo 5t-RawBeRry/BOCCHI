@@ -11,8 +11,12 @@ using XIVFate = Lumina.Excel.Sheets.Fate;
 
 namespace BOCCHI.Common.Config.Renderers;
 
-public class DisabledFateIdsRenderer(IZoneProvider zones, IDataManager data, IUIService ui)
-    : IFieldRenderer<DisabledFateIdsAttribute>
+public class DisabledFateIdsRenderer(
+    IZoneProvider zones,
+    IDataManager data,
+    IUIService ui,
+    AutomatorConfig automator
+) : IFieldRenderer<DisabledFateIdsAttribute>
 {
     public bool Render(object target, PropertyInfo prop, DisabledFateIdsAttribute attr, Type owner, ITranslator translator)
     {
@@ -23,6 +27,23 @@ public class DisabledFateIdsRenderer(IZoneProvider zones, IDataManager data, IUI
             .OrderBy(f => f.Id)
             .ToList();
 
+        string? ForcedOnReason(uint id)
+        {
+            if (!automator.PreferPotFates || !zone.IsPotFate((int)id))
+            {
+                return null;
+            }
+
+            return translator.T("config.fates.fields.disabled_fate_ids.forced_by_prefer");
+        }
+
+        string? note = automator.PreferPotFates
+            ? translator.T("config.fates.fields.disabled_fate_ids.forced_note")
+            : null;
+        string? suffix = automator.PreferPotFates
+            ? translator.T("config.fates.fields.disabled_fate_ids.forced_suffix")
+            : null;
+
         return DisabledActivityIdsHelper.Render(
             target,
             prop,
@@ -31,6 +52,9 @@ public class DisabledFateIdsRenderer(IZoneProvider zones, IDataManager data, IUI
             ui,
             nameof(DisabledFateIdsRenderer),
             fates,
-            id => fateSheet.GetRow(id).Name.ToString());
+            id => fateSheet.GetRow(id).Name.ToString(),
+            ForcedOnReason,
+            note,
+            suffix);
     }
 }

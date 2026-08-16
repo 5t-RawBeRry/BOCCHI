@@ -8,7 +8,7 @@
   "fields": {
     "should_automate_buffs": {
       "label": "自动维持增益",
-      "tooltip": "在违规模式中，于知识水晶自动刷新你在下方勾选的增益。不会仅为补增益而离开已在等待或战斗中的紧急遭遇战。"
+      "tooltip": "违规模式中，在知识水晶处维持下方增益。"
     },
     "apply_romeos_ballad": {
       "label": "爱之歌",
@@ -28,7 +28,7 @@
     },
     "apply_buffs_using_inquiring_mind": {
       "label": "尽量使用探求心",
-      "tooltip": "在知识水晶附近，辅助自由人可用探求心一次附加所有已选且已解锁的增益。若还有缺失，再换职逐个附加。"
+      "tooltip": "在知识水晶附近，辅助自由人可一次附加所选已解锁增益。"
     },
     "reapply_threshold": {
       "label": "剩余不足（分钟）时刷新",

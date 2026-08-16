@@ -18,27 +18,27 @@
     },
     "prefer_pot_fates": {
       "label": "Prefer pot FATEs",
-      "tooltip": "Pick Magic Pot FATEs when choosing what to do, and allow those FATEs even if they are unchecked under Allowed FATEs. Also turns on pot timing and waiting near pots (see Pot timing)."
+      "tooltip": "Always do Magic Pot FATEs, and pick them first. On the FATEs tab they stay checked and say “required” until you turn this off."
     },
     "should_farm_pot_chests": {
       "label": "Farm pot chests after pot FATEs",
-      "tooltip": "After a pot FATE ends (not between waves), wait for Cache Me If You Can, drink Magical Elixir, and follow the compass. Keeps going while Cache Me is up; stops when that buff is gone. If you have no buff, elixir, or hints, it visits known chest spots instead. Also allows pot FATEs for Illegal Mode even if they are unchecked under Allowed FATEs. Extra reroll chests are under Pot timing."
+      "tooltip": "After a pot FATE, drink Magical Elixir and follow the compass while Cache Me If You Can lasts. No compass hint? It walks known chest spots instead."
     },
     "should_preposition_to_pots": {
       "label": "Wait near pots before they spawn",
-      "tooltip": "Leave early and stand near where the next pot FATE should appear. Timing is under Pot timing. The next-pot timer resets if you leave Occult Crescent or change instance."
+      "tooltip": "Leave early and stand near where the next pot FATE should appear. Timing is under Pot timing."
     },
     "should_do_critical_encounters": {
       "label": "Do Critical Encounters",
-      "tooltip": "Go to and complete Critical Encounters. While waiting for or fighting a CE, BOCCHI will not Return early just to refresh buffs or idle."
+      "tooltip": "Go to and complete Critical Encounters."
     },
     "combat_autorotation": {
       "label": "Combat autorotation",
-      "tooltip": "How Illegal Mode fights in FATEs and CEs. Wrath Combo + BOCCHI AI / Rotation Solver Reborn + BOCCHI AI: BossMod targeting and movement plus that plugin for job skills (RSR uses Henched mode — skills only). BossMod / BossMod Reborn autorotation: full presets with job modules, role AI, phantom job AI, autotarget, and automove. Turns off while traveling. None = manual."
+      "tooltip": "Which autorotation to use in FATEs and CEs. Off while traveling. None = you fight."
     },
     "should_auto_mount": {
       "label": "Mount while traveling",
-      "tooltip": "Mount for long trips to a FATE or CE, and remount if you get off mid-way (for example after Treasure Sight)."
+      "tooltip": "Mount for long trips to a FATE or CE, and remount if you get off mid-way."
     },
     "preferred_mount_id": {
       "label": "Preferred mount",
@@ -47,45 +47,45 @@
     },
     "sprint_on_aetheryte_approach": {
       "label": "Sprint to aetherytes",
-      "tooltip": "Use Sprint when walking up to an aetheryte (camp, aethernet shard, or escaping combat during a treasure hunt)."
+      "tooltip": "Use Sprint when walking up to an aetheryte."
     },
     "stay_mounted_while_waiting_for_ce": {
       "label": "Stay mounted while waiting for CEs",
-      "tooltip": "Do not get off your mount after you arrive at a CE that is still preparing. You still dismount when it starts."
+      "tooltip": "Stay on your mount after you arrive at a CE that is still preparing."
     },
     "stop_after_return": {
       "label": "Stop after return and teleport",
-      "tooltip": "After a FATE or CE, return to camp, teleport toward the next one, mount, then stop. You walk the rest yourself. Toggle Illegal Mode to resume, or turn this off for full auto."
+      "tooltip": "After a FATE or CE, Return, teleport toward the next one, mount, then stop. Toggle Illegal Mode to resume."
     },
     "phantom_jobs_leveling_mode": {
       "label": "Level phantom jobs automatically",
-      "tooltip": "When your current phantom job is maxed, switch to the next unlocked one that is not maxed. Skips Freelancer (it does not level from combat). Stays put if every unlocked job is already maxed. Does not switch during Triage Mode or pot chest farming, and does not interrupt Treasure Sight or buffs."
+      "tooltip": "When your phantom job is maxed, switch to the next unlocked one that is not. Skips Freelancer."
     },
     "enable_triage_mode": {
       "label": "Triage Mode",
-      "tooltip": "Fits into normal Illegal Mode. After a FATE or CE: if dead players nearby still need a raise, briefly switch to your chosen raise job, raise them (skips anyone who already has a raise pending), switch back, then continue as usual (Return / Sight / next activity). If nobody needs a raise, nothing extra happens — no job swap and no waiting. Needs Chemist or White Mage unlocked."
+      "tooltip": "After a FATE or CE, raise nearby dead players with your chosen phantom job, then continue. Skips anyone who already has a raise."
     },
     "preferred_triage_raise_job": {
       "label": "Triage raise job",
-      "tooltip": "Which phantom job to use for raises. If that job is not unlocked, Triage uses the other one when available.",
+      "tooltip": "Which phantom job to use for raises.",
       "chemist": "Phantom Chemist",
       "white_mage": "Phantom White Mage"
     },
     "should_cast_treasure_sight": {
       "label": "Cast Treasure Sight at camp",
-      "tooltip": "While idle at base camp, cast Treasure Sight on a timer. Ignored if Auto treasure hunt in Illegal Mode is on (that already surveys after each CE/FATE). Waits if Triage Mode is currently raising."
+      "tooltip": "At camp, cast Treasure Sight on a timer."
     },
     "treasure_sight_recast_interval_seconds": {
       "label": "Treasure Sight every (seconds)",
-      "tooltip": "How often to cast Treasure Sight at camp when the option above is on."
+      "tooltip": "How often to cast Treasure Sight at camp."
     },
     "max_remote_idle_time_seconds": {
       "label": "Max wait before Return (seconds)",
-      "tooltip": "After a FATE or CE ends (and Triage Mode finishes, if it ran), wait a random time between 2 seconds and this value before casting Return."
+      "tooltip": "After a FATE or CE, wait a random time between 2 seconds and this before Return."
     },
     "max_base_teleport_delay_seconds": {
       "label": "Max wait before leaving camp (seconds)",
-      "tooltip": "At camp, wait a random time between 0 seconds and this value before teleporting to a FATE or CE. Helps when people would otherwise leave at the same time. 0 means leave right away."
+      "tooltip": "At camp, wait 0 to this many seconds before leaving for a FATE or CE. 0 = leave right away."
     },
     "auto_repair_threshold": {
       "label": "Repair gear below (%)",

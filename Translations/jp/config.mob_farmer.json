@@ -27,15 +27,15 @@
     },
     "only_start_out_of_combat": {
       "label": "戦闘が完全に終わるまで待つ",
-      "tooltip": "完全に非戦闘になってから次の釣りを始めます。すでに敵に狙われている場合は戦闘に入ります。"
+      "tooltip": "完全に非戦闘になってから次の釣りを始めます。"
     },
     "max_mob_level": {
       "label": "対象の最大レベル",
-      "tooltip": "これより高いレベルの敵は無視します。特殊モブやレベル差のある群れ向けです。"
+      "tooltip": "これより高いレベルの敵は無視します。"
     },
     "max_euclidean_distance": {
       "label": "釣りの最大距離",
-      "tooltip": "この距離（ヤルム）より遠い敵は無視します。遠い特殊モブにマップ端まで引っ張られるのを防ぎます。"
+      "tooltip": "この距離（ヤルム）より遠い敵は無視します。"
     },
     "min_euclidean_distance_to_return_home": {
       "label": "この距離以上なら開始地点へ戻る",
@@ -43,7 +43,7 @@
     },
     "return_to_start_in_waiting_phase": {
       "label": "戦闘後に開始地点へ戻る",
-      "tooltip": "開始地点は Start を押した場所です。自動マウントがオンなら、帰りにマウントします。"
+      "tooltip": "開始地点は Start を押した場所です。"
     },
     "render_debug_lines": {
       "label": "デバッグ線を表示",
@@ -51,7 +51,7 @@
     },
     "apply_battle_bell": {
       "label": "バトルベルを使う",
-      "tooltip": "釣りの前に毎回ジオマンサーへ切り替えてバトルベルを唱え（効果が残っていても再詠唱）、その後スプリントします。下の待ち時間よりクールダウンが長い場合のみスキップします。"
+      "tooltip": "プル前にジオマンサーへ切り替え、バトルベルをかけ直し、スプリントして戻ります。"
     },
     "maximum_battle_bell_wait_time": {
       "label": "バトルベルの最大待ち時間",
@@ -63,7 +63,7 @@
     },
     "minimum_mobs_to_start_fight": {
       "label": "戦闘前に集める敵の数",
-      "tooltip": "戦う前に何体集めるかです。近くに釣れる敵がもういない場合は、足りなくても戦闘を始めます。"
+      "tooltip": "戦う前に何体集めるかです。"
     },
     "stacking_timeout_seconds": {
       "label": "集めの制限時間（秒）",
