@@ -38,7 +38,12 @@ public class PotsConfig : IAutoConfig
     /// <summary>
     ///     True when a live pot should not be started / pathing to — already registered pots stay.
     /// </summary>
+    /// <summary>
+    ///     A FATE that has not started yet reports a nonsense TimeRemaining, so only judge a pot on
+    ///     the clock once it is actually running — otherwise a pot is dropped the moment it spawns.
+    /// </summary>
     public bool ShouldSkipLivePot(long timeRemainingSeconds) =>
         MinPotFateMinutesRemaining > 0
+        && timeRemainingSeconds > 0
         && timeRemainingSeconds < MinPotFateMinutesRemaining * 60L;
 }

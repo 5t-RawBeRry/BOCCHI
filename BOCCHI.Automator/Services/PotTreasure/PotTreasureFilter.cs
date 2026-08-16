@@ -1,0 +1,94 @@
+using System.Numerics;
+using BOCCHI.Common.Data.Zones;
+using BOCCHI.Common.Data.Zones.Graph;
+using Ocelot.Extensions;
+
+namespace BOCCHI.Automator.Services.PotTreasure;
+
+/// <summary>
+///     Narrows the authored pot chest spots using compass hints.
+///     A hint is read <b>from wherever the player is standing</b>, so it is a bearing constraint
+///     relative to the player — not a fixed property of the chest. The previous design binned spots
+///     by their direction from the pot FATE centre, which only agrees with the hint while you are
+///     standing at the centre; after the first move it sent the hunt to the octant on the wrong side
+///     of the map and it ping-ponged.
+/// </summary>
+public static class PotTreasureFilter
+{
+    /// <summary>Octants are 45° wide, so a hint constrains the bearing to ±22.5°.</summary>
+    public const float OctantTolerance = 22.5f;
+
+    /// <summary>Used for the one retry before giving up: 1.5 octants either side.</summary>
+    public const float WideTolerance = 67.5f;
+
+    /// <summary>Compass bearing in degrees from <paramref name="from"/>, 0 = north (−Z), 90 = east.</summary>
+    public static float Bearing(Vector3 from, Vector3 to)
+    {
+        float deg = MathF.Atan2(to.X - from.X, -(to.Z - from.Z)) * (180f / MathF.PI);
+        return deg < 0f ? deg + 360f : deg;
+    }
+
+    /// <summary>Smallest absolute angle between two bearings, 0..180.</summary>
+    public static float AngleDelta(float a, float b)
+    {
+        float delta = MathF.Abs(a - b) % 360f;
+        return delta > 180f ? 360f - delta : delta;
+    }
+
+    /// <summary>Bearing of the hinted octant, or null when the direction is unknown.</summary>
+    public static float? HintBearing(PotTreasureDirection direction) => direction switch
+    {
+        PotTreasureDirection.North => 0f,
+        PotTreasureDirection.Northeast => 45f,
+        PotTreasureDirection.East => 90f,
+        PotTreasureDirection.Southeast => 135f,
+        PotTreasureDirection.South => 180f,
+        PotTreasureDirection.Southwest => 225f,
+        PotTreasureDirection.West => 270f,
+        PotTreasureDirection.Northwest => 315f,
+        _ => null,
+    };
+
+    /// <summary>
+    ///     Spots lying in the hinted direction from <paramref name="from"/>, nearest first within the
+    ///     distance band the hint reported. Distance only orders the result — the buckets' real
+    ///     boundaries are not known, so excluding on them would risk discarding the right spot.
+    /// </summary>
+    public static List<PotTreasureCandidate> Narrow(
+        IEnumerable<PotTreasureCandidate> pool,
+        Vector3 from,
+        PotTreasureDirection direction,
+        PotTreasureDistanceBucket distance,
+        float toleranceDegrees)
+    {
+        if (HintBearing(direction) is not float hinted)
+        {
+            return pool.ToList();
+        }
+
+        float expected = PotTreasureIds.RefineStep(distance);
+        return pool
+            .Where(c => c.Position.Distance2D(from) > 1f)
+            .Where(c => AngleDelta(Bearing(from, c.Position), hinted) <= toleranceDegrees)
+            .OrderBy(c => MathF.Abs(c.Position.Distance2D(from) - expected))
+            .ThenBy(c => c.Position.Distance2D(from))
+            .ToList();
+    }
+
+    /// <summary>Smart mode needs authored chest spots to narrow; otherwise it can only sweep.</summary>
+    public static bool CanRunSmart(IZone zone, int fateId) =>
+        zone.IsPotFate(fateId) && zone.GetPotChestData().ContainsKey(fateId);
+
+    /// <summary>Every authored spot for this pot FATE, as filter input.</summary>
+    public static List<PotTreasureCandidate> BuildPool(IZone zone, int fateId)
+    {
+        if (!zone.GetPotChestData().TryGetValue(fateId, out List<PotChestData>? chests))
+        {
+            return [];
+        }
+
+        return chests
+            .Select((chest, i) => new PotTreasureCandidate($"P{i + 1}", chest.Position, chest.Level))
+            .ToList();
+    }
+}

@@ -184,7 +184,12 @@ public class FarmingPotChestsHandler
         if (HasTreasureBuff())
         {
             hints.Arm();
-            farm.Phase = PotChestFarmPhase.ApproachCenter;
+
+            // Read the first hint where we are. Walking back to the pot centre only mattered when
+            // spots were binned by direction *from* the centre; hints are player-relative now, so
+            // the trip is pure overhead — and after a chest it dragged us back across the map.
+            pathfinder.Stop();
+            farm.Phase = PotChestFarmPhase.ElixirAtCenter;
             farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
             farm.SettledAtUtc = DateTimeOffset.MinValue;
             farm.ElixirAttempts = 0;
@@ -199,28 +204,13 @@ public class FarmingPotChestsHandler
         }
     }
 
+    /// <summary>
+    ///     Kept only so a farm latched before the player-relative rewrite does not stall on a phase
+    ///     nothing sets any more — just read the hint here instead of walking to the centre.
+    /// </summary>
     private void HandleApproachCenter(PotChestFarmMemory farm)
     {
-        float dist = player.Position.Distance2D(farm.FateCenter);
-        if (dist > CenterArrival)
-        {
-            farm.SettledAtUtc = DateTimeOffset.MinValue;
-            EnsurePathing(farm.FateCenter);
-            return;
-        }
-
         pathfinder.Stop();
-        if (farm.SettledAtUtc == DateTimeOffset.MinValue)
-        {
-            farm.SettledAtUtc = DateTimeOffset.UtcNow;
-            return;
-        }
-
-        if (DateTimeOffset.UtcNow - farm.SettledAtUtc < SettleDelay)
-        {
-            return;
-        }
-
         farm.Phase = PotChestFarmPhase.ElixirAtCenter;
         farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
         farm.ElixirAttempts = 0;
@@ -240,29 +230,20 @@ public class FarmingPotChestsHandler
 
             if (evt.Kind == PotTreasureHintKind.Hint)
             {
-                string groupKey = PotTreasureIds.GroupKey(evt.Direction);
-                if (!PotTreasureGroups.TryGetGroup(
-                        farm.FateId.Value,
-                        groupKey,
-                        farm.FateCenter,
-                        zones.GetZone(),
-                        out IReadOnlyList<PotTreasureCandidate> group)
-                    || group.Count == 0)
+                farm.SeedPool(PotTreasureFilter.BuildPool(zones.GetZone(), farm.FateId.Value));
+                if (farm.Pool.Count == 0)
                 {
-                    logger.Warning("Pot treasure: no candidates for {Group} — blind fallback", groupKey);
+                    logger.Warning("Pot treasure: no authored chest spots for this pot — blind fallback");
                     FallBackToBlind(farm);
                     return;
                 }
 
-                IEnumerable<PotTreasureCandidate> ordered = OrderNearestNeighbor(group, farm.FateCenter);
-                farm.BeginCandidateSearch(groupKey, ordered);
+                if (!TryNarrowByHint(farm, evt))
+                {
+                    return;
+                }
+
                 farm.HintRevisionBaseline = hints.Revision;
-                logger.Info(
-                    "Pot treasure: hint {Direction}/{Distance} → {Group} ({Count} candidates)",
-                    evt.Direction,
-                    evt.Distance,
-                    groupKey,
-                    farm.CandidateTotal);
                 return;
             }
 
@@ -340,33 +321,11 @@ public class FarmingPotChestsHandler
                 return;
             }
 
-            if (evt.Kind == PotTreasureHintKind.Hint && farm.Candidates.Count > 0)
+            if (evt.Kind == PotTreasureHintKind.Hint)
             {
-                if (TryRedirectCandidateGroup(farm, evt))
+                if (!TryNarrowByHint(farm, evt))
                 {
                     return;
-                }
-
-                if (!evt.IsLocalHint)
-                {
-                    // Same compass group, far from this spot — skip to the next candidate.
-                    farm.Candidates.Dequeue();
-                    farm.ElixirAttempts = 0;
-                    farm.RefineSteps = 0;
-                    farm.RefineTarget = null;
-                    farm.SettledAtUtc = DateTimeOffset.MinValue;
-                    return;
-                }
-
-                // Local: refine along hint direction.
-                if (farm.RefineSteps < MaxRefineSteps)
-                {
-                    Vector3 from = farm.RefineTarget ?? farm.Candidates.Peek().Position;
-                    Vector3 step = PotTreasureIds.DirectionVector(evt.Direction) * PotTreasureIds.RefineStep(evt.Distance);
-                    farm.RefineTarget = from + step;
-                    farm.RefineSteps++;
-                    farm.SettledAtUtc = DateTimeOffset.MinValue;
-                    farm.ElixirAttempts = 0;
                 }
             }
         }
@@ -380,7 +339,6 @@ public class FarmingPotChestsHandler
                 farm.WaitingForSpawnSince = DateTimeOffset.MinValue;
                 farm.SettledAtUtc = DateTimeOffset.MinValue;
                 farm.ElixirAttempts = 0;
-                farm.RefineTarget = null;
                 continue;
             }
 
@@ -389,12 +347,13 @@ public class FarmingPotChestsHandler
 
         if (farm.Candidates.Count == 0)
         {
-            logger.Info("Pot treasure: candidates exhausted — blind fallback while Cache Me remains");
-            FallBackToBlind(farm);
+            // Go through ResumeSearchOrBlind so this exhausts into a fresh reading, not straight
+            // into a 50-spot sweep — this path was missed when that re-read was added.
+            ResumeSearchOrBlind(farm);
             return;
         }
 
-        Vector3 target = farm.RefineTarget ?? farm.Candidates.Peek().Position;
+        Vector3 target = farm.Candidates.Peek().Position;
         float distance = player.Position.Distance2D(target);
 
         if (distance > OpenTreasureCofferChain.InteractDistance)
@@ -462,8 +421,6 @@ public class FarmingPotChestsHandler
         }
 
         farm.ElixirAttempts = 0;
-        farm.RefineSteps = 0;
-        farm.RefineTarget = null;
         farm.SettledAtUtc = DateTimeOffset.MinValue;
         farm.WaitingForSpawnSince = DateTimeOffset.MinValue;
         farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
@@ -513,6 +470,14 @@ public class FarmingPotChestsHandler
                 return;
             }
 
+            // Get on foot before closing the last stretch. Travel and the elixir are fine mounted,
+            // but the open needs to be within 2y of the coffer and that is not reliable from a
+            // mount — least of all in the air, where Dismount cannot land us on the spot.
+            if (DismountAssist.TryDismount(conditions))
+            {
+                return;
+            }
+
             // 2D — reveal Y ≈ -500 made 3D distance ~500y and blocked open forever (#170).
             float distance = player.Position.Distance2D(reveal.Position);
             if (distance > OpenTreasureCofferChain.InteractDistance)
@@ -552,8 +517,6 @@ public class FarmingPotChestsHandler
         }
 
         farm.ElixirAttempts = 0;
-        farm.RefineSteps = 0;
-        farm.RefineTarget = null;
         farm.SettledAtUtc = DateTimeOffset.MinValue;
         farm.WaitingForSpawnSince = DateTimeOffset.MinValue;
         ResetApproachWatch();
@@ -572,13 +535,14 @@ public class FarmingPotChestsHandler
         }
 
         farm.ElixirAttempts = 0;
-        farm.RefineSteps = 0;
-        farm.RefineTarget = null;
         farm.SettledAtUtc = DateTimeOffset.MinValue;
         farm.WaitingForSpawnSince = DateTimeOffset.MinValue;
         ResetApproachWatch();
         ResumeSearchOrBlind(farm);
     }
+
+    /// <summary>Give up on narrowing after this many readings and just sweep.</summary>
+    private const int MaxHintReadings = 10;
 
     private void ResumeSearchOrBlind(PotChestFarmMemory farm)
     {
@@ -587,6 +551,18 @@ public class FarmingPotChestsHandler
             farm.Phase = PotChestFarmPhase.SearchingCandidates;
             farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
             farm.SettledAtUtc = DateTimeOffset.MinValue;
+            return;
+        }
+
+        // Spending the narrowed set does not mean the compass stopped working — it usually means the
+        // last reading pointed at a spot that did not pop. Re-read from the full set instead of
+        // throwing the hints away for a 50-spot sweep.
+        if (farm.Pool.Count > 0 && farm.HintsApplied < MaxHintReadings && HasTreasureBuff())
+        {
+            logger.Info(
+                "Pot treasure: narrowed set spent — re-reading from {Count} spots",
+                farm.Pool.Count);
+            farm.NarrowTo(farm.Pool);
             return;
         }
 
@@ -687,60 +663,6 @@ public class FarmingPotChestsHandler
             farm.Chests.Count);
     }
 
-    private bool TryRedirectCandidateGroup(PotChestFarmMemory farm, PotTreasureHintEvent evt)
-    {
-        string groupKey = PotTreasureIds.GroupKey(evt.Direction);
-        if (string.IsNullOrEmpty(groupKey)
-            || string.Equals(groupKey, farm.ActiveGroupKey, StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        IZone zone = zones.GetZone();
-        if (!PotTreasureGroups.TryGetGroup(
-                farm.FateId.Value,
-                groupKey,
-                farm.FateCenter,
-                zone,
-                out IReadOnlyList<PotTreasureCandidate> group)
-            || group.Count == 0)
-        {
-            if (!PotTreasureGroups.TryGetNearestNonEmptyGroup(
-                    farm.FateId.Value,
-                    groupKey,
-                    farm.FateCenter,
-                    zone,
-                    out string fallbackKey,
-                    out group))
-            {
-                logger.Warning(
-                    "Pot treasure: hint redirected {From} → {To} but no candidates — blind fallback",
-                    farm.ActiveGroupKey ?? "?",
-                    groupKey);
-                FallBackToBlind(farm);
-                return true;
-            }
-
-            logger.Info(
-                "Pot treasure: hint {To} empty — using adjacent {Alt} ({Count} candidates)",
-                groupKey,
-                fallbackKey,
-                group.Count);
-            groupKey = fallbackKey;
-        }
-
-        IEnumerable<PotTreasureCandidate> ordered = OrderNearestNeighbor(group, player.Position);
-        string previous = farm.ActiveGroupKey ?? "?";
-        farm.BeginCandidateSearch(groupKey, ordered);
-        logger.Info(
-            "Pot treasure: hint redirected {From} → {To}/{Distance} ({Count} candidates)",
-            previous,
-            groupKey,
-            evt.Distance,
-            farm.CandidateTotal);
-        return true;
-    }
-
     private void EnsurePathing(Vector3 destination)
     {
         Vector3 pathable = PathableTreasurePosition(destination);
@@ -804,6 +726,57 @@ public class FarmingPotChestsHandler
     {
         IGameObject? chest = FindChestNear(position);
         return chest != null && !OpenTreasureCofferChain.IsOpenedOrLooted(chest) ? chest : null;
+    }
+
+    /// <summary>
+    ///     Apply one hint: keep the spots lying in that direction <b>from where we are standing</b>.
+    ///     Narrows the survivors first so successive readings triangulate; if that leaves nothing the
+    ///     reading disagrees with the ones before it, so re-acquire from the full set before giving up.
+    /// </summary>
+    /// <returns>False when the farm fell back to a blind sweep and the caller should stop.</returns>
+    private bool TryNarrowByHint(PotChestFarmMemory farm, PotTreasureHintEvent evt)
+    {
+        Vector3 from = player.Position;
+        IEnumerable<PotTreasureCandidate> basis = farm.Candidates.Count > 0 ? farm.Candidates : farm.Pool;
+
+        List<PotTreasureCandidate> survivors = PotTreasureFilter.Narrow(
+            basis, from, evt.Direction, evt.Distance, PotTreasureFilter.OctantTolerance);
+
+        string source = "narrowed";
+        if (survivors.Count == 0)
+        {
+            survivors = PotTreasureFilter.Narrow(
+                farm.Pool, from, evt.Direction, evt.Distance, PotTreasureFilter.OctantTolerance);
+            source = "re-acquired";
+        }
+
+        if (survivors.Count == 0)
+        {
+            survivors = PotTreasureFilter.Narrow(
+                farm.Pool, from, evt.Direction, evt.Distance, PotTreasureFilter.WideTolerance);
+            source = "widened";
+        }
+
+        if (survivors.Count == 0)
+        {
+            logger.Warning(
+                "Pot treasure: hint {Direction}/{Distance} matches no authored spot — blind fallback",
+                evt.Direction,
+                evt.Distance);
+            FallBackToBlind(farm);
+            return false;
+        }
+
+        farm.NarrowTo(survivors);
+        logger.Info(
+            "Pot treasure: hint {Hint} {Direction}/{Distance} — {Count} spot(s) {Source}, nearest {Label}",
+            farm.HintsApplied,
+            evt.Direction,
+            evt.Distance,
+            survivors.Count,
+            source,
+            survivors[0].Label);
+        return true;
     }
 
     private void FallBackToBlind(PotChestFarmMemory farm)

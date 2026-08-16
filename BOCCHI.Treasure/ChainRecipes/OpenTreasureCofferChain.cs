@@ -104,6 +104,16 @@ public class OpenTreasureCofferChain
 
                 // Stay mounted when possible (forced dismount in high-knowledge areas got people killed, #175).
 
+                // Pot reveals open on a cast, unlike ordinary coffers which resolve instantly.
+                // Re-issuing Interact every 200ms restarts that cast, so it never completes and the
+                // farm loops on a chest it is standing on. Let a cast in flight finish.
+                if (player.IsCasting()
+                    || conditions[ConditionFlag.Casting]
+                    || conditions[ConditionFlag.Casting87])
+                {
+                    return false;
+                }
+
                 // Pandora: require targetable before Interact.
                 if (!gameObject->GetIsTargetable())
                 {

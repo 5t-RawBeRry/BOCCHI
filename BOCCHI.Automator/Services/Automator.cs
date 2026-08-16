@@ -175,17 +175,18 @@ public class Automator
 
         memory.Forget<NavigationInterruptedMemory>();
         autoRotation.PrepareForIllegalMode();
-        TryResumePotChestFarmFromBuff();
+        EnsurePotChestFarmForBuff();
     }
 
     /// <summary>
-    ///     Starting Illegal Mode while Cache Me If You Can is already up has to farm the chests, not
-    ///     walk off to a FATE — the buff is short and the chests are gone with it. The farm is
-    ///     normally latched when a pot FATE we were doing ends, so a pot done manually (or before
-    ///     the mode was switched on) leaves nothing latched at all.
+    ///     Cache Me If You Can being up means there are chests to open, so that — not goal
+    ///     bookkeeping — is what starts the farm. Latching off the goal transition alone raced the
+    ///     treasure filler: whichever ran first in the frame either started the farm or latched a
+    ///     Sight survey, and the survey path Returns at High priority and picks a new FATE.
+    ///     Runs every tick; cheap, and a no-op once a farm is latched or the buff is gone.
     ///     The buff does not say which pot it came from, so use the nearest pot FATE spot.
     /// </summary>
-    private void TryResumePotChestFarmFromBuff()
+    private void EnsurePotChestFarmForBuff()
     {
         if (memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _)
             || memory.TryRemember<PendingPotChestFarmMemory>(out PendingPotChestFarmMemory _))
@@ -209,7 +210,7 @@ public class Automator
         }
 
         logger.Info(
-            "Illegal Mode started with Cache Me If You Can up — farming pot chests for fate {FateId}",
+            "Cache Me If You Can is up — farming pot chests for fate {FateId}",
             nearest.Id);
         TryStartPotChestFarm(new FateId((ushort)nearest.Id));
     }
@@ -317,6 +318,7 @@ public class Automator
         }
 
         TryStartPendingPotChestFarm();
+        EnsurePotChestFarmForBuff();
 
         if (memory.TryRemember<GoalMemory>(out GoalMemory goal))
         {
@@ -434,7 +436,7 @@ public class Automator
         // Magical Elixir + compass hints whenever we have pot chest data (SH authored groups, NH binned).
         // WaitingForBuff waits for Cache Me; leftover elixir alone must not start a blind sweep.
         ActivityData? potFate = zone.GetPotFateData().FirstOrDefault(f => f.Id == fateId.Value);
-        if (potFate != null && PotTreasureGroups.CanRunSmart(zone, fateId.Value))
+        if (potFate != null && PotTreasureFilter.CanRunSmart(zone, fateId.Value))
         {
             logger.Info("Starting pot treasure (elixir/hints) for fate {FateId}", fateId.Value);
             BeginExclusivePotChestFarm(PotChestFarmMemory.CreateSmart(fateId, potFate.Position));

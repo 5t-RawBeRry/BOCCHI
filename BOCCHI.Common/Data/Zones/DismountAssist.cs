@@ -1,6 +1,7 @@
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
 using ECommons.GameHelpers;
+using ECommons.Throttlers;
 using Ocelot.Actions;
 
 namespace BOCCHI.Common.Data.Zones;
@@ -27,7 +28,12 @@ public static class DismountAssist
             return false;
         }
 
-        if (!conditions[ConditionFlag.Mounting])
+        // Throttle and check CanCast, the same as every other unmount site. Casting once per tick
+        // had the game reject the action outright, and since TryDismount keeps reporting "still
+        // preparing" the caller waits for a dismount that never lands — pot reveals never opened.
+        if (!conditions[ConditionFlag.Mounting]
+            && EzThrottler.Throttle("DismountAssist::Dismount", 500)
+            && Actions.Dismount.CanCast())
         {
             Actions.Dismount.Cast();
         }

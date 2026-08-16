@@ -242,7 +242,8 @@ public sealed class PotChestFarmMemory
 
     public int CandidateTotal { get; set; }
 
-    public string? ActiveGroupKey { get; set; }
+    /// <summary>Every authored spot for this pot FATE — the set each hint narrows.</summary>
+    public readonly List<PotTreasureCandidate> Pool = [];
 
     public DateTimeOffset PhaseStartedUtc { get; set; }
 
@@ -252,9 +253,8 @@ public sealed class PotChestFarmMemory
 
     public int HintRevisionBaseline { get; set; }
 
-    public int RefineSteps { get; set; }
-
-    public Vector3? RefineTarget { get; set; }
+    /// <summary>Hints already used to narrow the set — for logging how far in we are.</summary>
+    public int HintsApplied { get; set; }
 
     /// <summary>When we started waiting for the current (peek) blind chest to spawn.</summary>
     public DateTimeOffset WaitingForSpawnSince { get; set; } = DateTimeOffset.MinValue;
@@ -282,27 +282,31 @@ public sealed class PotChestFarmMemory
         BlindTotalChests = Chests.Count;
         Candidates.Clear();
         CandidateTotal = 0;
-        ActiveGroupKey = null;
         ElixirAttempts = 0;
-        RefineSteps = 0;
-        RefineTarget = null;
+        HintsApplied = 0;
         WaitingForSpawnSince = DateTimeOffset.MinValue;
         PhaseStartedUtc = DateTimeOffset.UtcNow;
     }
 
-    public void BeginCandidateSearch(string groupKey, IEnumerable<PotTreasureCandidate> ordered)
+    /// <summary>Seed the full authored set for this pot FATE; hints narrow it from here.</summary>
+    public void SeedPool(IEnumerable<PotTreasureCandidate> all)
     {
-        ActiveGroupKey = groupKey;
+        Pool.Clear();
+        Pool.AddRange(all);
+    }
+
+    /// <summary>Replace the live candidates with what survived the latest hint.</summary>
+    public void NarrowTo(IEnumerable<PotTreasureCandidate> survivors)
+    {
         Candidates.Clear();
-        foreach (PotTreasureCandidate c in ordered)
+        foreach (PotTreasureCandidate c in survivors)
         {
             Candidates.Enqueue(c);
         }
 
         CandidateTotal = Candidates.Count;
+        HintsApplied++;
         ElixirAttempts = 0;
-        RefineSteps = 0;
-        RefineTarget = null;
         SettledAtUtc = DateTimeOffset.MinValue;
         Phase = PotChestFarmPhase.SearchingCandidates;
         PhaseStartedUtc = DateTimeOffset.UtcNow;

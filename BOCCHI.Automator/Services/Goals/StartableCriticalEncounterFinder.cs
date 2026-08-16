@@ -34,6 +34,20 @@ public class StartableCriticalEncounterFinder
             automatorConfig.ShouldFarmPotChests,
             automatorConfig.ShouldPrepositionToPots);
 
+        // A pot that is actually up outranks a CE. The window check below only looks at the *next*
+        // predicted pot, which rolls a full cycle forward the moment one spawns — so it never covers
+        // the live pot, and Choosing would send us to a warming-up CE mid-pot.
+        if (cycle.CurrentActivePotFateId != 0
+            && automatorConfig.ShouldDoFates
+            && fatesConfig.IsFateEnabledForIllegalMode(
+                (uint)cycle.CurrentActivePotFateId,
+                isPotFate: true,
+                automatorConfig.PreferPotFates,
+                automatorConfig.ShouldFarmPotChests))
+        {
+            return null;
+        }
+
         // Include Warmup so Choosing does not stall on a visible CE.
         foreach (CriticalEncounter ce in criticalEncounterRepository.SnapshotWithoutForkedTower())
         {
