@@ -9,10 +9,7 @@ namespace BOCCHI.Common.Data.Zones.Graph.Traversal;
 
 public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
 {
-    /// <summary>
-    ///     Snap radius for "I'm already on a graph node." Camp return pad ↔ aetheryte is ~20–25y,
-    ///     so 20f was too tight and forced a slow live vnav every depart-from-camp route.
-    /// </summary>
+    /// <summary>Graph snap radius (45y; camp pad ~20–25y was too tight).</summary>
     private const float GraphSnapRadius = 45f;
 
     public string Key() => "WalkTeleportWalk";
@@ -93,9 +90,7 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
             return (baseCamp, start.Distance(baseCamp.Position));
         }
 
-        // Only snap when already on a teleport pad. Snapping to a nearby FATE/CE node and
-        // using that activity→shard graph edge inflated departure cost (often 100–300y) even
-        // when a field aethernet was close — Return (~40) then wrongly won.
+        // Snap to teleport nodes only (not FATE/CE nodes).
         if (graph.TryGetNode(start, GraphSnapRadius, out Node node) && node.IsTeleport())
         {
             return (node, start.Distance(node.Position));

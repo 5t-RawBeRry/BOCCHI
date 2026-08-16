@@ -90,8 +90,7 @@ public class FarmingPotChestsHandler
             return StatePriority.Never;
         }
 
-        // High so we beat opportunistic Return / next-goal pathing if a GoalPathStep
-        // briefly overlaps (Pending handoff race). Farm start clears those latches.
+        // High priority vs Return/next-goal handoff race.
         return memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _)
             ? StatePriority.High
             : StatePriority.Never;
@@ -181,8 +180,7 @@ public class FarmingPotChestsHandler
 
     private void HandleWaitingForBuff(PotChestFarmMemory farm)
     {
-        // Status 1531 = Cache Me If You Can (Eureka row). Do not start on leftover Magical Elixir alone —
-        // that caused blind sweeps after "persistent pot is too injured" with no reward.
+        // Require Cache Me (1531); not Magical Elixir alone.
         if (HasTreasureBuff())
         {
             hints.Arm();
@@ -815,8 +813,7 @@ public class FarmingPotChestsHandler
             positions.AddRange(chests.Select(c => c.Position));
         }
 
-        // Same reroll opt-in the blind-start path uses (Automator.TryStartPotChestFarm) — smart runs
-        // that degrade to a sweep were silently dropping every reroll pad.
+        // Include reroll pads on the same opt-in as the blind-start path.
         if (context.IsPotsAndTreasure || potsConfig.ShouldFarmRerollPotChests)
         {
             positions.AddRange(zone.GetRerollPotChestData().Select(c => c.Position));

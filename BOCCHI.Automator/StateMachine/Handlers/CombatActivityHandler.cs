@@ -63,9 +63,7 @@ internal static class CombatActivityHandler
 
         if (deferCombatToBossModAi)
         {
-            // The AI owns combat movement outright: StayCloseToTarget walks melee to the hitbox and
-            // NormalMovement dodges, both via BossMod's own Hints.ForcedMovement / NavigationDecision
-            // rather than vnav. Travel was stopped on Enter, so there is nothing for us to do here.
+            // BossMod AI owns combat movement; vnav already stopped.
             return true;
         }
 

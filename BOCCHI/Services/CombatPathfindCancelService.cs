@@ -20,9 +20,7 @@ using Ocelot.Services.Pathfinding;
 namespace BOCCHI.Services;
 
 /// <summary>
-///     In Occult Crescent only: if the player uses a combat action while pathfinding, stop
-///     World Path / Illegal Mode travel. Must not touch vnav outside OC, and must not cancel
-///     Mob Farmer / Treasure Hunt / Carrot Hunt (those own movement during combat).
+///     OC only: cancel World Path / Illegal travel on combat actions; not hunt or Mob Farmer.
 /// </summary>
 public sealed unsafe class CombatPathfindCancelService
 (
@@ -107,8 +105,7 @@ public sealed unsafe class CombatPathfindCancelService
 
     private bool ShouldCancelPathfinding(ActionType actionType, uint actionId)
     {
-        // Never steal vnav from dungeon/overworld plugins (e.g. AutoDuty) (#160).
-        // Territory ids are authoritative — zone map alone must not decide this hot path.
+        // OC territory check only (#160); don't steal external vnav.
         if (!IsInOccultCrescentTerritory())
         {
             return false;
@@ -119,8 +116,7 @@ public sealed unsafe class CombatPathfindCancelService
             return false;
         }
 
-        // Travel utility actions — not combat. General Sprint is ActionType.GeneralAction and
-        // never reaches here; Occult Sprint is a normal action id (#157).
+        // Occult Sprint is travel, not combat (#157).
         if (actionId == PhantomActions.OccultSprint)
         {
             return false;
@@ -176,9 +172,7 @@ public sealed unsafe class CombatPathfindCancelService
             || (PathStepSoftStop.IsPathStepChain(name)
                 && !name.StartsWith($"{PathStepSoftStop.Prefix}Teleport", StringComparison.Ordinal)));
 
-        // Drop the in-flight route only — keep GoalMemory so Illegal Mode can enter the
-        // FATE/CE or replan after combat (#157 / #159). Soft-pause is for World Path /
-        // non-automator travel (toggle to resume).
+        // Forget the route latch, keep GoalMemory for replan (#157/#159).
         memory.Forget<GoalPathStepMemory>();
         memory.Forget<BaseTeleportDelayMemory>();
 

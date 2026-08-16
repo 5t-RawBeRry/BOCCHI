@@ -262,7 +262,6 @@ public sealed class CarrotHunterService
 
     private void TickIdle()
     {
-        // After a replan that found nothing left, or startup edge cases.
         if (vnav.IsRunning())
         {
             vnav.Stop();
@@ -405,7 +404,7 @@ public sealed class CarrotHunterService
 
         if (conditions[ConditionFlag.InCombat])
         {
-            // Walk toward camp pad until combat clears (same idea as treasure hunt Return).
+            // In combat: walk toward camp stand-off.
             if (!vnav.IsRunning() && !vnav.IsPathfinding())
             {
                 Vector3 standOff = zone.GetMainAetheryte().GetCampStandOffPosition(player.Position);
@@ -1295,8 +1294,7 @@ public sealed class CarrotHunterService
                 continue;
             }
 
-            // Order by TourOrder position, not by enum value — RebuildNorthHornRegionTour walks
-            // TourOrder, so comparing raw enum values desyncs the moment that array is reordered.
+            // Use TourIndex, not enum ordinal.
             NorthHornCarrotRegion region = NorthHornCarrotRegions.Classify(remaining.Position);
             int order = NorthHornCarrotRegions.TourIndex(region);
             if (order < activeOrder)
@@ -1480,8 +1478,7 @@ public sealed class CarrotHunterService
 
     private void MaybeMount(Vector3 destination)
     {
-        // Allow mount even inside camp so Return → walk-south legs do not stay on foot
-        // until outside the camp bubble (treasure hunt uses the same rule).
+        // Mount allowed in camp (matches treasure hunt).
         MountWait.TryCastIfNeeded(
             conditions,
             objects,

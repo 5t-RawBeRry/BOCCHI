@@ -207,9 +207,6 @@ public class SouthHorn
         new(1839, 22, new(-585.260f, 5.000f, -864.836f)),
         new(1840, 22, new(-729.427f, 5.000f, -724.788f)),
         new(1841, 22, new(-661.677f, 3.000f, -579.492f)),
-        // Was level 99 — outside the 1..50 HuntMaxLevel clamp, so this pad could never be routed
-        // even though treasure_route.json lists it. 23 is the level the rest of the table is missing
-        // (every other level has 2-3 pads) and matches the neighbouring 1794 pad.
         new(1842, 23, new(-884.123f, 3.800f, -682.002f)),
         new(1843, 24, new(-729.915f, 116.541f, -79.057f)),
         new(1844, 24, new(-856.935f, 68.847f, -93.144f)),

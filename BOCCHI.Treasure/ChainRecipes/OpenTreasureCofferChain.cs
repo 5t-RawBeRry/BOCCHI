@@ -102,9 +102,7 @@ public class OpenTreasureCofferChain
 
                 StopNav();
 
-                // Stay mounted when possible (Pandora AutoOpenChests style). Forced dismount
-                // in high-knowledge areas was getting players killed while looting (#175).
-                // Callers that need feet (Ninja Hide) already dismount before this chain.
+                // Stay mounted when possible (forced dismount in high-knowledge areas got people killed, #175).
 
                 // Pandora: require targetable before Interact.
                 if (!gameObject->GetIsTargetable())

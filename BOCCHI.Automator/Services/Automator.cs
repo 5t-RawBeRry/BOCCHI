@@ -175,6 +175,43 @@ public class Automator
 
         memory.Forget<NavigationInterruptedMemory>();
         autoRotation.PrepareForIllegalMode();
+        TryResumePotChestFarmFromBuff();
+    }
+
+    /// <summary>
+    ///     Starting Illegal Mode while Cache Me If You Can is already up has to farm the chests, not
+    ///     walk off to a FATE — the buff is short and the chests are gone with it. The farm is
+    ///     normally latched when a pot FATE we were doing ends, so a pot done manually (or before
+    ///     the mode was switched on) leaves nothing latched at all.
+    ///     The buff does not say which pot it came from, so use the nearest pot FATE spot.
+    /// </summary>
+    private void TryResumePotChestFarmFromBuff()
+    {
+        if (memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _)
+            || memory.TryRemember<PendingPotChestFarmMemory>(out PendingPotChestFarmMemory _))
+        {
+            return;
+        }
+
+        if (objects.LocalPlayer is not { } player
+            || !player.StatusList.Has(PotTreasureIds.TreasureBuffStatusId))
+        {
+            return;
+        }
+
+        IZone zone = zones.GetZone();
+        ActivityData? nearest = zone.GetPotFateData()
+            .OrderBy(fate => Vector3.DistanceSquared(fate.Position, player.Position))
+            .FirstOrDefault();
+        if (nearest == null)
+        {
+            return;
+        }
+
+        logger.Info(
+            "Illegal Mode started with Cache Me If You Can up — farming pot chests for fate {FateId}",
+            nearest.Id);
+        TryStartPotChestFarm(new FateId((ushort)nearest.Id));
     }
 
     public void RefreshPathfinding()

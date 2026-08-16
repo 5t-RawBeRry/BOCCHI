@@ -123,8 +123,7 @@ public class ReturningHandler
             return;
         }
 
-        // Milliseconds() returns true when the interval has elapsed (true = run), same contract as
-        // UpdateLimit.ShouldUpdate. This used to return on true, so it ran every tick except one.
+        // Gate: true = interval elapsed (was inverted before).
         if (!gate.Milliseconds(this, "ReturningHandler::Gate", 500))
         {
             return;

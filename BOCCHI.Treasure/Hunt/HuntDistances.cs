@@ -21,8 +21,8 @@ public static class HuntDistances
     public const float SamePadRecheckRadiusSq = SamePadRecheckRadius * SamePadRecheckRadius;
 
     /// <summary>
-    ///     Carrot empty-pad trust, and treasure hunt "committed approach" (no peel).
-    ///     Treasure hunt does not skip empties at this range — silvers may not have streamed yet.
+    ///     Empty-pad trust / committed approach. Treasure hunt does not skip empties at this range —
+    ///     silvers may not have streamed yet.
     /// </summary>
     public const float EmptyPadSkipRadius = 100f;
 
@@ -69,10 +69,7 @@ public static class HuntDistances
     /// </summary>
     public const float NearbyLiveDivertRange = MatchRadius;
 
-    /// <summary>
-    /// Don't divert when already this close to the current walk goal (about to open).
-    /// Higher values made the hunt walk past Nearby coffers on the way to a mid-range pad.
-    /// </summary>
+    /// <summary>Don't divert when this close to the current walk goal.</summary>
     public const float NearbyLiveDivertMinCurrentDistance = 25f;
 
     /// <summary>Live target must be at least this many yalms closer than the current destination.</summary>

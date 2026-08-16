@@ -35,9 +35,5 @@ public sealed class AuthoredTreasureTransition
 /// </summary>
 public readonly record struct AuthoredRouteEntry(uint NodeId, int SegmentIndex);
 
-/// <summary>
-///     One authored segment, minus its pads. The transition belongs to the segment boundary rather
-///     than to the pad that happens to be authored last — that pad is routinely absent from a plan
-///     (already looted, or above HuntMaxLevel), and keying on it silently dropped the hop.
-/// </summary>
+/// <summary>Segment metadata; TransitionAfter is on the segment, not the last pad.</summary>
 public readonly record struct AuthoredRouteSegment(string Id, AuthoredTreasureTransition? TransitionAfter);

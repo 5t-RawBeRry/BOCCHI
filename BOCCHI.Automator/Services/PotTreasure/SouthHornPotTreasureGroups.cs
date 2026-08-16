@@ -41,8 +41,6 @@ public static class SouthHornPotTreasureGroups
                     new("S2", new Vector3(263.256f, 100.385f, 326.683f), 10),
                     new("S3", new Vector3(80.19762f, 101.27949f, 391.2263f), 10),
                     new("S4", new Vector3(224.7233f, 68.7328f, 518.668f), 15),
-                    // Bears south from the pot center (200, -215) — was filed under southwest,
-                    // so a "south" hint never offered it.
                     new("S5", new Vector3(-54.69518f, 99.40573f, 405.0261f), 10),
                 ],
                 ["southwest"] =

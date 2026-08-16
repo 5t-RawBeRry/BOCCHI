@@ -19,12 +19,7 @@ using Ocelot.States.Score;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
 
-/// <summary>
-///     Hold near a CE after arrival. Travel delivers via PathCalculator; this state prevents leaving
-///     for another activity while the arrived CE moves from preparation into Battle.
-///     Once Battle is underway (player EventId, CE enemies, or combat), yield to
-///     <see cref="InCriticalEncounterHandler"/> so BOCCHI AI can enable.
-/// </summary>
+/// <summary>Hold at a CE until Battle, then hand off to <see cref="InCriticalEncounterHandler"/>.</summary>
 public class WaitingForCriticalEncounterHandler
 (
     IAutomatorMemory memory,
@@ -38,10 +33,6 @@ public class WaitingForCriticalEncounterHandler
     AutomatorConfig config
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.WaitingForCriticalEncounter)
 {
-    /// <summary>
-    ///     If player EventId never appears, still hand off after this so we do not sit in Waiting
-    ///     for the whole fight (CE AI never enables).
-    /// </summary>
     public override StatePriority GetScore()
     {
         if (!TryGetGoalEncounter(out CriticalEncounter ce))
@@ -54,8 +45,7 @@ public class WaitingForCriticalEncounterHandler
 
         if (ce.IsActive())
         {
-            // Hand off to InCritical as soon as we look like participants — do not keep Waiting
-            // for the whole Battle when EventId is slow/missing.
+            // Hand off when participation is detected (EventId may lag).
             if (ShouldHandOffToInCritical(ce))
             {
                 return StatePriority.Never;
@@ -111,8 +101,7 @@ public class WaitingForCriticalEncounterHandler
     public override void Enter()
     {
         base.Enter();
-        // Drop the route latch before canceling chains so PathfindingHandler does not
-        // treat the cancel as a soft-pause while GoalPathStepMemory is still present.
+        // Forget GoalPathStepMemory before cancel (avoid soft-pause).
         memory.Forget<GoalPathStepMemory>();
         StopNavigation();
 

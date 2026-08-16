@@ -30,12 +30,7 @@ public sealed class TreasureLocationsExportPanel
 {
     private const string Filename = "treasure_locations.json";
 
-    /// <summary>
-    ///     Deliberately NOT treasure_route.json. This panel emits a flat schema-v1 tour, but the hunt
-    ///     planner only accepts schema v2 with segments — writing over the hand-authored file (in the
-    ///     plugin dir *and* the repo) silently dropped South Horn to nearest-neighbor TSP with no
-    ///     red/blue halves. Export here, then hand-merge into treasure_route.json.
-    /// </summary>
+    /// <summary>Export filename — not treasure_route.json (overwriting that dropped South Horn to NN).</summary>
     private const string RouteFilename = "treasure_route.suggested.json";
 
     private static readonly JsonSerializerOptions WriteJson = new()

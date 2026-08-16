@@ -159,13 +159,18 @@ public static class NavigationApproach
     }
 
     /// <summary>Random point inside the combat area so travel lands on the blue registration zone.</summary>
+    /// <param name="standRadius">
+    ///     Standable radius when tighter than <paramref name="combatRadius"/>; 0 to use the
+    ///     registration rim. The rim can extend past the ground you can actually stand on.
+    /// </param>
     public static Vector3 GetCriticalEncounterApproachPosition(
         Vector3 center,
         Vector3 from,
         float combatRadius,
-        ActivityAreaShape shape = ActivityAreaShape.Circle)
+        ActivityAreaShape shape = ActivityAreaShape.Circle,
+        float standRadius = 0f)
     {
-        float red = MathF.Max(1f, combatRadius);
+        float red = MathF.Max(1f, standRadius > 0f ? standRadius : combatRadius);
         if (shape == ActivityAreaShape.Square)
         {
             // Squares (e.g. A Beast Unleashed): scatter inside the blue box — not one approach ray.
@@ -201,7 +206,12 @@ public static class NavigationApproach
         if (goal.Type == NodeType.CriticalEncounter
             && goal.Metadata is ActivityNodeMetadata { CombatRadius: > 0 } meta)
         {
-            return GetCriticalEncounterApproachPosition(goal.Position, from, meta.CombatRadius, meta.AreaShape);
+            return GetCriticalEncounterApproachPosition(
+                goal.Position,
+                from,
+                meta.CombatRadius,
+                meta.AreaShape,
+                meta.StandRadius);
         }
 
         return GetEventPosition(goal.Position, from);
@@ -241,7 +251,7 @@ public static class NavigationApproach
             }
 
             approach = GetCriticalEncounterApproachPosition(
-                center, from, radius, candidate.AreaShape);
+                center, from, radius, candidate.AreaShape, candidate.StandRadius ?? 0f);
             return true;
         }
 

@@ -43,8 +43,7 @@ public static class AethernetTeleport
             .UseMiddleware(new RetryChainMiddleware(logger)
             {
                 DelayMs = 500,
-                // Keep low — canceling mid-approach used to feel like endless teleport retries.
-                MaxAttempts = 2
+                MaxAttempts = 2, // Keep low — cancel mid-approach retried forever.
             })
             .UseStepMiddleware<LogStepMiddleware>()
             .UseStepMiddleware<RunOnMainThreadMiddleware>()
@@ -140,7 +139,7 @@ public static class AethernetTeleport
 
                 return StepResult.Success();
             }, $"{chainName}::Teleport")
-            // Confirm Lifestream actually started; silent no-ops used to burn the full arrive timeout.
+            // Confirm Lifestream started; silent no-ops burned the arrive timeout.
             .WaitUntil(
                 _ =>
                 {

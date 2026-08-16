@@ -70,10 +70,7 @@ public abstract class HuntRoutePlanner
         PropertyNameCaseInsensitive = true,
     };
 
-    /// <summary>
-    ///     Cached per zone. The planner is rebuilt on every RecalculateRoute; payloads are
-    ///     read-only after load, so one parse per zone per session is enough.
-    /// </summary>
+    /// <summary>Parsed hunt data cached per zone per session.</summary>
     private static readonly Dictionary<(ZoneId Zone, string File), HuntNodeDataSchema> NodeDataCache = [];
 
     private static readonly Dictionary<ZoneId, AuthoredRoutePayload> AuthoredRouteCache = [];
@@ -336,12 +333,7 @@ public abstract class HuntRoutePlanner
         return ImproveWithTwoOpt(route, graph);
     }
 
-    /// <summary>
-    ///     2-opt pass over the nearest-neighbour tour. NN routinely leaves long crossing edges;
-    ///     repeatedly reversing a segment when that shortens the path removes them. The start pad is
-    ///     pinned (it is where we are / the pad we were told to prefer) and only strict improvements
-    ///     are taken, so this can never make the tour longer.
-    /// </summary>
+    /// <summary>2-opt improvement on the NN tour; start pad pinned.</summary>
     private static List<uint> ImproveWithTwoOpt(
         List<uint> route,
         Dictionary<uint, Dictionary<uint, (float Cost, List<HuntPathfinderStep> Steps)>> graph)
@@ -543,11 +535,7 @@ public abstract class HuntRoutePlanner
         return steps;
     }
 
-    /// <summary>
-    ///     Transitions belong to the segment boundary, not to the pad authored last in the segment:
-    ///     that pad drops out of the plan whenever it is already looted or above HuntMaxLevel, and
-    ///     keying on it silently downgraded the hop to a cross-map walk.
-    /// </summary>
+    /// <summary>Segment boundary owns the transition (last pad may be absent from the plan).</summary>
     private AuthoredTreasureTransition? FindTransitionBetween(uint from, uint to)
     {
         int? fromSegment = TryGetSegmentIndex(from);
@@ -589,9 +577,7 @@ public abstract class HuntRoutePlanner
             case "walk":
                 return [HuntPathfinderStep.WalkToDestination(toId)];
             default:
-                // auto — cheapest of walk, aethernet hop, or Return. This used to short-circuit to
-                // a walk whenever the bake had the pair, which it always does, so no "auto"
-                // boundary ever hopped (North Horn walked base camp -> crown at 365 over a 160 hop).
+                // auto: cheapest hop (walk / aethernet / Return).
                 return GetBestSteps(fromId, toId).Steps;
         }
     }
@@ -783,10 +769,7 @@ public abstract class HuntRoutePlanner
         return graph;
     }
 
-    /// <summary>
-    ///     Nearest-neighbor TSP: from the current node, always append the cheapest unvisited neighbor.
-    ///     Open path — does not return to the start.
-    /// </summary>
+    /// <summary>Open-path nearest-neighbor TSP.</summary>
     private static List<uint> SolveTspNearestNeighbor(
         uint start,
         List<uint> nodes,

@@ -12,12 +12,7 @@ using System.Text.Json.Serialization;
 
 namespace BOCCHI.Common.Services;
 
-/// <summary>
-///     Anonymous pot-cycle sync for the BOCCHI Worker.
-///     Fingerprints the instance from any active FATE (Linker-style), uploads local pot anchors,
-///     and fetches shared anchors when the local tracker has none yet.
-///     HTTP runs off the framework thread so sync never hitches the game.
-/// </summary>
+/// <summary>Sync pot-cycle anchors with the BOCCHI Worker (off-thread HTTP).</summary>
 public sealed class PotCycleSyncService
 (
     IZoneProvider zones,
@@ -57,11 +52,7 @@ public sealed class PotCycleSyncService
 
     private long lastUploadedSpawnUnix;
 
-    /// <summary>
-    ///     Instance key the current anchor was last published under. The fingerprint FATE ending
-    ///     rekeys everyone, and an anchor left under the old key is invisible to every later fetch,
-    ///     so the same anchor has to be re-uploaded whenever the key rotates.
-    /// </summary>
+    /// <summary>Last upload instance key; re-upload when the fingerprint rotates.</summary>
     private string? lastUploadedInstanceKey;
 
     private string? lastFetchedInstanceKey;
@@ -332,8 +323,7 @@ public sealed class PotCycleSyncService
             return;
         }
 
-        // Keep the established fingerprint while that FATE is still up — using "oldest active
-        // FATE" alone rekeys every time a FATE ends and was wiping the next-pot timer.
+        // Hold fingerprint until that FATE ends (avoid timer wipe).
         if (instanceKey != null
             && fingerprintFateId != 0
             && fates.Snapshot().Any(f =>

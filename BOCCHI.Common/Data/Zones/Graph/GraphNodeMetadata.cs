@@ -33,6 +33,9 @@ public class ActivityNodeMetadata : INodeMetadata
 
     /// <summary>Circle or axis-aligned square join area.</summary>
     public ActivityAreaShape AreaShape { get; set; } = ActivityAreaShape.Circle;
+
+    /// <summary>Stand radius when tighter than CombatRadius; 0 → use CombatRadius.</summary>
+    public float StandRadius { get; set; }
 }
 
 public class TeleportNodeMetadata : INodeMetadata

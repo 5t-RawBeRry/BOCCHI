@@ -19,12 +19,18 @@ public enum ActivityAreaShape
 /// <param name="CombatRadius">Engage radius (circle) or half-extent (square) for CEs; unused for FATEs.</param>
 /// <param name="PreferredAethernetId">PlaceNameId of preferred inbound shard, if any.</param>
 /// <param name="AreaShape">Circle (default) or axis-aligned square (e.g. A Beast Unleashed).</param>
+/// <param name="CombatRadius">Registration rim — how close you must be to join.</param>
+/// <param name="StandRadius">
+///     Standable area, when it is smaller than the registration rim (a CE on a tower, say).
+///     Null means the two are the same and CombatRadius is used for both.
+/// </param>
 public record ActivityData(
     int Id,
     Vector3 Position,
     float? CombatRadius = null,
     uint? PreferredAethernetId = null,
-    ActivityAreaShape AreaShape = ActivityAreaShape.Circle);
+    ActivityAreaShape AreaShape = ActivityAreaShape.Circle,
+    float? StandRadius = null);
 
 public record CarrotData(int Id, Vector3 Position, int Level);
 

@@ -29,9 +29,7 @@ public class FateRepository
 
     public IReadOnlyList<Fate> Snapshot()
     {
-        // Rebuild when the cache is empty but the repository is not — not every reader runs inside
-        // the update pass (commands and mode toggles do not), and before this was cached the method
-        // read the repository live, so those callers worked by accident.
+        // Rebuild when empty but the repo is not — callers outside Update (commands, toggles).
         if (snapshot.Count == 0 && data.GetAll().Any())
         {
             snapshot = data.GetAll().ToList();

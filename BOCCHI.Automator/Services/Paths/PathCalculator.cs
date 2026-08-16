@@ -126,9 +126,7 @@ public class PathCalculator
         traverser.AddCalculator(new WalkTeleportWalkCalculator());
         traverser.AddCalculator(new DirectWalkCalculator());
 
-        // Always consider Return on long trips. The old "closer than half camp" gate skipped
-        // Return when already near the inbound shard, so same-shard WalkTeleportWalk walked
-        // 500y+ to CEs like Lost on the Wind instead of Return → TP (#172).
+        // Long trips: always add the Return calculator (#172).
         if (!insideCeWait && distanceToGoal > NavigationConstants.MaxDirectWalkDistance)
         {
             traverser.AddCalculator(new ReturnTeleportWalkCalculator());
@@ -141,8 +139,7 @@ public class PathCalculator
 
         if (potPrepositionStandOff is { } standOff)
         {
-            // Only rewrite the *arrival* Pathfind. Rewriting walk-to-pad Pathfinds before
-            // Teleport turned Return→TP into a cross-map mount (#174).
+            // Pot preposition: rewrite the last Pathfind only (#174).
             int lastPathfind = resolvedSteps.FindLastIndex(step => step.PathStepData is Pathfind);
             if (lastPathfind >= 0)
             {

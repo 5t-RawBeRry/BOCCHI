@@ -4,7 +4,7 @@ using Ocelot.Config.Fields;
 
 namespace BOCCHI.Common.Config;
 
-/// <summary>Illegal Mode FATE allowlist and skip-by-progress (Pots &amp; Treasure uses progress skip only).</summary>
+/// <summary>Illegal Mode FATE allowlist and skip-by-progress.</summary>
 [Serializable]
 [ConfigGroup("automation", GroupOrder = 0, Order = 2)]
 public class FatesConfig : IAutoConfig
@@ -31,10 +31,7 @@ public class FatesConfig : IAutoConfig
     public bool ShouldSkipByProgress(byte progress) =>
         MaxFateProgressPercent > 0 && progress >= MaxFateProgressPercent;
 
-    /// <summary>
-    ///     Prefer pot FATEs force-includes Magic Pots for Illegal Mode (shown locked on in Allowed FATEs).
-    ///     Farm pot chests does not.
-    /// </summary>
+    /// <summary>Prefer pot FATEs force-includes Magic Pots; farm pot chests does not.</summary>
     public bool IsFateEnabledForIllegalMode(uint fateId, bool isPotFate, bool preferPotFates, bool shouldFarmPotChests)
     {
         _ = shouldFarmPotChests;
@@ -47,10 +44,8 @@ public class FatesConfig : IAutoConfig
     }
 
     /// <summary>
-    ///     Pot fallback cutoffs / preposition apply when either farm pot chests or wait-near-pots is
-    ///     on, and that pot is allowed. Both reasons need the same window: something has to stop a
-    ///     FATE/CE starting right before the pot, or there is no time to get there.
-    ///     Prefer pot FATEs alone does not turn on pot timing.
+    ///     Pot timing applies when farm pot chests or wait-near-pots is on, and that pot is allowed.
+    ///     Prefer pot FATEs alone does not turn this on.
     /// </summary>
     public bool IsPotFallbackGatingEnabled(
         uint predictedNextPotFateId,

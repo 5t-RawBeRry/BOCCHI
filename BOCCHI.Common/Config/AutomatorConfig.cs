@@ -81,11 +81,7 @@ public class AutomatorConfig : IAutoConfig
     [IntRange(60, 600, Order = 15, Section = "treasure")]
     public int TreasureSightRecastIntervalSeconds { get; set; } = 120;
 
-    /// <summary>
-    ///     Upper bound (seconds) for the random 2..max wait before Return after a FATE/CE.
-    ///     Bypassed while a Treasure Sight survey is latched (ReturningHandler's survey latch) —
-    ///     that path Returns immediately so Sight is cast before the next activity.
-    /// </summary>
+    /// <summary>Max random idle before Return; 0 delay when Treasure Sight is latched.</summary>
     [IntRange(2, 60, Order = 16, Section = "delays")]
     public int MaxRemoteIdleTimeSeconds { get; set; } = 10;
 

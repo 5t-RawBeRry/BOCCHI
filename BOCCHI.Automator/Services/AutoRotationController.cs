@@ -1,5 +1,6 @@
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Services;
 using Dalamud.Plugin.Services;
@@ -21,9 +22,19 @@ public class AutoRotationController(
     ICriticalEncounterContext criticalEncounters,
     IFateContext fates,
     IPluginStatus pluginStatus,
-    ISupportJobFactory supportJobs
+    ISupportJobFactory supportJobs,
+    IAutomatorMemory memory
 )
 {
+    /// <summary>
+    ///     Pot chest farming owns the character outright — it walks to reveals and opens them, and
+    ///     leftover AutoTarget / AI movement from the pot FATE fights that. The FATE is usually still
+    ///     up while farming, so this has to beat the in-activity guards below.
+    /// </summary>
+    private bool CombatSuppressedByActivity =>
+        memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _)
+        || memory.TryRemember<PendingPotChestFarmMemory>(out PendingPotChestFarmMemory _);
+
     public void PrepareForIllegalMode()
     {
         if (!config.CombatAutorotation.UsesCombatAutomation() || !ValidatePluginsForConfig())
@@ -42,10 +53,14 @@ public class AutoRotationController(
 
     public void EnableForCriticalEncounter() => session.Enable(CombatActivity.CriticalEncounter);
 
-    /// <summary>Drop combat automation while travelling. No-op if already in a FATE/CE.</summary>
+    /// <summary>
+    ///     Drop combat automation while travelling. Normally a no-op inside a FATE/CE, since the
+    ///     activity still wants the rotation — except when pot chest farming has taken over.
+    /// </summary>
     public void DisableAi()
     {
-        if (criticalEncounters.IsInCriticalEncounter() || fates.IsInFate())
+        if (!CombatSuppressedByActivity
+            && (criticalEncounters.IsInCriticalEncounter() || fates.IsInFate()))
         {
             return;
         }
@@ -61,6 +76,13 @@ public class AutoRotationController(
 
     private void SyncActivityCombat()
     {
+        // Without this the per-tick sync re-enables the rotation immediately: pot chest farming
+        // usually runs while still standing in the pot FATE.
+        if (CombatSuppressedByActivity)
+        {
+            return;
+        }
+
         if (criticalEncounters.IsInCriticalEncounter())
         {
             session.Enable(CombatActivity.CriticalEncounter);

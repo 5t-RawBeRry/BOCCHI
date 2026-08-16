@@ -10,11 +10,8 @@ namespace BOCCHI.Treasure.Hunt;
 public static class TreasureHuntPathOverrides
 {
     /// <summary>
-    ///     Pads vnav cannot path to at all because the approach needs a jump, which BOCCHI has no
-    ///     support for (movement is entirely vnav pathfinding). Excluded from the hunt so the run
-    ///     does not burn the 30s stuck timeout on them every time.
-    ///     These stay in treasure_route.json — deleting the entry here is all it takes to re-enable
-    ///     one, which is the plan if vnavmesh gains jump support.
+    ///     Pads vnav cannot path to (need a jump). Left in treasure_route.json so deleting an
+    ///     entry here re-enables the pad.
     /// </summary>
     private static readonly HashSet<(ZoneId Zone, uint NodeId)> UnreachableNodes =
     [

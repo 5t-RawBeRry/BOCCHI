@@ -45,8 +45,7 @@ public static class AetheryteApproach
                         return StepResult.Failure("No local player.");
                     }
 
-                    // Distance only — Lifestream IPC can report an "active" shard while still
-                    // outside the cyan ring, which used to skip movement entirely.
+                    // Use distance to the cyan ring, not Lifestream IPC alone.
                     if (zone.IsWithinLifestreamRange(current.Position))
                     {
                         return StepResult.Success();
