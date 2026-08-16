@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Numerics;
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Debug;
@@ -48,10 +50,29 @@ public class DebugCommand
             case "toggle":
                 debugWindow.Toggle();
                 break;
+            case "pos":
+            case "position":
+                PrintPosition();
+                break;
             default:
-                chat.PrintError("Usage: /bocchi debug [open|close|toggle|ai-preset]");
+                chat.PrintError("Usage: /bocchi debug [open|close|toggle|ai-preset|pos]");
                 break;
         }
+    }
+
+    /// <summary>
+    ///     Print the player position as a TreasureHuntPathOverrides via-point literal. Stand on the
+    ///     safe line, run the command, paste the line.
+    /// </summary>
+    private void PrintPosition()
+    {
+        Vector3 p = player.Position;
+        BocchiChat.Print(
+            chat,
+            uiConfig,
+            $"new({p.X.ToString("0.###", CultureInfo.InvariantCulture)}f, "
+            + $"{p.Y.ToString("0.###", CultureInfo.InvariantCulture)}f, "
+            + $"{p.Z.ToString("0.###", CultureInfo.InvariantCulture)}f),");
     }
 
     private void MakeAiPreset()

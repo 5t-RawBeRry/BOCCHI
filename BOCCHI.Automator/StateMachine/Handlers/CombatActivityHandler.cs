@@ -61,24 +61,22 @@ internal static class CombatActivityHandler
             return false;
         }
 
+        if (deferCombatToBossModAi)
+        {
+            // The AI owns combat movement outright: StayCloseToTarget walks melee to the hitbox and
+            // NormalMovement dodges, both via BossMod's own Hints.ForcedMovement / NavigationDecision
+            // rather than vnav. Travel was stopped on Enter, so there is nothing for us to do here.
+            return true;
+        }
+
         if (stopPathfinderInCombat && conditions[ConditionFlag.InCombat])
         {
             pathfinder.Stop();
             return true;
         }
 
-        // Once the AI owns movement, never touch vnav again. BossMod NormalMovement dodges via vnav
-        // Pathfind and Stop() cancels those steps, so a per-tick Stop here reads as "never evades".
-        // The approach below is the one exception, and it only runs until we arrive.
-        if (deferCombatToBossModAi && !shouldApproachTarget)
-        {
-            return true;
-        }
-
         if (IsInEngagementRange(distance, isMelee))
         {
-            // Arrived. Stop our own approach path exactly once — returning true latches the caller's
-            // InitialCombatApproachMemory, so the branch above owns every later tick.
             pathfinder.Stop();
             return true;
         }

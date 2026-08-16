@@ -58,12 +58,25 @@ public class InFateHandler
 
         List<IBattleNpc> fateTargets = context.GetTargets().ToList();
         bool ai = config.CombatAutorotation.UsesCombatAutomation();
-        InitialCombatApproachMemory<FateId> approach = GetApproachMemory(context.GetFateId());
 
-        // The AI path used to skip the approach entirely, but we enter InFate the moment we cross
-        // the FATE ring — which can be well outside engagement range — and travel is suspended by
-        // then. So we walk in ourselves either way, and hand vnav over once we are in range.
-        // With AI on, combat starting is not the cue to stop: it may have started at range.
+        if (ai)
+        {
+            // Hand the whole fight over — the preset's StayCloseToTarget paths melee into range
+            // itself, so BOCCHI closing the distance would only fight it.
+            CombatActivityHandler.HandleTargets(
+                player,
+                playerState,
+                fateTargets,
+                conditions,
+                pathfinder,
+                "InFate",
+                shouldApproachTarget: false,
+                deferCombatToBossModAi: true,
+                targetManager: targetManager);
+            return;
+        }
+
+        InitialCombatApproachMemory<FateId> approach = GetApproachMemory(context.GetFateId());
         if (CombatActivityHandler.HandleTargets(
                 player,
                 playerState,
@@ -72,8 +85,7 @@ public class InFateHandler
                 pathfinder,
                 "InFate",
                 approach.IsPending,
-                stopPathfinderInCombat: !ai,
-                deferCombatToBossModAi: ai,
+                stopPathfinderInCombat: true,
                 targetManager: targetManager))
         {
             approach.Complete();
