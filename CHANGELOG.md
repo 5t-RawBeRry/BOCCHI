@@ -13,7 +13,7 @@
 - Illegal Mode locks Wrath Combo to the recommended settings while it is running, and stopping no longer errors with Wrath selected.
 - The random wait before Return after a FATE/CE works again. Mob Farmer only auto-targets when “Handle targeting” is on. Ninja Hide uses your Knowledge offset and range.
 - Setting and Dependencies descriptions are shorter. Dependencies now says Ready / Not enabled / Not installed, and shows which combat plugins your Combat pick uses.
-- Occult silver/gold per hour works again, in both horns. It only ever counted South Horn's pieces, so in North Horn — which pays in obols — nothing it watched ever changed and the rate sat at 0. Silver was also being read from a value stuck at 9999 regardless of what you held, and the rate reset itself whenever the Occult state briefly dropped out.
+- Occult silver/gold per hour works again in both horns. North Horn used to stay at 0 (it pays in obols, not pieces), silver was counted wrong, and the rate no longer resets when Occult Crescent briefly drops out.
 
 ### Performance
 - Treasure Hunt should no longer hitch between coffers. Route data is smaller and loads once. Outside Occult Crescent, BOCCHI does almost nothing.

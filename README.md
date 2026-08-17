@@ -24,7 +24,7 @@ https://raw.githubusercontent.com/OhKannaDuh/plugins/refs/heads/master/manifest.
 ### Illegal Mode (full autopilot)
 - Pick and travel to FATEs and/or Critical Encounters
 - Prefer / wait for **Magic Pot** FATEs and farm **pot chests** (Magical Elixir + compass hints)
-- Optional **BOCCHI AI** (BossMod / BMR autorotation preset for targeting and movement — not a job rotation, not legacy `ai:on`)
+- Combat: Wrath Combo or Rotation Solver Reborn with BOCCHI AI, or full BossMod / BossMod Reborn autorotation (Illegal Mode → General → Combat). Off while traveling.
 - Auto-mount, Return to camp, repair, Treasure Sight at camp
 - Optional auto treasure hunt between activities
 - Phantom job leveling helper

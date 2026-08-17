@@ -36,11 +36,8 @@ public class PotsConfig : IAutoConfig
     public bool ShouldFarmRerollPotChests { get; set; } = true;
 
     /// <summary>
-    ///     True when a live pot should not be started / pathing to — already registered pots stay.
-    /// </summary>
-    /// <summary>
-    ///     A FATE that has not started yet reports a nonsense TimeRemaining, so only judge a pot on
-    ///     the clock once it is actually running — otherwise a pot is dropped the moment it spawns.
+    ///     Skip a running pot with too little time left. Unstarted pots report a bogus timer, so
+    ///     only judge once TimeRemaining is actually ticking. Already-registered pots stay.
     /// </summary>
     public bool ShouldSkipLivePot(long timeRemainingSeconds) =>
         MinPotFateMinutesRemaining > 0

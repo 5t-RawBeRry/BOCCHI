@@ -88,7 +88,7 @@ public class CurrencyTracker(UIConfig config) : ICurrencyTracker, IOnUpdate, IOn
 
         stateWasAvailable = true;
 
-        // Shopping churns currency reads; re-baseline so spend→recover isn't a false gain.
+        // Vendor spend is not a session gain.
         if (AddonHelpers.IsShopExchangeOpen())
         {
             goldTracker.SyncBaseline(gold);

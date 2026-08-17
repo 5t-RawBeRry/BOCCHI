@@ -13,7 +13,7 @@ public sealed class DebugWindow
     IEnumerable<IDebugPanel> panels,
     IZoneProvider zones,
     IUIService ui
-) : OcelotWindow("OCH Debug"), IDebugWindow
+) : OcelotWindow("BOCCHI Debug"), IDebugWindow
 {
     private readonly IDebugPanel[] panels = panels.ToArray();
 

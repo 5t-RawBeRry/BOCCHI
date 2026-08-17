@@ -15,26 +15,14 @@ public static unsafe class OccultCrescentHelper
     }
 
     /// <summary>
-    ///     Read the currencies as inventory items, not from <see cref="OccultCrescentState"/>.
-    ///     <c>state->Silver</c> does not track the real balance — it read 9999 while the player
-    ///     actually held 309, so it never produced a delta and the per-hour rate sat at zero, and
-    ///     shopping believed it could always afford anything. <c>state->Gold</c> happened to agree,
-    ///     but there is no reason to trust one and not the other when the item count is what the
-    ///     game's own counter shows.
-    /// </summary>
-    /// <summary>
-    ///     Pieces only — what the South Horn vendor actually accepts. Shopping must use this, not
-    ///     the total: obols cannot pay for a piece-priced item.
+    ///     South Horn piece count from inventory (not <see cref="OccultCrescentState"/>, which can
+    ///     sit at 9999). Obols cannot pay a piece-priced vendor.
     /// </summary>
     public static int GetSilverPieces() => GetCurrencyCount(ShopCatalog.SilverPieceItemId);
 
     public static int GetGoldPieces() => GetCurrencyCount(ShopCatalog.GoldPieceItemId);
 
-    /// <summary>
-    ///     Pieces plus obols. Each horn pays in only one of the two, so whichever you are earning
-    ///     moves this total — which is what a per-hour rate needs. Tracking pieces alone reported
-    ///     zero for anyone farming the horn that pays in obols.
-    /// </summary>
+    /// <summary>Pieces plus obols — both horns, for per-hour rates.</summary>
     public static int GetSilverTotal() =>
         GetCurrencyCount(ShopCatalog.SilverPieceItemId) + GetCurrencyCount(ShopCatalog.SilverObolItemId);
 

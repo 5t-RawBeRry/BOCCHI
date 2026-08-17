@@ -40,7 +40,9 @@ using Ocelot.UI.Services;
 using Ocelot.Windows;
 using System.Reflection;
 using BOCCHI.Services.MOTD;
+#if DEBUG
 using BOCCHI.Services.Shopping;
+#endif
 using BOCCHI.Debug;
 using Ocelot.Lifecycle;
 
@@ -111,7 +113,9 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<RepairStep>();
         services.AddSingleton<IRepairService, RepairService>();
         services.AddSingleton<AethernetTeleportChain>();
+#if DEBUG
         services.AddSingleton<ShoppingService>();
+#endif
 
         services.LoadTrackersModule();
         services.LoadWorldModule();
