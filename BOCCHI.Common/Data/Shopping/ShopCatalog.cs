@@ -15,6 +15,14 @@ public static class ShopCatalog
     public const uint SilverPieceItemId = 45043;
     public const uint GoldPieceItemId = 45044;
 
+    /// <summary>
+    ///     The other horn pays in obols rather than pieces — a separate pair of items, so a player
+    ///     earning obols never moves the piece counts at all.
+    /// </summary>
+    public const uint SilverObolItemId = 51975;
+
+    public const uint GoldObolItemId = 51976;
+
     /// <summary>South Horn silver armor tab (IL 745) — common spend targets.</summary>
     public static readonly ShopCatalogEntry[] SilverArmor =
     [

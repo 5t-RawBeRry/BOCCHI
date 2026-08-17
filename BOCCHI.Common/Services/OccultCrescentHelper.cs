@@ -22,9 +22,24 @@ public static unsafe class OccultCrescentHelper
     ///     but there is no reason to trust one and not the other when the item count is what the
     ///     game's own counter shows.
     /// </summary>
-    public static int GetSilver() => GetCurrencyCount(ShopCatalog.SilverPieceItemId);
+    /// <summary>
+    ///     Pieces only — what the South Horn vendor actually accepts. Shopping must use this, not
+    ///     the total: obols cannot pay for a piece-priced item.
+    /// </summary>
+    public static int GetSilverPieces() => GetCurrencyCount(ShopCatalog.SilverPieceItemId);
 
-    public static int GetGold() => GetCurrencyCount(ShopCatalog.GoldPieceItemId);
+    public static int GetGoldPieces() => GetCurrencyCount(ShopCatalog.GoldPieceItemId);
+
+    /// <summary>
+    ///     Pieces plus obols. Each horn pays in only one of the two, so whichever you are earning
+    ///     moves this total — which is what a per-hour rate needs. Tracking pieces alone reported
+    ///     zero for anyone farming the horn that pays in obols.
+    /// </summary>
+    public static int GetSilverTotal() =>
+        GetCurrencyCount(ShopCatalog.SilverPieceItemId) + GetCurrencyCount(ShopCatalog.SilverObolItemId);
+
+    public static int GetGoldTotal() =>
+        GetCurrencyCount(ShopCatalog.GoldPieceItemId) + GetCurrencyCount(ShopCatalog.GoldObolItemId);
 
     private static int GetCurrencyCount(uint itemId)
     {

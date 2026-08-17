@@ -22,6 +22,11 @@ public class CurrencyTracker(UIConfig config) : ICurrencyTracker, IOnUpdate, IOn
 
     private readonly DeltaRateTracker silverTracker = new(() => TimeSpan.FromMinutes(config.TrackedDuration));
 
+    /// <summary>A state dropout shorter than this is a blip, not a session gap — keep recording.</summary>
+    private static readonly TimeSpan MaxIgnorableGap = TimeSpan.FromSeconds(5);
+
+    private DateTime lastAvailableUtc = DateTime.MinValue;
+
     private bool needsBaseline = true;
 
     private bool stateWasAvailable;
@@ -64,12 +69,15 @@ public class CurrencyTracker(UIConfig config) : ICurrencyTracker, IOnUpdate, IOn
         int gold = GetCurrentGold();
         int silver = GetCurrentSilver();
 
-        // First OC-ready sample after the state was unavailable — re-anchor so the jump across the
-        // gap is not counted as income, but keep the samples already collected. Reset() also wipes
-        // those, and IsStateAvailable() drops out often enough (zoning, instance load) that doing
-        // so left the rate stuck near zero — while the experience tracker, which merely pauses and
-        // resumes, kept reading correctly.
-        if (needsBaseline || !stateWasAvailable || !goldTracker.HasValue || !silverTracker.HasValue)
+        // Re-anchoring costs us whatever arrived during the gap, so only do it for a gap long
+        // enough to have hidden a real jump. A momentary read of "state unavailable" used to be
+        // enough, which silently swallowed gains — the experience tracker has no such branch, it
+        // simply resumes recording, which is why it ticks on every kill and this did not.
+        bool longGap = lastAvailableUtc == DateTime.MinValue
+                       || DateTime.UtcNow - lastAvailableUtc > MaxIgnorableGap;
+        lastAvailableUtc = DateTime.UtcNow;
+
+        if (needsBaseline || (!stateWasAvailable && longGap) || !goldTracker.HasValue || !silverTracker.HasValue)
         {
             goldTracker.SyncBaseline(gold);
             silverTracker.SyncBaseline(silver);
@@ -77,6 +85,8 @@ public class CurrencyTracker(UIConfig config) : ICurrencyTracker, IOnUpdate, IOn
             stateWasAvailable = true;
             return;
         }
+
+        stateWasAvailable = true;
 
         // Shopping churns currency reads; re-baseline so spend→recover isn't a false gain.
         if (AddonHelpers.IsShopExchangeOpen())
@@ -90,7 +100,7 @@ public class CurrencyTracker(UIConfig config) : ICurrencyTracker, IOnUpdate, IOn
         silverTracker.RecordPositiveDelta(silver);
     }
 
-    private static int GetCurrentGold() => OccultCrescentHelper.GetGold();
+    private static int GetCurrentGold() => OccultCrescentHelper.GetGoldTotal();
 
-    private static int GetCurrentSilver() => OccultCrescentHelper.GetSilver();
+    private static int GetCurrentSilver() => OccultCrescentHelper.GetSilverTotal();
 }

@@ -1,7 +1,9 @@
 using System.Globalization;
 using System.Numerics;
 using Dalamud.Game.ClientState.Objects.Types;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using Lumina.Excel.Sheets;
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Zones;
@@ -25,6 +27,7 @@ public unsafe class DebugCommand
     IPlayer player,
     IObjectTable objects,
     IZoneProvider zones,
+    IDataManager data,
     IChatGui chat,
     UIConfig uiConfig,
     ITranslator<DebugCommand> translator
@@ -103,7 +106,26 @@ public unsafe class DebugCommand
             chat,
             uiConfig,
             $"IsStateAvailable={OccultCrescentHelper.IsStateAvailable()} "
-            + $"Gold={OccultCrescentHelper.GetGold()} Silver={OccultCrescentHelper.GetSilver()}");
+            + $"GoldTotal={OccultCrescentHelper.GetGoldTotal()} SilverTotal={OccultCrescentHelper.GetSilverTotal()} "
+            + $"(pieces {OccultCrescentHelper.GetGoldPieces()}/{OccultCrescentHelper.GetSilverPieces()})");
+
+        // Drops mention currencies we have never heard of ("Enlightenment silver obols"), and they
+        // do not live in InventoryType.Currency. Ask the game's own item sheet which Enlightenment
+        // items exist and how many we hold, so the ids come from the game rather than a guess.
+        InventoryManager* inventory = InventoryManager.Instance();
+        BocchiChat.Print(chat, uiConfig, "Enlightenment items (itemId / name / held):");
+
+        foreach (Item row in data.GetExcelSheet<Item>())
+        {
+            string name = row.Name.ExtractText();
+            if (!name.Contains("Enlightenment", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            int held = inventory == null ? -1 : inventory->GetInventoryItemCount(row.RowId);
+            BocchiChat.Print(chat, uiConfig, $"  {row.RowId}  \"{name}\"  {held}");
+        }
     }
 
     /// <summary>

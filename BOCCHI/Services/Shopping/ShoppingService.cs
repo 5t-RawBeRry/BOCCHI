@@ -69,8 +69,8 @@ public sealed class ShoppingService
             return;
         }
 
-        int silver = OccultCrescentHelper.GetSilver();
-        int gold = OccultCrescentHelper.GetGold();
+        int silver = OccultCrescentHelper.GetSilverPieces();
+        int gold = OccultCrescentHelper.GetGoldPieces();
         bool shouldShop =
             config.PreferredItemIds.Count > 0
             && ((config.SilverThreshold > 0 && silver >= config.SilverThreshold)
