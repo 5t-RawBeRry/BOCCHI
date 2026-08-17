@@ -439,7 +439,7 @@ public class Automator
         if (potFate != null && PotTreasureFilter.CanRunSmart(zone, fateId.Value))
         {
             logger.Info("Starting pot treasure (elixir/hints) for fate {FateId}", fateId.Value);
-            BeginExclusivePotChestFarm(PotChestFarmMemory.CreateSmart(fateId, potFate.Position));
+            BeginExclusivePotChestFarm(PotChestFarmMemory.CreateSmart(fateId));
             return;
         }
 

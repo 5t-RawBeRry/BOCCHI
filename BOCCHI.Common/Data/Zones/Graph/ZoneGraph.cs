@@ -164,8 +164,6 @@ public class ZoneGraph
         AddEdge(b, a, costAB, type);
     }
 
-    public IEnumerable<Edge> GetEdges(Guid nodeId) => Edges.TryGetValue(nodeId, out List<Edge>? list) ? list : [];
-
     public Edge? GetEdge(Node from, Node to)
     {
         if (!Edges.TryGetValue(from.Id, out List<Edge>? list))

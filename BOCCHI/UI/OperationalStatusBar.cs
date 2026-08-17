@@ -66,10 +66,6 @@ public class OperationalStatusBar
 
     public bool CarrotHuntActive => carrotHunter.Running;
 
-    public bool AnyAutomationActive =>
-        IllegalModeActive || CompletionistActive || PotsTreasureActive || MobFarmerActive
-        || TreasureHuntActive || CarrotHuntActive;
-
     public void Render()
     {
         ImGui.Separator();

@@ -35,9 +35,6 @@ public static class NavigationConstants
     /// <summary>PathCalculator treats this as "arrived at event" — must be ≥ max approach.</summary>
     public const float EventArrivalRadius = 5f;
 
-    /// <summary>Legacy alias — prefer <see cref="EventApproachJitter"/> for FATE waits.</summary>
-    public const float CampApproachJitter = EventApproachJitter;
-
     /// <summary>
     ///     Added to authored CE combat radius for <see cref="CriticalEncounter.Radius"/> / debug green.
     ///     Red debug = padded − this.

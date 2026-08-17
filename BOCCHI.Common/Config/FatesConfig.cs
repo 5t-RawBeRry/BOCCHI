@@ -9,9 +9,6 @@ namespace BOCCHI.Common.Config;
 [ConfigGroup("automation", GroupOrder = 0, Order = 2)]
 public class FatesConfig : IAutoConfig
 {
-    /// <summary>South / North Horn Magic Pot FATE ids (Persistent / Pleading / Daylight / Pot of Bother).</summary>
-    public static readonly uint[] PotFateIds = [1976, 1977, 2072, 2073];
-
     /// <summary>
     ///     Skip FATEs at or above this progress % (0 = disabled). Once you are in the FATE, it is finished.
     /// </summary>

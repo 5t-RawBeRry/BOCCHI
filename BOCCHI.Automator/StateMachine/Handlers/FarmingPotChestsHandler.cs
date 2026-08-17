@@ -60,8 +60,6 @@ public class FarmingPotChestsHandler
     /// </summary>
     private const float RevealSpotTolerance = 12f;
 
-    private const float CenterArrival = 5f;
-
     /// <summary>
     ///     How close counts as "standing on the spot" for the elixir probe. Deliberately not the 2y
     ///     interact distance: that is the gate for touching a coffer, while the probe just needs the
@@ -109,8 +107,6 @@ public class FarmingPotChestsHandler
     private static readonly TimeSpan RerollWait = TimeSpan.FromSeconds(12);
 
     private const int MaxElixirAttempts = 3;
-
-    private const int MaxRefineSteps = 6;
 
     private Task<ChainResult>? activeChain;
 
@@ -245,9 +241,6 @@ public class FarmingPotChestsHandler
             case PotChestFarmPhase.WaitingForBuff:
                 HandleWaitingForBuff(farm);
                 break;
-            case PotChestFarmPhase.ApproachCenter:
-                HandleApproachCenter(farm);
-                break;
             case PotChestFarmPhase.ElixirAtCenter:
                 HandleElixirAtCenter(farm);
                 break;
@@ -373,19 +366,6 @@ public class FarmingPotChestsHandler
                 "Pot treasure: no Cache Me If You Can after wait — ending farm (not selected or pot failed)");
             FinishFarm();
         }
-    }
-
-    /// <summary>
-    ///     Kept only so a farm latched before the player-relative rewrite does not stall on a phase
-    ///     nothing sets any more — just read the hint here instead of walking to the centre.
-    /// </summary>
-    private void HandleApproachCenter(PotChestFarmMemory farm)
-    {
-        pathfinder.Stop();
-        farm.Phase = PotChestFarmPhase.ElixirAtCenter;
-        farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
-        farm.ElixirAttempts = 0;
-        farm.HintRevisionBaseline = hints.Revision;
     }
 
     private void HandleElixirAtCenter(PotChestFarmMemory farm)
@@ -1171,37 +1151,6 @@ public class FarmingPotChestsHandler
     {
         hints.Disarm();
         memory.Forget<PotChestFarmMemory>();
-    }
-
-    private static IEnumerable<PotTreasureCandidate> OrderNearestNeighbor(
-        IReadOnlyList<PotTreasureCandidate> group,
-        Vector3 origin)
-    {
-        List<PotTreasureCandidate> remaining = group.ToList();
-        List<PotTreasureCandidate> ordered = new(remaining.Count);
-        Vector3 cursor = origin;
-
-        while (remaining.Count > 0)
-        {
-            int best = 0;
-            float bestDist = float.MaxValue;
-            for (int i = 0; i < remaining.Count; i++)
-            {
-                float d = Vector3.DistanceSquared(cursor, remaining[i].Position);
-                if (d < bestDist)
-                {
-                    bestDist = d;
-                    best = i;
-                }
-            }
-
-            PotTreasureCandidate next = remaining[best];
-            remaining.RemoveAt(best);
-            ordered.Add(next);
-            cursor = next.Position;
-        }
-
-        return ordered;
     }
 
     private bool HasTreasureBuff() =>

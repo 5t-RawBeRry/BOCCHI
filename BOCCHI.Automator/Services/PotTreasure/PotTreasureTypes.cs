@@ -44,10 +44,6 @@ public sealed class PotTreasureHintEvent
     public PotTreasureDistanceBucket Distance { get; init; }
 
     public int Revision { get; set; }
-
-    public bool IsLocalHint =>
-        Kind == PotTreasureHintKind.Hint
-        && Distance is PotTreasureDistanceBucket.Immediate or PotTreasureDistanceBucket.Close;
 }
 
 public static class PotTreasureIds
@@ -76,19 +72,6 @@ public static class PotTreasureIds
 
     public static readonly uint[] RevealCofferBaseIds = [2014741, 2014742, 2014743];
 
-    public static string GroupKey(PotTreasureDirection direction) => direction switch
-    {
-        PotTreasureDirection.North => "north",
-        PotTreasureDirection.Northeast => "northeast",
-        PotTreasureDirection.East => "east",
-        PotTreasureDirection.Southeast => "southeast",
-        PotTreasureDirection.South => "south",
-        PotTreasureDirection.Southwest => "southwest",
-        PotTreasureDirection.West => "west",
-        PotTreasureDirection.Northwest => "northwest",
-        _ => string.Empty,
-    };
-
     public static PotTreasureDirection MapDirection(int value) => value switch
     {
         1 => PotTreasureDirection.North,
@@ -109,19 +92,6 @@ public static class PotTreasureIds
         HintFarLogMessageId => PotTreasureDistanceBucket.Far,
         HintBeyondFarLogMessageId => PotTreasureDistanceBucket.BeyondFar,
         _ => PotTreasureDistanceBucket.Unknown,
-    };
-
-    public static Vector3 DirectionVector(PotTreasureDirection direction) => direction switch
-    {
-        PotTreasureDirection.North => new(0f, 0f, -1f),
-        PotTreasureDirection.Northeast => new(0.70710677f, 0f, -0.70710677f),
-        PotTreasureDirection.East => new(1f, 0f, 0f),
-        PotTreasureDirection.Southeast => new(0.70710677f, 0f, 0.70710677f),
-        PotTreasureDirection.South => new(0f, 0f, 1f),
-        PotTreasureDirection.Southwest => new(-0.70710677f, 0f, 0.70710677f),
-        PotTreasureDirection.West => new(-1f, 0f, 0f),
-        PotTreasureDirection.Northwest => new(-0.70710677f, 0f, -0.70710677f),
-        _ => Vector3.Zero,
     };
 
     public static float RefineStep(PotTreasureDistanceBucket bucket) => bucket switch

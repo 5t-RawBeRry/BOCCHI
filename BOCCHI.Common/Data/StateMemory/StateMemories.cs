@@ -194,7 +194,6 @@ public enum PotChestFarmMode
 public enum PotChestFarmPhase
 {
     WaitingForBuff,
-    ApproachCenter,
     ElixirAtCenter,
     SearchingCandidates,
     OpeningReveal,
@@ -206,12 +205,10 @@ public sealed class PotChestFarmMemory
     private PotChestFarmMemory(
         FateId fateId,
         PotChestFarmMode mode,
-        Vector3 fateCenter,
         IEnumerable<Vector3> blindPositions)
     {
         FateId = fateId;
         Mode = mode;
-        FateCenter = fateCenter;
         Chests = new Queue<Vector3>(blindPositions);
         BlindTotalChests = Chests.Count;
         Phase = mode == PotChestFarmMode.Smart
@@ -220,11 +217,11 @@ public sealed class PotChestFarmMemory
         PhaseStartedUtc = DateTimeOffset.UtcNow;
     }
 
-    public static PotChestFarmMemory CreateSmart(FateId fateId, Vector3 fateCenter) =>
-        new(fateId, PotChestFarmMode.Smart, fateCenter, []);
+    public static PotChestFarmMemory CreateSmart(FateId fateId) =>
+        new(fateId, PotChestFarmMode.Smart, []);
 
     public static PotChestFarmMemory CreateBlind(FateId fateId, IEnumerable<Vector3> chestPositions) =>
-        new(fateId, PotChestFarmMode.Blind, Vector3.Zero, chestPositions);
+        new(fateId, PotChestFarmMode.Blind, chestPositions);
 
     public FateId FateId { get; }
 
@@ -232,7 +229,6 @@ public sealed class PotChestFarmMemory
 
     public PotChestFarmPhase Phase { get; set; }
 
-    public Vector3 FateCenter { get; }
 
     public readonly Queue<Vector3> Chests;
 
@@ -341,8 +337,6 @@ public sealed class GoalPathStepMemory(IGoal goal, IPathCalculator calculator, b
     public bool PauseWhenPlanCompletes { get; } = pauseWhenPlanCompletes;
 
     public Queue<IPathStep> PathSteps { get; private set; } = [];
-
-    public bool IsCalculating => pathStepTask is { IsCompleted: false };
 
     /// <summary>Calc finished with zero steps (already at destination, or walks-only plan stripped).</summary>
     public bool IsEmptyPlan => emptyPlan && pathStepTask == null;
