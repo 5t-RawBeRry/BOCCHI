@@ -25,8 +25,7 @@ public class FateScorer
         if (!automatorConfig.ShouldDoFates || !config.IsFateEnabledForIllegalMode(
                 fate.Id.Value,
                 zones.GetZone().IsPotFate(fate.Id.Value),
-                automatorConfig.PreferPotFates,
-                automatorConfig.ShouldFarmPotChests))
+                automatorConfig.PreferPotFates))
         {
             return score;
         }
@@ -68,8 +67,7 @@ public class FateScorer
             if (!config.IsFateEnabledForIllegalMode(
                     fate.Id.Value,
                     zones.GetZone().IsPotFate(fate.Id.Value),
-                    automatorConfig.PreferPotFates,
-                    automatorConfig.ShouldFarmPotChests))
+                    automatorConfig.PreferPotFates))
             {
                 continue;
             }

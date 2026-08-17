@@ -45,7 +45,10 @@ public class CurrencyTracker(UIConfig config) : ICurrencyTracker, IOnUpdate, IOn
 
     public void OnTerritoryChanged(uint territory)
     {
-        // Re-baseline after instance / zone changes so a late OC silver read is not a huge “gain”.
+        // A different zone is a different session, so the samples so far no longer describe it.
+        // This is the only place history should be dropped — see Update.
+        goldTracker.Reset();
+        silverTracker.Reset();
         needsBaseline = true;
         stateWasAvailable = false;
     }
@@ -61,11 +64,13 @@ public class CurrencyTracker(UIConfig config) : ICurrencyTracker, IOnUpdate, IOn
         int gold = GetCurrentGold();
         int silver = GetCurrentSilver();
 
-        // First OC-ready sample after unavailable / territory change — never count as income.
+        // First OC-ready sample after the state was unavailable — re-anchor so the jump across the
+        // gap is not counted as income, but keep the samples already collected. Reset() also wipes
+        // those, and IsStateAvailable() drops out often enough (zoning, instance load) that doing
+        // so left the rate stuck near zero — while the experience tracker, which merely pauses and
+        // resumes, kept reading correctly.
         if (needsBaseline || !stateWasAvailable || !goldTracker.HasValue || !silverTracker.HasValue)
         {
-            goldTracker.Reset();
-            silverTracker.Reset();
             goldTracker.SyncBaseline(gold);
             silverTracker.SyncBaseline(silver);
             needsBaseline = false;

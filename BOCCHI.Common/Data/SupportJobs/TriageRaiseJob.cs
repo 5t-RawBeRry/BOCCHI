@@ -4,17 +4,12 @@ using BOCCHI.Common.Services;
 
 namespace BOCCHI.Common.Data.SupportJobs;
 
-public static class SupportJobWhiteMage
-{
-    public static bool IsUnlocked(ISupportJobFactory supportJobs) =>
-        supportJobs.Create(SupportJobId.PhantomWhiteMage).Level >= 1;
-}
-
 /// <summary>Phantom jobs that can raise in Triage Mode.</summary>
 public static class TriageRaiseJob
 {
     public static bool AnyUnlocked(ISupportJobFactory supportJobs) =>
-        SupportJobChemist.IsUnlocked(supportJobs) || SupportJobWhiteMage.IsUnlocked(supportJobs);
+        IsUnlocked(supportJobs, SupportJobId.PhantomChemist)
+        || IsUnlocked(supportJobs, SupportJobId.PhantomWhiteMage);
 
     public static bool TrySelect(
         ISupportJobFactory supportJobs,
@@ -48,7 +43,5 @@ public static class TriageRaiseJob
         jobId == SupportJobId.PhantomWhiteMage ? PhantomActions.OccultRaise : PhantomActions.Revive;
 
     private static bool IsUnlocked(ISupportJobFactory supportJobs, SupportJobId jobId) =>
-        jobId == SupportJobId.PhantomWhiteMage
-            ? SupportJobWhiteMage.IsUnlocked(supportJobs)
-            : SupportJobChemist.IsUnlocked(supportJobs);
+        supportJobs.Create(jobId).Level >= 1;
 }

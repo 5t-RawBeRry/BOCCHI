@@ -42,8 +42,7 @@ public class StartableCriticalEncounterFinder
             && fatesConfig.IsFateEnabledForIllegalMode(
                 (uint)cycle.CurrentActivePotFateId,
                 isPotFate: true,
-                automatorConfig.PreferPotFates,
-                automatorConfig.ShouldFarmPotChests))
+                automatorConfig.PreferPotFates))
         {
             return null;
         }

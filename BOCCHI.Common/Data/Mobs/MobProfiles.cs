@@ -2,6 +2,10 @@ using BOCCHI.Common.Data.OccultCrescent;
 
 namespace BOCCHI.Common.Data.Mobs;
 
+/// <summary>
+///     Authored mob weakness / spawn data. Not consumed by runtime yet — Mob Farmer uses
+///     <see cref="MobData.MobsWithSpawnCondition"/>.
+/// </summary>
 public static class MobProfiles
 {
     private static readonly Dictionary<Mob, MobProfile> Profiles = BuildProfiles();

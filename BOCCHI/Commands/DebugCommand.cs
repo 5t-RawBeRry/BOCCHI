@@ -5,6 +5,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Zones;
+using BOCCHI.Common.Services;
 using BOCCHI.Debug;
 using Dalamud.Plugin.Services;
 using Ocelot.Rotation.Services;
@@ -66,8 +67,11 @@ public unsafe class DebugCommand
             case "instance":
                 PrintInstance();
                 break;
+            case "currency":
+                PrintCurrency();
+                break;
             default:
-                chat.PrintError("Usage: /bocchi debug [open|close|toggle|ai-preset|pos|chests]");
+                chat.PrintError("Usage: /bocchi debug [open|close|toggle|ai-preset|pos|chests|instance|currency]");
                 break;
         }
     }
@@ -86,6 +90,20 @@ public unsafe class DebugCommand
             ui == null
                 ? "UIState unavailable."
                 : $"IsInstancedArea={ui->PublicInstance.IsInstancedArea()} InstanceId={ui->PublicInstance.InstanceId}");
+    }
+
+    /// <summary>
+    ///     Prints the raw currency source the per-hour trackers read. Compare against the in-game
+    ///     Enlightenment counters: matching numbers mean the source is fine and any wrong rate is in
+    ///     the rate logic; zeroes or nonsense mean the tracker is reading the wrong field.
+    /// </summary>
+    private void PrintCurrency()
+    {
+        BocchiChat.Print(
+            chat,
+            uiConfig,
+            $"IsStateAvailable={OccultCrescentHelper.IsStateAvailable()} "
+            + $"Gold={OccultCrescentHelper.GetGold()} Silver={OccultCrescentHelper.GetSilver()}");
     }
 
     /// <summary>

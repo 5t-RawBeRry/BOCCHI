@@ -44,22 +44,12 @@ public static class MobData
             Mob.Mimic,
             Mob.Mousse,
             Mob.Troubadour,
-            // North Horn (night) — also authored on MobProfiles
+            // North Horn (night)
             Mob.Bicephalus,
             Mob.Glutton,
             Mob.Ankou
         ];
     }
-
-    public static MobElement GetWeaknesses(Mob mob) => MobProfiles.GetWeaknesses(mob);
-
-    public static bool IsWeakTo(Mob mob, MobElement element) => MobProfiles.IsWeakTo(mob, element);
-
-    public static MobSusceptibility GetSusceptibilities(Mob mob) => MobProfiles.GetSusceptibilities(mob);
-
-    public static bool IsSusceptibleTo(Mob mob, MobSusceptibility flag) => MobProfiles.IsSusceptibleTo(mob, flag);
-
-    public static bool TryGetProfile(Mob mob, out MobProfile profile) => MobProfiles.TryGet(mob, out profile);
 
     public static ZoneId GetZone(Mob mob) =>
         (uint)mob >= NorthHornMinNameId ? ZoneId.NorthHorn : ZoneId.SouthHorn;

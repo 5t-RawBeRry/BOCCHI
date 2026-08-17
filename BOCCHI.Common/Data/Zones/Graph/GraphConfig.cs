@@ -16,13 +16,11 @@ public enum ActivityAreaShape
 }
 
 /// <param name="Position">Path / wait destination (CE staging or FATE start).</param>
-/// <param name="CombatRadius">Engage radius (circle) or half-extent (square) for CEs; unused for FATEs.</param>
+/// <param name="CombatRadius">Engage / registration rim (circle radius or square half-extent).</param>
 /// <param name="PreferredAethernetId">PlaceNameId of preferred inbound shard, if any.</param>
 /// <param name="AreaShape">Circle (default) or axis-aligned square (e.g. A Beast Unleashed).</param>
-/// <param name="CombatRadius">Registration rim — how close you must be to join.</param>
 /// <param name="StandRadius">
-///     Standable area, when it is smaller than the registration rim (a CE on a tower, say).
-///     Null means the two are the same and CombatRadius is used for both.
+///     Standable area when smaller than the registration rim. Null uses CombatRadius for both.
 /// </param>
 public record ActivityData(
     int Id,

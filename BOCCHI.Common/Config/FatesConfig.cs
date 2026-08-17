@@ -29,9 +29,8 @@ public class FatesConfig : IAutoConfig
         MaxFateProgressPercent > 0 && progress >= MaxFateProgressPercent;
 
     /// <summary>Prefer pot FATEs force-includes Magic Pots; farm pot chests does not.</summary>
-    public bool IsFateEnabledForIllegalMode(uint fateId, bool isPotFate, bool preferPotFates, bool shouldFarmPotChests)
+    public bool IsFateEnabledForIllegalMode(uint fateId, bool isPotFate, bool preferPotFates)
     {
-        _ = shouldFarmPotChests;
         if (IsFateEnabled(fateId))
         {
             return true;
@@ -64,7 +63,6 @@ public class FatesConfig : IAutoConfig
         return IsFateEnabledForIllegalMode(
             predictedNextPotFateId,
             isPotFate: true,
-            preferPotFates,
-            shouldFarmPotChests);
+            preferPotFates);
     }
 }

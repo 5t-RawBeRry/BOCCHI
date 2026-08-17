@@ -111,8 +111,7 @@ public class GoalValidator
                  || !fatesConfig.IsFateEnabledForIllegalMode(
                      id.Value,
                      isPot,
-                     automatorConfig.PreferPotFates,
-                     automatorConfig.ShouldFarmPotChests))
+                     automatorConfig.PreferPotFates))
         {
             return false;
         }
@@ -286,8 +285,7 @@ public class GoalValidator
             .FirstOrDefault(f => fatesConfig.IsFateEnabledForIllegalMode(
                 f.Id.Value,
                 isPotFate: true,
-                automatorConfig.PreferPotFates,
-                automatorConfig.ShouldFarmPotChests));
+                automatorConfig.PreferPotFates));
 
         if (live == null)
         {

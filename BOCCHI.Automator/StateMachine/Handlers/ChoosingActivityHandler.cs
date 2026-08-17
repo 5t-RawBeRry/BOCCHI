@@ -151,8 +151,7 @@ public class ChoosingActivityHandler
             else if (!fatesConfig.IsFateEnabledForIllegalMode(
                          fate.Id.Value,
                          isPot,
-                         automatorConfig.PreferPotFates,
-                         automatorConfig.ShouldFarmPotChests))
+                         automatorConfig.PreferPotFates))
             {
                 continue;
             }

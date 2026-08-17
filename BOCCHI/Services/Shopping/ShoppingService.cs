@@ -69,8 +69,8 @@ public sealed class ShoppingService
             return;
         }
 
-        ushort silver = OccultCrescentHelper.GetSilver();
-        ushort gold = OccultCrescentHelper.GetGold();
+        int silver = OccultCrescentHelper.GetSilver();
+        int gold = OccultCrescentHelper.GetGold();
         bool shouldShop =
             config.PreferredItemIds.Count > 0
             && ((config.SilverThreshold > 0 && silver >= config.SilverThreshold)
@@ -140,7 +140,7 @@ public sealed class ShoppingService
         }
     }
 
-    private unsafe bool TryHandleOpenShop(ushort silver, ushort gold)
+    private unsafe bool TryHandleOpenShop(int silver, int gold)
     {
         if (!GenericHelpers.TryGetAddonByName("ShopExchangeCurrency", out AtkUnitBase* shop)
             || !GenericHelpers.IsAddonReady(shop))

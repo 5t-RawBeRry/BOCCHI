@@ -60,12 +60,7 @@ public class FarmingPotChestsHandler
     /// </summary>
     private const float RevealSpotTolerance = 12f;
 
-    /// <summary>
-    ///     How close counts as "standing on the spot" for the elixir probe. Deliberately not the 2y
-    ///     interact distance: that is the gate for touching a coffer, while the probe just needs the
-    ///     player on the pad. At 2y a candidate vnav parked slightly wide was never probed at all —
-    ///     it sat there until the stuck watch skipped it. AOCCH treats 5y as arrived; so do we.
-    /// </summary>
+    /// <summary>On-pad distance for the elixir probe (not coffer interact range).</summary>
     private const float CandidateProbeRadius = 5f;
 
     private static readonly TimeSpan ChestSpawnWait = TimeSpan.FromSeconds(45);
@@ -256,12 +251,7 @@ public class FarmingPotChestsHandler
         }
     }
 
-    /// <summary>
-    ///     Finding the coffer <b>is</b> what clears Cache Me — with no reroll offered the buff just
-    ///     ends. So "buff gone → stop" fired at the exact moment of success and walked away from the
-    ///     chest the whole farm was for. Keep going while an unopened coffer is actually in front of
-    ///     us, bounded in time so a stray layout chest cannot hold the farm open indefinitely.
-    /// </summary>
+    /// <summary>Keep farming after Cache Me drops while a revealed coffer is still in front of us.</summary>
     private bool TryFinishRevealAfterBuff(PotChestFarmMemory farm)
     {
         if (farm.BuffLostUtc == DateTimeOffset.MinValue)
@@ -275,9 +265,7 @@ public class FarmingPotChestsHandler
             return false;
         }
 
-        // The game announces the reveal, and that message lands on the same tick the buff drops.
-        // This runs ahead of the phase handlers, so without reading it here it would sit unread —
-        // the same way a compass hint sat unread through the whole OpeningReveal timeout.
+        // Reveal log can land on the same tick Cache Me drops — read it before the phase handlers.
         if (hints.TryGetEventSince(farm.HintRevisionBaseline, out PotTreasureHintEvent evt))
         {
             farm.HintRevisionBaseline = evt.Revision;
@@ -287,21 +275,16 @@ public class FarmingPotChestsHandler
             }
         }
 
-        // Same acquisition the normal path uses: the reveal can be nearer the candidate we were
-        // walking to than to us, and player-only matching would miss it and end the farm.
+        // Match the reveal even if it is nearer the candidate pad than the player.
         if (!TryAcquireReveal(farm, out IGameObject? reveal) || reveal == null)
         {
             if (!farm.HoldingAfterBuffLoss)
             {
-                // Nothing to open *yet*. The coffer object trails the buff drop by a beat, so
-                // testing only on the tick the buff clears finds nothing and ends the farm — the
-                // very failure this grace window exists to prevent. Wait briefly for it to appear.
+                // Coffer object trails the buff drop — wait briefly before giving up.
                 return since < RevealSpawnGrace;
             }
 
-            // The coffer we latched onto is gone, so it has been opened. Start the reroll wait from
-            // here rather than from the buff drop: the open chain itself takes ~10s and was eating
-            // almost the whole window, leaving barely a second for a reroll to arrive.
+            // Coffer is gone (opened) — start the reroll wait from now, not from the buff drop.
             if (!farm.RerollWaitStarted)
             {
                 farm.RerollWaitStarted = true;
@@ -503,8 +486,7 @@ public class FarmingPotChestsHandler
 
         if (farm.Candidates.Count == 0)
         {
-            // Go through ResumeSearchOrBlind so this exhausts into a fresh reading, not straight
-            // into a 50-spot sweep — this path was missed when that re-read was added.
+            // Exhausted candidates → re-read, not a 50-spot sweep.
             ResumeSearchOrBlind(farm);
             return;
         }
@@ -759,9 +741,7 @@ public class FarmingPotChestsHandler
             return;
         }
 
-        // Spending the narrowed set does not mean the compass stopped working — it usually means the
-        // last reading pointed at a spot that did not pop. Re-read from the full set instead of
-        // throwing the hints away for a 50-spot sweep.
+        // Narrowed set spent — re-read from the full pool instead of a 50-spot sweep.
         if (farm.Pool.Count > 0 && farm.HintsApplied < MaxHintReadings && HasTreasureBuff())
         {
             logger.Info(
@@ -876,19 +856,13 @@ public class FarmingPotChestsHandler
     {
         Vector3 pathable = PathableTreasurePosition(destination);
 
-        // A pot FATE's candidate spots span 1600y+ of zone, so the next one is regularly most of a
-        // map away and walking there costs most of the Cache Me window. Route long hops through the
-        // same aethernet planner FATE/CE travel uses; short ones stay on plain vnav, which avoids
-        // the async plan for the common case.
+        // Long hops use the FATE/CE aethernet planner; short ones stay on vnav.
         if (TryTravelByPlan(pathable))
         {
             return;
         }
 
-        // Re-path when the destination moves, not only when the pathfinder happens to be idle.
-        // A hint that narrows to a different spot mid-walk left the old path running: the player
-        // kept going to the previous candidate, distance to the new one never closed, and 20s
-        // later the stuck watch discarded a candidate that was never actually approached.
+        // Re-path when the destination moves, not only when vnav is idle.
         bool drifted = lastPathDestination is not { } last || last.Distance2D(pathable) > RepathDrift;
         string throttleKey = $"PotChestFarm::Path::{MathF.Round(pathable.X)}::{MathF.Round(pathable.Z)}";
         if ((pathfinder.IsIdle() || drifted) && EzThrottler.Throttle(throttleKey, 750))
@@ -984,8 +958,7 @@ public class FarmingPotChestsHandler
         }
 
         Vector3 position = PathableTreasurePosition(chest.Position);
-        // Name the reveal ids explicitly. Falling back to ObjectKind.Treasure was the bug: a pot
-        // reveal is an EventObj, so the kind test excluded the very object we came to open.
+        // Prefer reveal BaseIds — pot reveals are EventObj, not ObjectKind.Treasure.
         activeChain = chainManager.Manage(
             chains.Create("PotChestFarm::Open")
                 .Then<OpenTreasureCofferChain, TreasureOpenTarget>(
@@ -1226,11 +1199,7 @@ public class FarmingPotChestsHandler
                 continue;
             }
 
-            // A pot reveal is an EventObj, not a Treasure — "2014741 EventObj Gold Coffer". Every
-            // finder here used to require ObjectKind.Treasure, so the reveal was never in the set
-            // at all: nothing to acquire, nothing to dismount for, no open chain, reveal timeout.
-            // The BaseId list was right all along; matching on it with no ObjectKind restriction is
-            // what AOCCH does too.
+            // Pot reveals are EventObj matched by BaseId, not ObjectKind.Treasure.
             if (PotTreasureIds.RevealCofferBaseIds.Contains(obj.BaseId))
             {
                 tickReveals.Add(obj);
