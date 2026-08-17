@@ -9,6 +9,7 @@ using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Chain.Recipes;
 using Ocelot.Extensions;
+using Ocelot.Ipc.VNavmesh;
 using Ocelot.Services.Pathfinding;
 
 namespace BOCCHI.Automator.Services.Paths;
@@ -20,6 +21,9 @@ public class PathStepExecutor
     IObjectTable objects,
     ICondition conditions,
     IZoneProvider zones,
+    IGameGui gui,
+    IPathfinder pathfinder,
+    IVNavmeshIpc vnav,
     AutomatorConfig config
 ) : IPathStepExecutor
 {
@@ -32,7 +36,17 @@ public class PathStepExecutor
             Teleport(var id) => chains.Create($"{PathStepSoftStop.Prefix}Teleport({id})")
                 .Then<AethernetTeleportChain, uint>(id),
 
-            Return _ => throw new InvalidOperationException("Return path steps are handled by PathfindingHandler."),
+            // PathfindingHandler intercepts Return before it reaches here, handing off to
+            // ReturningHandler so the rolled pre-Return delay applies. Callers that drive the
+            // executor directly (the pot chest farm) have no such state to hand off to, and
+            // Returning does not drop the pot — so run the same chain the treasure hunt uses.
+            Return _ => ReturnToBaseCamp.Append(
+                chains.Create($"{PathStepSoftStop.Prefix}Return"),
+                zones,
+                conditions,
+                gui,
+                pathfinder,
+                vnav),
 
             var _ => throw new ArgumentOutOfRangeException()
         };

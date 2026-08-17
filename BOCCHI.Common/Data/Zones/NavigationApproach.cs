@@ -8,6 +8,19 @@ public static class NavigationConstants
 {
     public const float MaxDirectWalkDistance = 80f;
 
+    /// <summary>
+    ///     Yalm-equivalent cost of casting Return. Every route planner shares these two so a hop is
+    ///     priced the same whether the treasure hunt, the carrot hunt or graph traversal is asking.
+    /// </summary>
+    public const float ReturnCost = 40f;
+
+    /// <summary>
+    ///     Yalm-equivalent cost of one aethernet hop. A hop's teleport chain takes roughly 2.5s,
+    ///     which is about 50 yalms of mounted travel — graph traversal previously priced it at 10
+    ///     and so reached for teleports on hops it could comfortably walk.
+    /// </summary>
+    public const float AethernetHopCost = 50f;
+
     /// <summary>Player is considered at base camp within this distance of the aetheryte.</summary>
     public const float CampRadius = 80f;
 

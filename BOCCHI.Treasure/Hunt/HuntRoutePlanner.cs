@@ -55,16 +55,6 @@ public abstract class HuntRoutePlanner
     IPluginLog log
 ) : IHuntRoutePlanner
 {
-    /// <summary>
-    ///     Extra yalm-equivalent cost for an aethernet hop when comparing walk vs teleport routes.
-    /// </summary>
-    public const float AethernetHopCost = 50f;
-
-    /// <summary>
-    ///     Yalm-equivalent cost for casting Return (aligned with Illegal Mode's ReturnCost).
-    /// </summary>
-    public const float ReturnCost = 40f;
-
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -613,7 +603,7 @@ public abstract class HuntRoutePlanner
                 continue;
             }
 
-            float cost = AethernetHopCost + to.Distance;
+            float cost = NavigationConstants.AethernetHopCost + to.Distance;
             if (cost >= bestCost)
             {
                 continue;
@@ -678,7 +668,7 @@ public abstract class HuntRoutePlanner
                     continue;
                 }
 
-                float cost = fromShard.Distance + AethernetHopCost + to.Distance;
+                float cost = fromShard.Distance + NavigationConstants.AethernetHopCost + to.Distance;
                 if (cost < bestCost)
                 {
                     bestCost = cost;
@@ -698,7 +688,7 @@ public abstract class HuntRoutePlanner
             HuntToNode walkFromBase = fromBaseList.FirstOrDefault(x => x.Id == toId);
             if (walkFromBase.Id == toId)
             {
-                float returnWalkCost = ReturnCost + walkFromBase.Distance;
+                float returnWalkCost = NavigationConstants.ReturnCost + walkFromBase.Distance;
                 if (returnWalkCost < bestCost)
                 {
                     bestCost = returnWalkCost;
@@ -725,7 +715,7 @@ public abstract class HuntRoutePlanner
                 continue;
             }
 
-            float cost = ReturnCost + AethernetHopCost + to.Distance;
+            float cost = NavigationConstants.ReturnCost + NavigationConstants.AethernetHopCost + to.Distance;
             if (cost < bestCost)
             {
                 bestCost = cost;

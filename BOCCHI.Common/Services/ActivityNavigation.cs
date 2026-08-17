@@ -198,7 +198,7 @@ public class ActivityNavigation
             {
                 fieldScore = alreadyAtBest
                     ? walkFromBest
-                    : walkToLifestream + GraphTraverser.TeleportCost + walkFromBest;
+                    : walkToLifestream + NavigationConstants.AethernetHopCost + walkFromBest;
             }
 
             float returnScore = float.PositiveInfinity;
@@ -207,8 +207,8 @@ public class ActivityNavigation
                 && !float.IsPositiveInfinity(walkFromBest)
                 && CanOfferSurveyReturn())
             {
-                float teleportLeg = bestIsMain ? 0f : GraphTraverser.TeleportCost;
-                returnScore = GraphTraverser.ReturnCost + teleportLeg + walkFromBest;
+                float teleportLeg = bestIsMain ? 0f : NavigationConstants.AethernetHopCost;
+                returnScore = NavigationConstants.ReturnCost + teleportLeg + walkFromBest;
             }
 
             SurveyRoute route = SurveyRoute.Direct;

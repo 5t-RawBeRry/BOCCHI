@@ -74,7 +74,7 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
         }
 
         return new(
-            walkToDepartureCost + GraphTraverser.TeleportCost + walkToGoalFromInbound.Cost,
+            walkToDepartureCost + NavigationConstants.AethernetHopCost + walkToGoalFromInbound.Cost,
             BuildTeleportSteps(departure, inboundMeta.AetheryteId, goal, inbound, start));
     }
 
@@ -157,7 +157,7 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
                 continue;
             }
 
-            float cost = walkToDepartureCost + GraphTraverser.TeleportCost + walkFromAlt;
+            float cost = walkToDepartureCost + NavigationConstants.AethernetHopCost + walkFromAlt;
             TraversalCandidate option = new(
                 cost,
                 BuildTeleportSteps(departure, altMeta.AetheryteId, goal, altInbound, start));

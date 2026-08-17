@@ -5,7 +5,9 @@ using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph;
+using BOCCHI.Common.Data.Paths;
 using BOCCHI.Common.Services;
+using BOCCHI.Common.Services.Paths;
 using BOCCHI.Common.Targeting;
 using BOCCHI.Treasure.ChainRecipes;
 using BOCCHI.Treasure.Services;
@@ -31,6 +33,8 @@ public class FarmingPotChestsHandler
     IChainFactory chains,
     IChainManager chainManager,
     IPathfinder pathfinder,
+    IPathCalculator pathCalculator,
+    IPathStepExecutor pathStepExecutor,
     IObjectTable objects,
     ICondition conditions,
     IPlayer player,
@@ -125,6 +129,15 @@ public class FarmingPotChestsHandler
 
     /// <summary>Last destination handed to the pathfinder, for drift detection.</summary>
     private Vector3? lastPathDestination;
+
+    /// <summary>In-flight aethernet route plan for the current long hop.</summary>
+    private Task<PathCalculationResult>? travelPlanTask;
+
+    /// <summary>Destination the current plan was built for.</summary>
+    private Vector3? travelPlanTarget;
+
+    /// <summary>Remaining steps of the planned route; null when travelling on plain vnav.</summary>
+    private Queue<IPathStep>? travelSteps;
 
     private Vector3? approachTarget;
 
@@ -612,6 +625,14 @@ public class FarmingPotChestsHandler
             return false;
         }
 
+        // While the route planner owns travel, vnav is legitimately idle between teleport steps —
+        // reading that as "no route" would skip the candidate mid-hop.
+        if (travelPlanTask != null || travelSteps != null)
+        {
+            approachIdleSince = DateTimeOffset.MinValue;
+            return false;
+        }
+
         if (!pathfinder.IsIdle())
         {
             approachIdleSince = DateTimeOffset.MinValue;
@@ -638,6 +659,7 @@ public class FarmingPotChestsHandler
     private void ResetApproachWatch()
     {
         lastPathDestination = null;
+        ClearTravelPlan();
         approachTarget = null;
         approachIdleSince = DateTimeOffset.MinValue;
         approachSince = DateTimeOffset.MinValue;
@@ -874,6 +896,15 @@ public class FarmingPotChestsHandler
     {
         Vector3 pathable = PathableTreasurePosition(destination);
 
+        // A pot FATE's candidate spots span 1600y+ of zone, so the next one is regularly most of a
+        // map away and walking there costs most of the Cache Me window. Route long hops through the
+        // same aethernet planner FATE/CE travel uses; short ones stay on plain vnav, which avoids
+        // the async plan for the common case.
+        if (TryTravelByPlan(pathable))
+        {
+            return;
+        }
+
         // Re-path when the destination moves, not only when the pathfinder happens to be idle.
         // A hint that narrows to a different spot mid-walk left the old path running: the player
         // kept going to the previous candidate, distance to the new one never closed, and 20s
@@ -891,6 +922,77 @@ public class FarmingPotChestsHandler
         {
             AutoMount.MaybeRemount(config, conditions, objects, pathable, zones.GetZone().IsInBasecamp());
         }
+    }
+
+    /// <summary>
+    ///     Plan and run an aethernet-assisted route to <paramref name="destination"/>.
+    ///     Returns true when travel is being handled here and the caller should not walk.
+    /// </summary>
+    private bool TryTravelByPlan(Vector3 destination)
+    {
+        if (player.Position.Distance2D(destination) <= NavigationConstants.MaxDirectWalkDistance)
+        {
+            ClearTravelPlan();
+            return false;
+        }
+
+        // Target moved: the old plan goes somewhere we no longer want.
+        if (travelPlanTarget is { } planned && planned.Distance2D(destination) > RepathDrift)
+        {
+            ClearTravelPlan();
+        }
+
+        if (travelPlanTask is { IsCompleted: true } finished)
+        {
+            travelPlanTask = null;
+            PathCalculationResult result = finished.IsCompletedSuccessfully
+                ? finished.Result
+                : PathCalculationResult.Failed();
+
+            // No route (or the planner faulted) — fall back to walking rather than stalling.
+            if (result.RoutingFailed || result.Steps.Count == 0)
+            {
+                travelPlanTarget = null;
+                travelSteps = null;
+                return false;
+            }
+
+            travelSteps = result.Steps;
+            logger.Info(
+                "Pot treasure: routing {Steps} step(s) to {Pos:F0} ({Dist:F0}y)",
+                travelSteps.Count,
+                destination,
+                player.Position.Distance2D(destination));
+        }
+
+        if (travelPlanTask != null)
+        {
+            return true;
+        }
+
+        if (travelSteps is { Count: > 0 })
+        {
+            activeChain = pathStepExecutor.Execute(travelSteps.Dequeue());
+            return true;
+        }
+
+        if (travelSteps != null)
+        {
+            // Plan spent — the last leg lands us close enough for plain vnav to finish.
+            ClearTravelPlan();
+            return false;
+        }
+
+        travelPlanTarget = destination;
+        travelPlanTask = pathCalculator.CalculateToPosition(destination, CandidateProbeRadius);
+        return true;
+    }
+
+    private void ClearTravelPlan()
+    {
+        travelPlanTask = null;
+        travelPlanTarget = null;
+        travelSteps = null;
     }
 
     private void TryOpenChest(IGameObject chest)

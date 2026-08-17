@@ -58,7 +58,7 @@ public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
         if (inbound.Type == NodeType.BaseCampAetheryte)
         {
             return Task.FromResult<TraversalCandidate?>(new(
-                GraphTraverser.ReturnCost + toBaseCampNodeEdge.Cost + walkToGoalFromInbound.Cost,
+                NavigationConstants.ReturnCost + toBaseCampNodeEdge.Cost + walkToGoalFromInbound.Cost,
                 [
                     PathStep.Return(),
                     // Destination is already offset via GetEventPosition — don't also give vnav a 20y arrival.
@@ -69,7 +69,7 @@ public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
         }
 
         return Task.FromResult<TraversalCandidate?>(new(
-            GraphTraverser.ReturnCost + toBaseCampNodeEdge.Cost + GraphTraverser.TeleportCost + walkToGoalFromInbound.Cost,
+            NavigationConstants.ReturnCost + toBaseCampNodeEdge.Cost + NavigationConstants.AethernetHopCost + walkToGoalFromInbound.Cost,
             [
                 PathStep.Return(),
                 PathStep.Teleport(meta.AetheryteId),

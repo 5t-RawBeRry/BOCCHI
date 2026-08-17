@@ -9,10 +9,6 @@ public record TraversalCandidate(float TotalCost, List<PathStep> Steps);
 
 public class GraphTraverser(ZoneGraph graph, IPathfinder pathfinder, ILogger logger)
 {
-    public const float ReturnCost = 40f;
-
-    public const float TeleportCost = 10f;
-
     private readonly List<IGraphCandidateCalculator> calculators = [];
 
     public void AddCalculator(IGraphCandidateCalculator calculator)

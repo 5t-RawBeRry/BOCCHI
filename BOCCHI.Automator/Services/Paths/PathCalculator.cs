@@ -29,6 +29,68 @@ public class PathCalculator
 {
     public Task<PathCalculationResult> Calculate(IGoal goal) => Calculate(goal, allowAutoRebuild: true);
 
+    /// <inheritdoc />
+    public async Task<PathCalculationResult> CalculateToPosition(Vector3 destination, float arrivalRange)
+    {
+        if (objects.LocalPlayer is not { } player)
+        {
+            return PathCalculationResult.NoTravelNeeded();
+        }
+
+        IZone zone = zones.GetZone();
+        if (!zone.IsOccultCrescentZone())
+        {
+            return PathCalculationResult.NoTravelNeeded();
+        }
+
+        float distance = player.Position.Distance2D(destination);
+        if (distance <= arrivalRange)
+        {
+            return PathCalculationResult.NoTravelNeeded();
+        }
+
+        ZoneGraph graph = await zone.GetGraph();
+
+        // The traverser routes to a Node, not a graph member — the live-FATE path already feeds it a
+        // synthetic node — so an arbitrary point needs no graph entry of its own.
+        Node goalNode = new()
+        {
+            Type = NodeType.PotChest,
+            Position = destination,
+        };
+
+        GraphTraverser traverser = new(graph, pathfinder, logger);
+        traverser.AddCalculator(new WalkTeleportWalkCalculator());
+        traverser.AddCalculator(new DirectWalkCalculator());
+
+        // Return costs a cast but lands at camp with every aethernet shard in reach, which beats
+        // walking across the zone. It does not drop the pot, so a chest search can use it too.
+        if (distance > NavigationConstants.MaxDirectWalkDistance)
+        {
+            traverser.AddCalculator(new ReturnTeleportWalkCalculator());
+        }
+
+        List<PathStep> steps = await traverser.FindPath(player.Position, goalNode);
+        List<IPathStep> resolved = steps
+            .Select(step => AethernetNavigation.ResolveAetherytePathStep(step, zone, player.Position))
+            .Cast<IPathStep>()
+            .ToList();
+
+        if (resolved.Count == 0)
+        {
+            logger.Debug("No route to {Pos:F0} ({Dist:F0}y) — caller falls back to walking", destination, distance);
+            return PathCalculationResult.Failed();
+        }
+
+        logger.Debug(
+            "Position path planned: {Count} step(s) toward {Pos:F0} ({Dist:F0}y)",
+            resolved.Count,
+            destination,
+            distance);
+
+        return PathCalculationResult.Planned(resolved);
+    }
+
     private async Task<PathCalculationResult> Calculate(IGoal goal, bool allowAutoRebuild)
     {
         if (objects.LocalPlayer is not { } player)

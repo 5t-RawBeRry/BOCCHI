@@ -1102,8 +1102,8 @@ public sealed class CarrotHunterService
         bestCost = from.Distance2D(to);
         HopMode bestMode = HopMode.Direct;
 
-        float teleportCost = HuntRoutePlanner.AethernetHopCost;
-        float returnCost = HuntRoutePlanner.ReturnCost;
+        float teleportCost = NavigationConstants.AethernetHopCost;
+        float returnCost = NavigationConstants.ReturnCost;
 
         if (aetherytes.Count >= 2)
         {
