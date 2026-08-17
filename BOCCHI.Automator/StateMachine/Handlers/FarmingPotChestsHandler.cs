@@ -68,6 +68,12 @@ public class FarmingPotChestsHandler
 
     private const float ApproachProgressThreshold = 1.5f;
 
+    /// <summary>
+    ///     Window after Cache Me drops in which a revealed coffer still gets opened. Only needs to
+    ///     cover dismount plus the last few yards — the reveal is already within matching range.
+    /// </summary>
+    private static readonly TimeSpan PostBuffGrace = TimeSpan.FromSeconds(30);
+
     private const int MaxElixirAttempts = 3;
 
     private const int MaxRefineSteps = 6;
@@ -141,11 +147,29 @@ public class FarmingPotChestsHandler
 
         RefreshTickChests();
 
-        // Cache Me clears when pot chests are done or the pot dies — that is the farm end signal.
+        // Cache Me clears when the coffer is found, when the chests are done, or when the pot dies.
+        // Finding it is the common case, so check for a coffer to open before treating this as the end.
         if (farm.Phase != PotChestFarmPhase.WaitingForBuff && !HasTreasureBuff())
         {
+            if (TryFinishRevealAfterBuff(farm))
+            {
+                return;
+            }
+
             logger.Info("Pot treasure: Cache Me If You Can gone — ending farm");
             FinishFarm();
+            return;
+        }
+
+        farm.BuffLostUtc = DateTimeOffset.MinValue;
+
+        // Buff is back (reroll) — drop the grace latch and pick the search straight back up. Leaving
+        // the phase on OpeningReveal would idle 15s waiting on a coffer that is already looted.
+        if (farm.HoldingAfterBuffLoss)
+        {
+            farm.HoldingAfterBuffLoss = false;
+            logger.Info("Pot treasure: Cache Me back after the coffer — continuing (reroll)");
+            ResumeSearchOrBlind(farm);
             return;
         }
 
@@ -177,6 +201,59 @@ public class FarmingPotChestsHandler
                 break;
         }
     }
+
+    /// <summary>
+    ///     Finding the coffer <b>is</b> what clears Cache Me — with no reroll offered the buff just
+    ///     ends. So "buff gone → stop" fired at the exact moment of success and walked away from the
+    ///     chest the whole farm was for. Keep going while an unopened coffer is actually in front of
+    ///     us, bounded in time so a stray layout chest cannot hold the farm open indefinitely.
+    /// </summary>
+    private bool TryFinishRevealAfterBuff(PotChestFarmMemory farm)
+    {
+        if (farm.BuffLostUtc == DateTimeOffset.MinValue)
+        {
+            farm.BuffLostUtc = DateTimeOffset.UtcNow;
+        }
+        else if (DateTimeOffset.UtcNow - farm.BuffLostUtc >= PostBuffGrace)
+        {
+            return false;
+        }
+
+        // Same acquisition the normal path uses: the reveal can be nearer the candidate we were
+        // walking to than to us, and player-only matching would miss it and end the farm.
+        if (!TryAcquireReveal(farm, out IGameObject? reveal) || reveal == null)
+        {
+            // Nothing left to open. If we already opened one here, stay latched for the rest of the
+            // window: a reroll re-grants the buff a moment later and needs the farm to still exist.
+            return farm.HoldingAfterBuffLoss;
+        }
+
+        if (!farm.HoldingAfterBuffLoss)
+        {
+            farm.HoldingAfterBuffLoss = true;
+            farm.Phase = PotChestFarmPhase.OpeningReveal;
+            logger.Info("Pot treasure: Cache Me gone but a coffer is revealed — opening it before ending");
+        }
+
+        if (DismountAssist.TryDismount(conditions, ReportDismount))
+        {
+            return true;
+        }
+
+        float distance = player.Position.Distance2D(reveal.Position);
+        if (distance > OpenTreasureCofferChain.InteractDistance)
+        {
+            EnsurePathing(reveal.Position);
+            return true;
+        }
+
+        pathfinder.Stop();
+        TryOpenChest(reveal);
+        return true;
+    }
+
+    private void ReportDismount(string detail) =>
+        logger.Debug("Pot treasure: {Detail}", detail);
 
     private void HandleWaitingForBuff(PotChestFarmMemory farm)
     {
@@ -473,7 +550,7 @@ public class FarmingPotChestsHandler
             // Get on foot before closing the last stretch. Travel and the elixir are fine mounted,
             // but the open needs to be within 2y of the coffer and that is not reliable from a
             // mount — least of all in the air, where Dismount cannot land us on the spot.
-            if (DismountAssist.TryDismount(conditions))
+            if (DismountAssist.TryDismount(conditions, ReportDismount))
             {
                 return;
             }
@@ -682,7 +759,7 @@ public class FarmingPotChestsHandler
     private void TryOpenChest(IGameObject chest)
     {
         // Pot reveals need feet — normal hunt coffers stay mounted (#175).
-        if (DismountAssist.TryDismount(conditions) || ECommonsPlayer.IsJumping)
+        if (DismountAssist.TryDismount(conditions, ReportDismount) || ECommonsPlayer.IsJumping)
         {
             return;
         }
@@ -690,8 +767,10 @@ public class FarmingPotChestsHandler
         Vector3 position = PathableTreasurePosition(chest.Position);
         activeChain = chainManager.Manage(
             chains.Create("PotChestFarm::Open")
+                // No preferred BaseIds — the chain then falls back to ObjectKind.Treasure, which is
+                // what actually matches a reveal.
                 .Then<OpenTreasureCofferChain, TreasureOpenTarget>(
-                    new TreasureOpenTarget(position, PotTreasureIds.RevealCofferBaseIds))
+                    new TreasureOpenTarget(position))
         );
     }
 
@@ -855,10 +934,12 @@ public class FarmingPotChestsHandler
         tickChests.Clear();
         foreach (IGameObject obj in objects)
         {
-            // Only Magic Pot reveal coffer BaseIds — layout bronze/silver can sit on the same spot.
+            // Any treasure object, not a fixed BaseId list: the reveal did not match the three ids
+            // we hardcoded, so a correctly-located chest was invisible to the farm. ObjectKind still
+            // scopes this to coffers — blanket interaction would hit aetherytes and NPCs.
             if (obj.IsValid()
                 && !obj.IsDead
-                && PotTreasureIds.RevealCofferBaseIds.Contains(obj.BaseId))
+                && obj.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.Treasure)
             {
                 tickChests.Add(obj);
             }
@@ -872,9 +953,13 @@ public class FarmingPotChestsHandler
     private IGameObject? FindRevealNear(Vector3 origin) =>
         GameObjectNearest.Find2D(tickChests, origin, RevealSearchRadius);
 
-    private bool IsChestOpened(Vector3 position)
-    {
-        IGameObject? chest = FindChestNear(position) ?? FindRevealNear(position);
-        return chest != null && OpenTreasureCofferChain.IsOpenedOrLooted(chest);
-    }
+    /// <summary>
+    ///     A spot counts as spent only when there is a coffer there and none of them are still
+    ///     closed. Now that any treasure matches, "nearest one is open" would let a leftover layout
+    ///     bronze on the same spot retire a candidate whose pot chest has not been touched.
+    /// </summary>
+    private bool IsChestOpened(Vector3 position) =>
+        (FindChestNear(position) ?? FindRevealNear(position)) != null
+        && FindUnopenedChestNear(position) == null
+        && FindUnopenedRevealNear(position) == null;
 }

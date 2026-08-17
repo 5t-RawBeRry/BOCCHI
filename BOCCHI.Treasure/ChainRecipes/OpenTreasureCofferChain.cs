@@ -120,7 +120,11 @@ public class OpenTreasureCofferChain
                     return false;
                 }
 
-                if (!EzThrottler.Throttle("ChestThrottle", 200))
+                // 500ms, not 200: the casting flags above only go up once the server acknowledges
+                // the interact, and at 200ms we could squeeze a second one in before that and clip
+                // the cast we are trying to protect. Instant coffers are unaffected — they open on
+                // the first interact and never reach a retry.
+                if (!EzThrottler.Throttle("ChestThrottle", 500))
                 {
                     return false;
                 }

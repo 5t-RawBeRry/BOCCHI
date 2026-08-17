@@ -256,6 +256,19 @@ public sealed class PotChestFarmMemory
     /// <summary>Hints already used to narrow the set — for logging how far in we are.</summary>
     public int HintsApplied { get; set; }
 
+    /// <summary>
+    ///     When Cache Me If You Can was first seen missing. Bounds the grace period in which an
+    ///     already-revealed coffer still gets opened instead of abandoned.
+    /// </summary>
+    public DateTimeOffset BuffLostUtc { get; set; } = DateTimeOffset.MinValue;
+
+    /// <summary>
+    ///     Set once we start opening a coffer after the buff dropped. Keeps the farm alive for the
+    ///     rest of the grace window so a reroll offer has somewhere to land — without it the farm is
+    ///     forgotten the tick the chest opens and the reroll is lost.
+    /// </summary>
+    public bool HoldingAfterBuffLoss { get; set; }
+
     /// <summary>When we started waiting for the current (peek) blind chest to spawn.</summary>
     public DateTimeOffset WaitingForSpawnSince { get; set; } = DateTimeOffset.MinValue;
 

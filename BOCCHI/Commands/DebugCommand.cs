@@ -1,5 +1,7 @@
 using System.Globalization;
 using System.Numerics;
+using Dalamud.Game.ClientState.Objects.Types;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Debug;
@@ -12,12 +14,13 @@ using Ocelot.Services.Translation;
 
 namespace BOCCHI.Commands;
 
-public class DebugCommand
+public unsafe class DebugCommand
 (
     IDebugWindow debugWindow,
     BossModMiscAiBackend bossModMiscAi,
     CombatAiPresetNaming presetNaming,
     IPlayer player,
+    IObjectTable objects,
     IChatGui chat,
     UIConfig uiConfig,
     ITranslator<DebugCommand> translator
@@ -54,9 +57,60 @@ public class DebugCommand
             case "position":
                 PrintPosition();
                 break;
-            default:
-                chat.PrintError("Usage: /bocchi debug [open|close|toggle|ai-preset|pos]");
+            case "chests":
+                PrintNearbyChests();
                 break;
+            case "instance":
+                PrintInstance();
+                break;
+            default:
+                chat.PrintError("Usage: /bocchi debug [open|close|toggle|ai-preset|pos|chests]");
+                break;
+        }
+    }
+
+    /// <summary>
+    ///     Dump nearby objects with their BaseId. Pot reveal detection only matches the BaseIds in
+    ///     PotTreasureIds.RevealCofferBaseIds, so stand next to a revealed chest and run this to see
+    ///     what it actually is.
+    /// </summary>
+    private unsafe void PrintInstance()
+    {
+        UIState* ui = UIState.Instance();
+        BocchiChat.Print(
+            chat,
+            uiConfig,
+            ui == null
+                ? "UIState unavailable."
+                : $"IsInstancedArea={ui->PublicInstance.IsInstancedArea()} InstanceId={ui->PublicInstance.InstanceId}");
+    }
+
+    private void PrintNearbyChests()
+    {
+        Vector3 me = player.Position;
+        var near = objects
+            .Where(o => o.IsValid() && !o.IsDead)
+            .Select(o => (Obj: o, Dist: Vector2.Distance(
+                new Vector2(me.X, me.Z),
+                new Vector2(o.Position.X, o.Position.Z))))
+            .Where(x => x.Dist <= 30f)
+            .OrderBy(x => x.Dist)
+            .Take(15)
+            .ToList();
+
+        if (near.Count == 0)
+        {
+            BocchiChat.Print(chat, uiConfig, "No objects within 30y.");
+            return;
+        }
+
+        BocchiChat.Print(chat, uiConfig, $"Objects within 30y (BaseId / kind / name / distance):");
+        foreach ((IGameObject obj, float dist) in near)
+        {
+            BocchiChat.Print(
+                chat,
+                uiConfig,
+                $"  {obj.BaseId}  {obj.ObjectKind}  \"{obj.Name.TextValue}\"  {dist:0.#}y");
         }
     }
 
