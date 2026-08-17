@@ -4,6 +4,7 @@ using Dalamud.Game.ClientState.Objects.Types;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Debug;
 using Dalamud.Plugin.Services;
 using Ocelot.Rotation.Services;
@@ -11,6 +12,7 @@ using Ocelot.Rotation.Services.BossMod;
 using Ocelot.Services.Commands;
 using Ocelot.Services.PlayerState;
 using Ocelot.Services.Translation;
+using DalamudObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
 
 namespace BOCCHI.Commands;
 
@@ -21,6 +23,7 @@ public unsafe class DebugCommand
     CombatAiPresetNaming presetNaming,
     IPlayer player,
     IObjectTable objects,
+    IZoneProvider zones,
     IChatGui chat,
     UIConfig uiConfig,
     ITranslator<DebugCommand> translator
@@ -85,14 +88,17 @@ public unsafe class DebugCommand
                 : $"IsInstancedArea={ui->PublicInstance.IsInstancedArea()} InstanceId={ui->PublicInstance.InstanceId}");
     }
 
+    /// <summary>
+    ///     Lists nearby objects and, for treasure ones, says whether the pot-reveal filter would
+    ///     accept them and why not. Standing on a revealed pot chest and running this answers the
+    ///     question the logs cannot: is the coffer being rejected, or never seen at all?
+    /// </summary>
     private void PrintNearbyChests()
     {
         Vector3 me = player.Position;
         var near = objects
             .Where(o => o.IsValid() && !o.IsDead)
-            .Select(o => (Obj: o, Dist: Vector2.Distance(
-                new Vector2(me.X, me.Z),
-                new Vector2(o.Position.X, o.Position.Z))))
+            .Select(o => (Obj: o, Dist: Flat(me, o.Position)))
             .Where(x => x.Dist <= 30f)
             .OrderBy(x => x.Dist)
             .Take(15)
@@ -104,15 +110,48 @@ public unsafe class DebugCommand
             return;
         }
 
-        BocchiChat.Print(chat, uiConfig, $"Objects within 30y (BaseId / kind / name / distance):");
+        IZone zone = zones.GetZone();
+        List<Vector3> potSpots = zone.GetPotChestData().Values
+            .SelectMany(chests => chests.Select(c => c.Position))
+            .Concat(zone.GetRerollPotChestData().Select(c => c.Position))
+            .ToList();
+        List<Vector3> huntSpots = zone.GetTreasureData()
+            .Where(t => t.Position.HasValue)
+            .Select(t => t.Position!.Value)
+            .ToList();
+
+        BocchiChat.Print(chat, uiConfig, "Objects within 30y (BaseId / kind / name / distance):");
         foreach ((IGameObject obj, float dist) in near)
         {
             BocchiChat.Print(
                 chat,
                 uiConfig,
-                $"  {obj.BaseId}  {obj.ObjectKind}  \"{obj.Name.TextValue}\"  {dist:0.#}y");
+                $"  {obj.BaseId}  {obj.ObjectKind}  \"{obj.Name.TextValue}\"  {dist:0.#}y"
+                + (obj.ObjectKind == DalamudObjectKind.Treasure
+                    ? $"  targetable={obj.IsTargetable}  {ClassifyReveal(obj, potSpots, huntSpots)}"
+                    : string.Empty));
         }
     }
+
+    /// <summary>Mirrors FarmingPotChestsHandler's reveal gate so the verdict here matches the farm.</summary>
+    private static string ClassifyReveal(IGameObject obj, List<Vector3> potSpots, List<Vector3> huntSpots)
+    {
+        float pot = potSpots.Count == 0 ? float.MaxValue : potSpots.Min(p => Flat(obj.Position, p));
+        float hunt = huntSpots.Count == 0 ? float.MaxValue : huntSpots.Min(p => Flat(obj.Position, p));
+        string distances = $"pot={pot:0.#}y hunt={hunt:0.#}y";
+
+        if (pot > 12f)
+        {
+            return $"REJECT (not on a pot spot; {distances})";
+        }
+
+        return hunt < pot
+            ? $"REJECT (nearer a hunt coffer; {distances})"
+            : $"ACCEPT as pot reveal ({distances})";
+    }
+
+    private static float Flat(Vector3 a, Vector3 b) =>
+        Vector2.Distance(new Vector2(a.X, a.Z), new Vector2(b.X, b.Z));
 
     /// <summary>
     ///     Print the player position as a TreasureHuntPathOverrides via-point literal. Stand on the

@@ -192,9 +192,14 @@ public class OpenTreasureCofferChain
         FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure* tr
     )
     {
-        if (tr->Flags.HasFlag(TreasureFlags.Opened)
-            || tr->Flags.HasFlag(TreasureFlags.FadedOut)
-            || tr->State is TreasureState.Opened or TreasureState.FadingOut or TreasureState.FadedOut)
+        // Only a real Treasure has the Treasure struct behind it. Pot reveals are EventObj, and
+        // reading Flags/State through that cast is reading whatever happens to sit at those
+        // offsets — a junk "already opened" would silently retire an unopened coffer. For those,
+        // the Loot window is the only trustworthy signal.
+        if (chest.ObjectKind == DalamudObjectKind.Treasure
+            && (tr->Flags.HasFlag(TreasureFlags.Opened)
+                || tr->Flags.HasFlag(TreasureFlags.FadedOut)
+                || tr->State is TreasureState.Opened or TreasureState.FadingOut or TreasureState.FadedOut))
         {
             return true;
         }
@@ -236,6 +241,13 @@ public class OpenTreasureCofferChain
                 if (position.Distance2D(o.Position) > searchRadius)
                 {
                     return false;
+                }
+
+                // An explicit BaseId match is the caller naming the exact object, so it stands on
+                // its own — pot reveals are EventObj and would fail a Treasure kind test (#175).
+                if (preferred is { Count: > 0 })
+                {
+                    return MatchesOpenFilter(o, preferred);
                 }
 
                 if (!MatchesOpenFilter(o, preferred))

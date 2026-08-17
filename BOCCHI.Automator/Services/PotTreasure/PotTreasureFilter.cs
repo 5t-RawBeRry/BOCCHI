@@ -79,7 +79,13 @@ public static class PotTreasureFilter
     public static bool CanRunSmart(IZone zone, int fateId) =>
         zone.IsPotFate(fateId) && zone.GetPotChestData().ContainsKey(fateId);
 
-    /// <summary>Every authored spot for this pot FATE, as filter input.</summary>
+    /// <summary>
+    ///     Every authored spot for this pot FATE, as filter input.
+    ///     Reroll pads are deliberately excluded. They sit in remote second-chance areas — 250y from
+    ///     the nearest pot spot on average in North Horn, up to 515y — reached by aethernet rather
+    ///     than on foot. Narrowing onto one would send the farm walking overland for the rest of the
+    ///     buff. The blind sweep still visits them; it orders by distance and is a last resort.
+    /// </summary>
     public static List<PotTreasureCandidate> BuildPool(IZone zone, int fateId)
     {
         if (!zone.GetPotChestData().TryGetValue(fateId, out List<PotChestData>? chests))

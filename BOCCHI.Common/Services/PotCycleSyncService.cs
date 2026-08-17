@@ -163,13 +163,24 @@ public sealed class PotCycleSyncService
         lastFetchedInstanceKey = fetch.InstanceKey;
         nextFetchAttemptUtc = DateTime.UtcNow;
 
+        // Every outcome below is logged. Whether this sync is worth its worker at all comes down to
+        // how often a fetch actually lands, and until now a miss, a territory mismatch and a
+        // rejected anchor all returned silently — indistinguishable from the service doing nothing.
         if (!fetch.Found || fetch.PotFateId == 0 || fetch.SpawnUnix <= 0)
         {
+            logger.Info(
+                "[PotCycleSync] fetch miss — no cycle published for key {Key}… (the key rotates, so a "
+                + "miss can mean nobody shared, or that we asked under a key nobody shared under)",
+                Shorten(fetch.InstanceKey));
             return;
         }
 
         if (fetch.ResponseTerritoryId != 0 && fetch.ResponseTerritoryId != fetch.RequestTerritoryId)
         {
+            logger.Warn(
+                "[PotCycleSync] fetch hit discarded — territory {Response} does not match {Request}",
+                fetch.ResponseTerritoryId,
+                fetch.RequestTerritoryId);
             return;
         }
 
@@ -177,11 +188,22 @@ public sealed class PotCycleSyncService
         if (potCycles.TryApplyRemoteAnchor(fetch.PotFateId, spawnAt, fetch.RequestTerritoryId))
         {
             logger.Info(
-                "[PotCycleSync] applied remote pot={PotId} spawn={Spawn}",
+                "[PotCycleSync] fetch hit — applied remote pot={PotId} spawn={Spawn}",
                 fetch.PotFateId,
                 fetch.SpawnUnix);
+            return;
         }
+
+        logger.Info(
+            "[PotCycleSync] fetch hit but not applied — pot={PotId} spawn={Spawn} rejected by the "
+            + "local tracker (usually a local anchor arrived first)",
+            fetch.PotFateId,
+            fetch.SpawnUnix);
     }
+
+    /// <summary>First 8 chars of a key, matching how the upload/rotation lines already print it.</summary>
+    private static string Shorten(string? key) =>
+        key is { Length: >= 8 } ? key[..8] : key ?? "?";
 
     private void StartUpload(PotCycleSnapshot snap, ushort territory)
     {

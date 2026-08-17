@@ -269,6 +269,9 @@ public sealed class PotChestFarmMemory
     /// </summary>
     public bool HoldingAfterBuffLoss { get; set; }
 
+    /// <summary>Set once the opened coffer disappears, so the reroll wait excludes the open itself.</summary>
+    public bool RerollWaitStarted { get; set; }
+
     /// <summary>When we started waiting for the current (peek) blind chest to spawn.</summary>
     public DateTimeOffset WaitingForSpawnSince { get; set; } = DateTimeOffset.MinValue;
 
