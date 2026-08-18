@@ -1,4 +1,4 @@
-# 4.0.2.29
+# 4.1.0.0
 
 ### New
 - Mount, sprint, and jump-when-stuck now live on a Movement page. They apply to Illegal Mode, Treasure Hunt, Carrot Hunt, and Mob Farmer. Jump is on by default. (#185)
