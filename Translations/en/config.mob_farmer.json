@@ -3,9 +3,11 @@
   "tooltip": "Choose which enemies to farm and how pulls work.",
   "sections": {
     "targets": "Targets",
+    "spots": "Spots",
     "pulls": "Pulls",
     "home": "After combat",
-    "buffs": "Battle Bell",
+    "buffs": "Pull buffs",
+    "yields": "Pause for",
     "debug": "Debug"
   },
   "fields": {
@@ -37,13 +39,37 @@
       "label": "Max pull range",
       "tooltip": "Ignore enemies farther than this (yalms)."
     },
+    "spots": {
+      "label": "Farm spots",
+      "tooltip": "Named gather points. Start uses the highest-priority enabled spot (nearest on a tie). Empty = use where you press Start. Stack / stop is for caves and SW Tower.",
+      "empty": "No spots — Start uses where you are standing.",
+      "add": "Add spot here",
+      "remove": "Remove",
+      "name": "Name",
+      "enabled": "On",
+      "priority": "Priority",
+      "origin": "Origin",
+      "set_origin": "Set origin here",
+      "use_stack": "Use stack / stop point",
+      "stack": "Stack / stop point",
+      "set_stack": "Set stack point here",
+      "min_fight": "Min enemies to fight (0 = default)"
+    },
+    "claimed_spot_seconds": {
+      "label": "Leave if claimed after (seconds)",
+      "tooltip": "If other players keep this pack or stand on the stack point this long, mark the spot claimed for this session and go to the next one."
+    },
+    "claimed_player_radius": {
+      "label": "Claimed player radius (yalms)",
+      "tooltip": "Treat the spot as claimed if another player stays this close to the origin or stack point."
+    },
     "min_euclidean_distance_to_return_home": {
       "label": "Go home if farther than",
-      "tooltip": "After a fight, walk back to your start point only if you are farther away than this (yalms)."
+      "tooltip": "After a fight, walk back to the current spot origin only if you are farther away than this (yalms)."
     },
     "return_to_start_in_waiting_phase": {
-      "label": "Return to start after combat",
-      "tooltip": "Your start point is where you stood when you pressed Start."
+      "label": "Return to spot after combat",
+      "tooltip": "Walk back to the current farm spot origin when the fight ends. Origin is the spot you are on, or where you stood when you pressed Start if you have no spots."
     },
     "render_debug_lines": {
       "label": "Show debug lines",
@@ -51,11 +77,23 @@
     },
     "apply_battle_bell": {
       "label": "Use Battle Bell",
-      "tooltip": "Before each pull, switch to Geomancer, recast Battle Bell, Sprint, then switch back."
+      "tooltip": "Before each pull, switch to Geomancer, recast Battle Bell, then Sprint and switch back."
+    },
+    "apply_ringing_respite": {
+      "label": "Use Ringing Respite",
+      "tooltip": "With Battle Bell (or on its own): Geomancer III heals you when you take hits. Needs Geomancer 3."
+    },
+    "apply_quickstep": {
+      "label": "Use Quickstep",
+      "tooltip": "Before each pull, switch to Phantom Dancer and cast Quickstep (90s evasion). Needs Dancer 2."
     },
     "maximum_battle_bell_wait_time": {
-      "label": "Max wait for Battle Bell",
-      "tooltip": "If Battle Bell needs longer than this (seconds) to come off cooldown, skip Bell and Sprint for that pull and start gathering anyway."
+      "label": "Max wait for Bell / Respite",
+      "tooltip": "If Battle Bell or Ringing Respite needs longer than this (seconds) to come off cooldown, skip that skill for the pull."
+    },
+    "quickstep_skip_if_remaining_minutes": {
+      "label": "Skip Quickstep if remaining (minutes)",
+      "tooltip": "Skip Quickstep when the 30-minute crystal Quicker Step buff still has at least this many minutes left. 0 = recast every pull (keeps the 90s evasion up)."
     },
     "minimum_mobs_to_start_loop": {
       "label": "Minimum enemies to start",
@@ -63,11 +101,47 @@
     },
     "minimum_mobs_to_start_fight": {
       "label": "Minimum enemies before fighting",
-      "tooltip": "How many enemies to gather before stopping to fight."
+      "tooltip": "How many enemies to gather before stopping to fight. A spot can override this."
     },
     "stacking_timeout_seconds": {
       "label": "Gather timeout (seconds)",
       "tooltip": "Max time spent running to gather enemies before fighting starts anyway."
+    },
+    "use_ranged_pull": {
+      "label": "Ranged pull (tanks)",
+      "tooltip": "While gathering, tanks use Shield Lob / Tomahawk / Unmend / Lightning Shot instead of walking into melee."
+    },
+    "use_provoke": {
+      "label": "Use Provoke while pulling",
+      "tooltip": "Tanks also fire Provoke on the current target during Gathering."
+    },
+    "use_gap_closer": {
+      "label": "Use gap closer while pulling",
+      "tooltip": "Tanks also use Intervene / Onslaught / Shadowstride / Trajectory during Gathering."
+    },
+    "yield_to_pots": {
+      "label": "Stop for Magic Pots",
+      "tooltip": "Pause farming for a live or soon-to-spawn Magic Pot (and pot chests if that Illegal Mode option is on). Timing is on the Pots page. Resumes the farm after."
+    },
+    "yield_to_treasure_hunt": {
+      "label": "Treasure Hunt on a timer",
+      "tooltip": "Every N minutes, if Treasure Sight counts are high enough, pause farming and run Treasure Hunt. Needs a recent Sight reading."
+    },
+    "treasure_hunt_interval_minutes": {
+      "label": "Hunt every (minutes)",
+      "tooltip": "How often to consider a Treasure Hunt while farming."
+    },
+    "treasure_hunt_min_bronze_percent": {
+      "label": "Hunt if bronze at least (%)",
+      "tooltip": "Start a hunt when active bronze coffers are at or above this percent of 30."
+    },
+    "treasure_hunt_min_silver_percent": {
+      "label": "Hunt if silver at least (%)",
+      "tooltip": "Start a hunt when active silver coffers are at or above this percent of 8."
+    },
+    "yield_to_crystal_buffs": {
+      "label": "Refresh crystal buffs when low",
+      "tooltip": "Pause farming to reapply knowledge-crystal buffs when they are at or below the reapply time on the Buffs page. Needs buff automation on."
     },
     "mobs": {
       "label": "Enemy list",

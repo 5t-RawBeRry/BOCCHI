@@ -124,7 +124,15 @@ public class OperationalStatusBar
 
             if (MobFarmerActive)
             {
-                Chip(translator.T(".status.mob_farmer"), FormatFarmerPhase(Farmer.Phase));
+                string detail = Farmer.Suspended
+                    ? translator.T($".automation.mob_farmer.yield_reasons.{Farmer.YieldReason.ToString().ToSnakeCase()}")
+                    : FormatFarmerPhase(Farmer.Phase);
+                if (!Farmer.Suspended && Farmer.CurrentSpotName is { } spot)
+                {
+                    detail = $"{detail} · {spot}";
+                }
+
+                Chip(translator.T(".status.mob_farmer"), detail);
             }
 
             if (StandaloneTreasureHuntActive)

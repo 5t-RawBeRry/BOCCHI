@@ -16,6 +16,9 @@ public static class PhantomBuffs
 
     public const ushort BattlesClangor = 4252;
 
+    /// <summary>Phantom Geomancer Ringing Respite (60s HoT-on-hit).</summary>
+    public const ushort RingingRespite = 4253;
+
     /// <summary>Knowledge-crystal party buff from Dancer Quickstep / Freelancer Inquiring Mind (30m).</summary>
     public const ushort QuickerStep = 4799;
 }

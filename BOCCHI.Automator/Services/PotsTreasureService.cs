@@ -56,6 +56,8 @@ public class PotsTreasureService
 
     public bool Paused { get; private set; }
 
+    public bool ManagedByMobFarmer { get; private set; }
+
     public PotsTreasurePhase Phase { get; private set; } = PotsTreasurePhase.Off;
 
     public void OnStop()
@@ -69,6 +71,7 @@ public class PotsTreasureService
         ResetTreasureLoop();
         Paused = false;
         Phase = PotsTreasurePhase.Off;
+        ManagedByMobFarmer = false;
     }
 
     public void Toggle()
@@ -80,6 +83,7 @@ public class PotsTreasureService
             ResetTreasureLoop();
             Paused = false;
             Phase = PotsTreasurePhase.Off;
+            ManagedByMobFarmer = false;
             return;
         }
 
@@ -102,7 +106,52 @@ public class PotsTreasureService
         ResetTreasureLoop();
         Paused = false;
         Phase = PotsTreasurePhase.DoingPots;
+        ManagedByMobFarmer = false;
         logger.Info("Pots & Treasure mode started");
+    }
+
+    public bool StartManagedFromFarmer()
+    {
+        if (Running)
+        {
+            ManagedByMobFarmer = true;
+            Phase = PotsTreasurePhase.DoingPots;
+            return true;
+        }
+
+        if (!hunter.IsVnavAvailable)
+        {
+            BocchiChat.PrintError(chat, uiConfig, translator.T(".automation.pots_treasure.requires_vnav"));
+            return false;
+        }
+
+        ManagedByMobFarmer = true;
+        automator.TogglePotsAndTreasure();
+        hunter.ManagedByPotsTreasure = false;
+        ResetTreasureLoop();
+        Paused = false;
+        Phase = PotsTreasurePhase.DoingPots;
+        logger.Info("Pots & Treasure: managed pot window for Mob Farmer");
+        return Running;
+    }
+
+    public void StopManagedFromFarmer()
+    {
+        if (!ManagedByMobFarmer)
+        {
+            return;
+        }
+
+        ManagedByMobFarmer = false;
+        if (Running)
+        {
+            StopHuntSession();
+            automator.TogglePotsAndTreasure();
+        }
+
+        ResetTreasureLoop();
+        Paused = false;
+        Phase = PotsTreasurePhase.Off;
     }
 
     public void Pause()
@@ -146,12 +195,13 @@ public class PotsTreasureService
     {
         if (!Running)
         {
-            if (Phase != PotsTreasurePhase.Off || hunter.ManagedByPotsTreasure)
+            if (Phase != PotsTreasurePhase.Off || hunter.ManagedByPotsTreasure || ManagedByMobFarmer)
             {
                 StopHuntSession();
                 ResetTreasureLoop();
                 Paused = false;
                 Phase = PotsTreasurePhase.Off;
+                ManagedByMobFarmer = false;
             }
 
             return;
@@ -164,12 +214,27 @@ public class PotsTreasureService
             return;
         }
 
-        hunter.ManagedByPotsTreasure = true;
-        CaptureFinishedTreasureHunt();
+        if (!ManagedByMobFarmer)
+        {
+            hunter.ManagedByPotsTreasure = true;
+            CaptureFinishedTreasureHunt();
+        }
 
         if (Paused)
         {
             SoftPauseMovement();
+            return;
+        }
+
+        if (ManagedByMobFarmer)
+        {
+            if (NeedsPotWork())
+            {
+                EnterPotPhase();
+                return;
+            }
+
+            StopManagedFromFarmer();
             return;
         }
 

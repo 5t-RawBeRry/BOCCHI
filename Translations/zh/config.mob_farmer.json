@@ -3,9 +3,11 @@
   "tooltip": "选择要刷的敌人，以及拉怪方式。",
   "sections": {
     "targets": "目标",
+    "spots": "地点",
     "pulls": "拉怪",
     "home": "战斗后",
-    "buffs": "战斗之铃",
+    "buffs": "拉怪前增益",
+    "yields": "暂停去做",
     "debug": "调试"
   },
   "fields": {
@@ -37,13 +39,37 @@
       "label": "最大拉怪距离",
       "tooltip": "忽略超过该距离（米）的敌人。"
     },
+    "spots": {
+      "label": "刷怪地点",
+      "tooltip": "命名的集合点。使用优先级最高的启用地点（相同则选最近）。为空则用按下开始时所在位置。堆叠/停留点用于洞穴和西南塔。",
+      "empty": "没有地点 — 开始时用你站着的位置。",
+      "add": "把当前位置加为地点",
+      "remove": "删除",
+      "name": "名称",
+      "enabled": "开启",
+      "priority": "优先级",
+      "origin": "起点",
+      "set_origin": "把当前位置设为起点",
+      "use_stack": "使用堆叠/停留点",
+      "stack": "堆叠/停留点",
+      "set_stack": "把当前位置设为堆叠点",
+      "min_fight": "开战最少数量（0 = 全局）"
+    },
+    "claimed_spot_seconds": {
+      "label": "被占后离开（秒）",
+      "tooltip": "若其他玩家持续拉这包怪，或在堆叠点站这么久，本轮将放弃该点并前往下一处。"
+    },
+    "claimed_player_radius": {
+      "label": "占用判定半径（米）",
+      "tooltip": "其他玩家靠近起点或堆叠点在此距离内，视为该点被占。"
+    },
     "min_euclidean_distance_to_return_home": {
       "label": "超过该距离才回家",
-      "tooltip": "战斗结束后，仅当你距离起点超过该数值（米）时才走回去。"
+      "tooltip": "战斗结束后，仅当你距离当前地点起点超过该数值（米）时才走回去。"
     },
     "return_to_start_in_waiting_phase": {
-      "label": "战斗结束后返回起点",
-      "tooltip": "起点是你按下“开始”时所站的位置。"
+      "label": "战斗结束后返回地点",
+      "tooltip": "战斗结束后走回当前刷怪地点起点。没有地点时，起点是你按下“开始”时所站的位置。"
     },
     "render_debug_lines": {
       "label": "显示调试连线",
@@ -53,9 +79,21 @@
       "label": "使用战斗之铃",
       "tooltip": "每次拉怪前切换到风水师，重施战斗之铃、冲刺，再切回。"
     },
+    "apply_ringing_respite": {
+      "label": "使用鸣响安息",
+      "tooltip": "与战斗之铃一起（或单独）使用：受击时治疗。需要风水师 3 级。"
+    },
+    "apply_quickstep": {
+      "label": "使用快步",
+      "tooltip": "每次拉怪前切换到幻舞者并施放快步（90 秒回避）。需要舞者 2 级。"
+    },
     "maximum_battle_bell_wait_time": {
-      "label": "等待战斗之铃的最长时间",
-      "tooltip": "若战斗之铃冷却长于该时间（秒），本次拉怪跳过铃与冲刺，直接开始聚怪。"
+      "label": "等待铃/安息的最长时间",
+      "tooltip": "若战斗之铃或鸣响安息冷却长于该时间（秒），本次拉怪跳过该技能。"
+    },
+    "quickstep_skip_if_remaining_minutes": {
+      "label": "剩余超过该分钟则跳过快步",
+      "tooltip": "知识水晶 30 分钟「更快一步」仍剩至少这么多分钟时跳过。0 = 每次拉怪都重施（保持 90 秒回避）。"
     },
     "minimum_mobs_to_start_loop": {
       "label": "开始拉怪的最少敌人",
@@ -63,11 +101,47 @@
     },
     "minimum_mobs_to_start_fight": {
       "label": "开战前最少敌人",
-      "tooltip": "聚集到多少只敌人后停下来开打。"
+      "tooltip": "聚集到多少只敌人后停下来开打。地点可以覆盖此值。"
     },
     "stacking_timeout_seconds": {
       "label": "聚怪超时（秒）",
       "tooltip": "跑去聚怪的最长时间，超时后无论如何都会开战。"
+    },
+    "use_ranged_pull": {
+      "label": "远程拉怪（坦克）",
+      "tooltip": "聚怪时坦克使用投盾/战斧/伤残/闪电弹，而不是走进近战。"
+    },
+    "use_provoke": {
+      "label": "拉怪时使用挑衅",
+      "tooltip": "坦克在聚怪阶段对当前目标再放挑衅。"
+    },
+    "use_gap_closer": {
+      "label": "拉怪时使用突进",
+      "tooltip": "坦克在聚怪阶段也使用干预/猛攻/暗影步/弹道。"
+    },
+    "yield_to_pots": {
+      "label": "为魔法罐暂停",
+      "tooltip": "为正在进行或即将出现的魔法罐暂停刷怪（宝箱是否开取决于违规模式选项）。时间在罐页。结束后继续刷怪。"
+    },
+    "yield_to_treasure_hunt": {
+      "label": "定时寻宝",
+      "tooltip": "每隔 N 分钟，若寻宝视觉数量足够，暂停刷怪并跑寻宝。需要最近一次视觉结果。"
+    },
+    "treasure_hunt_interval_minutes": {
+      "label": "寻宝间隔（分钟）",
+      "tooltip": "刷怪时多久考虑一次寻宝。"
+    },
+    "treasure_hunt_min_bronze_percent": {
+      "label": "铜箱达到该％则寻宝",
+      "tooltip": "当前铜箱占 30 的比例达到或超过该值时开始寻宝。"
+    },
+    "treasure_hunt_min_silver_percent": {
+      "label": "银箱达到该％则寻宝",
+      "tooltip": "当前银箱占 8 的比例达到或超过该值时开始寻宝。"
+    },
+    "yield_to_crystal_buffs": {
+      "label": "水晶增益将尽时重施",
+      "tooltip": "知识水晶增益剩余时间达到增益页的重施阈值时，暂停刷怪去补。需要开启增益自动化。"
     },
     "mobs": {
       "label": "敌人列表",

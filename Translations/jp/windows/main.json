@@ -163,6 +163,14 @@
       "not_engaged": "戦闘していません",
       "engaged": "戦闘中",
       "selected_mobs": "選択中の敵",
+      "spot": "地点",
+      "yield": "一時停止中",
+      "yield_reasons": {
+        "none": "—",
+        "pots": "マジックポット",
+        "treasure_hunt": "トレジャーハント",
+        "crystal_buffs": "クリスタルバフ"
+      },
       "configure_mobs": "敵は /bocchi config → モブファーム で選んでください。",
       "off_left_zone": "[BOCCHI] オカルトクレセントを離れたためモブファーム オフ"
     },
@@ -227,6 +235,7 @@
     "recalculate_route_tooltip": "現在地からトレジャーハントのルートを再計算します",
     "managed_by_pots": "ハントはポット＆トレジャーが管理しています — 開始／停止はそちらから行ってください。",
     "managed_by_illegal_mode": "ハントは不正モードが管理しています（活動の合間に実行）。",
+    "managed_by_mob_farmer": "ハントはモブファームが管理しています（タイマーで実行）。",
     "managed_by_carrot": "キャロットハント実行中 — 下で停止してからトレジャーハントを開始してください。",
     "managed_by_treasure": "トレジャーハント実行中 — 上で停止してからキャロットハントを開始してください。",
     "distance_to_chest": "宝箱までの距離",

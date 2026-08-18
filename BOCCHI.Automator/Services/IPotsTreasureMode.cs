@@ -22,4 +22,14 @@ public interface IPotsTreasureMode : Ocelot.Lifecycle.IOnUpdate
     void Resume();
 
     void ResumeTreasureHunt();
+
+    bool ManagedByMobFarmer { get; }
+
+    /// <summary>
+    ///     Run one pot window (and chests) without tearing down Mob Farmer. No treasure hunt.
+    ///     Returns false if vnav is missing.
+    /// </summary>
+    bool StartManagedFromFarmer();
+
+    void StopManagedFromFarmer();
 }

@@ -3,6 +3,7 @@ using BOCCHI.Buff.Services;
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Services;
+using BOCCHI.MobFarmer.Data;
 using BOCCHI.MobFarmer.Services;
 using BOCCHI.Treasure.Services;
 using Dalamud.Plugin.Services;
@@ -58,6 +59,10 @@ public class AutomationModeGuard
             {
                 Automator.SetSuspendedForTreasure(true);
             }
+            else if (mode == AutomationMode.TreasureHunt && Farmer.Running)
+            {
+                Farmer.SetSuspended(true, FarmerYieldReason.TreasureHunt);
+            }
             else if (mode is not AutomationMode.IllegalMode and not AutomationMode.Completionist)
             {
                 StopIllegalOrCompletionist();
@@ -73,15 +78,22 @@ public class AutomationModeGuard
 
             if (mode != AutomationMode.PotsAndTreasure && PotsTreasure.Running)
             {
-                PotsTreasure.Toggle();
+                if (PotsTreasure.ManagedByMobFarmer)
+                {
+                    PotsTreasure.StopManagedFromFarmer();
+                }
+                else
+                {
+                    PotsTreasure.Toggle();
+                }
             }
 
-            if (mode != AutomationMode.MobFarmer && Farmer.Running)
+            if (mode != AutomationMode.MobFarmer && Farmer.Running && mode != AutomationMode.TreasureHunt)
             {
                 Farmer.Toggle();
             }
 
-            // Pots & Treasure / Illegal / Completionist filler may own the hunter — leave it running.
+            // Pots & Treasure / Illegal / Completionist / Mob Farmer filler may own the hunter — leave it running.
             if (mode is not AutomationMode.TreasureHunt
                 and not AutomationMode.PotsAndTreasure
                 and not AutomationMode.IllegalMode
@@ -113,6 +125,11 @@ public class AutomationModeGuard
         if ((Automator.IsIllegalMode || Automator.IsCompletionist) && Automator.SuspendedForTreasure)
         {
             Automator.SetSuspendedForTreasure(false);
+        }
+
+        if (Farmer.Running && Farmer.Suspended && Farmer.YieldReason == FarmerYieldReason.TreasureHunt)
+        {
+            Farmer.SetSuspended(false);
         }
     }
 

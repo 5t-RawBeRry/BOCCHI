@@ -33,6 +33,15 @@ public class MobScanner
 
     public IEnumerable<IBattleNpc> NotInCombat => Mobs.Where(o => !o.HasTarget());
 
+    public IEnumerable<IBattleNpc> Contested
+    {
+        get
+        {
+            IPlayerCharacter? localPlayer = objects.LocalPlayer;
+            return Mobs.Where(o => o.HasTarget() && !o.IsTargetingPlayer(localPlayer));
+        }
+    }
+
     public unsafe void Update()
     {
         // Occult Crescent only (the farmer panel still previews counts while stopped).

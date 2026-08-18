@@ -38,7 +38,7 @@
     },
     "combat_autorotation": {
       "label": "전투 자동 로테이션",
-      "tooltip": "돌발·비상 조우에서 쓸 자동 로테이션입니다. 이동 중에는 끔. None은 직접 싸움."
+      "tooltip": "돌발·비상 조우·몹 사냥 전투에서 쓸 자동 로테이션입니다. 이동·끌어오기 중에는 끔. None은 직접 싸움."
     },
     "stay_mounted_while_waiting_for_ce": {
       "label": "비상 조우 대기 중 탈것 유지",

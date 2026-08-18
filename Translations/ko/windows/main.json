@@ -163,6 +163,14 @@
       "not_engaged": "전투 안 함",
       "engaged": "전투 중",
       "selected_mobs": "선택한 적",
+      "spot": "지점",
+      "yield": "일시 정지",
+      "yield_reasons": {
+        "none": "—",
+        "pots": "마법 항아리",
+        "treasure_hunt": "보물 찾기",
+        "crystal_buffs": "크리스탈 버프"
+      },
       "configure_mobs": "적은 /bocchi config → 몹 사냥에서 고르세요.",
       "off_left_zone": "[BOCCHI] 초승달 섬를 떠나 몹 사냥 꺼짐"
     },
@@ -227,6 +235,7 @@
     "recalculate_route_tooltip": "현재 위치에서 보물 찾기 경로를 다시 계산합니다",
     "managed_by_pots": "보물 찾기는 항아리 & 보물 찾기가 관리합니다 — 시작/중지는 그쪽에서 하세요.",
     "managed_by_illegal_mode": "보물 찾기는 자동 모드가 관리합니다 (활동 사이에 실행).",
+    "managed_by_mob_farmer": "보물 찾기는 몹 사냥이 관리합니다 (타이머로 실행).",
     "managed_by_carrot": "재물당근 찾기 실행 중 — 아래에서 중지한 뒤 보물 찾기를 시작하세요.",
     "managed_by_treasure": "보물 찾기 실행 중 — 위에서 중지한 뒤 재물당근 찾기를 시작하세요.",
     "distance_to_chest": "상자까지 거리",

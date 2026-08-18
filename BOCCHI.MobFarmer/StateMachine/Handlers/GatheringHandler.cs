@@ -11,13 +11,16 @@ using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
 using Ocelot.States.Flow;
+using System.Numerics;
 
 namespace BOCCHI.MobFarmer.StateMachine.Handlers;
 
 public class GatheringHandler
 (
     MobFarmerConfig config,
+    IMobFarmer farmer,
     IMobScanner scanner,
+    FarmerPullAssist pull,
     IObjectTable objects,
     ITargetManager targets,
     IPathfinder pathfinder,
@@ -31,14 +34,12 @@ public class GatheringHandler
         List<IBattleNpc> notInCombat = scanner.NotInCombat.ToList();
 
         if (MobFarmerPack.CountTowardMinimum(inCombat, config.CountSpecialMobsTowardMinimum)
-            >= config.MinimumMobsToStartFight)
+            >= farmer.EffectiveMinimumMobsToStartFight)
         {
             pathfinder.Stop();
             return FarmerPhase.Stacking;
         }
 
-        // Contested packs (all mobs have a target that isn't us) leave both lists empty —
-        // do not spin Stacking → Fighting → Waiting with nothing to fight.
         if (notInCombat.Count == 0)
         {
             pathfinder.Stop();
@@ -52,13 +53,13 @@ public class GatheringHandler
             pathfinder.Stop();
         }
 
-        IBattleNpc? next = notInCombat
+        List<IBattleNpc> ordered = notInCombat
             .OrderBy(o => player.Position.Distance2D(o.Position))
-            .FirstOrDefault();
-        if (next == null)
-        {
-            return null;
-        }
+            .ToList();
+        IBattleNpc current = ordered[0];
+        Vector3? nextPos = ordered.Count > 1
+            ? ordered[1].Position
+            : farmer.StackPoint;
 
         if (DismountAssist.TryDismount(conditions))
         {
@@ -67,7 +68,13 @@ public class GatheringHandler
 
         if (config.ShouldHandleTargeting)
         {
-            targets.Target = next;
+            targets.Target = current;
+        }
+
+        float dist = player.Position.Distance2D(current.Position);
+        if (dist <= FarmerPullAssist.PullRange)
+        {
+            pull.TryPull(current);
         }
 
         if (pathfinder.GetState() != PathfindingState.Idle)
@@ -75,17 +82,43 @@ public class GatheringHandler
             return null;
         }
 
-        if (!next.IsTargetingPlayer(objects.LocalPlayer) && !EzThrottler.Throttle("MobFarmer::Gathering::Repath"))
+        if (!current.IsTargetingPlayer(objects.LocalPlayer)
+            && !EzThrottler.Throttle("MobFarmer::Gathering::Repath"))
         {
             return null;
         }
 
-        pathfinder.PathfindAndMoveTo(new(next.Position)
+        Vector3 destination = Destination(current.Position, nextPos, dist);
+        pathfinder.PathfindAndMoveTo(new(destination)
         {
             AllowFlying = false,
             DistanceThreshold = 2f,
+            ShouldSnapToFloor = true,
         });
 
         return null;
+    }
+
+    private static Vector3 Destination(Vector3 current, Vector3? next, float distToCurrent)
+    {
+        if (distToCurrent <= FarmerPullAssist.PullRange)
+        {
+            return next ?? current;
+        }
+
+        if (next is not { } nextPos)
+        {
+            return current;
+        }
+
+        Vector3 toNext = nextPos - current;
+        toNext.Y = 0;
+        if (toNext.LengthSquared() < 0.01f)
+        {
+            return current;
+        }
+
+        Vector3 dir = Vector3.Normalize(toNext);
+        return current + (dir * (FarmerPullAssist.PullRange * 0.7f));
     }
 }

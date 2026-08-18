@@ -4,6 +4,7 @@ using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using BOCCHI.MobFarmer.Data;
 using Dalamud.Plugin.Services;
+using Ocelot.Extensions;
 using Ocelot.Lifecycle;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
@@ -25,23 +26,64 @@ public class MobFarmerService
     IChatGui chat,
     UIConfig uiConfig,
     ITranslator<MainWindow> translator,
-    IAutomationModeGuard modeGuard
+    IAutomationModeGuard modeGuard,
+    IFarmerCombatController combat,
+    FarmerSpotSession spots
 ) : IMobFarmer, IOnUpdate, IOnStop
 {
+    public int Order => 10;
+
     private IStateMachine<FarmerPhase>? stateMachine;
 
     private IStateMachine<FarmerPhase> StateMachine => stateMachine ??= stateMachineFactory();
 
     public bool Running { get; private set; }
 
+    public bool Suspended { get; private set; }
+
+    public FarmerYieldReason YieldReason { get; private set; }
+
     public Vector3 StartingPoint { get; private set; }
+
+    public Vector3? StackPoint => spots.StackPoint;
+
+    public string? CurrentSpotName => spots.Name;
+
+    public int EffectiveMinimumMobsToStartFight => spots.EffectiveMinimumMobsToStartFight;
+
+    public bool NeedsApproachSpot => spots.NeedsApproach;
+
+    public void MarkArrivedAtSpot() => spots.MarkArrived();
 
     public FarmerPhase Phase => StateMachine.State;
 
+    public bool CanAcceptYield
+    {
+        get
+        {
+            if (!Running || Suspended)
+            {
+                return false;
+            }
+
+            if (Phase is FarmerPhase.Waiting or FarmerPhase.Buffing)
+            {
+                return true;
+            }
+
+            if (Phase != FarmerPhase.Gathering)
+            {
+                return false;
+            }
+
+            return !scanner.NotInCombat.Any(m =>
+                player.Position.Distance2D(m.Position) <= FarmerPullAssist.PullRange);
+        }
+    }
+
     public void OnStop()
     {
-        Running = false;
-        pathfinder.Stop();
+        StopInternal();
     }
 
     public void Toggle()
@@ -55,12 +97,47 @@ public class MobFarmerService
         modeGuard.EnsureExclusive(AutomationMode.MobFarmer);
 
         Running = true;
+        Suspended = false;
+        YieldReason = FarmerYieldReason.None;
         if (StateMachine is FlowStateMachine<FarmerPhase> flow)
         {
             flow.Reset();
         }
 
-        StartingPoint = player.Position;
+        spots.Begin();
+        StartingPoint = spots.Origin;
+        combat.Prepare();
+    }
+
+    public void SetSuspended(bool suspended, FarmerYieldReason reason = FarmerYieldReason.None)
+    {
+        if (!Running)
+        {
+            return;
+        }
+
+        if (Suspended == suspended && YieldReason == reason)
+        {
+            return;
+        }
+
+        Suspended = suspended;
+        YieldReason = suspended ? reason : FarmerYieldReason.None;
+        pathfinder.Stop();
+        combat.Disable();
+
+        if (suspended)
+        {
+            combat.Teardown();
+            if (StateMachine is FlowStateMachine<FarmerPhase> flow)
+            {
+                flow.Reset();
+            }
+
+            return;
+        }
+
+        combat.Prepare();
     }
 
     public void Render()
@@ -89,14 +166,30 @@ public class MobFarmerService
             return;
         }
 
-        // Always tick the phase machine while running — even with an empty scan list —
-        // so Fighting can return to Waiting after the last mob dies/despawns.
+        if (Suspended)
+        {
+            return;
+        }
+
+        combat.Tick();
+
+        if (Phase == FarmerPhase.Waiting && spots.TickClaimed(scanner))
+        {
+            StartingPoint = spots.Origin;
+            pathfinder.Stop();
+        }
+
         StateMachine.Update();
     }
 
     private void StopInternal()
     {
         Running = false;
+        Suspended = false;
+        YieldReason = FarmerYieldReason.None;
+        spots.Reset();
+        combat.Disable();
+        combat.Teardown();
         if (StateMachine is FlowStateMachine<FarmerPhase> flowOff)
         {
             flowOff.Reset();

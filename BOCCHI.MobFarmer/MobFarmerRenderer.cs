@@ -2,6 +2,7 @@ using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.MobFarmer.Services;
 using Dalamud.Bindings.ImGui;
+using Ocelot.Extensions;
 using Ocelot.Services.Translation;
 using Ocelot.Services.UI;
 using Ocelot.Windows;
@@ -36,6 +37,18 @@ public class MobFarmerRenderer
         ui.LabelledValue(translator.T(".automation.mob_farmer.not_engaged"), scanner.NotInCombat.Count());
         ui.LabelledValue(translator.T(".automation.mob_farmer.engaged"), scanner.InCombat.Count());
         ui.LabelledValue(translator.T(".automation.mob_farmer.selected_mobs"), config.Mobs.Count);
+        if (Farmer.CurrentSpotName is { } spotName)
+        {
+            ui.LabelledValue(translator.T(".automation.mob_farmer.spot"), spotName);
+        }
+
+        if (Farmer.Suspended)
+        {
+            ui.LabelledValue(
+                translator.T(".automation.mob_farmer.yield"),
+                translator.T($".automation.mob_farmer.yield_reasons.{Farmer.YieldReason.ToString().ToSnakeCase()}"));
+        }
+
         ImGui.TextUnformatted(translator.T(".automation.mob_farmer.configure_mobs"));
 
         if (Farmer.Running)

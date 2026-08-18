@@ -163,6 +163,14 @@
       "not_engaged": "未在战斗",
       "engaged": "战斗中",
       "selected_mobs": "已选敌人",
+      "spot": "地点",
+      "yield": "已暂停",
+      "yield_reasons": {
+        "none": "—",
+        "pots": "魔法罐",
+        "treasure_hunt": "寻宝",
+        "crystal_buffs": "水晶增益"
+      },
       "configure_mobs": "请在 /bocchi config → 刷怪 中选择敌人。",
       "off_left_zone": "[BOCCHI] 已离开神典石 — 刷怪已关闭"
     },
@@ -227,6 +235,7 @@
     "recalculate_route_tooltip": "从当前位置重新规划寻宝路线",
     "managed_by_pots": "寻宝当前由“魔法罐与寻宝”控制 —— 请在该处开始或停止。",
     "managed_by_illegal_mode": "寻宝当前由违规模式控制（在活动之间运行）。",
+    "managed_by_mob_farmer": "寻宝当前由刷怪控制（按定时运行）。",
     "managed_by_carrot": "胡萝卜狩猎进行中 — 请先在下方停止后再开始寻宝。",
     "managed_by_treasure": "寻宝进行中 — 请先在上方停止后再开始胡萝卜狩猎。",
     "distance_to_chest": "距宝箱距离",

@@ -42,6 +42,9 @@ public interface ITreasureHunter
     /// <summary>True while Illegal Mode auto-filler owns this hunt session.</summary>
     bool ManagedByIllegalModeFiller { get; set; }
 
+    /// <summary>True while Mob Farmer auto-yield owns this hunt session.</summary>
+    bool ManagedByMobFarmer { get; set; }
+
     bool IsVnavAvailable { get; }
 
     bool IsVnavReady { get; }

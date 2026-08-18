@@ -254,6 +254,7 @@
           "FFXIVOcelot.ECommons": "[1.0.0, )",
           "FFXIVOcelot.Pathfinding": "[1.0.0, )",
           "FFXIVOcelot.Pictomancy": "[1.0.0, )",
+          "FFXIVOcelot.Rotation": "[1.0.0, )",
           "FFXIVOcelot.UI": "[1.0.0, )"
         }
       },

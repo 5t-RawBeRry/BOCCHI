@@ -7,12 +7,14 @@ using Ocelot.Extensions;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
 using Ocelot.States.Flow;
+using System.Numerics;
 
 namespace BOCCHI.MobFarmer.StateMachine.Handlers;
 
 public class StackingHandler
 (
     MobFarmerConfig config,
+    IMobFarmer farmer,
     IMobScanner scanner,
     ITargetManager targets,
     IPathfinder pathfinder,
@@ -54,19 +56,30 @@ public class StackingHandler
             return FarmerPhase.Waiting;
         }
 
-        IBattleNpc? furthest = inCombat
-            .Where(o => o.GameObjectId != targets.Target?.GameObjectId)
-            .OrderBy(o => player.Position.Distance2D(o.Position))
-            .LastOrDefault();
-
-        if (furthest == null)
+        Vector3 destination;
+        if (farmer.StackPoint is { } stack)
         {
-            return FarmerPhase.Fighting;
+            destination = stack;
+        }
+        else
+        {
+            IBattleNpc? furthest = inCombat
+                .Where(o => o.GameObjectId != targets.Target?.GameObjectId)
+                .OrderBy(o => player.Position.Distance2D(o.Position))
+                .LastOrDefault();
+
+            if (furthest == null)
+            {
+                return FarmerPhase.Fighting;
+            }
+
+            destination = furthest.Position;
         }
 
-        pathfinder.PathfindAndMoveTo(new(furthest.Position)
+        pathfinder.PathfindAndMoveTo(new(destination)
         {
-            AllowFlying = false
+            AllowFlying = false,
+            ShouldSnapToFloor = true,
         });
         hasRunStack = true;
 

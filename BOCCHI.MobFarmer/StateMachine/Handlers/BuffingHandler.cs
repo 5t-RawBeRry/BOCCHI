@@ -2,6 +2,7 @@ using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.OccultCrescent;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Data.Zones;
+using BOCCHI.Common.Extensions;
 using BOCCHI.Common.Services;
 using BOCCHI.MobFarmer.Data;
 using Dalamud.Game.ClientState.Conditions;
@@ -23,29 +24,35 @@ public class BuffingHandler
     ISupportJobChanger changer
 ) : FlowStateHandler<FarmerPhase>(FarmerPhase.Buffing)
 {
-    /// <summary>Battle Bell by action ID — not the current job's Phantom Action I slot.</summary>
     private static readonly Action BattleBell = new(ActionType.Action, PhantomActions.BattleBell);
 
-    private static readonly TimeSpan SprintGiveUp = TimeSpan.FromSeconds(2.5);
+    private static readonly Action RingingRespite = new(ActionType.Action, PhantomActions.RingingRespite);
 
-    private bool castBattleBell;
+    private static readonly TimeSpan StepGiveUp = TimeSpan.FromSeconds(2.5);
+
+    private bool quickstepDone;
+
+    private bool bellDone;
+
+    private bool respiteDone;
 
     private bool sprintDone;
 
-    private DateTimeOffset? sprintWaitStartedUtc;
+    private DateTimeOffset? stepWaitStartedUtc;
 
     private SupportJobId? jobToRestore;
 
     public override void Enter()
     {
         base.Enter();
-        castBattleBell = false;
+        quickstepDone = false;
+        bellDone = false;
+        respiteDone = false;
         sprintDone = false;
-        sprintWaitStartedUtc = null;
+        stepWaitStartedUtc = null;
         jobToRestore = null;
 
-        if (supportJobs.TryGetCurrent(out SupportJob job)
-            && job.Id != SupportJobId.PhantomGeomancer)
+        if (supportJobs.TryGetCurrent(out SupportJob job))
         {
             jobToRestore = job.Id;
         }
@@ -53,71 +60,151 @@ public class BuffingHandler
 
     public override FarmerPhase? Handle()
     {
-        if (!config.ApplyBattleBell)
-        {
-            return RestoreThenGather();
-        }
-
-        // Gate on Battle Bell's own CD, not whatever Action I the combat job has equipped.
-        if (BattleBell.GetRecastTime() > config.MaximumBattleBellWaitTime)
-        {
-            return RestoreThenGather();
-        }
-
         if (DismountAssist.TryDismount(conditions))
         {
             return null;
         }
 
-        // Reapply every pull when enabled.
-        if (!castBattleBell)
+        if (!quickstepDone)
         {
-            if (!IsGeomancer())
-            {
-                if (!changer.IsBusy())
-                {
-                    changer.Change(SupportJobId.PhantomGeomancer);
-                }
-
-                return null;
-            }
-
-            // Wait out remaining CD (already below MaximumBattleBellWaitTime).
-            if (!Actions.PhantomActionI.CanCast())
+            FarmerPhase? quickstep = TryQuickstep();
+            if (quickstep == null && !quickstepDone)
             {
                 return null;
             }
-
-            Actions.PhantomActionI.Cast();
-            castBattleBell = true;
-            return null;
         }
 
-        // Action must have been consumed (covers refresh while buff still ticking).
-        if (BattleBell.GetRecastTime() <= 0f)
+        if (!bellDone || !respiteDone)
         {
-            if (IsGeomancer() && Actions.PhantomActionI.CanCast())
+            FarmerPhase? geo = TryGeomancerBuffs();
+            if (geo == null && (!bellDone || !respiteDone))
             {
-                Actions.PhantomActionI.Cast();
+                return null;
             }
-
-            return null;
-        }
-
-        // Don't swap jobs until the buff actually sticks.
-        if (!HasBattleBell())
-        {
-            return null;
         }
 
         return TrySprintThenGather();
     }
 
+    private FarmerPhase? TryQuickstep()
+    {
+        if (!config.ApplyQuickstep || supportJobs.Create(SupportJobId.PhantomDancer).Level < 2)
+        {
+            quickstepDone = true;
+            return FarmerPhase.Gathering;
+        }
+
+        if (config.QuickstepSkipIfRemainingMinutes > 0
+            && objects.LocalPlayer is { } local
+            && local.GetRemainingMinutes(PhantomBuffs.QuickerStep) >= (uint)config.QuickstepSkipIfRemainingMinutes)
+        {
+            quickstepDone = true;
+            return FarmerPhase.Gathering;
+        }
+
+        if (!IsJob(SupportJobId.PhantomDancer))
+        {
+            if (!changer.IsBusy())
+            {
+                changer.Change(SupportJobId.PhantomDancer);
+            }
+
+            return null;
+        }
+
+        if (Actions.PhantomActionII.CanCast())
+        {
+            Actions.PhantomActionII.Cast();
+            stepWaitStartedUtc = DateTimeOffset.UtcNow;
+            return null;
+        }
+
+        if (HasQuickstepBuff() || DateTimeOffset.UtcNow - (stepWaitStartedUtc ?? DateTimeOffset.UtcNow) >= StepGiveUp)
+        {
+            quickstepDone = true;
+            stepWaitStartedUtc = null;
+            return FarmerPhase.Gathering;
+        }
+
+        return null;
+    }
+
+    private FarmerPhase? TryGeomancerBuffs()
+    {
+        bool wantBell = config.ApplyBattleBell && BattleBell.GetRecastTime() <= config.MaximumBattleBellWaitTime;
+        bool wantRespite = config.ApplyRingingRespite
+                           && supportJobs.Create(SupportJobId.PhantomGeomancer).Level >= 3
+                           && RingingRespite.GetRecastTime() <= config.MaximumBattleBellWaitTime;
+
+        if (!wantBell)
+        {
+            bellDone = true;
+        }
+
+        if (!wantRespite)
+        {
+            respiteDone = true;
+        }
+
+        if (bellDone && respiteDone)
+        {
+            return FarmerPhase.Gathering;
+        }
+
+        if (!IsJob(SupportJobId.PhantomGeomancer))
+        {
+            if (!changer.IsBusy())
+            {
+                changer.Change(SupportJobId.PhantomGeomancer);
+            }
+
+            return null;
+        }
+
+        if (!bellDone)
+        {
+            if (BattleBell.GetRecastTime() <= 0f && Actions.PhantomActionI.CanCast())
+            {
+                Actions.PhantomActionI.Cast();
+                return null;
+            }
+
+            if (!HasBattleBell())
+            {
+                return null;
+            }
+
+            bellDone = true;
+        }
+
+        if (!respiteDone)
+        {
+            if (RingingRespite.GetRecastTime() <= 0f && Actions.PhantomActionIII.CanCast())
+            {
+                Actions.PhantomActionIII.Cast();
+                stepWaitStartedUtc ??= DateTimeOffset.UtcNow;
+                return null;
+            }
+
+            if (RingingRespite.GetRecastTime() <= 0f
+                && DateTimeOffset.UtcNow - (stepWaitStartedUtc ?? DateTimeOffset.UtcNow) < StepGiveUp)
+            {
+                return null;
+            }
+
+            respiteDone = true;
+            stepWaitStartedUtc = null;
+        }
+
+        return FarmerPhase.Gathering;
+    }
+
     private FarmerPhase? TrySprintThenGather()
     {
-        if (!sprintDone)
+        bool appliedAny = config.ApplyQuickstep || config.ApplyBattleBell || config.ApplyRingingRespite;
+        if (!sprintDone && appliedAny)
         {
-            sprintWaitStartedUtc ??= DateTimeOffset.UtcNow;
+            stepWaitStartedUtc ??= DateTimeOffset.UtcNow;
 
             if (Actions.Sprint.CanCast())
             {
@@ -125,15 +212,15 @@ public class BuffingHandler
                 return null;
             }
 
-            // CanCast false: Sprint on CD (ok) or still animation-locked after Bell.
             bool sprintOnCooldown = Actions.Sprint.GetRecastTime() > 0f;
-            bool timedOut = DateTimeOffset.UtcNow - sprintWaitStartedUtc >= SprintGiveUp;
+            bool timedOut = DateTimeOffset.UtcNow - stepWaitStartedUtc >= StepGiveUp;
             if (!sprintOnCooldown && !timedOut)
             {
                 return null;
             }
 
             sprintDone = true;
+            stepWaitStartedUtc = null;
         }
 
         return RestoreThenGather();
@@ -160,8 +247,8 @@ public class BuffingHandler
         return null;
     }
 
-    private bool IsGeomancer() =>
-        supportJobs.TryGetCurrent(out SupportJob job) && job.Id == SupportJobId.PhantomGeomancer;
+    private bool IsJob(SupportJobId id) =>
+        supportJobs.TryGetCurrent(out SupportJob job) && job.Id == id;
 
     private bool HasBattleBell()
     {
@@ -172,5 +259,15 @@ public class BuffingHandler
 
         return player.StatusList.Has(PhantomBuffs.BattleBell)
                || player.StatusList.Has(PhantomBuffs.BattlesClangor);
+    }
+
+    private bool HasQuickstepBuff()
+    {
+        if (objects.LocalPlayer is not { } player)
+        {
+            return false;
+        }
+
+        return player.StatusList.Has(PhantomBuffs.QuickerStep);
     }
 }

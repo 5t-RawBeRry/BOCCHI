@@ -14,6 +14,9 @@ public static class IServiceCollectionExtensions
         Registry.RegisterAssemblies(typeof(FarmerPhase).Assembly);
 
         services.AddSingleton<IMobScanner, MobScanner>();
+        services.AddSingleton<IFarmerCombatController, FarmerCombatController>();
+        services.AddSingleton<FarmerPullAssist>();
+        services.AddSingleton<FarmerSpotSession>();
         services.AddSingleton<IMobFarmer, MobFarmerService>();
         services.AddSingleton<Func<IMobFarmer>>(sp => () => sp.GetRequiredService<IMobFarmer>());
         services.AddSingleton<IDynamicRenderer, MobFarmerRenderer>();

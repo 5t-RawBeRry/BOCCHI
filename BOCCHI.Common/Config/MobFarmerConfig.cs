@@ -1,5 +1,6 @@
 using BOCCHI.Common.Config.Fields;
 using BOCCHI.Common.Data.Mobs;
+using BOCCHI.Common.Data.MobFarmer;
 using Ocelot.Config;
 using Ocelot.Config.Fields;
 
@@ -27,33 +28,82 @@ public class MobFarmerConfig : IAutoConfig
     [FloatRange(10f, 1000f, Order = 5, Section = "targets")]
     public float MaxEuclideanDistance { get; set; } = 75f;
 
-    [Checkbox(Order = 6, Section = "pulls")]
+    [FarmSpotList(Order = 6, Section = "spots")]
+    public List<FarmSpot> Spots { get; set; } = [];
+
+    [FloatRange(3f, 30f, Order = 7, Section = "spots")]
+    public float ClaimedSpotSeconds { get; set; } = 8f;
+
+    [FloatRange(3f, 15f, Order = 8, Section = "spots")]
+    public float ClaimedPlayerRadius { get; set; } = 5f;
+
+    [Checkbox(Order = 9, Section = "pulls")]
     public bool CountSpecialMobsTowardMinimum { get; set; } = false;
 
-    [Checkbox(Order = 7, Section = "pulls")]
+    [Checkbox(Order = 10, Section = "pulls")]
     public bool OnlyStartOutOfCombat { get; set; } = false;
 
-    [IntRange(0, 20, Order = 8, Section = "pulls")]
+    [IntRange(0, 20, Order = 11, Section = "pulls")]
     public int MinimumMobsToStartLoop { get; set; } = 0;
 
-    [IntRange(1, 20, Order = 9, Section = "pulls")]
+    [IntRange(1, 20, Order = 12, Section = "pulls")]
     public int MinimumMobsToStartFight { get; set; } = 5;
 
-    [FloatRange(5f, 60f, Order = 10, Section = "pulls")]
+    [FloatRange(5f, 60f, Order = 13, Section = "pulls")]
     public float StackingTimeoutSeconds { get; set; } = 15f;
 
-    [Checkbox(Order = 11, Section = "home")]
+    [Checkbox(Order = 14, Section = "pulls")]
+    public bool UseRangedPull { get; set; } = true;
+
+    [Checkbox(Order = 15, Section = "pulls")]
+    public bool UseProvoke { get; set; } = false;
+
+    [Checkbox(Order = 16, Section = "pulls")]
+    public bool UseGapCloser { get; set; } = false;
+
+    [Checkbox(Order = 17, Section = "home")]
     public bool ReturnToStartInWaitingPhase { get; set; } = false;
 
-    [FloatRange(10f, 1000f, Order = 12, Section = "home")]
+    [FloatRange(10f, 1000f, Order = 18, Section = "home")]
     public float MinEuclideanDistanceToReturnHome { get; set; } = 200f;
 
-    [Checkbox(Order = 13, Section = "buffs")]
+    [Checkbox(Order = 19, Section = "buffs")]
     public bool ApplyBattleBell { get; set; } = false;
 
-    [FloatRange(0f, 30f, Order = 14, Section = "buffs")]
+    [Checkbox(Order = 20, Section = "buffs")]
+    public bool ApplyRingingRespite { get; set; } = false;
+
+    [Checkbox(Order = 21, Section = "buffs")]
+    public bool ApplyQuickstep { get; set; } = false;
+
+    [FloatRange(0f, 30f, Order = 22, Section = "buffs")]
     public float MaximumBattleBellWaitTime { get; set; } = 10f;
 
-    [Checkbox(Order = 15, Section = "debug")]
+    /// <summary>
+    ///     Skip Quickstep when the 30m crystal Quicker Step buff still has at least this many
+    ///     minutes left. 0 = recast every pull (90s evasion).
+    /// </summary>
+    [IntRange(0, 30, Order = 23, Section = "buffs")]
+    public int QuickstepSkipIfRemainingMinutes { get; set; } = 0;
+
+    [Checkbox(Order = 24, Section = "yields")]
+    public bool YieldToPots { get; set; } = false;
+
+    [Checkbox(Order = 25, Section = "yields")]
+    public bool YieldToTreasureHunt { get; set; } = false;
+
+    [IntRange(5, 60, Order = 26, Indent = 1, Requires = nameof(YieldToTreasureHunt), Section = "yields")]
+    public int TreasureHuntIntervalMinutes { get; set; } = 15;
+
+    [IntRange(0, 100, Order = 27, Indent = 1, Requires = nameof(YieldToTreasureHunt), Section = "yields")]
+    public int TreasureHuntMinBronzePercent { get; set; } = 50;
+
+    [IntRange(0, 100, Order = 28, Indent = 1, Requires = nameof(YieldToTreasureHunt), Section = "yields")]
+    public int TreasureHuntMinSilverPercent { get; set; } = 50;
+
+    [Checkbox(Order = 29, Section = "yields")]
+    public bool YieldToCrystalBuffs { get; set; } = false;
+
+    [Checkbox(Order = 30, Section = "debug")]
     public bool RenderDebugLines { get; set; } = false;
 }

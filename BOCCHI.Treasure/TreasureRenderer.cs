@@ -79,6 +79,18 @@ public class TreasureRenderer
             return;
         }
 
+        if (hunter.ManagedByMobFarmer)
+        {
+            ImGui.TextWrapped(translator.T(".treasure.managed_by_mob_farmer"));
+            if (hunter.Elapsed > TimeSpan.Zero)
+            {
+                ui.LabelledValue(translator.T(".treasure.elapsed"), $"{hunter.Elapsed:mm\\:ss}");
+            }
+
+            TreasureHuntStatusUi.DrawProgress(hunter, ui, translator, config);
+            return;
+        }
+
         // Carrot Hunt owns the section — don't offer Start Hunt beside an active carrot run.
         if (carrotHunter.Running)
         {
@@ -141,7 +153,7 @@ public class TreasureRenderer
     private void DrawCarrotHuntPanel()
     {
         // Hide while a coffer hunt owns the section (standalone, Pots, or Illegal filler).
-        if (hunter.Running || hunter.ManagedByPotsTreasure || hunter.ManagedByIllegalModeFiller)
+        if (hunter.Running || hunter.ManagedByPotsTreasure || hunter.ManagedByIllegalModeFiller || hunter.ManagedByMobFarmer)
         {
             return;
         }

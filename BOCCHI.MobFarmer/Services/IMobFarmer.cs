@@ -12,6 +12,14 @@ namespace BOCCHI.MobFarmer.Data
         Stacking,
         Fighting
     }
+
+    public enum FarmerYieldReason
+    {
+        None = 0,
+        Pots,
+        TreasureHunt,
+        CrystalBuffs,
+    }
 }
 
 namespace BOCCHI.MobFarmer.Services
@@ -20,11 +28,29 @@ namespace BOCCHI.MobFarmer.Services
     {
         bool Running { get; }
 
+        bool Suspended { get; }
+
+        FarmerYieldReason YieldReason { get; }
+
         Vector3 StartingPoint { get; }
+
+        Vector3? StackPoint { get; }
+
+        string? CurrentSpotName { get; }
+
+        int EffectiveMinimumMobsToStartFight { get; }
+
+        bool NeedsApproachSpot { get; }
+
+        void MarkArrivedAtSpot();
 
         FarmerPhase Phase { get; }
 
+        bool CanAcceptYield { get; }
+
         void Toggle();
+
+        void SetSuspended(bool suspended, FarmerYieldReason reason = FarmerYieldReason.None);
 
         void Render();
     }

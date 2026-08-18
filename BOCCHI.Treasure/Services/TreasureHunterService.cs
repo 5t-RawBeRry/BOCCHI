@@ -422,6 +422,8 @@ public class TreasureHunterService
 
     public bool ManagedByIllegalModeFiller { get; set; }
 
+    public bool ManagedByMobFarmer { get; set; }
+
     public bool IsVnavAvailable => vnav.IsAvailable();
 
     public bool IsVnavReady => vnav.IsNavmeshReady();
@@ -437,6 +439,7 @@ public class TreasureHunterService
         modeGuard.EnsureExclusive(AutomationMode.TreasureHunt);
         ManagedByPotsTreasure = false;
         ManagedByIllegalModeFiller = false;
+        ManagedByMobFarmer = false;
         BeginHuntSession();
     }
 
@@ -2387,11 +2390,12 @@ public class TreasureHunterService
 
     private void StopDueToLeavingOccultCrescent()
     {
-        bool announceStandalone = !ManagedByPotsTreasure && !ManagedByIllegalModeFiller;
+        bool announceStandalone = !ManagedByPotsTreasure && !ManagedByIllegalModeFiller && !ManagedByMobFarmer;
         log.Info(
-            "Left Occult Crescent — stopping treasure hunt (pots={Pots}, filler={Filler})",
+            "Left Occult Crescent — stopping treasure hunt (pots={Pots}, filler={Filler}, farmer={Farmer})",
             ManagedByPotsTreasure,
-            ManagedByIllegalModeFiller);
+            ManagedByIllegalModeFiller,
+            ManagedByMobFarmer);
         Teardown();
         if (announceStandalone)
         {
@@ -2402,8 +2406,9 @@ public class TreasureHunterService
     private void Teardown()
     {
         bool wasManagedByPotsTreasure = ManagedByPotsTreasure;
-        bool wasStandalone = Running && !wasManagedByPotsTreasure && !ManagedByIllegalModeFiller;
+        bool wasStandalone = Running && !wasManagedByPotsTreasure && !ManagedByIllegalModeFiller && !ManagedByMobFarmer;
         bool wasIllegalFiller = ManagedByIllegalModeFiller;
+        bool wasMobFarmer = ManagedByMobFarmer;
 
         Running = false;
         Paused = false;
@@ -2434,6 +2439,7 @@ public class TreasureHunterService
         LastCheckedNodeId = null;
         ManagedByPotsTreasure = false;
         ManagedByIllegalModeFiller = false;
+        ManagedByMobFarmer = false;
         checkedNodeIds.Clear();
         excludedNodeIdsForNextRun.Clear();
         maxLevelOverrideForNextRun = null;
@@ -2449,7 +2455,7 @@ public class TreasureHunterService
         stuckSkippedNodeIds.Clear();
         pandoraAutoOpen.Release();
 
-        if (wasStandalone || wasIllegalFiller)
+        if (wasStandalone || wasIllegalFiller || wasMobFarmer)
         {
             modeGuard.NotifyTreasureHuntEnded();
         }

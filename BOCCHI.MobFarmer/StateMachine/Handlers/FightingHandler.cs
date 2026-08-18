@@ -17,8 +17,10 @@ namespace BOCCHI.MobFarmer.StateMachine.Handlers;
 public class FightingHandler
 (
     MobFarmerConfig config,
+    AutomatorConfig automatorConfig,
     MovementConfig movementConfig,
     IMobFarmer farmer,
+    IFarmerCombatController combat,
     IMobScanner scanner,
     ITargetManager targets,
     ICondition conditions,
@@ -28,26 +30,59 @@ public class FightingHandler
     IPlayer player
 ) : FlowStateHandler<FarmerPhase>(FarmerPhase.Fighting)
 {
+    public override void Enter()
+    {
+        base.Enter();
+        // Stacking may still be walking — BossMod AI cannot dodge while vnav owns movement.
+        pathfinder.Stop();
+        combat.EnableFighting();
+    }
+
+    public override void Exit(FarmerPhase next)
+    {
+        combat.Disable();
+        base.Exit(next);
+    }
+
     public override FarmerPhase? Handle()
     {
         List<IBattleNpc> inCombat = scanner.InCombat.ToList();
-        if (config.ShouldHandleTargeting
-            && inCombat.Count > 0
-            && EzThrottler.Throttle("MobFarmer::Fighting::Target", 250))
+        bool anyInCombat = inCombat.Count > 0;
+        bool useAi = automatorConfig.CombatAutorotation.UsesCombatAutomation();
+
+        if (anyInCombat || conditions[ConditionFlag.InCombat])
         {
-            IBattleNpc? target = TargetHelper.Select(inCombat, player.Position, config.ForceTargetCentralEnemy);
-            if (target != null)
+            combat.EnableFighting();
+            if (DismountAssist.TryDismount(conditions))
             {
-                targets.Target = target;
+                return null;
             }
+
+            if (config.ShouldHandleTargeting
+                && inCombat.Count > 0
+                && EzThrottler.Throttle("MobFarmer::Fighting::Target", 250))
+            {
+                IBattleNpc? target = TargetHelper.Select(inCombat, player.Position, config.ForceTargetCentralEnemy);
+                if (target != null)
+                {
+                    targets.Target = target;
+                }
+            }
+
+            if (useAi)
+            {
+                pathfinder.Stop();
+            }
+
+            return null;
         }
 
-        bool anyInCombat = inCombat.Count > 0;
+        combat.Disable();
+
         bool shouldReturnHome = config.ReturnToStartInWaitingPhase
                                 && player.Position.Distance2D(farmer.StartingPoint) >= config.MinEuclideanDistanceToReturnHome;
 
-        // Finish the fight before gathering again — do not top up mid-pack.
-        if (shouldReturnHome && !anyInCombat)
+        if (shouldReturnHome)
         {
             if (pathfinder.GetState() == PathfindingState.Idle)
             {
@@ -68,12 +103,7 @@ public class FightingHandler
             return player.Position.Distance2D(farmer.StartingPoint) <= 2f ? FarmerPhase.Waiting : null;
         }
 
-        if (!anyInCombat && !conditions[ConditionFlag.InCombat])
-        {
-            pathfinder.Stop();
-            return FarmerPhase.Waiting;
-        }
-
-        return null;
+        pathfinder.Stop();
+        return FarmerPhase.Waiting;
     }
 }

@@ -163,6 +163,14 @@
       "not_engaged": "Not fighting",
       "engaged": "Fighting",
       "selected_mobs": "Selected enemies",
+      "spot": "Spot",
+      "yield": "Paused for",
+      "yield_reasons": {
+        "none": "—",
+        "pots": "Magic Pot",
+        "treasure_hunt": "Treasure Hunt",
+        "crystal_buffs": "Crystal buffs"
+      },
       "configure_mobs": "Pick enemies in /bocchi config → Mob Farmer.",
       "off_left_zone": "[BOCCHI] Left Occult Crescent — Mob Farmer Off"
     },
@@ -227,6 +235,7 @@
     "recalculate_route_tooltip": "Recalculate the treasure hunt route from your current position",
     "managed_by_pots": "Hunt is controlled by Pots & Treasure — start or stop it there.",
     "managed_by_illegal_mode": "Hunt is controlled by Illegal Mode (runs between activities).",
+    "managed_by_mob_farmer": "Hunt is controlled by Mob Farmer (runs on its timer).",
     "managed_by_carrot": "Carrot Hunt is running — stop it below before starting Treasure Hunt.",
     "managed_by_treasure": "Treasure Hunt is running — stop it above before starting Carrot Hunt.",
     "distance_to_chest": "Distance to chest",

@@ -38,7 +38,7 @@
     },
     "combat_autorotation": {
       "label": "戦闘オートローテーション",
-      "tooltip": "FATE / CE で使うオートローテーションです。移動中はオフ。None は自分で戦う。"
+      "tooltip": "FATE / CE / モブファームの戦闘で使うオートローテーションです。移動中・釣り中はオフ。None は自分で戦う。"
     },
     "stay_mounted_while_waiting_for_ce": {
       "label": "CE 待機中はマウントしたまま",

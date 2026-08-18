@@ -38,7 +38,7 @@
     },
     "combat_autorotation": {
       "label": "战斗自动循环",
-      "tooltip": "危命/紧急遭遇战使用哪个自动循环。赶路时关闭。None 为手动战斗。"
+      "tooltip": "危命、紧急遭遇战和刷怪战斗使用哪个自动循环。赶路或拉怪时关闭。None 为手动战斗。"
     },
     "stay_mounted_while_waiting_for_ce": {
       "label": "等待紧急遭遇战时保持坐骑",

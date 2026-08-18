@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <ItemGroup>
         <ProjectReference Include="..\BOCCHI.Common\BOCCHI.Common.csproj"/>
+        <ProjectReference Include="..\Ocelot\Ocelot.Rotation\Ocelot.Rotation.csproj"/>
     </ItemGroup>
 </Project>

@@ -38,7 +38,7 @@
     },
     "combat_autorotation": {
       "label": "Combat autorotation",
-      "tooltip": "Which autorotation to use in FATEs and CEs. Off while traveling. None = you fight."
+      "tooltip": "Which autorotation to use in FATEs, CEs, and Mob Farmer fights. Off while traveling or pulling. None = you fight."
     },
     "stay_mounted_while_waiting_for_ce": {
       "label": "Stay mounted while waiting for CEs",

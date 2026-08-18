@@ -5,6 +5,10 @@
 - Jump when stuck: if you stop moving on rocks, ledges, or stairs while pathing, BOCCHI jumps to get free. On by default; timing is on the Movement page. (#185)
 - Walking to a FATE no longer instantly switches to a Critical Encounter. It waits until registration is almost up (90 seconds left by default; 0 = old behaviour). If you are already in the FATE or fighting it, it finishes first. Prefer pot FATEs still puts Magic Pots ahead of CEs. (#187)
 - Illegal Mode → Combat only lists autorotation plugins you have installed.
+- Mob Farmer uses your Illegal Mode combat choice only while fighting, not while pulling. When the pack is gathered, autorotation and BOCCHI AI take over movement so you dodge. Tanks can Shield Lob (or the job equivalent), Provoke, and gap-close, and they walk toward the next enemy while the current one is still in range. (#145)
+- Mob Farmer pull buffs: Battle Bell, optional Phantom Dancer Quickstep, optional Geomancer Ringing Respite. (#145)
+- Mob Farmer farm spots: named origins, optional stack/stop points for caves and SW Tower, and leave a camp if someone else has claimed it. (#145, #155)
+- Mob Farmer can pause for Magic Pots, a timed Treasure Hunt when Sight counts are high enough, and knowledge-crystal buffs that are about to expire. (#145)
 
 ### Fixes
 - Critical Encounter registration uses the real in-game ring size, so it no longer pulls you inward while you are already on the blue ring.

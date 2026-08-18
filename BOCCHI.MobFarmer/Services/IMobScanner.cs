@@ -10,5 +10,8 @@ public interface IMobScanner
 
     IEnumerable<IBattleNpc> NotInCombat { get; }
 
+    /// <summary>Selected enemies that have a target that is not the local player.</summary>
+    IEnumerable<IBattleNpc> Contested { get; }
+
     void Update();
 }
