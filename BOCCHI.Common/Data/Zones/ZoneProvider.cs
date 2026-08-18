@@ -47,8 +47,6 @@ public class NullZone : IZone
 
     public bool IsInForkedTower() => false;
 
-    public float GetCriticalEncounterRadius(int eventId) => 0f;
-
     public Task<ZoneGraph> GetGraph() => Task.FromResult(new ZoneGraph());
 
     public ZoneGraphLoadState GraphLoadState => ZoneGraphLoadState.Idle;
@@ -56,6 +54,10 @@ public class NullZone : IZone
     public ZoneGraphSource GraphSource => ZoneGraphSource.None;
 
     public void InvalidateGraph(string? reason = null)
+    {
+    }
+
+    public void ApplyCriticalEncounterCombat(int eventId, float combatRadius, ActivityAreaShape shape)
     {
     }
 }

@@ -1,4 +1,5 @@
-﻿using BOCCHI.Common.Data.Zones.Graph;
+﻿using BOCCHI.Common.Data.Zones;
+using BOCCHI.Common.Data.Zones.Graph;
 using ECommons;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using FFXIVClientStructs.FFXIV.Client.LayoutEngine;
@@ -28,9 +29,9 @@ public class CriticalEncounter(
     public readonly string Name = ev.Name.ToString();
 
     /// <summary>Padded size used for debug outer ring (circle radius or square half-extent).</summary>
-    public readonly float Radius = radius;
+    public float Radius { get; private set; } = radius;
 
-    public readonly ActivityAreaShape AreaShape = areaShape;
+    public ActivityAreaShape AreaShape { get; private set; } = areaShape;
 
     public Vector3 Position { get; private set; } = ResolvePosition(ev, fallbackPosition);
 
@@ -121,4 +122,13 @@ public class CriticalEncounter(
     public bool IsPreparing() => State is DynamicEventState.Register or DynamicEventState.Warmup;
 
     public bool IsActive() => State is DynamicEventState.Battle;
+
+    /// <summary>Apply live LGB registration size (unpadded combat radius).</summary>
+    public void ApplyCombatGeometry(float combatRadius, ActivityAreaShape shape)
+    {
+        AreaShape = shape;
+        Radius = combatRadius > 0f
+            ? NavigationConstants.CriticalEncounterPaddedRadius(combatRadius, shape)
+            : 0f;
+    }
 }

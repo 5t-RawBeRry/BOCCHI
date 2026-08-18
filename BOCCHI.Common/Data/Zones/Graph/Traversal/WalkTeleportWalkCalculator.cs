@@ -16,7 +16,7 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
 
     public async Task<TraversalCandidate?> CalculateAsync(ZoneGraph graph, Vector3 start, Node goal, IPathfinder pathfinder)
     {
-        Node? inbound = graph.GetInboundTeleport(goal);
+        Node? inbound = graph.GetUsableInboundTeleport(goal);
         if (inbound?.Metadata is not TeleportNodeMetadata inboundMeta)
         {
             return null;
@@ -139,7 +139,7 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
         candidate = null;
         TraversalCandidate? best = null;
 
-        foreach ((Node altInbound, float walkFromAlt) in graph.GetInboundTeleports(goal))
+        foreach ((Node altInbound, float walkFromAlt) in graph.GetUsableInboundTeleports(goal))
         {
             if (altInbound.Metadata is not TeleportNodeMetadata altMeta)
             {

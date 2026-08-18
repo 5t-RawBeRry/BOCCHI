@@ -1,4 +1,5 @@
 using BOCCHI.Common.Data.Zones.Graph;
+using BOCCHI.Common.Services;
 using Ocelot.Extensions;
 using System.Numerics;
 
@@ -36,22 +37,13 @@ public static class NavigationConstants
     public const float EventArrivalRadius = 5f;
 
     /// <summary>
-    ///     Added to authored CE combat radius for <see cref="CriticalEncounter.Radius"/> / debug green.
-    ///     Red debug = padded − this.
+    ///     Added to LGB CE combat radius for debug green.
+    ///     Red debug = padded − this (the in-game blue registration edge).
     /// </summary>
     public const float CriticalEncounterRadiusPadding = 7f;
 
     /// <summary>Yellow debug ring inset from padded CE radius (green − this).</summary>
     public const float CriticalEncounterYellowInset = 2f;
-
-    /// <summary>
-    ///     Square CEs: inside red = in the registration zone (same as circles).
-    ///     Authored half-extent should match the game blue box; do not shrink again here.
-    /// </summary>
-    public const float CriticalEncounterSquareWaitInnerRatio = 1f;
-
-    /// <summary>Circle CEs: inside red = in the registration zone (stop pulling inward).</summary>
-    public const float CriticalEncounterCircleWaitInnerRatio = 1f;
 
     /// <summary>Square CEs: cyan stand (path target) as a fraction of red half-extent.</summary>
     public const float CriticalEncounterSquareStandRatio = 0.7f;
@@ -97,20 +89,6 @@ public static class NavigationConstants
     public static float CriticalEncounterYellowRadius(float paddedRadius) =>
         MathF.Max(0f, paddedRadius - CriticalEncounterYellowInset);
 
-    /// <summary>Inside-zone size (red for circles; tighter hold for squares).</summary>
-    public static float CriticalEncounterWaitHoldRadius(float combatRadius, ActivityAreaShape shape)
-    {
-        if (combatRadius <= 0f)
-        {
-            return EventArrivalRadius;
-        }
-
-        float ratio = shape == ActivityAreaShape.Square
-            ? CriticalEncounterSquareWaitInnerRatio
-            : CriticalEncounterCircleWaitInnerRatio;
-        return combatRadius * ratio;
-    }
-
     /// <summary>Cyan debug / preferred stand size (inside red).</summary>
     public static float CriticalEncounterStandRadius(float combatRadius, ActivityAreaShape shape)
     {
@@ -125,7 +103,7 @@ public static class NavigationConstants
         return combatRadius * ratio;
     }
 
-    /// <summary>Padded outer (green) size from authored combat radius.</summary>
+    /// <summary>Padded outer (green) size from LGB combat radius.</summary>
     public static float CriticalEncounterPaddedRadius(float combatRadius, ActivityAreaShape shape)
     {
         float pad = shape == ActivityAreaShape.Square
@@ -135,8 +113,8 @@ public static class NavigationConstants
     }
 
     /// <summary>
-    ///     True when <paramref name="point"/> is safely inside the CE registration area.
-    ///     <paramref name="combatRadius"/> is authored combat size (circle radius or square half-extent).
+    ///     True when <paramref name="point"/> is inside the CE registration area (the in-game blue
+    ///     ring/box). <paramref name="combatRadius"/> is the LGB size (circle radius or square half-extent).
     /// </summary>
     public static bool IsInsideCriticalEncounterWaitArea(
         Vector3 center,
@@ -144,17 +122,19 @@ public static class NavigationConstants
         ActivityAreaShape shape,
         Vector3 point)
     {
-        float hold = CriticalEncounterWaitHoldRadius(combatRadius, shape);
+        if (combatRadius <= 0f)
+        {
+            return false;
+        }
 
         if (shape == ActivityAreaShape.Square)
         {
-            // Chebyshev: keep pathing until clearly inside the blue square, not on the rim.
             float dx = MathF.Abs(point.X - center.X);
             float dz = MathF.Abs(point.Z - center.Z);
-            return MathF.Max(dx, dz) <= hold;
+            return MathF.Max(dx, dz) <= combatRadius;
         }
 
-        return point.Distance2D(center) <= hold;
+        return point.Distance2D(center) <= combatRadius;
     }
 }
 
@@ -232,36 +212,40 @@ public static class NavigationApproach
     /// </summary>
     public static bool TryResolveCriticalEncounterApproach(
         IZone zone,
+        CriticalEncounterGeometry? geometry,
         Vector3 destination,
         Vector3 from,
         out Vector3 approach,
-        out ActivityData? activity)
+        out ActivityData? activity,
+        out bool alreadyInside)
     {
+        alreadyInside = false;
         const float matchRadius = 80f;
         foreach (ActivityData candidate in zone.GetCriticalEncounterData())
         {
-            if (candidate.CombatRadius is not { } radius || radius <= 0f)
-            {
-                continue;
-            }
-
             if (destination.Distance2D(candidate.Position) > matchRadius)
             {
                 continue;
             }
 
+            if (geometry == null
+                || !geometry.TryGetCombat((ushort)candidate.Id, out float radius, out ActivityAreaShape shape))
+            {
+                continue;
+            }
+
             activity = candidate;
-            // Prefer PathTo destination as center (live CE position from World panel for squares).
             Vector3 center = destination;
             if (NavigationConstants.IsInsideCriticalEncounterWaitArea(
-                    center, radius, candidate.AreaShape, from))
+                    center, radius, shape, from))
             {
                 approach = from;
+                alreadyInside = true;
                 return true;
             }
 
             approach = GetCriticalEncounterApproachPosition(
-                center, from, radius, candidate.AreaShape, candidate.StandRadius ?? 0f);
+                center, from, radius, shape, candidate.StandRadius ?? 0f);
             return true;
         }
 

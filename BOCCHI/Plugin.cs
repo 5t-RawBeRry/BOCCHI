@@ -106,6 +106,7 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
 
         services.AddSingleton<IGraphFactory, GraphFactory>();
 
+        services.AddSingleton<CriticalEncounterGeometry>();
         services.AddSingleton<IActivityNavigation, ActivityNavigation>();
         services.AddSingleton<IFieldNoteTracker, FieldNoteTracker>();
 

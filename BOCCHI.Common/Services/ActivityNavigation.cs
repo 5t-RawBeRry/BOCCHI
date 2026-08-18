@@ -35,6 +35,7 @@ public class ActivityNavigation
     IFramework framework,
     AutomatorConfig automatorConfig,
     MovementConfig movementConfig,
+    CriticalEncounterGeometry geometry,
     ILogger<ActivityNavigation> logger
 ) : IActivityNavigation
 {
@@ -542,11 +543,8 @@ public class ActivityNavigation
 
         IZone zone = zones.GetZone();
         if (NavigationApproach.TryResolveCriticalEncounterApproach(
-                zone, destination, from, out approach, out ActivityData? activity)
-            && activity?.CombatRadius is { } radius)
+                zone, geometry, destination, from, out approach, out _, out alreadyAtCeRing))
         {
-            alreadyAtCeRing = NavigationConstants.IsInsideCriticalEncounterWaitArea(
-                destination, radius, activity.AreaShape, from);
             return true;
         }
 

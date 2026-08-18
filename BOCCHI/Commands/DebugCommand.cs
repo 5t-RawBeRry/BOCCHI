@@ -31,6 +31,7 @@ public unsafe class DebugCommand
     IObjectTable objects,
     IZoneProvider zones,
     IDataManager data,
+    CriticalEncounterGeometry geometry,
     IChatGui chat,
     UIConfig uiConfig,
     ITranslator<DebugCommand> translator
@@ -102,14 +103,8 @@ public unsafe class DebugCommand
     }
 
     /// <summary>
-    ///     Measure a Critical Encounter's real registration area. Stand on the blue rim and run this
-    ///     at a few points around it; the largest reading is the radius to author.
-    ///     <para>
-    ///     Needed because every CE radius is hand-authored and most are still the default 20y, while
-    ///     the game exposes no geometry to read instead — neither DynamicEvent nor MycDynamicEvent
-    ///     carries a position or radius. A CE whose real ring is wider than the authored value gets
-    ///     you repathed inward while you are legitimately already inside it.
-    ///     </para>
+    ///     Measure a Critical Encounter's real registration area against live LGB MapRange.
+    ///     Stand on the blue rim; your distance should match the LGB radius.
     /// </summary>
     private void PrintCriticalEncounterMeasurement()
     {
@@ -127,40 +122,43 @@ public unsafe class DebugCommand
         float dz = MathF.Abs(me.Z - nearest.Position.Z);
         float circle = Flat(me, nearest.Position);
         float square = MathF.Max(dx, dz);
-        float authored = nearest.CombatRadius ?? 0f;
-        float measured = nearest.AreaShape == ActivityAreaShape.Square ? square : circle;
+        bool haveLgb = geometry.TryGetCombat((ushort)nearest.Id, out float lgbRadius, out ActivityAreaShape lgbShape);
+        ActivityAreaShape shape = haveLgb ? lgbShape : nearest.AreaShape;
+        float measured = shape == ActivityAreaShape.Square ? square : circle;
+        float compare = haveLgb ? lgbRadius : 0f;
 
         BocchiChat.Print(
             chat,
             uiConfig,
-            $"CE {nearest.Id} ({nearest.AreaShape}) centre <{nearest.Position.X:0.#}, {nearest.Position.Z:0.#}>  authored {authored:0.#}y");
-        BocchiChat.Print(
-            chat,
-            uiConfig,
-            $"  you are {measured:0.#}y out (circle {circle:0.#}y / square half-extent {square:0.#}y)"
-            + $"  → {(measured > authored ? "OUTSIDE" : "inside")} the authored area");
-        // InvariantCulture: this line is meant to be pasted into source, and a locale decimal comma
-        // turns "29.8f" into "29,8f" — which reads as two arguments and will not compile.
-        BocchiChat.Print(
-            chat,
-            uiConfig,
-            "  " + string.Format(
+            string.Format(
                 CultureInfo.InvariantCulture,
-                "new({0}, new({1:0.###}f, {2:0.###}f, {3:0.###}f), {4:0.#}f),",
+                "CE {0} ({1}) centre <{2:0.#}, {3:0.#}>  LGB {4}",
                 nearest.Id,
+                shape,
                 nearest.Position.X,
-                nearest.Position.Y,
                 nearest.Position.Z,
-                measured));
+                haveLgb ? $"{lgbRadius:0.#}y" : "unresolved"));
+        BocchiChat.Print(
+            chat,
+            uiConfig,
+            string.Format(
+                CultureInfo.InvariantCulture,
+                "  you are {0:0.#}y out (circle {1:0.#}y / square half-extent {2:0.#}y)  → {3}",
+                measured,
+                circle,
+                square,
+                !haveLgb
+                    ? "LGB unresolved"
+                    : measured > compare
+                        ? "OUTSIDE the LGB area"
+                        : "inside the LGB area"));
 
         PrintLiveEventGeometry();
     }
 
     /// <summary>
-    ///     Report the centre and radius the game itself holds for each live Critical Encounter.
-    ///     <c>DynamicEvent.MapMarker</c> carries both, so if these agree with what we author by hand
-    ///     the whole authored table could be replaced by reading this at runtime — no measuring, and
-    ///     no drift when a zone is adjusted.
+    ///     Report live DynamicEvent marker centre/radius. Occult CE MapMarker.Radius is 0;
+    ///     registration size comes from LGB MapRange via <c>/bocchi debug ce</c>.
     /// </summary>
     private void PrintLiveEventGeometry()
     {
@@ -184,11 +182,33 @@ public unsafe class DebugCommand
             }
 
             any = true;
+
+            // MapMarker.Radius reads 0 for Occult CEs, so the usable size comes from the LGB
+            // MapRange the event points at.
+            CriticalEncounterArea? area = geometry.TryGet(evt.DynamicEventId, out string lgbDetail);
+            string lgb = area is { } a
+                ? string.Format(
+                    CultureInfo.InvariantCulture,
+                    "  LGB <{0:0.#}, {1:0.#}> r={2:0.#}y {3} ({4})",
+                    a.Center.X,
+                    a.Center.Z,
+                    a.Radius,
+                    a.IsSquare ? "square" : "circle",
+                    lgbDetail)
+                : "  LGB unresolved (" + lgbDetail + ")";
+
             BocchiChat.Print(
                 chat,
                 uiConfig,
-                $"  {evt.DynamicEventId}  {evt.State}  "
-                + $"<{evt.MapMarker.Position.X:0.#}, {evt.MapMarker.Position.Z:0.#}>  r={evt.MapMarker.Radius:0.#}y");
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "  {0}  {1}  marker <{2:0.#}, {3:0.#}> r={4:0.#}y{5}",
+                    evt.DynamicEventId,
+                    evt.State,
+                    evt.MapMarker.Position.X,
+                    evt.MapMarker.Position.Z,
+                    evt.MapMarker.Radius,
+                    lgb));
         }
 
         if (!any)

@@ -1,0 +1,252 @@
+using BOCCHI.Common.Data.Zones.Graph;
+using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
+using Lumina.Data.Files;
+using Lumina.Data.Parsing.Layer;
+using Lumina.Excel.Sheets;
+using Ocelot.Extensions;
+using Ocelot.Services.Logger;
+using System.Numerics;
+using GameDynamicEvent = FFXIVClientStructs.FFXIV.Client.Game.InstanceContent.DynamicEvent;
+using ExcelDynamicEvent = Lumina.Excel.Sheets.DynamicEvent;
+
+namespace BOCCHI.Common.Services;
+
+/// <summary>Centre and size of a Critical Encounter's registration area, read from level geometry.</summary>
+public readonly record struct CriticalEncounterArea(Vector3 Center, float Radius, bool IsSquare);
+
+/// <summary>
+///     Resolves a Critical Encounter's real registration area from the zone's level geometry.
+///     <para>
+///     Occult CE <c>DynamicEvent.MapMarker.Radius</c> is 0 even while registration is open.
+///     <c>DynamicEvent.LGBMapRange</c> is the InstanceId of a MapRange volume — the shape the
+///     blue ring is drawn from — but live copies of that field are often still 0, so we also
+///     read the Excel row and, if needed, pick the MapRange whose centre is nearest the event
+///     marker.
+///     </para>
+/// </summary>
+public sealed class CriticalEncounterGeometry(
+    IDataManager data,
+    IClientState clientState,
+    ILogger<CriticalEncounterGeometry> logger)
+{
+    /// <summary>Layer files besides the level stem (e.g. oc1f1.lgb) that can hold MapRange volumes.</summary>
+    private static readonly string[] ExtraLayerFiles =
+        ["planevent", "planmap", "planner", "planlive", "planobject", "bg"];
+
+    private readonly Dictionary<uint, CriticalEncounterArea> cache = [];
+
+    private ushort cachedTerritory;
+
+    public unsafe CriticalEncounterArea? TryGet(ushort dynamicEventId) =>
+        TryGet(dynamicEventId, out _);
+
+    /// <summary>Unpadded registration size from LGB, or false when it cannot be resolved.</summary>
+    public bool TryGetCombat(ushort dynamicEventId, out float radius, out ActivityAreaShape shape)
+    {
+        if (TryGet(dynamicEventId) is { Radius: > 0 } area)
+        {
+            radius = area.Radius;
+            shape = area.IsSquare ? ActivityAreaShape.Square : ActivityAreaShape.Circle;
+            return true;
+        }
+
+        radius = 0f;
+        shape = ActivityAreaShape.Circle;
+        return false;
+    }
+
+    /// <param name="detail">Why lookup succeeded or failed — for <c>/bocchi debug ce</c>.</param>
+    public unsafe CriticalEncounterArea? TryGet(ushort dynamicEventId, out string detail)
+    {
+        if (cachedTerritory != (ushort)clientState.TerritoryType)
+        {
+            cache.Clear();
+            cachedTerritory = (ushort)clientState.TerritoryType;
+        }
+
+        if (cache.TryGetValue(dynamicEventId, out CriticalEncounterArea cached))
+        {
+            detail = "cached";
+            return cached;
+        }
+
+        PublicContentOccultCrescent* content = PublicContentOccultCrescent.GetInstance();
+        if (content == null)
+        {
+            detail = "no occult director";
+            return null;
+        }
+
+        uint liveRangeId = 0;
+        Vector3 marker = Vector3.Zero;
+        bool haveMarker = false;
+        ref DynamicEventContainer container = ref content->DynamicEventContainer;
+        for (int i = 0; i < container.Events.Length; i++)
+        {
+            GameDynamicEvent evt = container.Events[i];
+            if (evt.DynamicEventId != dynamicEventId)
+            {
+                continue;
+            }
+
+            liveRangeId = evt.LGBMapRange;
+            marker = evt.MapMarker.Position;
+            haveMarker = marker.X != 0f || marker.Z != 0f;
+            break;
+        }
+
+        uint excelRangeId = 0;
+        if (data.GetExcelSheet<ExcelDynamicEvent>().TryGetRow(dynamicEventId, out ExcelDynamicEvent row))
+        {
+            excelRangeId = row.LGBMapRange;
+        }
+
+        uint mapRangeId = liveRangeId != 0 ? liveRangeId : excelRangeId;
+        List<(string Path, LayerCommon.InstanceObject Instance, LayerCommon.MapRangeInstanceObject Range)> ranges =
+            LoadMapRanges();
+
+        if (mapRangeId != 0)
+        {
+            foreach ((string path, LayerCommon.InstanceObject instance, LayerCommon.MapRangeInstanceObject range) in ranges)
+            {
+                if (instance.InstanceId != mapRangeId)
+                {
+                    continue;
+                }
+
+                CriticalEncounterArea area = Build(instance, range);
+                cache[dynamicEventId] = area;
+                detail = $"id {mapRangeId} in {path} (live={liveRangeId} excel={excelRangeId})";
+                logger.Info(
+                    "CE {Id}: LGB MapRange {RangeId} centre {Center:F0} radius {Radius:F1}y ({Shape})",
+                    dynamicEventId,
+                    mapRangeId,
+                    area.Center,
+                    area.Radius,
+                    area.IsSquare ? "square" : "circle");
+                return area;
+            }
+        }
+
+        if (haveMarker && ranges.Count > 0)
+        {
+            float bestDist = float.MaxValue;
+            CriticalEncounterArea? best = null;
+            string bestPath = "";
+            uint bestId = 0;
+            foreach ((string path, LayerCommon.InstanceObject instance, LayerCommon.MapRangeInstanceObject range) in ranges)
+            {
+                CriticalEncounterArea candidate = Build(instance, range);
+                float dist = candidate.Center.Distance2D(marker);
+                if (dist >= bestDist || dist > 40f)
+                {
+                    continue;
+                }
+
+                bestDist = dist;
+                best = candidate;
+                bestPath = path;
+                bestId = instance.InstanceId;
+            }
+
+            if (best is { } near)
+            {
+                cache[dynamicEventId] = near;
+                detail = $"nearest MapRange {bestId} at {bestDist:0.#}y in {bestPath} (live={liveRangeId} excel={excelRangeId})";
+                logger.Info(
+                    "CE {Id}: no MapRange id {Wanted}; using nearest {RangeId} ({Dist:F1}y) centre {Center:F0} radius {Radius:F1}y",
+                    dynamicEventId,
+                    mapRangeId,
+                    bestId,
+                    bestDist,
+                    near.Center,
+                    near.Radius);
+                return near;
+            }
+        }
+
+        detail = ranges.Count == 0
+            ? $"no LGB MapRange files (live={liveRangeId} excel={excelRangeId})"
+            : $"id live={liveRangeId} excel={excelRangeId} not in {ranges.Count} MapRange(s)";
+        logger.Warning("CE {Id}: {Detail}", dynamicEventId, detail);
+        return null;
+    }
+
+    private List<(string Path, LayerCommon.InstanceObject Instance, LayerCommon.MapRangeInstanceObject Range)> LoadMapRanges()
+    {
+        List<(string, LayerCommon.InstanceObject, LayerCommon.MapRangeInstanceObject)> found = [];
+        foreach (string path in EnumerateLayerPaths())
+        {
+            LgbFile? lgb = data.GetFile<LgbFile>(path);
+            if (lgb == null)
+            {
+                continue;
+            }
+
+            foreach (LayerCommon.Layer layer in lgb.Layers)
+            {
+                foreach (LayerCommon.InstanceObject instance in layer.InstanceObjects)
+                {
+                    if (instance.Object is not LayerCommon.MapRangeInstanceObject range)
+                    {
+                        continue;
+                    }
+
+                    found.Add((path, instance, range));
+                }
+            }
+        }
+
+        return found;
+    }
+
+    private IEnumerable<string> EnumerateLayerPaths()
+    {
+        if (!data.GetExcelSheet<TerritoryType>().TryGetRow(clientState.TerritoryType, out TerritoryType territory))
+        {
+            yield break;
+        }
+
+        string bg = territory.Bg.ExtractText();
+        if (string.IsNullOrEmpty(bg))
+        {
+            yield break;
+        }
+
+        int levelIndex = bg.LastIndexOf("/level/", StringComparison.Ordinal);
+        string levelDirectory = levelIndex >= 0 ? bg[..(levelIndex + "/level/".Length)] : bg + "/level/";
+        string stem = levelIndex >= 0 ? bg[(levelIndex + "/level/".Length)..] : "";
+
+        HashSet<string> names = new(StringComparer.OrdinalIgnoreCase);
+        if (!string.IsNullOrEmpty(stem))
+        {
+            names.Add(stem);
+        }
+
+        foreach (string extra in ExtraLayerFiles)
+        {
+            names.Add(extra);
+        }
+
+        foreach (string name in names)
+        {
+            yield return $"bg/{levelDirectory}{name}.lgb";
+        }
+    }
+
+    private static CriticalEncounterArea Build(
+        LayerCommon.InstanceObject instance,
+        LayerCommon.MapRangeInstanceObject range)
+    {
+        Vector3 center = new(instance.Transform.Translation.X, instance.Transform.Translation.Y, instance.Transform.Translation.Z);
+        Vector3 scale = new(instance.Transform.Scale.X, instance.Transform.Scale.Y, instance.Transform.Scale.Z);
+
+        bool square = range.ParentData.TriggerBoxShape == TriggerBoxShape.TriggerBoxShapeBox
+                      || range.ParentData.TriggerBoxShape == TriggerBoxShape.TriggerBoxShapeBoard;
+
+        // Box scale is a half-extent per axis; sphere/cylinder use the horizontal scale as radius.
+        float radius = MathF.Max(scale.X, scale.Z);
+        return new CriticalEncounterArea(center, radius, square);
+    }
+}

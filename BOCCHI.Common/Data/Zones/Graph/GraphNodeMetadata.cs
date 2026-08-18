@@ -28,7 +28,7 @@ public class ActivityNodeMetadata : INodeMetadata
 
     public uint? PreferredAethernetId { get; set; }
 
-    /// <summary>Authored engage radius for CE nodes; 0 for FATEs.</summary>
+    /// <summary>Live LGB registration size for CE nodes; 0 until geometry is applied.</summary>
     public float CombatRadius { get; set; }
 
     /// <summary>Circle or axis-aligned square join area.</summary>

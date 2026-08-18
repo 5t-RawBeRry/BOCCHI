@@ -42,7 +42,7 @@ public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
             return Task.FromResult<TraversalCandidate?>(null);
         }
 
-        Node? inbound = graph.GetInboundTeleport(goal);
+        Node? inbound = graph.GetUsableInboundTeleport(goal);
         if (inbound?.Metadata is not TeleportNodeMetadata meta)
         {
             return Task.FromResult<TraversalCandidate?>(null);

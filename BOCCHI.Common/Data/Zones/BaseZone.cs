@@ -186,14 +186,6 @@ public abstract class BaseZone
             .ToList();
     }
 
-    public virtual float GetCriticalEncounterRadius(int eventId)
-    {
-        ActivityData? activity = GetCriticalEncounterData().FirstOrDefault(a => a.Id == eventId);
-        return activity?.CombatRadius is { } radius
-            ? NavigationConstants.CriticalEncounterPaddedRadius(radius, activity.AreaShape)
-            : 0f;
-    }
-
     public unsafe bool IsInForkedTower()
     {
         DynamicEventContainer* dec = DynamicEventContainer.GetInstance();
@@ -231,6 +223,27 @@ public abstract class BaseZone
             }
 
             return graphLoadTask ??= LoadOrBuildGraphAsync();
+        }
+    }
+
+    public void ApplyCriticalEncounterCombat(int eventId, float combatRadius, ActivityAreaShape shape)
+    {
+        if (cachedGraph == null || combatRadius <= 0f)
+        {
+            return;
+        }
+
+        foreach (Node node in cachedGraph.GetActivityNodes())
+        {
+            if (node.Type != NodeType.CriticalEncounter
+                || node.Metadata is not ActivityNodeMetadata meta
+                || meta.Id != eventId)
+            {
+                continue;
+            }
+
+            meta.CombatRadius = combatRadius;
+            meta.AreaShape = shape;
         }
     }
 
@@ -333,6 +346,7 @@ public abstract class BaseZone
         logger.Info($"Building zone graph for territory {TerritoryType} (one-time; Automator waits until done)");
         GraphConfig config = new(pathfinder, logger);
         ZoneGraph built = await graphs.BuildAsync(config, this);
+        built.ClearCriticalEncounterCombatRadii();
         logger.Debug("Writing zone graph to: " + path);
         await File.WriteAllTextAsync(path, built.ToJson());
 
@@ -364,6 +378,7 @@ public abstract class BaseZone
                 return null;
             }
 
+            graph.ClearCriticalEncounterCombatRadii();
             return graph;
         }
         catch (Exception ex)

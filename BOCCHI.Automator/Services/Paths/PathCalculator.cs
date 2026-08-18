@@ -24,6 +24,7 @@ public class PathCalculator
     IFateRepository fates,
     IFateContext fateContext,
     AutomatorConfig config,
+    CriticalEncounterGeometry geometry,
     ILogger<PathCalculator> logger
 ) : IPathCalculator
 {
@@ -148,12 +149,12 @@ public class PathCalculator
 
         float ceCombatRadius = 0f;
         ActivityAreaShape ceShape = ActivityAreaShape.Circle;
-        if (goal.GoalType is CriticalEncounterGoal ceGoalForRadius)
+        if (goal.GoalType is CriticalEncounterGoal ceGoalForRadius
+            && geometry.TryGetCombat(ceGoalForRadius.id.Value, out float lgbRadius, out ActivityAreaShape lgbShape))
         {
-            ActivityData? authored = zone.GetCriticalEncounterData()
-                .FirstOrDefault(a => a.Id == ceGoalForRadius.id.Value);
-            ceCombatRadius = authored?.CombatRadius ?? 0f;
-            ceShape = authored?.AreaShape ?? ActivityAreaShape.Circle;
+            ceCombatRadius = lgbRadius;
+            ceShape = lgbShape;
+            zone.ApplyCriticalEncounterCombat(ceGoalForRadius.id.Value, lgbRadius, lgbShape);
             logger.Debug(
                 "CE {Id} path goal at {Pos:F0} ({Shape}, combat radius {Radius:F0})",
                 ceGoalForRadius.id.Value,

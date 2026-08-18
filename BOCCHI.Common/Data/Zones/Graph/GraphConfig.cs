@@ -8,15 +8,15 @@ namespace BOCCHI.Common.Data.Zones.Graph;
 /// <summary>How CE join / combat area is measured around <see cref="ActivityData.Position"/>.</summary>
 public enum ActivityAreaShape
 {
-    /// <summary>Euclidean radius (<see cref="ActivityData.CombatRadius"/>).</summary>
+    /// <summary>Euclidean radius (LGB MapRange for CEs; <see cref="ActivityData.CombatRadius"/> for FATEs).</summary>
     Circle = 0,
 
-    /// <summary>Axis-aligned square; <see cref="ActivityData.CombatRadius"/> is half-extent (center → edge).</summary>
+    /// <summary>Axis-aligned square; size is half-extent (center → edge).</summary>
     Square = 1,
 }
 
 /// <param name="Position">Path / wait destination (CE staging or FATE start).</param>
-/// <param name="CombatRadius">Engage / registration rim (circle radius or square half-extent).</param>
+/// <param name="CombatRadius">FATE engage radius. CEs leave this null and use live LGB size.</param>
 /// <param name="PreferredAethernetId">PlaceNameId of preferred inbound shard, if any.</param>
 /// <param name="AreaShape">Circle (default) or axis-aligned square (e.g. A Beast Unleashed).</param>
 /// <param name="StandRadius">

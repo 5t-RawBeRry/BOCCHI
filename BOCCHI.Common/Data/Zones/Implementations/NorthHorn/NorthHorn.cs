@@ -125,25 +125,24 @@ public class NorthHorn
         new(2073, new(-505.2822f, 53.14409f, 244.041f), 38f, SuspendedMasonry.Id) // In a Pot of Bother (South)
     ];
 
+    // Staging positions. Registration size comes from live LGB MapRange, not these rows.
     public override List<ActivityData> GetCriticalEncounterData() =>
     [
-        // Center from in-game stand on the blue box; half-extent = registration (not hazard platform).
-        new(56, new(237.91f, 15f, 351.69f), 16f, AreaShape: ActivityAreaShape.Square), // A Beast Unleashed
-        new(63, new(500f, 56f, -310f), 27f), // Accept No Imitators (red ≈ registration rim)
-        new(62, new(-82f, 12f, 485f), 20f), // Ahead of the Competition
-        new(59, new(807f, 61f, -562f), 20f), // Appalling Behavior
-        new(53, new(-688f, 90f, 150f), 20f), // Cursed Resurgence
-        new(57, new(224f, 52f, -860f), 20f), // Dark Artistry
-        // LGB center (-215, 18, -65). Registration ~20y (stone rim was ~27 and left drop outside blue).
-        new(50, new(-215f, 18f, -65f), 20f), // Doubled Trouble
-        new(58, new(-390f, 68f, 700f), 20f), // Familiar Tactics
-        new(52, new(659f, 132f, 659f), 20f, TheCrownOfKarnak.Id), // Forbidden Folios
-        new(54, new(765f, 70f, 0f), 20f), // Imbalanced Diet
-        new(61, new(-150f, 70f, -860f), 20f, MolderingOutskirts.Id), // Lost on the Wind
-        new(49, new(-870f, 20f, -560f), 20f), // Many Mouths to Feed
-        new(51, new(-519f, 48f, -641f), 20f), // Quarried Away
-        new(60, new(152f, 70f, 716f), 20f), // Tiny Terror
-        new(55, new(170f, 4f, -136f), 20f) // Web of Terror
+        new(56, new(237.91f, 15f, 351.69f), AreaShape: ActivityAreaShape.Square), // A Beast Unleashed
+        new(63, new(500f, 56f, -310f)), // Accept No Imitators
+        new(62, new(-82f, 12f, 485f)), // Ahead of the Competition
+        new(59, new(807f, 61f, -562f)), // Appalling Behavior
+        new(53, new(-688f, 90f, 150f)), // Cursed Resurgence
+        new(57, new(224f, 52f, -860f)), // Dark Artistry
+        new(50, new(-215f, 18f, -65f)), // Doubled Trouble
+        new(58, new(-390f, 68f, 700f)), // Familiar Tactics
+        new(52, new(659f, 132f, 659f), PreferredAethernetId: TheCrownOfKarnak.Id), // Forbidden Folios
+        new(54, new(765f, 70f, 0f)), // Imbalanced Diet
+        new(61, new(-150f, 70f, -860f), PreferredAethernetId: MolderingOutskirts.Id), // Lost on the Wind
+        new(49, new(-870f, 20f, -560f)), // Many Mouths to Feed
+        new(51, new(-519f, 48f, -641f)), // Quarried Away
+        new(60, new(152f, 70f, 716f)), // Tiny Terror
+        new(55, new(170f, 4f, -136f)) // Web of Terror
     ];
 
     public override BuffZone? GetBuffZone() =>

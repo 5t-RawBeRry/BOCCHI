@@ -117,25 +117,25 @@ public class SouthHorn
         new(1977, new(-481f, 75f, 528f), PreferredAethernetId: Stonemarsh.Id) // "Pleading Pots" (South)
     ];
 
-    // Staging positions; CombatRadius keeps BOCCHI engage padding behavior.
+    // Staging positions. Registration size comes from live LGB MapRange, not these rows.
     public override List<ActivityData> GetCriticalEncounterData() =>
     [
-        new(33, new(300.109f, 70f, 730.029f), 20f, Eldergrowth.Id), // "Scourge of the Mind"
-        new(34, new(449.613f, 65f, 356.86f), 20f, Eldergrowth.Id), // "The Black Regiment"
-        new(35, new(619.864f, 79f, 799.882f), 20f, Eldergrowth.Id), // "The Unbridled"
-        new(36, new(680.95f, 74f, 533.939f), 20f, Eldergrowth.Id), // "Crawling Death"
-        new(37, new(-340.067f, 75f, 800.32f), 20f, Stonemarsh.Id), // "Calamity Bound"
-        new(38, new(-413.775f, 92f, 74.884f), 20f, CrystallizedCaverns.Id), // "Trial by Claw"
-        new(39, new(-799.895f, 44f, 245.027f), 20f, Stonemarsh.Id), // "From Times Bygone"
-        new(40, new(679.954f, 96f, -279.855f), 20f, BaseCamp.Id), // "Company of Stone"
-        new(41, new(-117.227f, 1f, -849.941f), 15f, TheWanderersHaven.Id), // "Shark Attack"
+        new(33, new(300.109f, 70f, 730.029f), PreferredAethernetId: Eldergrowth.Id), // "Scourge of the Mind"
+        new(34, new(449.613f, 65f, 356.86f), PreferredAethernetId: Eldergrowth.Id), // "The Black Regiment"
+        new(35, new(619.864f, 79f, 799.882f), PreferredAethernetId: Eldergrowth.Id), // "The Unbridled"
+        new(36, new(680.95f, 74f, 533.939f), PreferredAethernetId: Eldergrowth.Id), // "Crawling Death"
+        new(37, new(-340.067f, 75f, 800.32f), PreferredAethernetId: Stonemarsh.Id), // "Calamity Bound"
+        new(38, new(-413.775f, 92f, 74.884f), PreferredAethernetId: CrystallizedCaverns.Id), // "Trial by Claw"
+        new(39, new(-799.895f, 44f, 245.027f), PreferredAethernetId: Stonemarsh.Id), // "From Times Bygone"
+        new(40, new(679.954f, 96f, -279.855f), PreferredAethernetId: BaseCamp.Id), // "Company of Stone"
+        new(41, new(-117.227f, 1f, -849.941f), PreferredAethernetId: TheWanderersHaven.Id), // "Shark Attack"
         // BaseCamp: Lost Citadel approach. Eldergrowth walks around the citadel exterior.
-        new(42, new(635.981f, 108f, -53.95f), 20f, BaseCamp.Id), // "On the Hunt"
-        new(43, new(-351.222f, 5f, -607.909f), 15f, TheWanderersHaven.Id), // "With Extreme Prejudice"
-        new(44, new(460.949f, 97f, -362.86f), 20f, BaseCamp.Id), // "Noise Complaint"
-        new(45, new(71.964f, 20f, -544.904f), 20f, TheWanderersHaven.Id), // "Cursed Concern"
-        new(46, new(869.891f, 122f, 180.11f), 20f, Eldergrowth.Id), // "Eternal Watch"
-        new(47, new(-570.087f, 97f, -160.04f), 20f, CrystallizedCaverns.Id) // "Flame of Dusk"
+        new(42, new(635.981f, 108f, -53.95f), PreferredAethernetId: BaseCamp.Id), // "On the Hunt"
+        new(43, new(-351.222f, 5f, -607.909f), PreferredAethernetId: TheWanderersHaven.Id), // "With Extreme Prejudice"
+        new(44, new(460.949f, 97f, -362.86f), PreferredAethernetId: BaseCamp.Id), // "Noise Complaint"
+        new(45, new(71.964f, 20f, -544.904f), PreferredAethernetId: TheWanderersHaven.Id), // "Cursed Concern"
+        new(46, new(869.891f, 122f, 180.11f), PreferredAethernetId: Eldergrowth.Id), // "Eternal Watch"
+        new(47, new(-570.087f, 97f, -160.04f), PreferredAethernetId: CrystallizedCaverns.Id) // "Flame of Dusk"
     ];
 
     public override BuffZone? GetBuffZone() =>

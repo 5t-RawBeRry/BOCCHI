@@ -328,7 +328,7 @@
         "MetadataType": "ActivityNodeMetadata",
         "Id": 33,
         "PreferredAethernetId": 4930,
-        "CombatRadius": 20,
+        "CombatRadius": 0,
         "AreaShape": 0
       }
     },
@@ -344,7 +344,7 @@
         "MetadataType": "ActivityNodeMetadata",
         "Id": 34,
         "PreferredAethernetId": 4930,
-        "CombatRadius": 20,
+        "CombatRadius": 0,
         "AreaShape": 0
       }
     },
@@ -360,7 +360,7 @@
         "MetadataType": "ActivityNodeMetadata",
         "Id": 35,
         "PreferredAethernetId": 4930,
-        "CombatRadius": 20,
+        "CombatRadius": 0,
         "AreaShape": 0
       }
     },
@@ -376,7 +376,7 @@
         "MetadataType": "ActivityNodeMetadata",
         "Id": 36,
         "PreferredAethernetId": 4930,
-        "CombatRadius": 20,
+        "CombatRadius": 0,
         "AreaShape": 0
       }
     },
@@ -392,7 +392,7 @@
         "MetadataType": "ActivityNodeMetadata",
         "Id": 37,
         "PreferredAethernetId": 4942,
-        "CombatRadius": 20,
+        "CombatRadius": 0,
         "AreaShape": 0
       }
     },
@@ -408,7 +408,7 @@
         "MetadataType": "ActivityNodeMetadata",
         "Id": 38,
         "PreferredAethernetId": 4929,
-        "CombatRadius": 20,
+        "CombatRadius": 0,
         "AreaShape": 0
       }
     },
@@ -424,7 +424,7 @@
         "MetadataType": "ActivityNodeMetadata",
         "Id": 39,
         "PreferredAethernetId": 4942,
-        "CombatRadius": 20,
+        "CombatRadius": 0,
         "AreaShape": 0
       }
     },
@@ -440,7 +440,7 @@
         "MetadataType": "ActivityNodeMetadata",
         "Id": 40,
         "PreferredAethernetId": 4927,
-        "CombatRadius": 20,
+        "CombatRadius": 0,
         "AreaShape": 0
       }
     },
@@ -456,7 +456,7 @@
         "MetadataType": "ActivityNodeMetadata",
         "Id": 41,
         "PreferredAethernetId": 4928,
-        "CombatRadius": 15,
+        "CombatRadius": 0,
         "AreaShape": 0
       }
     },
@@ -472,7 +472,7 @@
         "MetadataType": "ActivityNodeMetadata",
         "Id": 42,
         "PreferredAethernetId": 4927,
-        "CombatRadius": 20,
+        "CombatRadius": 0,
         "AreaShape": 0
       }
     },
@@ -488,7 +488,7 @@
         "MetadataType": "ActivityNodeMetadata",
         "Id": 43,
         "PreferredAethernetId": 4928,
-        "CombatRadius": 15,
+        "CombatRadius": 0,
         "AreaShape": 0
       }
     },
@@ -504,7 +504,7 @@
         "MetadataType": "ActivityNodeMetadata",
         "Id": 44,
         "PreferredAethernetId": 4927,
-        "CombatRadius": 20,
+        "CombatRadius": 0,
         "AreaShape": 0
       }
     },
@@ -520,7 +520,7 @@
         "MetadataType": "ActivityNodeMetadata",
         "Id": 45,
         "PreferredAethernetId": 4928,
-        "CombatRadius": 20,
+        "CombatRadius": 0,
         "AreaShape": 0
       }
     },
@@ -536,7 +536,7 @@
         "MetadataType": "ActivityNodeMetadata",
         "Id": 46,
         "PreferredAethernetId": 4930,
-        "CombatRadius": 20,
+        "CombatRadius": 0,
         "AreaShape": 0
       }
     },
@@ -552,7 +552,7 @@
         "MetadataType": "ActivityNodeMetadata",
         "Id": 47,
         "PreferredAethernetId": 4929,
-        "CombatRadius": 20,
+        "CombatRadius": 0,
         "AreaShape": 0
       }
     }

@@ -1,3 +1,4 @@
+using BOCCHI.Common.Services;
 using Ocelot.Extensions;
 using System.Numerics;
 using System.Text.Json;
@@ -84,6 +85,23 @@ public class ZoneGraph
     /// <summary>How many FATE/CE nodes have a usable inbound aetheryte walk.</summary>
     public int CountRoutableActivities() =>
         GetActivityNodes().Count(activity => GetInboundTeleport(activity) != null);
+
+    /// <summary>
+    ///     Drop baked CE combat sizes. Registration size comes from live LGB, not the path map.
+    /// </summary>
+    public void ClearCriticalEncounterCombatRadii()
+    {
+        foreach (Node node in GetActivityNodes())
+        {
+            if (node.Type != NodeType.CriticalEncounter || node.Metadata is not ActivityNodeMetadata meta)
+            {
+                continue;
+            }
+
+            meta.CombatRadius = 0f;
+            meta.StandRadius = 0f;
+        }
+    }
 
     /// <summary>
     ///     True when every authored FATE/CE for the zone exists in the graph with an inbound teleport.
@@ -207,8 +225,17 @@ public class ZoneGraph
         return true;
     }
 
+    /// <summary>Validation view — every inbound teleport, regardless of unlock state.</summary>
     public Node? GetInboundTeleport(Node goal) =>
         GetInboundTeleports(goal).FirstOrDefault().Teleport;
+
+    /// <summary>Routing view — the best inbound shard the player has unlocked.</summary>
+    public Node? GetUsableInboundTeleport(Node goal) =>
+        GetUsableInboundTeleports(goal).FirstOrDefault().Teleport;
+
+    /// <summary>Routing view — only shards the player has unlocked.</summary>
+    public IReadOnlyList<(Node Teleport, float Cost)> GetUsableInboundTeleports(Node goal) =>
+        GetInboundTeleports(goal).Where(entry => IsTeleportUsable(entry.Teleport)).ToList();
 
     /// <summary>All teleport→activity walk edges, preferred shard first, then by walk cost.</summary>
     public IReadOnlyList<(Node Teleport, float Cost)> GetInboundTeleports(Node goal)
@@ -252,7 +279,25 @@ public class ZoneGraph
 
     public Node? GetBaseCampAetheryteNode() => GetNodesByTypes(NodeType.BaseCampAetheryte).FirstOrDefault();
 
-    public IEnumerable<Node> GetTeleportNodes() => GetNodesByTypes(NodeType.BaseCampAetheryte, NodeType.AethernetShard);
+    public IEnumerable<Node> GetTeleportNodes() =>
+        GetNodesByTypes(NodeType.BaseCampAetheryte, NodeType.AethernetShard);
+
+    /// <summary>
+    ///     Teleports the player can actually use right now.
+    ///     <para>
+    ///     Deliberately separate from <see cref="GetTeleportNodes"/>: that one feeds graph
+    ///     <i>validation</i>, which asks whether the cached file is intact. Hiding locked shards
+    ///     from validation would make a low-unlock character's graph look corrupt and rebuild it on
+    ///     every check. Unlock state belongs to routing, not to the data.
+    ///     </para>
+    ///     Filtered on query rather than at build time for the same reason in reverse — the graph is
+    ///     cached to disk, so baking unlock state in would leave a shard missing after it is earned.
+    /// </summary>
+    public IEnumerable<Node> GetUsableTeleportNodes() => GetTeleportNodes().Where(IsTeleportUsable);
+
+    private static bool IsTeleportUsable(Node node) =>
+        node.Metadata is not TeleportNodeMetadata teleport
+        || OccultCrescentHelper.IsAethernetUnlocked(teleport.AetheryteId);
 
     public IEnumerable<Node> GetActivityNodes() => GetNodesByTypes(NodeType.NormalFate, NodeType.PotFate, NodeType.CriticalEncounter);
 

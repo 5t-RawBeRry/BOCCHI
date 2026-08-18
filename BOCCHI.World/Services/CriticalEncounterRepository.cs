@@ -1,5 +1,6 @@
 ﻿using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Zones;
+using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.Services.Data;
 using BOCCHI.CriticalEncounters.Data;
@@ -14,7 +15,8 @@ public class CriticalEncounterRepository
 (
     IDataRepository<CriticalEncounterId, CriticalEncounter> data,
     ICriticalEncounterFactory factory,
-    IZoneProvider zones
+    IZoneProvider zones,
+    CriticalEncounterGeometry geometry
 ) : ICriticalEncounterRepository, IOnUpdate
 {
     public event Action<CriticalEncounter>? CriticalEncounterAdded;
@@ -114,12 +116,21 @@ public class CriticalEncounterRepository
         RepositorySync.ApplySnapshot(data, current, CriticalEncounterAdded, CriticalEncounterRemoved);
 
         List<CriticalEncounter> tracked = data.GetAll().ToList();
+        IZone zone = zones.GetZone();
         foreach (CriticalEncounter criticalEncounter in tracked)
         {
             if (live.TryGetValue(criticalEncounter.Id.Value, out DynamicEvent ev))
             {
                 criticalEncounter.Update(ev);
             }
+
+            if (!geometry.TryGetCombat(criticalEncounter.Id.Value, out float combat, out ActivityAreaShape shape))
+            {
+                continue;
+            }
+
+            criticalEncounter.ApplyCombatGeometry(combat, shape);
+            zone.ApplyCriticalEncounterCombat(criticalEncounter.Id.Value, combat, shape);
         }
 
         BuildSnapshots(tracked);

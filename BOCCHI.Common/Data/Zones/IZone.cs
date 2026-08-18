@@ -69,8 +69,6 @@ public interface IZone
 
     bool IsInForkedTower();
 
-    float GetCriticalEncounterRadius(int eventId);
-
     bool IsPotFate(int fateId)
     {
         return GetPotFateData().Any(f => f.Id == fateId);
@@ -112,4 +110,7 @@ public interface IZone
 
     /// <summary>Drop the in-memory and on-disk zone path map so the next GetGraph rebuilds or reseeds.</summary>
     void InvalidateGraph(string? reason = null);
+
+    /// <summary>Write live CE registration size onto the loaded path graph (approach / wait).</summary>
+    void ApplyCriticalEncounterCombat(int eventId, float combatRadius, ActivityAreaShape shape);
 }
