@@ -201,7 +201,7 @@ public sealed class PotCycleSyncService
             fetch.SpawnUnix);
     }
 
-    /// <summary>First 8 chars of a key, matching how the upload/rotation lines already print it.</summary>
+    /// <summary>First 8 chars of an instance key, for log lines.</summary>
     private static string Shorten(string? key) =>
         key is { Length: >= 8 } ? key[..8] : key ?? "?";
 

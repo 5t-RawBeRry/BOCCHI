@@ -24,10 +24,11 @@ https://raw.githubusercontent.com/OhKannaDuh/plugins/refs/heads/master/manifest.
 ### Illegal Mode (full autopilot)
 - Pick and travel to FATEs and/or Critical Encounters
 - Prefer / wait for **Magic Pot** FATEs and farm **pot chests** (Magical Elixir + compass hints)
-- Combat: Wrath Combo or Rotation Solver Reborn with BOCCHI AI, or full BossMod / BossMod Reborn autorotation (Illegal Mode → General → Combat). Off while traveling.
+- Combat: Wrath Combo or Rotation Solver Reborn with BOCCHI AI, or full BossMod / BossMod Reborn autorotation (Illegal Mode → General → Combat). Only plugins you have installed are listed. Off while traveling.
 - Auto-mount, Return to camp, repair, Treasure Sight at camp
 - Optional auto treasure hunt between activities
 - Phantom job leveling helper
+- Mount, sprint, and jump-when-stuck on the **Movement** page (also used by Treasure Hunt, Carrot Hunt, and Mob Farmer)
 
 ### Pots & Treasure
 - Dedicated loop: pot windows ↔ treasure hunting without full Illegal Mode
@@ -39,7 +40,8 @@ https://raw.githubusercontent.com/OhKannaDuh/plugins/refs/heads/master/manifest.
 - **Carrot Hunt:** authored map tour with nearest-next routing and aethernet hops; Fortune Carrot → bunny gold chest
 
 ### Mob Farmer
-- Pull and clear selected mob packs in a farm area (separate from Illegal Mode)
+- Pull and clear selected packs at named farm spots (optional stack points, pull buffs, tank gap-closers)
+- Can pause for Magic Pots, a timed Treasure Hunt, or knowledge-crystal buffs that are about to expire
 
 ### Buffs
 - Apply knowledge-crystal style buffs (Apply / Stop from the main window)
@@ -86,6 +88,7 @@ Prefix: `/bocchi` (aliases: `/och`, `/occultcrescenthelper`)
 | `/bocchi buff` | Start/stop a buff run |
 | `/bocchi tp [fate\|ce\|pot]` | Teleport toward nearest matching activity |
 | `/bocchi illegal [on\|off\|toggle]` | Control Illegal Mode (no arg opens the window) |
+| `/bocchi changelog` | Open What’s new |
 | `/bocchi cmd flag-active-ce` | Flag a registering CE |
 | `/bocchi cmd flag-active-fate` | Flag a FATE |
 | `/bocchi reload-translations` | Reload translations (`rt`) |

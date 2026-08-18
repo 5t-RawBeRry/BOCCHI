@@ -220,14 +220,10 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
     }
 
     /// <summary>
-    ///     UI ranges are not enforced on load — early/partial JSON can leave delays that look like stuck pathing.
-    /// </summary>
-    /// <summary>
-    ///     Drop a combat backend whose plugin has been uninstalled. Deliberately keyed on
+    ///     Drop a combat backend whose plugin has been uninstalled. Keyed on
     ///     <see cref="IDalamudPluginInterface.InstalledPlugins"/> rather than "is it loaded": load
-    ///     order is not guaranteed, so a plugin that simply has not initialised yet would otherwise
-    ///     look absent and we would silently reset a perfectly good setting. Not installed at all is
-    ///     unambiguous.
+    ///     order is not guaranteed, so a plugin that has not initialised yet would look absent and
+    ///     silently reset a valid setting.
     /// </summary>
     private static void SanitizeCombatAutorotation(
         AutomatorConfig automator,
@@ -255,6 +251,9 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         automator.CombatAutorotation = CombatAutorotation.None;
     }
 
+    /// <summary>
+    ///     UI ranges are not enforced on load — early/partial JSON can leave delays that look like stuck pathing.
+    /// </summary>
     private static void SanitizeAutomatorConfig(AutomatorConfig automator)
     {
         automator.MaxRemoteIdleTimeSeconds = Math.Clamp(automator.MaxRemoteIdleTimeSeconds, 2, 60);

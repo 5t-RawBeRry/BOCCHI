@@ -194,10 +194,7 @@ public class FarmingPotChestsHandler
 
         activeChain = null;
 
-        // Combat is the one window where nothing of ours drives movement, so hand it to the AI:
-        // it fights and dodges, and the pot trailing us comes along out of the AoE. Previously the
-        // farm disabled rotation and AI outright and then stood still through the whole fight —
-        // no attacking, no dodging, and a destroyed pot loses the run (#188).
+        // Combat is the one window where we do not drive movement — AI fights and dodges (#188).
         if (conditions[ConditionFlag.InCombat])
         {
             pathfinder.Stop();
