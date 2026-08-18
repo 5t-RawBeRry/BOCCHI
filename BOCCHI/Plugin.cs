@@ -258,6 +258,7 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         automator.MaxBaseTeleportDelaySeconds = Math.Clamp(automator.MaxBaseTeleportDelaySeconds, 0, 60);
         automator.TreasureSightRecastIntervalSeconds =
             Math.Clamp(automator.TreasureSightRecastIntervalSeconds, 60, 600);
+        automator.LeaveFateTravelForCeSeconds = Math.Clamp(automator.LeaveFateTravelForCeSeconds, 0, 180);
         automator.AutoRepairThreshold = Math.Clamp(automator.AutoRepairThreshold, 1, 99);
     }
 

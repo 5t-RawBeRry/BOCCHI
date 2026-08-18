@@ -18,7 +18,7 @@
     },
     "prefer_pot_fates": {
       "label": "マジックポットFATEを優先",
-      "tooltip": "マジックポットFATEを必ず行い、先に選びます。FATE タブでは「必須」と表示され、これをオフにするまで外せません。"
+      "tooltip": "マジックポットFATEを必ず行います。オン：ポット → CE → 他の FATE。オフ：CE → ポット → 他の FATE。FATE タブでは「必須」と表示され、これをオフにするまで外せません。"
     },
     "should_farm_pot_chests": {
       "label": "マジックポットFATE後に宝箱を回収",
@@ -31,6 +31,10 @@
     "should_do_critical_encounters": {
       "label": "クリティカルエンカウントをやる",
       "tooltip": "CE へ向かい、完了します。"
+    },
+    "leave_fate_travel_for_ce_seconds": {
+      "label": "FATE 移動中に CE へ切り替える残り秒",
+      "tooltip": "FATE へ歩いている最中は、CE の参加受付がこの秒数以下になったときだけ切り替えます。0 は CE が出たらすぐ切り替え（以前の動作）。FATE に入ったあと、またはすでに戦闘中なら最後までやります。"
     },
     "combat_autorotation": {
       "label": "戦闘オートローテーション",

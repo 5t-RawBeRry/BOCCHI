@@ -15,6 +15,8 @@ public class StartableCriticalEncounterFinder
     CriticalEncountersConfig criticalEncountersConfig,
     ICriticalEncounterRepository criticalEncounterRepository,
     IPotCycleTracker potCycle,
+    IFateRepository fateRepository,
+    IZoneProvider zones,
     IFieldNoteTracker fieldNotes
 ) : IStartableCriticalEncounterFinder
 {
@@ -34,15 +36,17 @@ public class StartableCriticalEncounterFinder
             automatorConfig.ShouldFarmPotChests,
             automatorConfig.ShouldPrepositionToPots);
 
-        // A pot that is actually up outranks a CE. The window check below only looks at the *next*
-        // predicted pot, which rolls a full cycle forward the moment one spawns — so it never covers
-        // the live pot, and Choosing would send us to a warming-up CE mid-pot.
-        if (cycle.CurrentActivePotFateId != 0
-            && automatorConfig.ShouldDoFates
-            && fatesConfig.IsFateEnabledForIllegalMode(
-                (uint)cycle.CurrentActivePotFateId,
-                isPotFate: true,
-                automatorConfig.PreferPotFates))
+        // Prefer pot FATEs: a live pot we would actually start outranks a CE.
+        // Skip / allowlist / Do FATEs / completionist still apply — a skipped pot must not block CEs.
+        if (automatorConfig.PreferPotFates
+            && LivePotPriority.FindStartable(
+                fateRepository,
+                zones,
+                automatorConfig,
+                fatesConfig,
+                potsConfig,
+                automatorContext,
+                fieldNotes) != null)
         {
             return null;
         }

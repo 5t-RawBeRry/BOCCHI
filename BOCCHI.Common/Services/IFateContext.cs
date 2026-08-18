@@ -9,5 +9,11 @@ public interface IFateContext
 
     FateId? GetFateId();
 
+    /// <summary>
+    ///     True if you are targeting a hostile of this FATE, or one of them is targeting you.
+    ///     Works before CurrentFate is set (rim pull).
+    /// </summary>
+    bool IsInCombatWith(FateId id);
+
     IEnumerable<IBattleNpc> GetTargets();
 }

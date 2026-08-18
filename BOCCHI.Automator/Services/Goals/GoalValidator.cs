@@ -7,6 +7,8 @@ using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
+using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Plugin.Services;
 using Ocelot.Services.Logger;
 
 namespace BOCCHI.Automator.Services.Goals;
@@ -27,6 +29,7 @@ public class GoalValidator
     IAutomatorMemory memory,
     IFieldNoteTracker fieldNotes,
     IStartableCriticalEncounterFinder startableCriticalEncounters,
+    ICondition conditions,
     ILogger<GoalValidator> logger
 ) : IGoalValidator
 {
@@ -62,6 +65,15 @@ public class GoalValidator
 
         if (ce.IsPreparing())
         {
+            // Prefer pot FATEs: drop a CE you are still walking to when a live pot is up.
+            if (!IsCommittedToCriticalEncounter(id) && HasLivePreferredPot())
+            {
+                logger.Info(
+                    "Invalidating CE {CeId} (still pathing) — Prefer pot FATEs, live pot up",
+                    id.Value);
+                return false;
+            }
+
             return PassesCompletionistCriticalEncounter(id.Value);
         }
 
@@ -118,6 +130,19 @@ public class GoalValidator
 
         if (isPot && IsValidPotPreposition(id))
         {
+            // Preposition is not a live pot — CEs still win (LeaveFateTravelForCeSeconds).
+            if (!potsOnly
+                && startableCriticalEncounters.FindStartable() is { } prepositionCe
+                && ShouldLeaveFateTravelForCe(prepositionCe))
+            {
+                logger.Info(
+                    "Invalidating pot preposition {FateId} — startable CE {CeId} ({CeName})",
+                    id.Value,
+                    prepositionCe.Id.Value,
+                    prepositionCe.Name);
+                return false;
+            }
+
             return PassesCompletionistFate(id.Value, potsOnly);
         }
 
@@ -152,34 +177,59 @@ public class GoalValidator
             }
         }
 
-        // Live pot — stay until despawn (chest farm starts then). Keep pot goals over CEs.
+        // Live pot with Prefer (or pots-only): stay until despawn. Without Prefer, pots are
+        // regular FATEs — a CE can take them while still traveling (#187).
         if (isPot)
         {
-            return true;
+            if (potsOnly || automatorConfig.PreferPotFates)
+            {
+                return true;
+            }
+
+            if (!IsEngagedWithFate(id)
+                && startableCriticalEncounters.FindStartable() is { } potCe
+                && ShouldLeaveFateTravelForCe(potCe))
+            {
+                logger.Info(
+                    "Invalidating pot FATE {FateId} (still pathing) — startable CE {CeId} ({CeName}) with Prefer pot FATEs off",
+                    id.Value,
+                    potCe.Id.Value,
+                    potCe.Name);
+                return false;
+            }
+
+            return PassesCompletionistFate(id.Value, potsOnly);
         }
 
-        // Prefer / farm pots: leave a non-pot FATE (while still traveling) when a pot is up.
+        // Live pot beats a non-pot FATE. If a CE is taking us now, CE wins instead.
         if (!potsOnly
-            && fateContext.GetFateId() != id
-            && TryFindLivePreferredPot(out Fate livePot))
+            && !IsEngagedWithFate(id)
+            && TryFindLiveAllowedPot(out Fate livePot)
+            && !IsLeavingForStartableCe())
         {
             logger.Info(
-                "Invalidating FATE {FateId} (still pathing) — live pot {PotId} with Prefer/Farm pots",
+                "Invalidating FATE {FateId} (still pathing) — live pot {PotId}",
                 id.Value,
                 livePot.Id.Value);
             return false;
         }
 
-        // Yield to a CE only while still traveling; finish the FATE once registered in it.
+        // Yield to a CE only while still traveling, and only when registration is almost up
+        // (or the timer is unknown). Stay if registered or already fighting this FATE (#187).
         if (!potsOnly
-            && fateContext.GetFateId() != id
-            && startableCriticalEncounters.FindStartable() is { } ce)
+            && !IsEngagedWithFate(id)
+            && startableCriticalEncounters.FindStartable() is { } ce
+            && ShouldLeaveFateTravelForCe(ce))
         {
             logger.Info(
-                "Invalidating FATE {FateId} (still pathing) — startable CE {CeId} ({CeName})",
+                "Invalidating FATE {FateId} (still pathing) — startable CE {CeId} ({CeName}) with {Remaining}s left (threshold {Threshold}s)",
                 id.Value,
                 ce.Id.Value,
-                ce.Name);
+                ce.Name,
+                ce.GetTimeUntilStart() is { } remaining
+                    ? Math.Max(0, (int)remaining.TotalSeconds)
+                    : -1,
+                automatorConfig.LeaveFateTravelForCeSeconds);
             return false;
         }
 
@@ -205,6 +255,58 @@ public class GoalValidator
             "FATE");
         return decision.AllowStart;
     }
+
+    /// <summary>
+    ///     0 = always leave FATE travel for a startable CE. Otherwise only when registration has
+    ///     this many seconds (or fewer) left, or the timer cannot be read.
+    /// </summary>
+    private bool ShouldLeaveFateTravelForCe(CriticalEncounter ce)
+    {
+        int threshold = automatorConfig.LeaveFateTravelForCeSeconds;
+        if (threshold <= 0)
+        {
+            return true;
+        }
+
+        if (ce.GetTimeUntilStart() is not { } remaining)
+        {
+            return true;
+        }
+
+        return remaining <= TimeSpan.FromSeconds(threshold);
+    }
+
+    private bool IsLeavingForStartableCe() =>
+        startableCriticalEncounters.FindStartable() is { } ce
+        && ShouldLeaveFateTravelForCe(ce);
+
+    /// <summary>
+    ///     Registered in the FATE, or already fighting its mobs (rim pull before CurrentFate).
+    ///     Do not abort for a CE / pot in those cases.
+    /// </summary>
+    private bool IsEngagedWithFate(FateId id) =>
+        fateContext.GetFateId() == id
+        || (conditions[ConditionFlag.InCombat] && fateContext.IsInCombatWith(id));
+
+    private bool IsCommittedToCriticalEncounter(CriticalEncounterId id)
+    {
+        if (criticalEncounterContext.GetCriticalEncounterId() == id)
+        {
+            return true;
+        }
+
+        if (memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory wait)
+            && wait.IsFor(id))
+        {
+            return true;
+        }
+
+        return memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _);
+    }
+
+    private bool HasLivePreferredPot() =>
+        automatorConfig.PreferPotFates
+        && TryFindLiveAllowedPot(out Fate _);
 
     private bool PassesCompletionistFate(uint fateId, bool potsOnly) =>
         potsOnly
@@ -268,27 +370,19 @@ public class GoalValidator
         potsConfig.PotSpawnLeadMinutes
     );
 
-    private bool TryFindLivePreferredPot(out Fate pot)
+    private bool TryFindLiveAllowedPot(out Fate pot)
     {
-        pot = null!;
-        if (!automatorConfig.ShouldDoFates
-            || (!automatorConfig.PreferPotFates && !automatorConfig.ShouldFarmPotChests))
-        {
-            return false;
-        }
-
-        IZone zone = zones.GetZone();
-        Fate? live = fateRepository.Snapshot()
-            .Where(f => zone.IsPotFate(f.Id.Value))
-            .Where(f => !fatesConfig.ShouldSkipByProgress(f.Progress)
-                        && !potsConfig.ShouldSkipLivePot(f.TimeRemainingSeconds))
-            .FirstOrDefault(f => fatesConfig.IsFateEnabledForIllegalMode(
-                f.Id.Value,
-                isPotFate: true,
-                automatorConfig.PreferPotFates));
-
+        Fate? live = LivePotPriority.FindStartable(
+            fateRepository,
+            zones,
+            automatorConfig,
+            fatesConfig,
+            potsConfig,
+            automatorContext,
+            fieldNotes);
         if (live == null)
         {
+            pot = null!;
             return false;
         }
 

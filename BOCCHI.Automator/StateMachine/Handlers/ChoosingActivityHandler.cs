@@ -125,8 +125,10 @@ public class ChoosingActivityHandler
             return null;
         }
 
-        Fate? best = null;
-        float bestScore = float.MinValue;
+        Fate? bestPot = null;
+        Fate? bestOther = null;
+        float bestPotScore = float.MinValue;
+        float bestOtherScore = float.MinValue;
         DateTimeOffset now = DateTimeOffset.UtcNow;
         PotCycleSnapshot cycle = potCycle.Snapshot;
         bool potFarming = PotsOnly
@@ -141,27 +143,36 @@ public class ChoosingActivityHandler
         foreach (Fate fate in snapshot)
         {
             bool isPot = zone.IsPotFate(fate.Id.Value);
-            if (PotsOnly)
+            if (isPot)
             {
-                if (!isPot)
+                if (!LivePotPriority.IsStartable(
+                        fate,
+                        zone,
+                        automatorConfig,
+                        fatesConfig,
+                        potsConfig,
+                        automatorContext,
+                        fieldNotes))
                 {
                     continue;
                 }
             }
+            else if (PotsOnly)
+            {
+                continue;
+            }
             else if (!fatesConfig.IsFateEnabledForIllegalMode(
                          fate.Id.Value,
-                         isPot,
+                         isPotFate: false,
                          automatorConfig.PreferPotFates))
             {
                 continue;
             }
-
-            if (CompletionistBlocksFate(fate.Id.Value))
+            else if (CompletionistBlocksFate(fate.Id.Value))
             {
                 continue;
             }
-
-            if (!isPot)
+            else
             {
                 (TimeSpan cutoff, int lead) = GetIllegalPotWindow();
                 PotFallbackStartDecision decision = PotFallbackWindow.Evaluate(
@@ -181,16 +192,28 @@ public class ChoosingActivityHandler
             float scoreValue = PotsOnly && isPot
                 ? Math.Max(1f, fateScorer.Score(fate).Value)
                 : fateScorer.Score(fate).Value;
-            if (scoreValue <= 0f || scoreValue <= bestScore)
+            if (scoreValue <= 0f)
             {
                 continue;
             }
 
-            bestScore = scoreValue;
-            best = fate;
+            if (isPot)
+            {
+                if (scoreValue > bestPotScore)
+                {
+                    bestPotScore = scoreValue;
+                    bestPot = fate;
+                }
+            }
+            else if (scoreValue > bestOtherScore)
+            {
+                bestOtherScore = scoreValue;
+                bestOther = fate;
+            }
         }
 
-        return best;
+        // Live pots always beat other FATEs. CE vs pot is decided in Handle / FindStartable.
+        return bestPot ?? bestOther;
     }
 
     private bool TryChoosePotPreposition()

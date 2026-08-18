@@ -24,9 +24,17 @@ public class AutomatorConfig : IAutoConfig
     public bool ShouldDoCriticalEncounters { get; set; } = true;
 
     /// <summary>
+    ///     While still walking to a FATE, only switch to a CE when registration has this many
+    ///     seconds or fewer left. 0 = switch as soon as a CE is up (old behaviour). Once you are
+    ///     in the FATE, it still finishes first (#187).
+    /// </summary>
+    [IntRange(0, 180, Order = 5, Section = "activities")]
+    public int LeaveFateTravelForCeSeconds { get; set; } = 90;
+
+    /// <summary>
     ///     Illegal Mode combat automation: Wrath/RSR + BOCCHI AI, or full BossMod / BMR autorotation.
     /// </summary>
-    [EnumSelect<CombatAutorotation, CombatAutorotationDisplay, CombatAutorotationFilter>(Order = 5, Section = "combat")]
+    [EnumSelect<CombatAutorotation, CombatAutorotationDisplay, CombatAutorotationFilter>(Order = 6, Section = "combat")]
     public CombatAutorotation CombatAutorotation { get; set; } = CombatAutorotation.WrathCombo;
 
 

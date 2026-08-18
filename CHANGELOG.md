@@ -3,6 +3,7 @@
 ### New
 - Mount, sprint, and unstuck options now live on a Movement page. They apply to Illegal Mode, Treasure Hunt, Carrot Hunt, and Mob Farmer — they used to sit under Illegal Mode where they were easy to miss.
 - Jump when stuck: if you stop moving on rocks, ledges, or stairs while pathing, BOCCHI jumps to get free. On by default; timing is on the Movement page. (#185)
+- While walking to a FATE, Illegal Mode only switches to a CE when registration is almost up (default 90 seconds left). 0 keeps the old “always go to the CE” behaviour. If you are already in the FATE or fighting it, it still finishes first. Priority is CE → pot → FATE, or pot → CE → FATE when Prefer pot FATEs is on — still following Do FATEs/CEs, allowlists, skip-by-progress, pot skip, and pot timing. (#187)
 - Illegal Mode → Combat only lists autorotation plugins you have installed.
 
 ### Fixes

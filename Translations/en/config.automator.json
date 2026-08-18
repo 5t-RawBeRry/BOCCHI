@@ -18,7 +18,7 @@
     },
     "prefer_pot_fates": {
       "label": "Prefer pot FATEs",
-      "tooltip": "Always do Magic Pot FATEs, and pick them first. On the FATEs tab they stay checked and say “required” until you turn this off."
+      "tooltip": "Always do Magic Pot FATEs. When on, priority is pot → Critical Encounter → other FATEs. When off, it is Critical Encounter → pot → other FATEs. On the FATEs tab they stay checked and say “required” until you turn this off."
     },
     "should_farm_pot_chests": {
       "label": "Farm pot chests after pot FATEs",
@@ -31,6 +31,10 @@
     "should_do_critical_encounters": {
       "label": "Do Critical Encounters",
       "tooltip": "Go to and complete Critical Encounters."
+    },
+    "leave_fate_travel_for_ce_seconds": {
+      "label": "Leave FATE travel for a CE when (seconds left)",
+      "tooltip": "While walking to a FATE, only switch to a Critical Encounter when its registration has this many seconds or fewer left. 0 = switch as soon as a CE is up. Once you are in the FATE or already fighting it, it still finishes first."
     },
     "combat_autorotation": {
       "label": "Combat autorotation",

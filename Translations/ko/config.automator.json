@@ -18,7 +18,7 @@
     },
     "prefer_pot_fates": {
       "label": "항아리 돌발 우선",
-      "tooltip": "매직 팟 돌발을 반드시 하고 먼저 고릅니다. 돌발 탭에서는 “필수”로 표시되며, 이 옵션을 끄기 전에는 끌 수 없습니다."
+      "tooltip": "매직 팟 돌발을 반드시 합니다. 켜면 우선순위는 팟 → 비상 조우 → 다른 돌발. 끄면 비상 조우 → 팟 → 다른 돌발. 돌발 탭에서는 “필수”로 표시되며, 이 옵션을 끄기 전에는 끌 수 없습니다."
     },
     "should_farm_pot_chests": {
       "label": "항아리 돌발 후 항아리 상자 수집",
@@ -31,6 +31,10 @@
     "should_do_critical_encounters": {
       "label": "비상 조우 수행",
       "tooltip": "비상 조우로 가서 완료합니다."
+    },
+    "leave_fate_travel_for_ce_seconds": {
+      "label": "FATE 이동 중 CE로 바꿀 남은 초",
+      "tooltip": "FATE로 가는 중에는 비상 조우 등록이 이 초 이하로 남았을 때만 바꿉니다. 0이면 CE가 뜨는 즉시 바꿉니다(이전 동작). FATE에 들어갔거나 이미 싸우고 있으면 끝까지 합니다."
     },
     "combat_autorotation": {
       "label": "전투 자동 로테이션",
