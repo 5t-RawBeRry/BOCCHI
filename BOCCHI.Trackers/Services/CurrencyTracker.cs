@@ -1,4 +1,3 @@
-using BOCCHI.Common.Config;
 using BOCCHI.Common.Data;
 using BOCCHI.Common.Services;
 using Ocelot.Lifecycle;
@@ -16,7 +15,7 @@ public interface ICurrencyTracker
     float[] GetSilverHistory(TimeSpan sampleDuration);
 }
 
-public class CurrencyTracker(UIConfig config) : ICurrencyTracker, IOnUpdate, IOnTerritoryChanged
+public class CurrencyTracker : ICurrencyTracker, IOnUpdate, IOnTerritoryChanged
 {
     private readonly DeltaRateTracker goldTracker = new(() => DeltaRateTracker.DefaultWindow);
 
@@ -69,10 +68,7 @@ public class CurrencyTracker(UIConfig config) : ICurrencyTracker, IOnUpdate, IOn
         int gold = GetCurrentGold();
         int silver = GetCurrentSilver();
 
-        // Re-anchoring costs us whatever arrived during the gap, so only do it for a gap long
-        // enough to have hidden a real jump. A momentary read of "state unavailable" used to be
-        // enough, which silently swallowed gains — the experience tracker has no such branch, it
-        // simply resumes recording, which is why it ticks on every kill and this did not.
+        // Re-anchor after a real session gap; ignore short "state unavailable" blips.
         bool longGap = lastAvailableUtc == DateTime.MinValue
                        || DateTime.UtcNow - lastAvailableUtc > MaxIgnorableGap;
         lastAvailableUtc = DateTime.UtcNow;

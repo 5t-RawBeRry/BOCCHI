@@ -1,14 +1,14 @@
 # 4.0.2.29
 
 ### New
-- Mount, sprint, and unstuck options now live on a Movement page. They apply to Illegal Mode, Treasure Hunt, Carrot Hunt, and Mob Farmer — they used to sit under Illegal Mode where they were easy to miss.
+- Mount, sprint, and unstuck options now live on a Movement page. They apply to Illegal Mode, Treasure Hunt, Carrot Hunt, and Mob Farmer.
 - Jump when stuck: if you stop moving on rocks, ledges, or stairs while pathing, BOCCHI jumps to get free. On by default; timing is on the Movement page. (#185)
-- While walking to a FATE, Illegal Mode only switches to a CE when registration is almost up (default 90 seconds left). 0 keeps the old “always go to the CE” behaviour. If you are already in the FATE or fighting it, it still finishes first. Priority is CE → pot → FATE, or pot → CE → FATE when Prefer pot FATEs is on — still following Do FATEs/CEs, allowlists, skip-by-progress, pot skip, and pot timing. (#187)
+- Walking to a FATE no longer instantly switches to a Critical Encounter. It waits until registration is almost up (90 seconds left by default; 0 = old behaviour). If you are already in the FATE or fighting it, it finishes first. Prefer pot FATEs still puts Magic Pots ahead of CEs. (#187)
 - Illegal Mode → Combat only lists autorotation plugins you have installed.
 
 ### Fixes
-- Illegal Mode uses the real Critical Encounter registration size from the zone instead of a flat 20y / 15y, so it no longer pulls you inward while you are already on the blue ring.
-- Illegal Mode, World Path, Treasure Hunt, and Carrot Hunt only aethernet to shards you have unlocked. Locked pads are skipped instead of trying Lifestream there.
-- Treasure Hunt can reach the Wanderer's Haven west-coast coffer again (the jump clears that ledge). Radar no longer peels onto the Unhallowed Hamlet basement coffer and cuts off the stairs — that pad is still visited in route order. (#185)
-- Pot chest farming fights and dodges if something aggroes you, so the magic pot is less likely to die. A second-chance chest now searches the far reroll pads instead of walking the original pot spots again. (#188)
-- Auto treasure hunt after FATEs/CEs is on the Illegal Mode page next to Treasure Sight, not the Treasure Hunter page.
+- Critical Encounter registration uses the real in-game ring size, so it no longer pulls you inward while you are already on the blue ring.
+- Aethernet hops skip shards you have not unlocked yet.
+- Treasure Hunt can reach the Wanderer's Haven west-coast coffer again. Radar no longer peels onto the Unhallowed Hamlet basement coffer, so the stairs stay intact. (#185)
+- Pot chest farming fights and dodges if something aggroes you. After a reroll, the next chest searches the far pads instead of walking the original pot spots again. (#188)
+- Auto treasure hunt after FATEs/CEs is on the Illegal Mode page next to Treasure Sight.

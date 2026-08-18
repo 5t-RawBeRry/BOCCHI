@@ -24,7 +24,6 @@ public class PathStepExecutor
     IGameGui gui,
     IPathfinder pathfinder,
     IVNavmeshIpc vnav,
-    AutomatorConfig config,
     MovementConfig movement
 ) : IPathStepExecutor
 {

@@ -20,8 +20,6 @@ public class CastingTreasureSightHandler
     ISupportJobFactory supportJobs,
     ISupportJobChanger changer,
     IAutomatorMemory memory,
-    AutomatorConfig config,
-    TreasureConfig treasureConfig,
     AutomatorConfig automatorConfig,
     ITreasureTracker tracker
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.CastingTreasureSight)
@@ -62,8 +60,8 @@ public class CastingTreasureSightHandler
 
         // Periodic basecamp Sight only when auto-hunt is off (latch replaces it otherwise).
         if (!automatorConfig.EnableAutomaticTreasureHuntDuringIllegalMode
-            && config.ShouldCastTreasureSight
-            && GetLastCastDeltaSeconds() >= config.TreasureSightRecastIntervalSeconds)
+            && automatorConfig.ShouldCastTreasureSight
+            && GetLastCastDeltaSeconds() >= automatorConfig.TreasureSightRecastIntervalSeconds)
         {
             return StatePriority.Always;
         }

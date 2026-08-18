@@ -16,7 +16,6 @@ using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.LayoutEngine;
-using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.Interop;
 using FFXIVClientStructs.STD;
@@ -41,7 +40,6 @@ namespace BOCCHI.Treasure.Services;
 public class TreasureHunterService
 (
     TreasureConfig config,
-    AutomatorConfig automatorConfig,
     MovementConfig movementConfig,
     IZoneProvider zones,
     IVNavmeshIpc vnav,
@@ -1615,27 +1613,6 @@ public class TreasureHunterService
                 vnav));
 
         return false;
-    }
-
-    private unsafe void TryConfirmReturnDialog()
-    {
-        // Death prompts also use SelectYesno — don't force-respawn while unconscious.
-        if (conditions[ConditionFlag.Unconscious])
-        {
-            return;
-        }
-
-        if (!EzThrottler.Throttle("TreasureHunt::SelectYesno", 250))
-        {
-            return;
-        }
-
-        if (!AddonHelpers.TryGetSelectYesno(out AddonSelectYesno* yesno))
-        {
-            return;
-        }
-
-        ReturnYesNo.TryAccept(&yesno->AtkUnitBase);
     }
 
     private bool HandleWalkToAethernet(HuntPathfinderStep step)

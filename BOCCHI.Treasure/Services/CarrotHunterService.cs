@@ -37,7 +37,6 @@ public sealed class CarrotHunterService
     FortuneCarrotAssist fortuneCarrot,
     TreasureConfig treasureConfig,
     UIConfig uiConfig,
-    AutomatorConfig automatorConfig,
     MovementConfig movementConfig,
     IPlayer player,
     ICondition conditions,

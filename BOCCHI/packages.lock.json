@@ -191,8 +191,8 @@
       },
       "WrathCombo.API": {
         "type": "Transitive",
-        "resolved": "0.5.6",
-        "contentHash": "wSVdsjRG4BeaZkRGpG3SuTTKMjUrVi+k/YpUEnqH+DnXb6XLXlRFc4P2bExVad0Wv+hOpI/VFZ5QBEJ5yzjMEg=="
+        "resolved": "0.5.7",
+        "contentHash": "A7KURat4s3efIj+KO5LTy6Vky1Y0Hsnqt4XWBL6xYsLlYSxlqhBCS3Y/LrEkohDuGletwRjfkx8IiLTiVnEmxw=="
       },
       "bocchi.automator": {
         "type": "Project",
@@ -323,7 +323,7 @@
         "type": "Project",
         "dependencies": {
           "FFXIVOcelot": "[1.0.0, )",
-          "WrathCombo.API": "[0.5.6, )"
+          "WrathCombo.API": "[0.5.7, )"
         }
       },
       "FFXIVOcelot.UI": {

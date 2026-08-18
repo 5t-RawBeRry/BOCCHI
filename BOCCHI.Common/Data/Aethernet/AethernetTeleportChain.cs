@@ -18,7 +18,6 @@ public class AethernetTeleportChain
     IObjectTable objects,
     IPathfinder pathfinder,
     IVNavmeshIpc vnav,
-    AutomatorConfig config,
     MovementConfig movementConfig,
     ILogger<AethernetTeleportChain> logger
 ) : ChainRecipe<uint>(chains)

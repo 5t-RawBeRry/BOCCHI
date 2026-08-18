@@ -33,7 +33,6 @@ public class ActivityNavigation
     IGameGui gui,
     IPlayer player,
     IFramework framework,
-    AutomatorConfig automatorConfig,
     MovementConfig movementConfig,
     CriticalEncounterGeometry geometry,
     ILogger<ActivityNavigation> logger
@@ -100,21 +99,10 @@ public class ActivityNavigation
     private const float SurveySnapExtentY = 200f;
 
     /// <summary>
-    ///     Authored survey coords carry XZ only (Y is 0), so the altitude has to be recovered.
-    ///     <para>
-    ///     This used to query <c>PointOnFloor</c> from Y=1024. That call searches beneath the point
-    ///     but takes no vertical extent, so from a kilometre up it never reached the ground and
-    ///     returned its own input — which failed the "did it move?" test and dropped every survey
-    ///     onto the fallback altitude below. The fallback was the nearest aetheryte's Y, which has
-    ///     nothing to do with the destination, so the flag landed correctly while the path did not.
-    ///     </para>
-    ///     <c>NearestPoint</c> takes an explicit vertical half-extent, which is the right tool when
-    ///     only Y is unknown.
+    ///     Authored survey coords are XZ only (Y is 0). Snap onto the mesh from our altitude.
     /// </summary>
     private Vector3 SeedDestinationAltitude(Vector3 destination)
     {
-        // Start from our own altitude: same zone, definitively on walkable ground, and far closer
-        // to any survey point than 1024 is.
         Vector3 seed = new(destination.X, player.Position.Y, destination.Z);
 
         Vector3 onMesh = vnav.FindPointOnMesh(seed, SurveySnapExtentXZ, SurveySnapExtentY);

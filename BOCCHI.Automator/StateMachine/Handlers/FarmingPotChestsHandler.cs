@@ -42,7 +42,6 @@ public class FarmingPotChestsHandler
     PotTreasureHintTracker hints,
     MagicalElixirAssist elixir,
     AutoRotationController autoRotation,
-    AutomatorConfig config,
     MovementConfig movement,
     PotsConfig potsConfig,
     IAutomatorContext context,

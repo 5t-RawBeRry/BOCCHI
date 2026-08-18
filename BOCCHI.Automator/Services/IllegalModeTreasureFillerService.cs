@@ -20,7 +20,6 @@ public class IllegalModeTreasureFillerService
     ITreasureTracker tracker,
     ISupportJobFactory supportJobs,
     IZoneProvider zones,
-    TreasureConfig treasureConfig,
     AutomatorConfig automatorConfig,
     ILogger<IllegalModeTreasureFillerService> logger
 ) : IOnUpdate

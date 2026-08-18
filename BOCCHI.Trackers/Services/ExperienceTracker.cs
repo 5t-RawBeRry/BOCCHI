@@ -1,5 +1,4 @@
-﻿using BOCCHI.Common.Config;
-using BOCCHI.Common.Data;
+﻿using BOCCHI.Common.Data;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Services;
 using Ocelot.Lifecycle;
@@ -13,11 +12,7 @@ public interface IExperienceTracker
     float[] GetExperienceHistory(TimeSpan sampleDuration);
 }
 
-public class ExperienceTracker
-(
-    UIConfig config,
-    ISupportJobFactory supportJobs
-) : IExperienceTracker, IOnUpdate
+public class ExperienceTracker(ISupportJobFactory supportJobs) : IExperienceTracker, IOnUpdate
 {
     private readonly DeltaRateTracker tracker = new(() => DeltaRateTracker.DefaultWindow);
 

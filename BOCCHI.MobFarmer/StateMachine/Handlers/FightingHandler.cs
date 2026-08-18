@@ -17,7 +17,6 @@ namespace BOCCHI.MobFarmer.StateMachine.Handlers;
 public class FightingHandler
 (
     MobFarmerConfig config,
-    AutomatorConfig automatorConfig,
     MovementConfig movementConfig,
     IMobFarmer farmer,
     IMobScanner scanner,

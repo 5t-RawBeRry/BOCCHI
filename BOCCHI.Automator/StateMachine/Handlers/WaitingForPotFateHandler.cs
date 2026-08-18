@@ -29,7 +29,6 @@ public class WaitingForPotFateHandler
     IChainManager manager,
     IFateRepository fates,
     IZoneProvider zones,
-    AutomatorConfig config,
     MovementConfig movement,
     AutoRotationController autoRotation
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.WaitingForPotFate)
