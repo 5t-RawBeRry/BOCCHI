@@ -26,7 +26,6 @@ public class InCriticalEncounterHandler
     AutoRotationController autoRotation,
     IPlayer playerState,
     AutomatorConfig config,
-    ITargetManager targetManager,
     ILogger<InCriticalEncounterHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InCriticalEncounter)
 {
@@ -82,8 +81,7 @@ public class InCriticalEncounterHandler
             pathfinder,
             "InCriticalEncounter",
             shouldApproachTarget: false,
-            deferCombatToBossModAi: config.CombatAutorotation.UsesCombatAutomation(),
-            targetManager: targetManager);
+            deferCombatToBossModAi: config.CombatAutorotation.UsesCombatAutomation());
     }
 
     private bool TryGetCommittedBattleEncounter(out CriticalEncounter ce)
