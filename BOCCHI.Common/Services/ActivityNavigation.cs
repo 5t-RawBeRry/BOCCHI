@@ -590,7 +590,7 @@ public class ActivityNavigation
         Vector3 destination,
         bool treatAsActivity)
     {
-        List<AethernetData> aetherytes = zones.GetZone().GetAetherytes();
+        List<AethernetData> aetherytes = zones.GetZone().EnumerateUsableAetherytes().ToList();
         if (aetherytes.Count == 0)
         {
             return (null, float.PositiveInfinity);

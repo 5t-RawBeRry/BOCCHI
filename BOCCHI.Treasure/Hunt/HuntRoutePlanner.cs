@@ -1,4 +1,5 @@
 using BOCCHI.Common.Data.Zones;
+using BOCCHI.Common.Services;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using System.Numerics;
@@ -557,6 +558,11 @@ public abstract class HuntRoutePlanner
             case "return":
                 return BuildEntryLeg(toId);
             case "teleport" when TryParseAethernet(transition?.To, out HuntAethernet shard):
+                if (!IsUsableHuntDestination(shard))
+                {
+                    return GetBestSteps(fromId, toId).Steps;
+                }
+
                 return
                 [
                     HuntPathfinderStep.ReturnToBaseCamp(),
@@ -592,7 +598,7 @@ public abstract class HuntRoutePlanner
         HuntAethernet? bestShard = null;
         foreach ((HuntAethernet aethernet, List<HuntToNode> list) in data.AethernetToNodeDistances)
         {
-            if (aethernet == baseCamp)
+            if (aethernet == baseCamp || !IsUsableHuntDestination(aethernet))
             {
                 continue;
             }
@@ -641,6 +647,11 @@ public abstract class HuntRoutePlanner
         return Enum.TryParse(name.Trim(), ignoreCase: true, out aethernet);
     }
 
+    /// <summary>Lifestream destinations only — walking to a locked shard to open the menu is still fine.</summary>
+    private bool IsUsableHuntDestination(HuntAethernet aethernet) =>
+        aethernet == BaseCampAethernet
+        || OccultCrescentHelper.IsAethernetUnlocked((uint)aethernet);
+
     /// <summary>Cheapest of walk, aethernet hop, or Return (+ optional aethernet from camp).</summary>
     protected (float Cost, List<HuntPathfinderStep> Steps) GetBestSteps(uint fromId, uint toId)
     {
@@ -662,6 +673,11 @@ public abstract class HuntRoutePlanner
             HuntToAethernet fromShard = shardList.OrderBy(x => x.Distance).First();
             foreach ((HuntAethernet aethernet, List<HuntToNode> list) in data.AethernetToNodeDistances)
             {
+                if (!IsUsableHuntDestination(aethernet))
+                {
+                    continue;
+                }
+
                 HuntToNode to = list.FirstOrDefault(x => x.Id == toId);
                 if (to.Id != toId)
                 {
@@ -704,7 +720,7 @@ public abstract class HuntRoutePlanner
         // Return lands at base camp — optional aethernet hop from there to a closer shard.
         foreach ((HuntAethernet aethernet, List<HuntToNode> list) in data.AethernetToNodeDistances)
         {
-            if (aethernet == baseCamp)
+            if (aethernet == baseCamp || !IsUsableHuntDestination(aethernet))
             {
                 continue;
             }

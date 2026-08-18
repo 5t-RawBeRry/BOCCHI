@@ -131,6 +131,11 @@ public static class AethernetTeleport
                     return StepResult.Success();
                 }
 
+                if (!zone.IsUsableAethernetDestination(placeNameId))
+                {
+                    return StepResult.Failure($"Aethernet {placeNameId} is locked.");
+                }
+
                 if (!lifestream.AethernetTeleportByPlaceNameId(placeNameId))
                 {
                     lifestream.Abort();

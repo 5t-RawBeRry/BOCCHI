@@ -1686,6 +1686,12 @@ public class TreasureHunterService
         }
 
         uint placeNameId = (uint)step.Aethernet;
+        if (!zones.GetZone().IsUsableAethernetDestination(placeNameId))
+        {
+            log.Warning("Treasure hunt: skipping locked aethernet {Id}", placeNameId);
+            return true;
+        }
+
         activeChain = chainManager.Manage(
             chains.Create($"TreasureHunt::Teleport({placeNameId})")
                 .Then<AethernetTeleportChain, uint>(placeNameId)

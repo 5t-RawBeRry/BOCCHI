@@ -1,6 +1,7 @@
 using BOCCHI.Common.Data.Paths;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph;
+using BOCCHI.Common.Services;
 using Ocelot.Extensions;
 using System.Numerics;
 
@@ -78,6 +79,29 @@ public static class AethernetNavigation
     }
 
     public static IEnumerable<AethernetData> EnumerateAetherytes(this IZone zone) => zone.GetAetherytes();
+
+    /// <summary>
+    ///     Shards Lifestream can actually land on. Base camp is always included; other pads follow
+    ///     <see cref="OccultCrescentHelper.IsAethernetUnlocked"/>.
+    /// </summary>
+    public static IEnumerable<AethernetData> EnumerateUsableAetherytes(this IZone zone) =>
+        zone.GetAetherytes().Where(aetheryte => zone.IsUsableAethernetDestination(aetheryte.Id));
+
+    /// <summary>True when Lifestream can teleport <i>to</i> this PlaceName (camp is always yes).</summary>
+    public static bool IsUsableAethernetDestination(this IZone zone, uint placeNameId)
+    {
+        if (placeNameId == 0)
+        {
+            return false;
+        }
+
+        if (placeNameId == zone.GetMainAetheryte().Id)
+        {
+            return true;
+        }
+
+        return OccultCrescentHelper.IsAethernetUnlocked(placeNameId);
+    }
 
     /// <summary>True when inside the magenta Lifestream ring (ready to teleport).</summary>
     public static bool IsWithinLifestreamRange(this IZone zone, Vector3 position)

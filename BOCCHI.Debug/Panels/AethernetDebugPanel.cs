@@ -154,10 +154,11 @@ public sealed class AethernetDebugPanel
         ui.Text("Zone authored (in code — /xlreload after edits)", branding.DalamudYellow);
         foreach(AethernetData authored in zones.GetZone().GetAetherytes())
         {
-            string status = authored.BaseId == 0 ? " STUB" : "";
+            string stub = authored.BaseId == 0 ? " STUB" : "";
+            string lockState = zones.GetZone().IsUsableAethernetDestination(authored.Id) ? "unlocked" : "LOCKED";
             ui.LabelledValue(
-                FormatPlaceName(authored.Id) + status,
-                $"Id={authored.Id} BaseId={authored.BaseId} Pos={Fmt(authored.Position)} Dest={Fmt(authored.Destination)} Dead={authored.DeadRadius:0.##}");
+                FormatPlaceName(authored.Id) + stub,
+                $"{lockState}  Id={authored.Id} BaseId={authored.BaseId} Pos={Fmt(authored.Position)} Dest={Fmt(authored.Destination)} Dead={authored.DeadRadius:0.##}");
         }
     }
 

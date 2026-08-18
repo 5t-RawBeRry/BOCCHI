@@ -1113,7 +1113,7 @@ public sealed class CarrotHunterService
                 float toA = from.Distance2D(shardA.Position);
                 foreach (AethernetData shardB in aetherytes)
                 {
-                    if (shardA.Id == shardB.Id)
+                    if (shardA.Id == shardB.Id || !IsUsableCarrotArrival(shardB, main))
                     {
                         continue;
                     }
@@ -1146,7 +1146,7 @@ public sealed class CarrotHunterService
 
         foreach (AethernetData shard in aetherytes)
         {
-            if (shard.Id == main.Id)
+            if (shard.Id == main.Id || !IsUsableCarrotArrival(shard, main))
             {
                 continue;
             }
@@ -1163,6 +1163,10 @@ public sealed class CarrotHunterService
 
         return bestMode;
     }
+
+    /// <summary>Lifestream landing pad — camp is always ok; locked field shards are not.</summary>
+    private static bool IsUsableCarrotArrival(AethernetData shard, AethernetData main) =>
+        shard.Id == main.Id || OccultCrescentHelper.IsAethernetUnlocked(shard.Id);
 
     private void MaybeBindLiveCarrot(CarrotData authored)
     {
