@@ -1,4 +1,5 @@
-﻿using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
+﻿using BOCCHI.Common.Data.OccultCrescent;
+using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
 
@@ -50,38 +51,5 @@ public class SupportJob
         }
     }
 
-    public uint StatusId
-    {
-        get
-        {
-            return Id switch
-            {
-                SupportJobId.PhantomFreelancer => 4263,
-                SupportJobId.PhantomKnight => 4242,
-                SupportJobId.PhantomBerserker => 4358,
-                SupportJobId.PhantomMonk => 4359,
-                SupportJobId.PhantomRanger => 4360,
-                SupportJobId.PhantomSamurai => 4361,
-                SupportJobId.PhantomBard => 4362,
-                SupportJobId.PhantomGeomancer => 4363,
-                SupportJobId.PhantomTime => 4364,
-                SupportJobId.PhantomCannoneer => 4365,
-                SupportJobId.PhantomChemist => 4366,
-                SupportJobId.PhantomOracle => 4367,
-                SupportJobId.PhantomThief => 4368,
-                SupportJobId.PhantomMysticKnight => 4803,
-                SupportJobId.PhantomGladiator => 4804,
-                SupportJobId.PhantomDancer => 4805,
-                SupportJobId.PhantomNinja => 5328,
-                SupportJobId.PhantomWhiteMage => 5329,
-                SupportJobId.PhantomBlackMage => 5330,
-                SupportJobId.PhantomDragoon => 5331,
-                SupportJobId.PhantomSummoner => 5332,
-                SupportJobId.PhantomBlueMage => 5333,
-                SupportJobId.PhantomRedMage => 5334,
-                SupportJobId.PhantomNecromancer => 5335,
-                var _ => throw new ArgumentOutOfRangeException()
-            };
-        }
-    }
+    public uint StatusId => PhantomJobStatuses.For(Id);
 }

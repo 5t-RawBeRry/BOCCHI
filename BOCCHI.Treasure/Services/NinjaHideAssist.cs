@@ -33,7 +33,7 @@ public sealed class NinjaHideAssist(
 
     private static readonly Ocelot.Actions.Action Hide = new(ActionType.Action, HideActionId);
 
-    private static readonly Ocelot.Actions.Action OccultSprint = new(ActionType.Action, PhantomActions.OccultSprint);
+    private static Ocelot.Actions.Action OccultSprint => new(ActionType.Action, PhantomActions.OccultSprint);
 
     private int? gearsetBeforeNinja;
 

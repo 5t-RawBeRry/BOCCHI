@@ -8,11 +8,25 @@ namespace BOCCHI.Buff.Data;
 
 public readonly struct BuffData
 {
-    public uint StatusId { get; init; }
+    public uint StatusId => State switch
+    {
+        BuffState.ApplyingRomeosBallad => PhantomBuffs.RomeosBallad,
+        BuffState.ApplyingFleetfooted => PhantomBuffs.Fleetfooted,
+        BuffState.ApplyingEnduringFortitude => PhantomBuffs.EnduringFortitude,
+        BuffState.ApplyingQuickerStep => PhantomBuffs.QuickerStep,
+        _ => 0
+    };
 
     public SupportJobId SupportJobId { get; init; }
 
-    public uint RequiredLevel { get; init; }
+    public uint RequiredLevel => State switch
+    {
+        BuffState.ApplyingRomeosBallad => PhantomActions.RomeosBalladUnlock,
+        BuffState.ApplyingFleetfooted => PhantomActions.CounterstanceUnlock,
+        BuffState.ApplyingEnduringFortitude => PhantomActions.PrayUnlock,
+        BuffState.ApplyingQuickerStep => PhantomActions.QuickstepUnlock,
+        _ => 1
+    };
 
     public Func<BuffConfig, bool> ShouldApply { get; init; }
 
@@ -22,8 +36,6 @@ public readonly struct BuffData
 
     public static readonly BuffData RomeosBallad = new()
     {
-        StatusId = PhantomBuffs.RomeosBallad,
-        RequiredLevel = 2,
         SupportJobId = SupportJobId.PhantomBard,
         ShouldApply = config => config.ShouldApplyRomeosBallad(),
         State = BuffState.ApplyingRomeosBallad,
@@ -32,8 +44,6 @@ public readonly struct BuffData
 
     public static readonly BuffData Fleetfooted = new()
     {
-        StatusId = PhantomBuffs.Fleetfooted,
-        RequiredLevel = 3,
         SupportJobId = SupportJobId.PhantomMonk,
         ShouldApply = config => config.ShouldApplyFleetfooted(),
         State = BuffState.ApplyingFleetfooted,
@@ -42,8 +52,6 @@ public readonly struct BuffData
 
     public static readonly BuffData EnduringFortitude = new()
     {
-        StatusId = PhantomBuffs.EnduringFortitude,
-        RequiredLevel = 2,
         SupportJobId = SupportJobId.PhantomKnight,
         ShouldApply = config => config.ShouldApplyEnduringFortitude(),
         State = BuffState.ApplyingEnduringFortitude,
@@ -52,8 +60,6 @@ public readonly struct BuffData
 
     public static readonly BuffData QuickerStep = new()
     {
-        StatusId = PhantomBuffs.QuickerStep,
-        RequiredLevel = 2,
         SupportJobId = SupportJobId.PhantomDancer,
         ShouldApply = config => config.ShouldApplyQuickerStep(),
         State = BuffState.ApplyingQuickerStep,

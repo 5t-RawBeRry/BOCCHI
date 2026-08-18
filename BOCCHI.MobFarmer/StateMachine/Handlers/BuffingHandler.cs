@@ -24,9 +24,9 @@ public class BuffingHandler
     ISupportJobChanger changer
 ) : FlowStateHandler<FarmerPhase>(FarmerPhase.Buffing)
 {
-    private static readonly Action BattleBell = new(ActionType.Action, PhantomActions.BattleBell);
+    private static Action BattleBell => new(ActionType.Action, PhantomActions.BattleBell);
 
-    private static readonly Action RingingRespite = new(ActionType.Action, PhantomActions.RingingRespite);
+    private static Action RingingRespite => new(ActionType.Action, PhantomActions.RingingRespite);
 
     private static readonly TimeSpan StepGiveUp = TimeSpan.FromSeconds(2.5);
 
@@ -88,7 +88,7 @@ public class BuffingHandler
 
     private FarmerPhase? TryQuickstep()
     {
-        if (!config.ApplyQuickstep || supportJobs.Create(SupportJobId.PhantomDancer).Level < 2)
+        if (!config.ApplyQuickstep || supportJobs.Create(SupportJobId.PhantomDancer).Level < PhantomActions.QuickstepUnlock)
         {
             quickstepDone = true;
             return FarmerPhase.Gathering;
@@ -133,7 +133,7 @@ public class BuffingHandler
     {
         bool wantBell = config.ApplyBattleBell && BattleBell.GetRecastTime() <= config.MaximumBattleBellWaitTime;
         bool wantRespite = config.ApplyRingingRespite
-                           && supportJobs.Create(SupportJobId.PhantomGeomancer).Level >= 3
+                           && supportJobs.Create(SupportJobId.PhantomGeomancer).Level >= PhantomActions.RingingRespiteUnlock
                            && RingingRespite.GetRecastTime() <= config.MaximumBattleBellWaitTime;
 
         if (!wantBell)

@@ -1,4 +1,4 @@
-using BOCCHI.Common.Data.Shopping;
+using BOCCHI.Common.Data.OccultCrescent;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -19,16 +19,16 @@ public static unsafe class OccultCrescentHelper
     ///     South Horn piece count from inventory (not <see cref="OccultCrescentState"/>, which can
     ///     sit at 9999). Obols cannot pay a piece-priced vendor.
     /// </summary>
-    public static int GetSilverPieces() => GetCurrencyCount(ShopCatalog.SilverPieceItemId);
+    public static int GetSilverPieces() => GetCurrencyCount(OccultCurrencies.SilverPieceItemId);
 
-    public static int GetGoldPieces() => GetCurrencyCount(ShopCatalog.GoldPieceItemId);
+    public static int GetGoldPieces() => GetCurrencyCount(OccultCurrencies.GoldPieceItemId);
 
     /// <summary>Pieces plus obols — both horns, for per-hour rates.</summary>
     public static int GetSilverTotal() =>
-        GetCurrencyCount(ShopCatalog.SilverPieceItemId) + GetCurrencyCount(ShopCatalog.SilverObolItemId);
+        GetCurrencyCount(OccultCurrencies.SilverPieceItemId) + GetCurrencyCount(OccultCurrencies.SilverObolItemId);
 
     public static int GetGoldTotal() =>
-        GetCurrencyCount(ShopCatalog.GoldPieceItemId) + GetCurrencyCount(ShopCatalog.GoldObolItemId);
+        GetCurrencyCount(OccultCurrencies.GoldPieceItemId) + GetCurrencyCount(OccultCurrencies.GoldObolItemId);
 
     /// <summary>
     ///     Whether an aethernet shard is usable, keyed by the PlaceName id we already store on

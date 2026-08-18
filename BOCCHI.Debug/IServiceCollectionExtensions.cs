@@ -12,6 +12,7 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<IDebugPanel, FatesDebugPanel>();
         services.AddSingleton<IDebugPanel, CriticalEncountersDebugPanel>();
         services.AddSingleton<IDebugPanel, JobLevelsDebugPanel>();
+        services.AddSingleton<IDebugPanel, OccultStateDebugPanel>();
         services.AddSingleton<IDebugPanel, AethernetDebugPanel>();
         services.AddSingleton<IDebugPanel, TreasureHuntPrecomputePanel>();
         services.AddSingleton<IDebugPanel, TreasureLocationsExportPanel>();

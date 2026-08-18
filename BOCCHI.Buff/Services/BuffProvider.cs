@@ -1,5 +1,6 @@
 ﻿using BOCCHI.Buff.Data;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.OccultCrescent;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Extensions;
 using Dalamud.Game.ClientState.Objects.SubKinds;
@@ -56,7 +57,7 @@ public class BuffProvider
         }
 
         SupportJob freelancer = supportJobs.Create(SupportJobId.PhantomFreelancer);
-        return freelancer.Level >= 15;
+        return freelancer.Level >= PhantomActions.InquiringMindUnlock;
     }
 
     public IEnumerable<BuffData> GetInquiringMindTargetsNeedingRefresh(IPlayerCharacter player, uint maxFreshMinutes) =>

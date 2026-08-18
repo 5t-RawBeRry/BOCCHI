@@ -1,3 +1,5 @@
+using BOCCHI.Common.Data.OccultCrescent;
+
 namespace BOCCHI.Common.Data.Shopping;
 
 /// <summary>Known Antiquarian currency-shop rows.</summary>
@@ -12,19 +14,20 @@ public readonly record struct ShopCatalogEntry(
 
 public static class ShopCatalog
 {
-    public const uint SilverPieceItemId = 45043;
-    public const uint GoldPieceItemId = 45044;
+    public static uint SilverPieceItemId => OccultCurrencies.SilverPieceItemId;
+
+    public static uint GoldPieceItemId => OccultCurrencies.GoldPieceItemId;
 
     /// <summary>
     ///     The other horn pays in obols rather than pieces — a separate pair of items, so a player
     ///     earning obols never moves the piece counts at all.
     /// </summary>
-    public const uint SilverObolItemId = 51975;
+    public static uint SilverObolItemId => OccultCurrencies.SilverObolItemId;
 
-    public const uint GoldObolItemId = 51976;
+    public static uint GoldObolItemId => OccultCurrencies.GoldObolItemId;
 
     /// <summary>South Horn silver armor tab (IL 745) — common spend targets.</summary>
-    public static readonly ShopCatalogEntry[] SilverArmor =
+    public static ShopCatalogEntry[] SilverArmor =>
     [
         new(47758, "Arcanaut's Pelt of Fending", 4000, 0, 0, 1, SilverPieceItemId),
         new(47773, "Arcanaut's Pelt of Maiming", 4000, 1, 0, 1, SilverPieceItemId),

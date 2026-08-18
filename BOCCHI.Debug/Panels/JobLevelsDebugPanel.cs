@@ -19,6 +19,7 @@ public sealed class JobLevelsDebugPanel
             ui.Text(job.Data.Name.ToString(), branding.DalamudYellow);
             ui.LabelledValue("Level", $"{job.Level}/{job.Data.LevelMax}");
             ui.LabelledValue("Experience", job.CurrentExperience);
+            ui.LabelledValue("StatusId", job.StatusId);
         }
     }
 }
