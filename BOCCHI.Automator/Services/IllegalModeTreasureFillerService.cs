@@ -142,7 +142,7 @@ public class IllegalModeTreasureFillerService
             survey.SurveyWaitDeadlineUtc = DateTime.MinValue;
             survey.PendingMapHunt = true;
             LogSightUnavailableOnce();
-            logger.Info("Illegal Mode: latched map treasure hunt without Treasure Sight ({Reason})", reason);
+            logger.Debug("Illegal Mode: latched map treasure hunt without Treasure Sight ({Reason})", reason);
             return;
         }
 
@@ -151,7 +151,7 @@ public class IllegalModeTreasureFillerService
         survey.WaitingForSurveyResult = false;
         survey.MinAcceptedRevision = tracker.SurveyRevision;
         survey.SurveyWaitDeadlineUtc = DateTime.MinValue;
-        logger.Info("Illegal Mode: latched Treasure Sight survey ({Reason})", reason);
+        logger.Debug("Illegal Mode: latched Treasure Sight survey ({Reason})", reason);
     }
 
     private void ClearSurveyLatchIfSightUnavailable(AutomaticTreasureSurveyMemory survey)
@@ -169,7 +169,7 @@ public class IllegalModeTreasureFillerService
             survey.SurveyWaitDeadlineUtc = DateTime.MinValue;
             survey.PendingMapHunt = true;
             LogSightUnavailableOnce();
-            logger.Info("Illegal Mode: Treasure Sight became unavailable — falling back to map hunt");
+            logger.Debug("Illegal Mode: Treasure Sight became unavailable — falling back to map hunt");
         }
     }
 
@@ -215,7 +215,7 @@ public class IllegalModeTreasureFillerService
         {
             survey.WaitingForSurveyResult = false;
             survey.PendingSurvey = false;
-            logger.Info("Illegal Mode: Treasure Sight survey timed out — retry after next activity");
+            logger.Debug("Illegal Mode: Treasure Sight survey timed out — retry after next activity");
         }
     }
 
@@ -312,7 +312,7 @@ public class IllegalModeTreasureFillerService
         {
             hunter.Resume();
             hadFillerHunt = true;
-            logger.Info("Illegal Mode: resumed automatic treasure hunt");
+            logger.Debug("Illegal Mode: resumed automatic treasure hunt");
         }
     }
 
@@ -328,7 +328,7 @@ public class IllegalModeTreasureFillerService
         if (hunter.Running && !hunter.Paused)
         {
             hunter.Pause();
-            logger.Info("Illegal Mode: paused treasure hunt for CE/FATE activity");
+            logger.Debug("Illegal Mode: paused treasure hunt for CE/FATE activity");
         }
     }
 

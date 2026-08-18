@@ -179,7 +179,7 @@ public class TriagingHandler
 
         if (TryCastRaise(corpse))
         {
-            logger.Info("Triage Mode: raise on {Name}", corpse.Name.TextValue);
+            logger.Debug("Triage Mode: raise on {Name}", corpse.Name.TextValue);
         }
     }
 

@@ -222,7 +222,7 @@ public class Automator
             return;
         }
 
-        logger.Info("Refreshing pathfinding from current position");
+        logger.Debug("Refreshing pathfinding from current position");
         memory.Forget<NavigationInterruptedMemory>();
         IllegalModeActivityWork.ForgetTravelLatches(memory, includePotChests: true);
         SoftStopPathfinding();
@@ -329,7 +329,7 @@ public class Automator
                     TryStartPotChestFarm(fateGoal.id);
                 }
 
-                logger.Info(
+                logger.Debug(
                     "Goal no longer valid ({Goal}) — aborting pathfinding",
                     DescribeGoal(goal.Goal));
                 memory.Forget<GoalMemory>();
@@ -425,7 +425,7 @@ public class Automator
                 // Stop next-goal travel immediately so we don't Return/TP before chests.
                 IllegalModeActivityWork.ForgetTravelLatches(memory);
                 SoftStopPathfinding();
-                logger.Info("Pot FATE {FateId} still active — deferring chest farm", fateId.Value);
+                logger.Debug("Pot FATE {FateId} still active — deferring chest farm", fateId.Value);
             }
 
             return;
@@ -446,7 +446,7 @@ public class Automator
         // Blind authored sweep only when the buff is already present (no WaitingForBuff phase).
         if (objects.LocalPlayer?.StatusList.Has(PotTreasureIds.TreasureBuffStatusId) != true)
         {
-            logger.Info(
+            logger.Debug(
                 "Skipping blind pot chest farm for fate {FateId}: no Cache Me If You Can buff and no smart groups",
                 fateId.Value);
             return;

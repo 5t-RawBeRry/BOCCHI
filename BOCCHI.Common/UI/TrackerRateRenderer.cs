@@ -15,7 +15,7 @@ public static class TrackerRateRenderer
         float plotHeight = 30f
     )
     {
-        ui.LabelledValue(label, perHour.ToString("f2"));
+        ui.LabelledValue(label, perHour.ToString("N0"));
 
         if (showGraph)
         {

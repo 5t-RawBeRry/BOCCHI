@@ -4,14 +4,20 @@ public readonly record struct DeltaSnapshot(long Delta, DateTime Time);
 
 public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
 {
-    /// <summary>
-    ///     How much history a per-hour rate averages over. Was a setting; nobody needs to tune it
-    ///     and it only made the trackers page longer.
-    /// </summary>
+    /// <summary>How much history the optional graph averages over.</summary>
     public static readonly TimeSpan DefaultWindow = TimeSpan.FromMinutes(5);
 
-    /// <summary>Width of one bar in the tracker graphs. Also formerly a setting.</summary>
+    /// <summary>Width of one bar in the tracker graphs.</summary>
     public static readonly TimeSpan DefaultGraphBucket = TimeSpan.FromSeconds(15);
+
+    /// <summary>Don't flash a rate from the first inventory tick.</summary>
+    public static readonly TimeSpan MinElapsedForRate = TimeSpan.FromSeconds(20);
+
+    /// <summary>
+    ///     "Per hour" means this hour. Until a full hour has passed, divide by 1h so one CE
+    ///     shows what it actually dropped instead of ×20 that burst.
+    /// </summary>
+    public static readonly TimeSpan RateHour = TimeSpan.FromHours(1);
 
     private static readonly TimeSpan RecoveryWindow = TimeSpan.FromSeconds(2);
 
@@ -19,43 +25,54 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
 
     private long lastValue;
 
+    private long sessionGained;
+
+    private TimeSpan accumulatedActive = TimeSpan.Zero;
+
+    private DateTime? activeStartedUtc;
+
     private long? valueBeforeDrop;
 
     private DateTime dropAt = DateTime.MinValue;
 
     public bool HasValue { get; private set; }
 
+    public long LastValue => lastValue;
+
     public double PerHour
     {
         get
         {
-            if (snapshots.Count == 0)
+            TimeSpan elapsed = ActiveElapsed();
+            if (elapsed < MinElapsedForRate)
             {
                 return 0;
             }
 
-            TimeSpan duration = getTrackedWindow();
-            DateTime now = DateTime.UtcNow;
-            DateTime windowStart = now - duration;
-
-            DateTime oldest = snapshots[0].Time;
-            DateTime start = oldest > windowStart ? oldest : windowStart;
-
-            TimeSpan elapsed = now - start;
-
-            if (elapsed < TimeSpan.FromSeconds(10))
-            {
-                return 0;
-            }
-
-            double hours = elapsed.TotalHours;
-            if (hours <= 0)
-            {
-                return 0;
-            }
-
-            return snapshots.Sum(s => s.Delta) / hours;
+            double hours = Math.Max(elapsed.TotalHours, RateHour.TotalHours);
+            return sessionGained / hours;
         }
+    }
+
+    /// <summary>
+    ///     Count wall-clock while farming in Occult Crescent. Pause on leave / state loss so
+    ///     loading screens don't dilute the rate and don't get treated as farm time.
+    /// </summary>
+    public void SetCounting(bool counting)
+    {
+        if (counting)
+        {
+            activeStartedUtc ??= DateTime.UtcNow;
+            return;
+        }
+
+        if (activeStartedUtc is not { } started)
+        {
+            return;
+        }
+
+        accumulatedActive += DateTime.UtcNow - started;
+        activeStartedUtc = null;
     }
 
     public void SyncBaseline(long value)
@@ -66,11 +83,13 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
         dropAt = DateTime.MinValue;
     }
 
-    /// <summary>Drop samples and baseline so a zone/OC reload does not inflate per-hour rates.</summary>
     public void Reset()
     {
         snapshots.Clear();
         lastValue = 0;
+        sessionGained = 0;
+        accumulatedActive = TimeSpan.Zero;
+        activeStartedUtc = null;
         HasValue = false;
         valueBeforeDrop = null;
         dropAt = DateTime.MinValue;
@@ -91,19 +110,16 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
 
         if (delta < 0)
         {
-            // Remember pre-drop balance so a shop/state dip→recover is not counted as a gain.
             valueBeforeDrop = lastValue;
             dropAt = DateTime.UtcNow;
             lastValue = current;
             return;
         }
 
-        if (valueBeforeDrop is { } before
-            && DateTime.UtcNow - dropAt <= RecoveryWindow)
+        if (valueBeforeDrop is { } before && DateTime.UtcNow - dropAt <= RecoveryWindow)
         {
             lastValue = current;
             valueBeforeDrop = null;
-            // Absorb one recovery sample after a dip (typically back to post-spend balance).
             if (current <= before)
             {
                 return;
@@ -122,6 +138,7 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
             return;
         }
 
+        sessionGained += delta;
         snapshots.Add(new(delta, DateTime.UtcNow));
     }
 
@@ -170,17 +187,16 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
         for (int i = 0; i < bucketCount; i++)
         {
             double amount = bucketTotals[i];
-
-            if (amount <= 0)
-            {
-                result[i] = 0f;
-                continue;
-            }
-
-            result[i] = (float)(amount / bucketSeconds * 3600.0);
+            result[i] = amount <= 0 ? 0f : (float)(amount / bucketSeconds * 3600.0);
         }
 
         return result;
+    }
+
+    private TimeSpan ActiveElapsed()
+    {
+        TimeSpan extra = activeStartedUtc is { } started ? DateTime.UtcNow - started : TimeSpan.Zero;
+        return accumulatedActive + extra;
     }
 
     private void Prune()

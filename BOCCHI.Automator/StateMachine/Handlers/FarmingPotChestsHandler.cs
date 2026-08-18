@@ -207,7 +207,7 @@ public class FarmingPotChestsHandler
             {
                 defendingInCombat = true;
                 autoRotation.EnableForSelfDefence();
-                logger.Info("Pot treasure: in combat — AI is fighting and dodging until it clears");
+                logger.Debug("Pot treasure: in combat — AI is fighting and dodging until it clears");
             }
 
             return;
@@ -218,7 +218,7 @@ public class FarmingPotChestsHandler
             defendingInCombat = false;
             autoRotation.DisableAi();
             ResetApproachWatch();
-            logger.Info("Pot treasure: combat over — taking movement back for the chest search");
+            logger.Debug("Pot treasure: combat over — taking movement back for the chest search");
         }
 
         RefreshTickChests(farm);
@@ -323,7 +323,7 @@ public class FarmingPotChestsHandler
         if (farm.Phase != PotChestFarmPhase.OpeningReveal)
         {
             farm.Phase = PotChestFarmPhase.OpeningReveal;
-            logger.Info("Pot treasure: Cache Me gone but a coffer is revealed — opening it before ending");
+            logger.Debug("Pot treasure: Cache Me gone but a coffer is revealed — opening it before ending");
         }
 
         farm.HoldingAfterBuffLoss = true;
@@ -348,7 +348,7 @@ public class FarmingPotChestsHandler
     // Info, not Debug: this is the line that tells us whether the dismount fired at all, and it is
     // no use if it lands below the level people actually read.
     private void ReportDismount(string detail) =>
-        logger.Info("Pot treasure: dismount {Detail}", detail);
+        logger.Debug("Pot treasure: dismount {Detail}", detail);
 
     private void HandleWaitingForBuff(PotChestFarmMemory farm)
     {
@@ -716,7 +716,7 @@ public class FarmingPotChestsHandler
 
         if (DateTimeOffset.UtcNow - farm.PhaseStartedUtc > TimeSpan.FromSeconds(15))
         {
-            logger.Info("Pot treasure: reveal timed out — resume search while Cache Me remains");
+            logger.Debug("Pot treasure: reveal timed out — resume search while Cache Me remains");
             ResumeSearchOrBlind(farm);
         }
     }
@@ -733,7 +733,7 @@ public class FarmingPotChestsHandler
         farm.SettledAtUtc = DateTimeOffset.MinValue;
         farm.WaitingForSpawnSince = DateTimeOffset.MinValue;
         ResetApproachWatch();
-        logger.Info(
+        logger.Debug(
             "Pot treasure: reveal already open — next candidate ({Remaining} left)",
             farm.Candidates.Count);
         ResumeSearchOrBlind(farm);
@@ -770,7 +770,7 @@ public class FarmingPotChestsHandler
         // Narrowed set spent — re-read from the full pool instead of a 50-spot sweep.
         if (farm.Pool.Count > 0 && farm.HintsApplied < MaxHintReadings && HasTreasureBuff())
         {
-            logger.Info(
+            logger.Debug(
                 "Pot treasure: narrowed set spent — re-reading from {Count} spots",
                 farm.Pool.Count);
             farm.NarrowTo(farm.Pool);
@@ -938,7 +938,7 @@ public class FarmingPotChestsHandler
             }
 
             travelSteps = result.Steps;
-            logger.Info(
+            logger.Debug(
                 "Pot treasure: routing {Steps} step(s) to {Pos:F0} ({Dist:F0}y)",
                 travelSteps.Count,
                 destination,
@@ -1032,7 +1032,7 @@ public class FarmingPotChestsHandler
             if (FindRevealNear(origin) != null
                 && EzThrottler.Throttle("PotChestFarm::RevealNotTargetable", 2000))
             {
-                logger.Info("Pot treasure: coffer on an authored spot is not targetable yet — waiting");
+                logger.Debug("Pot treasure: coffer on an authored spot is not targetable yet — waiting");
             }
 
             return null;
@@ -1101,7 +1101,7 @@ public class FarmingPotChestsHandler
         }
 
         farm.NarrowTo(survivors);
-        logger.Info(
+        logger.Debug(
             "Pot treasure: hint {Hint} {Direction}/{Distance} — {Count} spot(s) {Source}, nearest {Label}",
             farm.HintsApplied,
             evt.Direction,
@@ -1178,7 +1178,7 @@ public class FarmingPotChestsHandler
         }
 
         farm.BeginBlindFallback(positions);
-        logger.Info("Pot treasure: blind sweep with {Count} positions", positions.Count);
+        logger.Debug("Pot treasure: blind sweep with {Count} positions", positions.Count);
     }
 
     private void FinishFarm()

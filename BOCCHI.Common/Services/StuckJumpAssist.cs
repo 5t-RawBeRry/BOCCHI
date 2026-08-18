@@ -92,7 +92,7 @@ public sealed class StuckJumpAssist(
             return;
         }
 
-        logger.Info(
+        logger.Debug(
             "Stuck at {Pos:F0} with vnav still running — jumping to break free",
             position);
         Actions.Jump.Cast();

@@ -118,7 +118,7 @@ public sealed class PotCycleSyncService
                 lastUploadedSpawnUnix = upload.SpawnUnix;
                 lastUploadedInstanceKey = upload.InstanceKey;
                 nextUploadAttemptUtc = DateTime.UtcNow;
-                logger.Info(
+                logger.Debug(
                     "[PotCycleSync] uploaded pot={PotId} spawn={Spawn} key={KeyPrefix}…",
                     upload.PotFateId,
                     upload.SpawnUnix,
@@ -168,7 +168,7 @@ public sealed class PotCycleSyncService
         // rejected anchor all returned silently — indistinguishable from the service doing nothing.
         if (!fetch.Found || fetch.PotFateId == 0 || fetch.SpawnUnix <= 0)
         {
-            logger.Info(
+            logger.Debug(
                 "[PotCycleSync] fetch miss — no cycle published for key {Key}… (the key rotates, so a "
                 + "miss can mean nobody shared, or that we asked under a key nobody shared under)",
                 Shorten(fetch.InstanceKey));
@@ -187,14 +187,14 @@ public sealed class PotCycleSyncService
         DateTimeOffset spawnAt = DateTimeOffset.FromUnixTimeSeconds(fetch.SpawnUnix);
         if (potCycles.TryApplyRemoteAnchor(fetch.PotFateId, spawnAt, fetch.RequestTerritoryId))
         {
-            logger.Info(
+            logger.Debug(
                 "[PotCycleSync] fetch hit — applied remote pot={PotId} spawn={Spawn}",
                 fetch.PotFateId,
                 fetch.SpawnUnix);
             return;
         }
 
-        logger.Info(
+        logger.Debug(
             "[PotCycleSync] fetch hit but not applied — pot={PotId} spawn={Spawn} rejected by the "
             + "local tracker (usually a local anchor arrived first)",
             fetch.PotFateId,
@@ -382,7 +382,7 @@ public sealed class PotCycleSyncService
 
         // Do not clear the pot timer on FATE-roster churn. Local/remote anchors re-validate
         // when the next pot is seen; wiping here caused "next pot → unknown".
-        logger.Info(
+        logger.Debug(
             firstKey
                 ? "[PotCycleSync] instance key from fate={FateId} epoch={Epoch} key={KeyPrefix}…"
                 : "[PotCycleSync] fingerprint fate ended — new key from fate={FateId} epoch={Epoch} key={KeyPrefix}… (pot timer kept)",

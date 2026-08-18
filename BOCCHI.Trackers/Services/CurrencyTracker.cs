@@ -1,4 +1,5 @@
 using BOCCHI.Common.Data;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using Ocelot.Lifecycle;
 
@@ -15,20 +16,13 @@ public interface ICurrencyTracker
     float[] GetSilverHistory(TimeSpan sampleDuration);
 }
 
-public class CurrencyTracker : ICurrencyTracker, IOnUpdate, IOnTerritoryChanged
+public class CurrencyTracker(IZoneProvider zones) : ICurrencyTracker, IOnUpdate, IOnTerritoryChanged
 {
     private readonly DeltaRateTracker goldTracker = new(() => DeltaRateTracker.DefaultWindow);
 
     private readonly DeltaRateTracker silverTracker = new(() => DeltaRateTracker.DefaultWindow);
 
-    /// <summary>A state dropout shorter than this is a blip, not a session gap — keep recording.</summary>
-    private static readonly TimeSpan MaxIgnorableGap = TimeSpan.FromSeconds(5);
-
-    private DateTime lastAvailableUtc = DateTime.MinValue;
-
-    private bool needsBaseline = true;
-
-    private bool stateWasAvailable;
+    private bool inOccultCrescent;
 
     public double GoldPerHour => goldTracker.PerHour;
 
@@ -47,44 +41,38 @@ public class CurrencyTracker : ICurrencyTracker, IOnUpdate, IOnTerritoryChanged
             Limit = 250
         };
 
-    public void OnTerritoryChanged(uint territory)
-    {
-        // A different zone is a different session, so the samples so far no longer describe it.
-        // This is the only place history should be dropped — see Update.
-        goldTracker.Reset();
-        silverTracker.Reset();
-        needsBaseline = true;
-        stateWasAvailable = false;
-    }
+    public void OnTerritoryChanged(uint territory) => ApplyZone(zones.GetZone().IsOccultCrescentZone());
 
     public void Update()
     {
+        ApplyZone(zones.GetZone().IsOccultCrescentZone());
+        if (!inOccultCrescent)
+        {
+            return;
+        }
+
         if (!OccultCrescentHelper.IsStateAvailable())
         {
-            stateWasAvailable = false;
+            goldTracker.SetCounting(false);
+            silverTracker.SetCounting(false);
             return;
         }
 
         int gold = GetCurrentGold();
         int silver = GetCurrentSilver();
 
-        // Re-anchor after a real session gap; ignore short "state unavailable" blips.
-        bool longGap = lastAvailableUtc == DateTime.MinValue
-                       || DateTime.UtcNow - lastAvailableUtc > MaxIgnorableGap;
-        lastAvailableUtc = DateTime.UtcNow;
-
-        if (needsBaseline || (!stateWasAvailable && longGap) || !goldTracker.HasValue || !silverTracker.HasValue)
+        // Inventory can read 0 while bags are still loading — don't treat that as a spend.
+        if ((gold == 0 && goldTracker.HasValue && goldTracker.LastValue > 0)
+            || (silver == 0 && silverTracker.HasValue && silverTracker.LastValue > 0))
         {
-            goldTracker.SyncBaseline(gold);
-            silverTracker.SyncBaseline(silver);
-            needsBaseline = false;
-            stateWasAvailable = true;
+            goldTracker.SetCounting(false);
+            silverTracker.SetCounting(false);
             return;
         }
 
-        stateWasAvailable = true;
+        goldTracker.SetCounting(true);
+        silverTracker.SetCounting(true);
 
-        // Vendor spend is not a session gain.
         if (AddonHelpers.IsShopExchangeOpen())
         {
             goldTracker.SyncBaseline(gold);
@@ -94,6 +82,18 @@ public class CurrencyTracker : ICurrencyTracker, IOnUpdate, IOnTerritoryChanged
 
         goldTracker.RecordPositiveDelta(gold);
         silverTracker.RecordPositiveDelta(silver);
+    }
+
+    private void ApplyZone(bool inOc)
+    {
+        if (inOc == inOccultCrescent)
+        {
+            return;
+        }
+
+        inOccultCrescent = inOc;
+        goldTracker.Reset();
+        silverTracker.Reset();
     }
 
     private static int GetCurrentGold() => OccultCrescentHelper.GetGoldTotal();

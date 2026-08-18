@@ -68,7 +68,7 @@ public class GoalValidator
             // Prefer pot FATEs: drop a CE you are still walking to when a live pot is up.
             if (!IsCommittedToCriticalEncounter(id) && HasLivePreferredPot())
             {
-                logger.Info(
+                logger.Debug(
                     "Invalidating CE {CeId} (still pathing) — Prefer pot FATEs, live pot up",
                     id.Value);
                 return false;
@@ -101,7 +101,7 @@ public class GoalValidator
             return true;
         }
 
-        logger.Info(
+        logger.Debug(
             "Dropping CE {CeId} — no longer Preparing and not committed (was still pathing)",
             id.Value);
         return false;
@@ -135,7 +135,7 @@ public class GoalValidator
                 && startableCriticalEncounters.FindStartable() is { } prepositionCe
                 && ShouldLeaveFateTravelForCe(prepositionCe))
             {
-                logger.Info(
+                logger.Debug(
                     "Invalidating pot preposition {FateId} — startable CE {CeId} ({CeName})",
                     id.Value,
                     prepositionCe.Id.Value,
@@ -159,7 +159,7 @@ public class GoalValidator
         {
             if (fatesConfig.ShouldSkipByProgress(live.Progress))
             {
-                logger.Info(
+                logger.Debug(
                     "Dropping FATE {FateId} — progress {Progress}% (skip at {Threshold}%)",
                     id.Value,
                     live.Progress,
@@ -169,7 +169,7 @@ public class GoalValidator
 
             if (isPot && potsConfig.ShouldSkipLivePot(live.TimeRemainingSeconds))
             {
-                logger.Info(
+                logger.Debug(
                     "Dropping pot FATE {FateId} — {Minutes:F1}m left (skip threshold)",
                     id.Value,
                     live.TimeRemainingSeconds / 60.0);
@@ -190,7 +190,7 @@ public class GoalValidator
                 && startableCriticalEncounters.FindStartable() is { } potCe
                 && ShouldLeaveFateTravelForCe(potCe))
             {
-                logger.Info(
+                logger.Debug(
                     "Invalidating pot FATE {FateId} (still pathing) — startable CE {CeId} ({CeName}) with Prefer pot FATEs off",
                     id.Value,
                     potCe.Id.Value,
@@ -207,7 +207,7 @@ public class GoalValidator
             && TryFindLiveAllowedPot(out Fate livePot)
             && !IsLeavingForStartableCe())
         {
-            logger.Info(
+            logger.Debug(
                 "Invalidating FATE {FateId} (still pathing) — live pot {PotId}",
                 id.Value,
                 livePot.Id.Value);
@@ -221,7 +221,7 @@ public class GoalValidator
             && startableCriticalEncounters.FindStartable() is { } ce
             && ShouldLeaveFateTravelForCe(ce))
         {
-            logger.Info(
+            logger.Debug(
                 "Invalidating FATE {FateId} (still pathing) — startable CE {CeId} ({CeName}) with {Remaining}s left (threshold {Threshold}s)",
                 id.Value,
                 ce.Id.Value,

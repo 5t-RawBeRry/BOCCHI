@@ -141,7 +141,7 @@ public abstract class HuntRoutePlanner
             return Task.FromResult(new List<HuntPathfinderStep>());
         }
 
-        log.Info(
+        log.Debug(
             authoredEntries.Count > 0
                 ? "Treasure hunt authored route: {Count} remaining (start {Start}, nearbyPrefix {Prefix}, segment {Segment})"
                 : "Treasure hunt nearest-neighbor route: {Count} remaining (start {Start}, nearbyPrefix {Prefix}, segment {Segment})",
@@ -249,7 +249,7 @@ public abstract class HuntRoutePlanner
 
         NodeDataCache[(zoneId, filename)] = data;
         AuthoredRouteCache[zoneId] = new AuthoredRoutePayload(authoredEntries, authoredSegments);
-        log.Info(
+        log.Debug(
             "Cached hunt route data for {Zone}: {Nodes} node(s), {Pads} authored pad(s)",
             zoneId,
             data.NodeToNodeDistances.Count,
@@ -265,7 +265,7 @@ public abstract class HuntRoutePlanner
         string file = GetDataFile(plugin, zoneId, "treasure_route.json");
         if (!File.Exists(file))
         {
-            log.Info("No treasure_route.json for {Zone}; using nearest-neighbor TSP", zoneId);
+            log.Debug("No treasure_route.json for {Zone}; using nearest-neighbor TSP", zoneId);
             return;
         }
 
@@ -275,7 +275,7 @@ public abstract class HuntRoutePlanner
             AuthoredTreasureRoute? route = JsonSerializer.Deserialize<AuthoredTreasureRoute>(json, JsonOptions);
             if (route is not { SchemaVersion: >= 2 } || route.Segments.Count == 0)
             {
-                log.Info(
+                log.Debug(
                     "treasure_route.json for {Zone} is not schema v2 with segments; using TSP",
                     zoneId);
                 return;
@@ -296,7 +296,7 @@ public abstract class HuntRoutePlanner
                 }
             }
 
-            log.Info(
+            log.Debug(
                 "Loaded authored treasure route for {Zone}: {Pads} pads in {Segments} segment(s)",
                 zoneId,
                 authoredEntries.Count,

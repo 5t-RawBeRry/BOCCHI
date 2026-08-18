@@ -131,7 +131,7 @@ public class PotsTreasureService
         ResetTreasureLoop();
         Paused = false;
         Phase = PotsTreasurePhase.DoingPots;
-        logger.Info("Pots & Treasure: managed pot window for Mob Farmer");
+        logger.Debug("Pots & Treasure: managed pot window for Mob Farmer");
         return Running;
     }
 
@@ -268,7 +268,7 @@ public class PotsTreasureService
         if (hunter.Running && !hunter.Paused)
         {
             hunter.Pause();
-            logger.Info("Pots & Treasure: paused hunt for pot window");
+            logger.Debug("Pots & Treasure: paused hunt for pot window");
         }
 
         // Hunt filler freezes the automator; when a pot pops we must hand it a FATE goal
@@ -340,7 +340,7 @@ public class PotsTreasureService
             hunter.ConfigureManagedRun(visitedTreasureNodes);
             hunter.StartManaged();
             huntWasRunning = hunter.Running;
-            logger.Info("Pots & Treasure: started treasure hunt filler");
+            logger.Debug("Pots & Treasure: started treasure hunt filler");
             return;
         }
 
@@ -350,7 +350,7 @@ public class PotsTreasureService
             huntWasRunning = true;
             // Rebuild the walk from the current authored step after pot vnav ownership.
             hunter.RecalculateRoute();
-            logger.Info("Pots & Treasure: resumed treasure hunt where it left off");
+            logger.Debug("Pots & Treasure: resumed treasure hunt where it left off");
         }
     }
 

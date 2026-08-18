@@ -312,7 +312,7 @@ public class ChoosingActivityHandler
         if (lastPrepositionSkip != reason)
         {
             lastPrepositionSkip = reason;
-            logger.Info("Not prepositioning to pot: {Reason}", reason);
+            logger.Debug("Not prepositioning to pot: {Reason}", reason);
         }
 
         return false;

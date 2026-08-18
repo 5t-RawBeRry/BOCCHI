@@ -15,4 +15,5 @@
 - Aethernet hops skip shards you have not unlocked yet.
 - Treasure Hunt can reach the Wanderer's Haven west-coast coffer again. Radar no longer peels onto the Unhallowed Hamlet basement coffer, so the stairs stay intact. (#185)
 - Pot chest farming fights and dodges if something aggroes you. After a reroll, the next chest searches the far pads instead of walking the original pot spots again. (#188)
-- Auto treasure hunt after FATEs/CEs is on the Illegal Mode page next to Treasure Sight.
+- Experience, gold, and silver per hour are this visit to Occult Crescent. One FATE or CE no longer gets treated as if you could do that for a full hour.
+- Dalamud log is quieter during farming, treasure hunt, and pathing. Enable Debug in Dalamud if you need the old traces.

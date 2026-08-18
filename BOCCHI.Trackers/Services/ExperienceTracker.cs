@@ -1,5 +1,6 @@
 ﻿using BOCCHI.Common.Data;
 using BOCCHI.Common.Data.SupportJobs;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using Ocelot.Lifecycle;
 
@@ -12,9 +13,12 @@ public interface IExperienceTracker
     float[] GetExperienceHistory(TimeSpan sampleDuration);
 }
 
-public class ExperienceTracker(ISupportJobFactory supportJobs) : IExperienceTracker, IOnUpdate
+public class ExperienceTracker(ISupportJobFactory supportJobs, IZoneProvider zones)
+    : IExperienceTracker, IOnUpdate, IOnTerritoryChanged
 {
     private readonly DeltaRateTracker tracker = new(() => DeltaRateTracker.DefaultWindow);
+
+    private bool inOccultCrescent;
 
     public double ExperiencePerHour => tracker.PerHour;
 
@@ -27,14 +31,42 @@ public class ExperienceTracker(ISupportJobFactory supportJobs) : IExperienceTrac
             Limit = 250
         };
 
+    public void OnTerritoryChanged(uint territory) => ApplyZone(zones.GetZone().IsOccultCrescentZone());
+
     public void Update()
     {
-        if (!OccultCrescentHelper.IsStateAvailable())
+        ApplyZone(zones.GetZone().IsOccultCrescentZone());
+        if (!inOccultCrescent)
         {
             return;
         }
 
-        tracker.RecordPositiveDelta(GetCurrentTotalExperience());
+        if (!OccultCrescentHelper.IsStateAvailable())
+        {
+            tracker.SetCounting(false);
+            return;
+        }
+
+        long total = GetCurrentTotalExperience();
+        if (total == 0 && tracker.HasValue && tracker.LastValue > 0)
+        {
+            tracker.SetCounting(false);
+            return;
+        }
+
+        tracker.SetCounting(true);
+        tracker.RecordPositiveDelta(total);
+    }
+
+    private void ApplyZone(bool inOc)
+    {
+        if (inOc == inOccultCrescent)
+        {
+            return;
+        }
+
+        inOccultCrescent = inOc;
+        tracker.Reset();
     }
 
     private long GetCurrentTotalExperience()

@@ -149,13 +149,13 @@ public class ActivityNavigation
 
         if (alreadyAtCeRing)
         {
-            logger.Info("Already inside CE wait area for {Name} — not pathing into the center", name);
+            logger.Debug("Already inside CE wait area for {Name} — not pathing into the center", name);
             CancelActivityChains();
             pathfinder.Stop();
             return;
         }
 
-        logger.Info("Pathfinding to {Name} at {Destination:f1}", name, approach);
+        logger.Debug("Pathfinding to {Name} at {Destination:f1}", name, approach);
         CancelActivityChains();
         _ = manager.Manage(BuildPathChain($"{ChainPrefix}Path::{id}", () => approach, treatAsActivity: true));
     }
@@ -241,7 +241,7 @@ public class ActivityNavigation
                 route = TryValidateOccultAethernet(out _) ? SurveyRoute.FieldAethernet : SurveyRoute.Direct;
             }
 
-            logger.Info(
+            logger.Debug(
                 "Survey route for {Name}: {Route} (direct={Direct:f0}, field={Field:f0}, return={Return:f0})",
                 name,
                 route,
@@ -295,7 +295,7 @@ public class ActivityNavigation
 
         if (route == SurveyRoute.Direct)
         {
-            logger.Info("Pathfinding directly to survey {Name} at {Destination:f1}", name, approach);
+            logger.Debug("Pathfinding directly to survey {Name} at {Destination:f1}", name, approach);
             _ = manager.Manage(BuildPathChain(chainName, walkTo, treatAsActivity: false));
             return;
         }
@@ -304,7 +304,7 @@ public class ActivityNavigation
         IChain chain = chains.Create(chainName);
         if (prependReturn)
         {
-            logger.Info("Return to base camp, then path to survey {Name}", name);
+            logger.Debug("Return to base camp, then path to survey {Name}", name);
             chain = ReturnToBaseCamp.Append(chain, zones, conditions, gui, pathfinder, vnav);
         }
 
@@ -397,7 +397,7 @@ public class ActivityNavigation
 
                 if (alreadyAtCeRing)
                 {
-                    logger.Info("Already inside CE wait area for {Name} — not pathing into the center", name);
+                    logger.Debug("Already inside CE wait area for {Name} — not pathing into the center", name);
                     pathfinder.Stop();
                     return;
                 }
@@ -444,14 +444,14 @@ public class ActivityNavigation
 
                 if (AetheryteApproach.IsAlreadyAtAetheryte(target, player.Position))
                 {
-                    logger.Info(
+                    logger.Debug(
                         "Already at best aethernet {Aethernet} for {Name} — teleport does not pathfind",
                         target.Id,
                         name);
                     return;
                 }
 
-                logger.Info("Teleporting via {Aethernet} toward {Name}", target.Id, name);
+                logger.Debug("Teleporting via {Aethernet} toward {Name}", target.Id, name);
 
                 IChain chain = AethernetTeleport.BuildChain(
                     chains.Create($"{ChainPrefix}Teleport::{id}"),
@@ -488,14 +488,14 @@ public class ActivityNavigation
         {
             if (target != null)
             {
-                logger.Info("Already at best aethernet — vnav to {Name}", name);
+                logger.Debug("Already at best aethernet — vnav to {Name}", name);
             }
 
             _ = manager.Manage(AppendPath(chain, chainName, walkTo, treatAsActivity));
             return;
         }
 
-        logger.Info("Lifestream to aethernet {Aethernet}, then vnav to {Name}", target.Id, name);
+        logger.Debug("Lifestream to aethernet {Aethernet}, then vnav to {Name}", target.Id, name);
 
         chain = AethernetTeleport.BuildChain(
             chain,

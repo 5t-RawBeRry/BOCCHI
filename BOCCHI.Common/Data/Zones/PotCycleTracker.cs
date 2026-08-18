@@ -140,7 +140,7 @@ public sealed class PotCycleTracker
             return;
         }
 
-        logger.Info(
+        logger.Debug(
             "[PotCycleTracker] cleared schedule for territory {Territory} ({Reason})",
             territoryTypeId,
             string.IsNullOrEmpty(reason) ? "unspecified" : reason);
@@ -193,7 +193,7 @@ public sealed class PotCycleTracker
         };
 
         cycles[territoryTypeId] = applied;
-        logger.Info(
+        logger.Debug(
             $"[PotCycleTracker] remote anchor zone={territoryTypeId} pot={potFateId} spawnAt={spawnAt:O} next={opposite?.Id ?? 0} nextSpawnAt={nextSpawn:O}");
         return true;
     }
@@ -224,7 +224,7 @@ public sealed class PotCycleTracker
         ActivityData? opposite = potFates.FirstOrDefault(p => p.Id != activeId);
         DateTimeOffset nextSpawn = spawnAt + PotCycleInterval;
 
-        logger.Info(
+        logger.Debug(
             $"[PotCycleTracker] zone={territoryType} local anchor pot={activeId} next={opposite?.Id ?? 0} nextSpawnAt={(opposite == null ? "none" : nextSpawn.ToString("O"))}");
 
         return new PotCycleSnapshot
@@ -286,7 +286,7 @@ public sealed class PotCycleTracker
 
         if (rolled > 0)
         {
-            logger.Info(
+            logger.Debug(
                 "[PotCycleTracker] zone={Territory} rolled stale prediction x{Rolled} → next={NextId} at {NextSpawn:O}",
                 territoryType,
                 rolled,

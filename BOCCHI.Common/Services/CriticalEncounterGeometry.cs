@@ -118,7 +118,7 @@ public sealed class CriticalEncounterGeometry(
                 CriticalEncounterArea area = Build(instance, range);
                 cache[dynamicEventId] = area;
                 detail = $"id {mapRangeId} in {path} (live={liveRangeId} excel={excelRangeId})";
-                logger.Info(
+                logger.Debug(
                     "CE {Id}: LGB MapRange {RangeId} centre {Center:F0} radius {Radius:F1}y ({Shape})",
                     dynamicEventId,
                     mapRangeId,
@@ -154,7 +154,7 @@ public sealed class CriticalEncounterGeometry(
             {
                 cache[dynamicEventId] = near;
                 detail = $"nearest MapRange {bestId} at {bestDist:0.#}y in {bestPath} (live={liveRangeId} excel={excelRangeId})";
-                logger.Info(
+                logger.Debug(
                     "CE {Id}: no MapRange id {Wanted}; using nearest {RangeId} ({Dist:F1}y) centre {Center:F0} radius {Radius:F1}y",
                     dynamicEventId,
                     mapRangeId,

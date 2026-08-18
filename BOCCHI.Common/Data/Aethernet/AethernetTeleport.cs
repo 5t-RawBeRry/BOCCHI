@@ -59,7 +59,7 @@ public static class AethernetTeleport
                         }
 
                         // Success (not Break): callers may AppendPath after this chain — Break would skip the walk.
-                        logger.Info("Already at aetheryte {Id} — skipping teleport", placeNameId);
+                        logger.Debug("Already at aetheryte {Id} — skipping teleport", placeNameId);
                         return StepResult.Success();
                     }
 
@@ -89,7 +89,7 @@ public static class AethernetTeleport
                             lifestream.Abort();
                         }
 
-                        logger.Info("Arrived at aetheryte {Id} during approach — skipping teleport", placeNameId);
+                        logger.Debug("Arrived at aetheryte {Id} during approach — skipping teleport", placeNameId);
                         return StepResult.Success();
                     }
 
@@ -105,7 +105,7 @@ public static class AethernetTeleport
                     // Stuck destination overlay / leftover task blocks AethernetTeleport (returns false when busy).
                     if (lifestream.IsBusy())
                     {
-                        logger.Info("Lifestream busy before teleport — aborting leftover task");
+                        logger.Debug("Lifestream busy before teleport — aborting leftover task");
                         lifestream.Abort();
                     }
 
@@ -127,7 +127,7 @@ public static class AethernetTeleport
                         lifestream.Abort();
                     }
 
-                    logger.Info("Already at destination aetheryte {Id} — skip Lifestream call", placeNameId);
+                    logger.Debug("Already at destination aetheryte {Id} — skip Lifestream call", placeNameId);
                     return StepResult.Success();
                 }
 

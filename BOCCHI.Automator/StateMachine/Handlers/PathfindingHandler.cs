@@ -156,7 +156,7 @@ public class PathfindingHandler
                     ChainResult result = currentPathTask.Result;
                     if (result.IsSuccess)
                     {
-                        logger.Info("Finished current task step...");
+                        logger.Debug("Finished current task step...");
                         PathStepKind completedKind = path.GetNextPathStep()?.Kind ?? PathStepKind.Pathfind;
                         path.DequeuePathStep();
 
@@ -210,7 +210,7 @@ public class PathfindingHandler
         {
             if (step.PathStepData is Return)
             {
-                logger.Info("Handing off return step to ReturningHandler...");
+                logger.Debug("Handing off return step to ReturningHandler...");
                 memory.TryAdd(new ReturningStateMemory(ReturnDelay.Roll(config)));
                 path.DequeuePathStep();
 
@@ -229,7 +229,7 @@ public class PathfindingHandler
                 return;
             }
 
-            logger.Info("Starting next task step...");
+            logger.Debug("Starting next task step...");
             memory.Forget<BaseTeleportDelayMemory>();
             currentPathTask = pathStepExecutor.Execute(step);
             return;
@@ -259,7 +259,7 @@ public class PathfindingHandler
             }
 
             memory.TryAdd(delay);
-            logger.Info("Waiting {Seconds:F1}s at camp before teleport", delay.Delay.TotalSeconds);
+            logger.Debug("Waiting {Seconds:F1}s at camp before teleport", delay.Delay.TotalSeconds);
             return false;
         }
 
@@ -315,7 +315,7 @@ public class PathfindingHandler
 
     private void ReplanAfterPathCancel(string reason)
     {
-        logger.Info("{Reason} — dropping route for replan", reason);
+        logger.Debug("{Reason} — dropping route for replan", reason);
         pathfinder.Stop();
         currentPathTask = null;
         pendingPauseReason = null;

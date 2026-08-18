@@ -197,7 +197,7 @@ public sealed class CarrotHunterService
             return false;
         }
 
-        log.Information("Carrot hunt: manual Fortune Carrot use");
+        log.Debug("Carrot hunt: manual Fortune Carrot use");
         return true;
     }
 
@@ -553,7 +553,7 @@ public sealed class CarrotHunterService
             && CanTrustEmptyCarrotPad(authored.Position)
             && ConfirmEmptyCarrotPad(authored.Id))
         {
-            log.Information(
+            log.Debug(
                 "Carrot hunt: no live carrot at authored {Id} — skipping",
                 authored.Id);
             ClearEmptyPadCandidate();
@@ -649,7 +649,7 @@ public sealed class CarrotHunterService
         itemUseIssued = true;
         waitingForBunnySince = DateTime.UtcNow;
         Phase = CarrotHuntPhase.WaitingForBunny;
-        log.Information("Carrot hunt: Fortune Carrot used at {Pos:F0}", currentTargetPosition);
+        log.Debug("Carrot hunt: Fortune Carrot used at {Pos:F0}", currentTargetPosition);
     }
 
     private void TickWaitingForBunny()
@@ -662,7 +662,7 @@ public sealed class CarrotHunterService
         IGameObject? bunny = FindBunnyNear(currentTargetPosition);
         if (bunny != null)
         {
-            log.Information("Carrot hunt: bunny chest spawned near {Pos:F0}", bunny.Position);
+            log.Debug("Carrot hunt: bunny chest spawned near {Pos:F0}", bunny.Position);
             Phase = CarrotHuntPhase.OpeningBunny;
             return;
         }
@@ -788,7 +788,7 @@ public sealed class CarrotHunterService
         }
 
         BeginRouteToCurrentAuthored();
-        log.Information(
+        log.Debug(
             "Carrot hunt: nearest-neighbor replan ({Count} remaining, start {StartId})",
             tour.Count,
             currentAuthored?.Id ?? 0);
@@ -804,7 +804,7 @@ public sealed class CarrotHunterService
                 HuntDistances.LocalClusterRadius,
                 preferLive: true) is int localLive)
         {
-            log.Information("Carrot hunt preferring local live pad {Id}", localLive);
+            log.Debug("Carrot hunt preferring local live pad {Id}", localLive);
             return localLive;
         }
 
@@ -813,7 +813,7 @@ public sealed class CarrotHunterService
                 HuntDistances.LocalClusterRadius,
                 preferLive: false) is int localPad)
         {
-            log.Information("Carrot hunt preferring local unfinished pad {Id}", localPad);
+            log.Debug("Carrot hunt preferring local unfinished pad {Id}", localPad);
             return localPad;
         }
 
@@ -891,7 +891,7 @@ public sealed class CarrotHunterService
 
         if (bestId is int id)
         {
-            log.Information(
+            log.Debug(
                 "Carrot hunt preferring live nearby pad {Id} at {Distance:F1}y",
                 id,
                 bestDist);
@@ -925,7 +925,7 @@ public sealed class CarrotHunterService
         }
 
         AppendNearestNeighborTour(remaining, preferStartId, start, aetherytes, main);
-        log.Information(
+        log.Debug(
             "Carrot hunt nearest-neighbor tour: {Count} remaining (start {Start})",
             tour.Count,
             tour[0].Id);
@@ -956,7 +956,7 @@ public sealed class CarrotHunterService
             start = tour[^1].Position;
         }
 
-        log.Information(
+        log.Debug(
             "Carrot hunt North Horn tour: {Count} remaining (start {Start}, {Order})",
             tour.Count,
             tour.Count > 0 ? tour[0].Id : 0,
@@ -1238,7 +1238,7 @@ public sealed class CarrotHunterService
             currentLiveCarrotId = bestLive.GameObjectId;
             currentTargetPosition = bestLive.GetPosition();
             CancelTravelForLocalCarrot();
-            log.Information(
+            log.Debug(
                 "Carrot hunt: rebinding to live carrot on authored {Id} at {Dist:F1}y",
                 bestPad.Id,
                 bestDist);
@@ -1255,7 +1255,7 @@ public sealed class CarrotHunterService
             return false;
         }
 
-        log.Information(
+        log.Debug(
             "Carrot hunt: diverting to live carrot on authored {NearbyId} at {NearbyDist:F1}y (was {CurrentId} at {CurrentDist:F1}y)",
             bestPad.Id,
             bestDist,
@@ -1398,7 +1398,7 @@ public sealed class CarrotHunterService
             {
                 currentLiveCarrotId = next.GameObjectId;
                 currentTargetPosition = next.GetPosition();
-                log.Information(
+                log.Debug(
                     "Carrot hunt: another chewed carrot at authored {Id} — staying for double spawn",
                     authored.Id);
                 Phase = CarrotHuntPhase.Pathing;
@@ -1425,7 +1425,7 @@ public sealed class CarrotHunterService
         if (currentAuthored is { } authored)
         {
             finishedAuthoredIds.Add(authored.Id);
-            log.Information("Carrot hunt: finished authored {Id} near {Pos:F0}", authored.Id, currentTargetPosition);
+            log.Debug("Carrot hunt: finished authored {Id} near {Pos:F0}", authored.Id, currentTargetPosition);
         }
 
         vnav.Stop();
@@ -1540,7 +1540,7 @@ public sealed class CarrotHunterService
                 return true;
             }
 
-            log.Information(
+            log.Debug(
                 "Carrot hunt: still stuck on authored {Id} after nudge — repathing",
                 authoredId);
             stuckWatchStartedUtc = now;
@@ -1558,7 +1558,7 @@ public sealed class CarrotHunterService
     {
         Vector3 nudge = PathfindingNudge.LateralFrom(player.Position, currentTargetPosition);
 
-        log.Information(
+        log.Debug(
             "Carrot hunt: stuck approaching authored {Id} — nudging sideways",
             currentAuthored?.Id ?? 0);
         pathfinder.Stop();
@@ -1623,7 +1623,7 @@ public sealed class CarrotHunterService
             return false;
         }
 
-        log.Information(
+        log.Debug(
             "Carrot hunt: stuck near target at {Dist:F1}y — trying interact from here",
             distance);
         return true;

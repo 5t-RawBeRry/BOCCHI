@@ -226,7 +226,7 @@ public class PathCalculator
             // Teleport-only mode stripped walks — PathfindingHandler pauses for manual travel.
             if (config.StopAfterReturn && stepsBeforeTeleportOnlyStrip > 0)
             {
-                logger.Info(
+                logger.Debug(
                     "Path planned: 0 step(s) toward {Pos:F0} ({Dist:F0}y) after teleport-only strip",
                     arrivalCheck,
                     distanceToGoal);
@@ -240,7 +240,7 @@ public class PathCalculator
             return await AutoRebuildAndRetry(zone, goal, allowAutoRebuild, "no route to activity");
         }
 
-        logger.Info(
+        logger.Debug(
             "Path planned: {Count} step(s) toward {Pos:F0} ({Dist:F0}y)",
             resolvedSteps.Count,
             arrivalCheck,

@@ -275,7 +275,7 @@ public class TreasureHunterService
                     steps.Insert(0, HuntPathfinderStep.ReturnToBaseCamp());
                 }
 
-                log.Info("Treasure hunt: prepended session-start Return to base camp");
+                log.Debug("Treasure hunt: prepended session-start Return to base camp");
             }
 
             pathPlanner = null;
@@ -493,7 +493,7 @@ public class TreasureHunterService
         pathPlanner = planner;
         planningRoute = true;
 
-        log.Info(
+        log.Debug(
             "Treasure hunt route recalculation requested; {CheckedCount} checked nodes excluded",
             checkedNodeIds.Count);
         return true;
@@ -552,7 +552,7 @@ public class TreasureHunterService
                 pendingSessionCampReturn = !zone.IsInBasecamp();
             }
 
-            log.Info(
+            log.Debug(
                 "Treasure hunt South Horn: start segment {Segment} (pad {Pad}); camp Return {Return}",
                 startSegment ?? "-",
                 pendingEntryNodeId?.ToString() ?? "-",
@@ -672,7 +672,7 @@ public class TreasureHunterService
         }
 
         map->SetFlagMapMarker(client.TerritoryType, client.MapId, position);
-        log.Info("Flagged treasure hunt resume coffer {NodeId} at {Position:f0}", nodeId, position);
+        log.Debug("Flagged treasure hunt resume coffer {NodeId} at {Position:f0}", nodeId, position);
         return true;
     }
 
@@ -742,7 +742,7 @@ public class TreasureHunterService
             : player.Position;
         Vector3 nudge = PathfindingNudge.LateralFrom(player.Position, dest);
 
-        log.Info("Treasure hunt stuck near {NodeId} — nudging sideways around geometry (#156)", step.NodeId);
+        log.Debug("Treasure hunt stuck near {NodeId} — nudging sideways around geometry (#156)", step.NodeId);
         pathfinder.Stop();
         vnav.Stop();
         vnav.PathfindAndMoveCloseTo(nudge, false, 1.5f);
@@ -1057,7 +1057,7 @@ public class TreasureHunterService
         checkedNodeIds.Remove(nearbyId);
         pendingPreferStartNode = nearbyId;
 
-        log.Info(
+        log.Debug(
             "Treasure hunt diverting to live coffer {NearbyId} at {NearbyDist:F1}y (was {CurrentType} {CurrentId} at {CurrentDist:F1}y)",
             nearbyId,
             nearbyDist,
@@ -1190,7 +1190,7 @@ public class TreasureHunterService
         sightCastUtc = DateTime.UtcNow;
         locationsSinceLastSight = 0;
 
-        log.Info(
+        log.Debug(
             "Treasure hunt: casting Treasure Sight ({Reason})",
             dueForStart ? "session start" : $"every {config.TreasureSightEveryNLocations} locations");
 
@@ -1243,7 +1243,7 @@ public class TreasureHunterService
         }
 
         int trimmed = TrimNearbyEmptyNodesAfterSight();
-        log.Info(
+        log.Debug(
             "Treasure Sight refresh: {Bronze} bronze / {Silver} silver remaining; trimmed {Trimmed} nearby empty pad(s)",
             tracker.BronzeChests,
             tracker.SilverChests,
@@ -1442,7 +1442,7 @@ public class TreasureHunterService
             // Empty-skip first: a live coffer elsewhere on radar must not pin us to an empty pad (#168).
             if (CanTrustEmptyPad(layoutDestination) && ConfirmEmptyPad(step.NodeId))
             {
-                log.Info(
+                log.Debug(
                     "Treasure hunt: no live coffer at layout {NodeId} at {Dist:F0}y — skipping "
                     + "({Nearby} coffer(s) streamed within {Radius:F0}y, {Total} in object table)",
                     step.NodeId,
@@ -2129,7 +2129,7 @@ public class TreasureHunterService
 
         if (added > 0)
         {
-            log.Info("Treasure hunt: merged {Count} baked pad(s) not in active layout", added);
+            log.Debug("Treasure hunt: merged {Count} baked pad(s) not in active layout", added);
         }
     }
 
@@ -2150,7 +2150,7 @@ public class TreasureHunterService
             }
         }
 
-        log.Info(
+        log.Debug(
             "Treasure hunt authored segments cached: {Count} pads",
             authoredNodeSegments.Count);
     }
@@ -2278,7 +2278,7 @@ public class TreasureHunterService
         // returned me". Say which check declined, so that case is distinguishable from the others.
         if (zones.GetZone().IsInBasecamp())
         {
-            log.Info(
+            log.Debug(
                 "Treasure hunt: no Return after hunt — already within the base camp radius ({Distance:F0}y from the aetheryte)",
                 player.Position.Distance2D(zones.GetZone().GetAetherytePosition()));
             return false;
@@ -2286,7 +2286,7 @@ public class TreasureHunterService
 
         if (steps.Count > 0 && steps[^1].Type == HuntPathfinderStepType.ReturnToBaseCamp)
         {
-            log.Info("Treasure hunt: no Return after hunt — the route already ends with one");
+            log.Debug("Treasure hunt: no Return after hunt — the route already ends with one");
             return false;
         }
 
@@ -2343,7 +2343,7 @@ public class TreasureHunterService
 
         if (walkVias.Count > 0)
         {
-            log.Info(
+            log.Debug(
                 "Treasure hunt: {Count} via(s) for node {NodeId} (index {Index})",
                 walkVias.Count,
                 step.NodeId,
