@@ -31,7 +31,7 @@ public sealed class FarmerCombatController(
         }
 
         session.Prepare(ToRecipe(automatorConfig.CombatAutorotation));
-        session.Tick(CurrentPhantomJobId());
+        session.Disable();
     }
 
     public void EnableFighting() => session.Enable(CombatActivity.Fate);

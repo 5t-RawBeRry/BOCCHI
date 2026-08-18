@@ -127,7 +127,7 @@ public class PathCalculator
             return await AutoRebuildAndRetry(zone, goal, allowAutoRebuild, "missing activity node");
         }
 
-        // Prefer live FATE center when available; CEs keep authored graph staging.
+        // Prefer live FATE center; CEs path to the LGB MapRange centre (blue ring), not authored staging.
         Node pathGoal = goalNode;
         Vector3? potPrepositionStandOff = null;
         if (goal.GoalType is FateGoal liveFateGoal
@@ -150,11 +150,18 @@ public class PathCalculator
         float ceCombatRadius = 0f;
         ActivityAreaShape ceShape = ActivityAreaShape.Circle;
         if (goal.GoalType is CriticalEncounterGoal ceGoalForRadius
-            && geometry.TryGetCombat(ceGoalForRadius.id.Value, out float lgbRadius, out ActivityAreaShape lgbShape))
+            && geometry.TryGet(ceGoalForRadius.id.Value) is { Radius: > 0 } area)
         {
-            ceCombatRadius = lgbRadius;
-            ceShape = lgbShape;
-            zone.ApplyCriticalEncounterCombat(ceGoalForRadius.id.Value, lgbRadius, lgbShape);
+            ceCombatRadius = area.Radius;
+            ceShape = area.IsSquare ? ActivityAreaShape.Square : ActivityAreaShape.Circle;
+            zone.ApplyCriticalEncounterCombat(ceGoalForRadius.id.Value, ceCombatRadius, ceShape);
+            pathGoal = new Node
+            {
+                Id = goalNode.Id,
+                Type = goalNode.Type,
+                Position = area.Center,
+                Metadata = goalNode.Metadata
+            };
             logger.Debug(
                 "CE {Id} path goal at {Pos:F0} ({Shape}, combat radius {Radius:F0})",
                 ceGoalForRadius.id.Value,

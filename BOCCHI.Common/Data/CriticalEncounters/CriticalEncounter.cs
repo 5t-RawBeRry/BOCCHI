@@ -123,12 +123,17 @@ public class CriticalEncounter(
 
     public bool IsActive() => State is DynamicEventState.Battle;
 
-    /// <summary>Apply live LGB registration size (unpadded combat radius).</summary>
-    public void ApplyCombatGeometry(float combatRadius, ActivityAreaShape shape)
+    /// <summary>Apply live LGB registration size and centre (unpadded combat radius).</summary>
+    public void ApplyCombatGeometry(float combatRadius, ActivityAreaShape shape, Vector3? center = null)
     {
         AreaShape = shape;
         Radius = combatRadius > 0f
             ? NavigationConstants.CriticalEncounterPaddedRadius(combatRadius, shape)
             : 0f;
+
+        if (center is { } c && !float.IsNaN(c.X))
+        {
+            Position = c;
+        }
     }
 }

@@ -24,13 +24,23 @@ public class CriticalEncounterFactory(IZoneProvider zones, CriticalEncounterGeom
 
         ActivityAreaShape shape = authored?.AreaShape ?? ActivityAreaShape.Circle;
         float padded = 0f;
-        if (geometry.TryGetCombat(ev.DynamicEventId, out float combat, out ActivityAreaShape lgbShape))
+        Vector3? lgbCenter = null;
+        float combat = 0f;
+        if (geometry.TryGet(ev.DynamicEventId) is { Radius: > 0 } area)
         {
-            shape = lgbShape;
+            shape = area.IsSquare ? ActivityAreaShape.Square : ActivityAreaShape.Circle;
+            combat = area.Radius;
             padded = NavigationConstants.CriticalEncounterPaddedRadius(combat, shape);
+            lgbCenter = area.Center;
             zone.ApplyCriticalEncounterCombat(ev.DynamicEventId, combat, shape);
         }
 
-        return new(id, ev, padded, fallback, shape);
+        CriticalEncounter created = new(id, ev, padded, fallback, shape);
+        if (lgbCenter is { } center)
+        {
+            created.ApplyCombatGeometry(combat, shape, center);
+        }
+
+        return created;
     }
 }

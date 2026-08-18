@@ -49,16 +49,16 @@ public static class NavigationConstants
     public const float CriticalEncounterSquareStandRatio = 0.7f;
 
     /// <summary>Circle CEs: cyan stand ring (path target while waiting), as a fraction of red.</summary>
-    public const float CriticalEncounterCircleStandRatio = 0.7f;
+    public const float CriticalEncounterCircleStandRatio = 0.45f;
 
     /// <summary>Debug green pad beyond red for square CEs (same idea as circle pad).</summary>
     public const float CriticalEncounterSquareRadiusPadding = 7f;
 
-    /// <summary>Circle travel stand-off around the cyan ring.</summary>
-    public const float CriticalEncounterApproachMinRatio = 0.6f;
+    /// <summary>Circle travel stand-off around the cyan ring — closer to centre than the rim.</summary>
+    public const float CriticalEncounterApproachMinRatio = 0.25f;
 
     /// <summary>Circle travel stand-off outer (≤ stand ratio).</summary>
-    public const float CriticalEncounterApproachMaxRatio = 0.75f;
+    public const float CriticalEncounterApproachMaxRatio = 0.4f;
 
     /// <summary>Angular jitter (degrees) for CE wait stand-off around the approach ray.</summary>
     public const float CriticalEncounterApproachJitter = 60f;
@@ -184,11 +184,10 @@ public static class NavigationApproach
             max = min;
         }
 
-        float approachRangeCircle = min + Random.Shared.NextSingle() * (max - min);
-        return center.GetApproachPosition(
-            from,
-            approachRangeCircle,
-            NavigationConstants.CriticalEncounterApproachJitter);
+        // Scatter on the disc. An inbound ray from the aethernet often lands on a ramp outside the ring.
+        float dist = min + Random.Shared.NextSingle() * (max - min);
+        float angle = Random.Shared.NextSingle() * MathF.PI * 2f;
+        return center + new Vector3(MathF.Cos(angle) * dist, 0f, MathF.Sin(angle) * dist);
     }
 
     public static Vector3 ResolveActivityApproach(Node goal, Vector3 from)
@@ -228,14 +227,16 @@ public static class NavigationApproach
                 continue;
             }
 
-            if (geometry == null
-                || !geometry.TryGetCombat((ushort)candidate.Id, out float radius, out ActivityAreaShape shape))
+            if (geometry?.TryGet((ushort)candidate.Id) is not { Radius: > 0 } area)
             {
                 continue;
             }
 
             activity = candidate;
-            Vector3 center = destination;
+            Vector3 center = area.Center;
+            float radius = area.Radius;
+            ActivityAreaShape shape = area.IsSquare ? ActivityAreaShape.Square : ActivityAreaShape.Circle;
+
             if (NavigationConstants.IsInsideCriticalEncounterWaitArea(
                     center, radius, shape, from))
             {

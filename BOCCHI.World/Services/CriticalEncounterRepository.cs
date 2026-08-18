@@ -124,13 +124,14 @@ public class CriticalEncounterRepository
                 criticalEncounter.Update(ev);
             }
 
-            if (!geometry.TryGetCombat(criticalEncounter.Id.Value, out float combat, out ActivityAreaShape shape))
+            if (geometry.TryGet(criticalEncounter.Id.Value) is not { Radius: > 0 } area)
             {
                 continue;
             }
 
-            criticalEncounter.ApplyCombatGeometry(combat, shape);
-            zone.ApplyCriticalEncounterCombat(criticalEncounter.Id.Value, combat, shape);
+            ActivityAreaShape shape = area.IsSquare ? ActivityAreaShape.Square : ActivityAreaShape.Circle;
+            criticalEncounter.ApplyCombatGeometry(area.Radius, shape, area.Center);
+            zone.ApplyCriticalEncounterCombat(criticalEncounter.Id.Value, area.Radius, shape);
         }
 
         BuildSnapshots(tracked);

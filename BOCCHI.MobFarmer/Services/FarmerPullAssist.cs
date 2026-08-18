@@ -13,7 +13,26 @@ public sealed class FarmerPullAssist(MobFarmerConfig config, IPlayer player, ITa
 {
     public const float PullRange = 20f;
 
+    private const ulong InvalidTargetId = 0xE0000000;
+
+    // Action IDs from Wrath Combo (RoleActions / job helpers).
     private static readonly Action Provoke = new(ActionType.Action, 7533);
+
+    private static readonly Action ShieldLob = new(ActionType.Action, 24);
+
+    private static readonly Action Tomahawk = new(ActionType.Action, 46);
+
+    private static readonly Action Unmend = new(ActionType.Action, 3624);
+
+    private static readonly Action LightningShot = new(ActionType.Action, 16143);
+
+    private static readonly Action Intervene = new(ActionType.Action, 16461);
+
+    private static readonly Action Onslaught = new(ActionType.Action, 7386);
+
+    private static readonly Action Shadowstride = new(ActionType.Action, 36926);
+
+    private static readonly Action Trajectory = new(ActionType.Action, 36934);
 
     public bool TryPull(IBattleNpc current)
     {
@@ -27,28 +46,34 @@ public sealed class FarmerPullAssist(MobFarmerConfig config, IPlayer player, ITa
             return false;
         }
 
+        ulong targetId = current.GameObjectId;
+        if (targetId == 0 || targetId == InvalidTargetId)
+        {
+            return false;
+        }
+
         if (config.ShouldHandleTargeting)
         {
             targets.Target = current;
         }
 
-        bool used = false;
+        // One skill per tick, aimed at this enemy rather than a flickered hard target.
         if (config.UseRangedPull && TryRanged() is { } ranged && ranged.CanCast())
         {
-            used = ranged.Cast();
+            return ranged.Cast(targetId);
         }
 
         if (config.UseProvoke && Provoke.CanCast())
         {
-            used = Provoke.Cast() || used;
+            return Provoke.Cast(targetId);
         }
 
         if (config.UseGapCloser && TryGapCloser() is { } gap && gap.CanCast())
         {
-            used = gap.Cast() || used;
+            return gap.Cast(targetId);
         }
 
-        return used;
+        return false;
     }
 
     private Action? TryRanged()
@@ -56,10 +81,10 @@ public sealed class FarmerPullAssist(MobFarmerConfig config, IPlayer player, ITa
         uint? jobId = player.GetClassJob()?.RowId;
         return jobId switch
         {
-            19 or 1 => new(ActionType.Action, 24), // PLD / GLA Shield Lob
-            21 or 3 => new(ActionType.Action, 31), // WAR / MRD Tomahawk
-            32 => new(ActionType.Action, 3624), // DRK Unmend
-            37 => new(ActionType.Action, 16139), // GNB Lightning Shot
+            19 or 1 => ShieldLob,
+            21 or 3 => Tomahawk,
+            32 => Unmend,
+            37 => LightningShot,
             _ => null,
         };
     }
@@ -69,10 +94,10 @@ public sealed class FarmerPullAssist(MobFarmerConfig config, IPlayer player, ITa
         uint? jobId = player.GetClassJob()?.RowId;
         return jobId switch
         {
-            19 => new(ActionType.Action, 16461), // Intervene
-            21 => new(ActionType.Action, 7387), // Onslaught
-            32 => new(ActionType.Action, 36926), // Shadowstride
-            37 => new(ActionType.Action, 36934), // Trajectory
+            19 => Intervene,
+            21 => Onslaught,
+            32 => Shadowstride,
+            37 => Trajectory,
             _ => null,
         };
     }

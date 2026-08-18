@@ -171,7 +171,10 @@ public class MobFarmerService
             return;
         }
 
-        combat.Tick();
+        if (Phase == FarmerPhase.Fighting)
+        {
+            combat.Tick();
+        }
 
         if (Phase == FarmerPhase.Waiting && spots.TickClaimed(scanner))
         {

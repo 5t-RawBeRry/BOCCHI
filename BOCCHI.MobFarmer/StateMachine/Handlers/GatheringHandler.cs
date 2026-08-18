@@ -46,13 +46,6 @@ public class GatheringHandler
             return inCombat.Count > 0 ? FarmerPhase.Stacking : FarmerPhase.Waiting;
         }
 
-        if (config.ShouldHandleTargeting
-            && targets.Target?.IsTargetingPlayer(objects.LocalPlayer) == true)
-        {
-            targets.Target = null;
-            pathfinder.Stop();
-        }
-
         List<IBattleNpc> ordered = notInCombat
             .OrderBy(o => player.Position.Distance2D(o.Position))
             .ToList();
@@ -66,7 +59,8 @@ public class GatheringHandler
             return null;
         }
 
-        if (config.ShouldHandleTargeting)
+        if (config.ShouldHandleTargeting
+            && targets.Target?.GameObjectId != current.GameObjectId)
         {
             targets.Target = current;
         }
@@ -82,13 +76,13 @@ public class GatheringHandler
             return null;
         }
 
-        if (!current.IsTargetingPlayer(objects.LocalPlayer)
-            && !EzThrottler.Throttle("MobFarmer::Gathering::Repath"))
+        bool pulled = current.IsTargetingPlayer(objects.LocalPlayer);
+        if (!pulled && !EzThrottler.Throttle("MobFarmer::Gathering::Repath"))
         {
             return null;
         }
 
-        Vector3 destination = Destination(current.Position, nextPos, dist);
+        Vector3 destination = Destination(current.Position, nextPos, dist, pulled);
         pathfinder.PathfindAndMoveTo(new(destination)
         {
             AllowFlying = false,
@@ -99,11 +93,11 @@ public class GatheringHandler
         return null;
     }
 
-    private static Vector3 Destination(Vector3 current, Vector3? next, float distToCurrent)
+    private static Vector3 Destination(Vector3 current, Vector3? next, float distToCurrent, bool currentPulled)
     {
         if (distToCurrent <= FarmerPullAssist.PullRange)
         {
-            return next ?? current;
+            return currentPulled ? next ?? current : current;
         }
 
         if (next is not { } nextPos)
