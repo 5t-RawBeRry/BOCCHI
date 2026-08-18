@@ -51,10 +51,6 @@ public class TreasureConfig : IAutoConfig
     [Checkbox(Order = 11, Section = "hunt")]
     public bool SkipUnsafeTreasureWindows { get; set; } = true;
 
-    /// <summary>Illegal Mode / Completionist: after CE/FATE, Sight (if known) then hunt, or map hunt without Sight.</summary>
-    [Checkbox(Order = 12, Section = "hunt")]
-    public bool EnableAutomaticTreasureHuntDuringIllegalMode { get; set; } = false;
-
     /// <summary>Use real Ninja Hide near high-knowledge hostiles while hunting coffers.</summary>
     [Checkbox(Order = 13, Section = "ninja_hide")]
     public bool UseNinjaHideOnDangerousRoutes { get; set; } = false;

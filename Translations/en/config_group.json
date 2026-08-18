@@ -16,5 +16,8 @@
   },
   "dependencies": {
     "label": "Dependencies"
+  },
+  "movement": {
+    "label": "Movement"
   }
 }

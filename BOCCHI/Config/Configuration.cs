@@ -5,7 +5,7 @@ namespace BOCCHI.Config;
 
 public class Configuration : IConfiguration
 {
-    public const int CurrentVersion = 22;
+    public const int CurrentVersion = 23;
 
     [ConfigHidden] public int Version { get; set; } = CurrentVersion;
 
@@ -17,6 +17,8 @@ public class Configuration : IConfiguration
     public DependenciesConfig DependenciesConfig { get; set; } = new();
 
     public AutomatorConfig AutomatorConfig { get; set; } = new();
+
+    public MovementConfig MovementConfig { get; set; } = new();
 
     public BuffConfig BuffConfig { get; set; } = new();
 

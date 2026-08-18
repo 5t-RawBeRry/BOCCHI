@@ -30,6 +30,7 @@ public class WaitingForPotFateHandler
     IFateRepository fates,
     IZoneProvider zones,
     AutomatorConfig config,
+    MovementConfig movement,
     AutoRotationController autoRotation
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.WaitingForPotFate)
 {
@@ -118,7 +119,7 @@ public class WaitingForPotFateHandler
                 pathfinder.PathfindAndMoveTo(new(approach));
             }
 
-            AutoMount.MaybeRemount(config, conditions, objects, approach, zones.GetZone().IsInBasecamp());
+            AutoMount.MaybeRemount(movement, conditions, objects, approach, zones.GetZone().IsInBasecamp());
 
             return;
         }

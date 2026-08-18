@@ -19,6 +19,7 @@ public class AethernetTeleportChain
     IPathfinder pathfinder,
     IVNavmeshIpc vnav,
     AutomatorConfig config,
+    MovementConfig movementConfig,
     ILogger<AethernetTeleportChain> logger
 ) : ChainRecipe<uint>(chains)
 {
@@ -27,5 +28,5 @@ public class AethernetTeleportChain
     protected override IChain Compose(IChain chain, uint placeNameId) =>
         AethernetTeleport.BuildChain(
             chain, Chains, zones, objects, pathfinder, vnav, lifestream, logger, placeNameId,
-            config.SprintOnAetheryteApproach);
+            movementConfig.SprintOnAetheryteApproach);
 }

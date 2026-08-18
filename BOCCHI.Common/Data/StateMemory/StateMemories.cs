@@ -268,6 +268,12 @@ public sealed class PotChestFarmMemory
     /// <summary>Set once the opened coffer disappears, so the reroll wait excludes the open itself.</summary>
     public bool RerollWaitStarted { get; set; }
 
+    /// <summary>
+    ///     True once a second-chance offer moved the search onto the reroll pads. Stops a repeated
+    ///     offer message from re-seeding and discarding narrowing already done there.
+    /// </summary>
+    public bool OnRerollPool { get; set; }
+
     /// <summary>When we started waiting for the current (peek) blind chest to spawn.</summary>
     public DateTimeOffset WaitingForSpawnSince { get; set; } = DateTimeOffset.MinValue;
 

@@ -4,6 +4,15 @@ public readonly record struct DeltaSnapshot(long Delta, DateTime Time);
 
 public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
 {
+    /// <summary>
+    ///     How much history a per-hour rate averages over. Was a setting; nobody needs to tune it
+    ///     and it only made the trackers page longer.
+    /// </summary>
+    public static readonly TimeSpan DefaultWindow = TimeSpan.FromMinutes(5);
+
+    /// <summary>Width of one bar in the tracker graphs. Also formerly a setting.</summary>
+    public static readonly TimeSpan DefaultGraphBucket = TimeSpan.FromSeconds(15);
+
     private static readonly TimeSpan RecoveryWindow = TimeSpan.FromSeconds(2);
 
     private readonly List<DeltaSnapshot> snapshots = [];

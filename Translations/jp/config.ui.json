@@ -33,14 +33,6 @@
       "label": "通貨グラフを表示",
       "tooltip": "トラッカーの下に通貨グラフを表示します。"
     },
-    "tracked_duration": {
-      "label": "履歴の長さ（分）",
-      "tooltip": "トラッカーが保持する過去データの分数です。"
-    },
-    "graph_bucket_size": {
-      "label": "グラフの刻み（秒）",
-      "tooltip": "グラフの各棒／点がカバーする秒数です。"
-    },
     "show_world_section": {
       "label": "FATE・CE 一覧を表示",
       "tooltip": "メインウィンドウに進行中の FATE とクリティカルエンカウントを表示します。"

@@ -21,6 +21,7 @@ public class IllegalModeTreasureFillerService
     ISupportJobFactory supportJobs,
     IZoneProvider zones,
     TreasureConfig treasureConfig,
+    AutomatorConfig automatorConfig,
     ILogger<IllegalModeTreasureFillerService> logger
 ) : IOnUpdate
 {
@@ -41,7 +42,7 @@ public class IllegalModeTreasureFillerService
             return;
         }
 
-        if (!treasureConfig.EnableAutomaticTreasureHuntDuringIllegalMode)
+        if (!automatorConfig.EnableAutomaticTreasureHuntDuringIllegalMode)
         {
             ResetSession();
             return;

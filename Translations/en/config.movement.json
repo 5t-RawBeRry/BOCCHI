@@ -1,0 +1,31 @@
+{
+  "label": "Movement",
+  "tooltip": "Mounting, sprinting and unsticking. These apply to every kind of travel — Illegal Mode, Treasure Hunt, Carrot Hunt and Mob Farmer.",
+  "sections": {
+    "mount": "Mount & sprint",
+    "unstuck": "Getting unstuck"
+  },
+  "fields": {
+    "sprint_on_aetheryte_approach": {
+      "label": "Sprint to aetherytes",
+      "tooltip": "Use Sprint when walking up to an aetheryte."
+    },
+    "should_auto_mount": {
+      "label": "Mount while traveling",
+      "tooltip": "Mount for long trips to a FATE or CE, and remount if you get off mid-way."
+    },
+    "preferred_mount_id": {
+      "label": "Preferred mount",
+      "roulette": "Mount Roulette",
+      "search": "Search mounts..."
+    },
+    "should_jump_when_stuck": {
+      "label": "Jump when stuck",
+      "tooltip": "Jump when movement stalls on rocks, ledges or stairs. Applies to all travel."
+    },
+    "jump_when_stuck_seconds": {
+      "label": "Seconds before jumping",
+      "tooltip": "How long to stand still before trying a jump."
+    }
+  }
+}

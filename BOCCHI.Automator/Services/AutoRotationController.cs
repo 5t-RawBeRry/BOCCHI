@@ -54,6 +54,14 @@ public class AutoRotationController(
     public void EnableForCriticalEncounter() => session.Enable(CombatActivity.CriticalEncounter);
 
     /// <summary>
+    ///     Fight back while pot chest farming. The AI deliberately owns movement here: the farm does
+    ///     not path during combat, so there is nothing to fight over — and the magic pot trails the
+    ///     player, so letting the AI dodge takes the pot out of AoE with us. The pot can be
+    ///     destroyed and the run lost with it, which is the real reason this matters (#188).
+    /// </summary>
+    public void EnableForSelfDefence() => session.Enable(CombatActivity.Fate);
+
+    /// <summary>
     ///     Drop combat automation while travelling. Normally a no-op inside a FATE/CE, since the
     ///     activity still wants the rotation — except when pot chest farming has taken over.
     /// </summary>

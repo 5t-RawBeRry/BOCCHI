@@ -43,6 +43,7 @@ public class FarmingPotChestsHandler
     MagicalElixirAssist elixir,
     AutoRotationController autoRotation,
     AutomatorConfig config,
+    MovementConfig movement,
     PotsConfig potsConfig,
     IAutomatorContext context,
     PandoraAutoOpenHold pandoraAutoOpen,
@@ -139,6 +140,9 @@ public class FarmingPotChestsHandler
 
     private float approachBestDist = float.MaxValue;
 
+    /// <summary>True while the AI holds movement for a fight (see the combat branch in Handle).</summary>
+    private bool defendingInCombat;
+
     public override StatePriority GetScore()
     {
         if (conditions[ConditionFlag.Unconscious])
@@ -172,6 +176,7 @@ public class FarmingPotChestsHandler
         activeChain = null;
         tickChests.Clear();
         tickReveals.Clear();
+        defendingInCombat = false;
         hints.Disarm();
         pandoraAutoOpen.Release();
     }
@@ -190,10 +195,31 @@ public class FarmingPotChestsHandler
 
         activeChain = null;
 
+        // Combat is the one window where nothing of ours drives movement, so hand it to the AI:
+        // it fights and dodges, and the pot trailing us comes along out of the AoE. Previously the
+        // farm disabled rotation and AI outright and then stood still through the whole fight —
+        // no attacking, no dodging, and a destroyed pot loses the run (#188).
         if (conditions[ConditionFlag.InCombat])
         {
             pathfinder.Stop();
+            ClearTravelPlan();
+
+            if (!defendingInCombat)
+            {
+                defendingInCombat = true;
+                autoRotation.EnableForSelfDefence();
+                logger.Info("Pot treasure: in combat — AI is fighting and dodging until it clears");
+            }
+
             return;
+        }
+
+        if (defendingInCombat)
+        {
+            defendingInCombat = false;
+            autoRotation.DisableAi();
+            ResetApproachWatch();
+            logger.Info("Pot treasure: combat over — taking movement back for the chest search");
         }
 
         RefreshTickChests(farm);
@@ -357,8 +383,8 @@ public class FarmingPotChestsHandler
         {
             if (evt.Kind == PotTreasureHintKind.BonusOffer)
             {
-                // Optional second chest — keep farming while Cache Me remains.
                 farm.HintRevisionBaseline = evt.Revision;
+                SwitchToRerollPool(farm);
                 return;
             }
 
@@ -450,6 +476,7 @@ public class FarmingPotChestsHandler
 
             if (evt.Kind == PotTreasureHintKind.BonusOffer)
             {
+                SwitchToRerollPool(farm);
                 return;
             }
 
@@ -874,7 +901,7 @@ public class FarmingPotChestsHandler
         // Remount only for longer walks — not while already on top of a reveal.
         if (allowRemount && player.Position.Distance2D(pathable) > 15f)
         {
-            AutoMount.MaybeRemount(config, conditions, objects, pathable, zones.GetZone().IsInBasecamp());
+            AutoMount.MaybeRemount(movement, conditions, objects, pathable, zones.GetZone().IsInBasecamp());
         }
     }
 
@@ -1084,6 +1111,41 @@ public class FarmingPotChestsHandler
             source,
             survivors[0].Label);
         return true;
+    }
+
+    /// <summary>
+    ///     A second-chance chest hides among the reroll pads, not the FATE's own spots — so the
+    ///     narrowing pool has to swap over wholesale. Without this the offer was acknowledged and
+    ///     discarded, and the search carried on among spots the chest could not be at, which is why
+    ///     rerolls looked like "it just keeps walking the normal route" (#188).
+    ///     Those pads sit in remote second-chance areas, so this depends on the route planner being
+    ///     able to teleport; walking 250-500y would spend the rest of the buff getting there.
+    /// </summary>
+    private void SwitchToRerollPool(PotChestFarmMemory farm)
+    {
+        if (!ShouldIncludeRerolls || farm.OnRerollPool)
+        {
+            return;
+        }
+
+        List<PotTreasureCandidate> reroll = PotTreasureFilter.BuildRerollPool(zones.GetZone());
+        if (reroll.Count == 0)
+        {
+            logger.Warning("Pot treasure: reroll offered but this zone has no authored reroll pads");
+            return;
+        }
+
+        farm.OnRerollPool = true;
+        farm.SeedPool(reroll);
+
+        // Seed with all of them; the next compass reading narrows within the reroll set.
+        farm.NarrowTo(reroll);
+        ResetApproachWatch();
+        ClearTravelPlan();
+
+        logger.Info(
+            "Pot treasure: second chest offered — switching to {Count} reroll pad(s)",
+            reroll.Count);
     }
 
     /// <summary>Same opt-in the blind sweep uses, so pool and sweep cover the same pads.</summary>

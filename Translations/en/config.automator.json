@@ -36,19 +36,6 @@
       "label": "Combat autorotation",
       "tooltip": "Which autorotation to use in FATEs and CEs. Off while traveling. None = you fight."
     },
-    "should_auto_mount": {
-      "label": "Mount while traveling",
-      "tooltip": "Mount for long trips to a FATE or CE, and remount if you get off mid-way."
-    },
-    "preferred_mount_id": {
-      "label": "Preferred mount",
-      "roulette": "Mount Roulette",
-      "search": "Search mounts..."
-    },
-    "sprint_on_aetheryte_approach": {
-      "label": "Sprint to aetherytes",
-      "tooltip": "Use Sprint when walking up to an aetheryte."
-    },
     "stay_mounted_while_waiting_for_ce": {
       "label": "Stay mounted while waiting for CEs",
       "tooltip": "Stay on your mount after you arrive at a CE that is still preparing."
@@ -90,6 +77,10 @@
     "auto_repair_threshold": {
       "label": "Repair gear below (%)",
       "tooltip": "At base camp, repair any equipped piece at or below this durability."
+    },
+    "enable_automatic_treasure_hunt_during_illegal_mode": {
+      "label": "Auto treasure hunt in Illegal Mode",
+      "tooltip": "After a FATE or CE, Return to camp, cast Treasure Sight if you know it, then hunt remaining coffers."
     }
   }
 }

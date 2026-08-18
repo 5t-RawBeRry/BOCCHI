@@ -38,6 +38,7 @@ public sealed class CarrotHunterService
     TreasureConfig treasureConfig,
     UIConfig uiConfig,
     AutomatorConfig automatorConfig,
+    MovementConfig movementConfig,
     IPlayer player,
     ICondition conditions,
     IObjectTable objects,
@@ -1483,8 +1484,8 @@ public sealed class CarrotHunterService
             conditions,
             objects,
             destination,
-            automatorConfig.ShouldAutoMount,
-            automatorConfig.PreferredMountId,
+            movementConfig.ShouldAutoMount,
+            movementConfig.PreferredMountId,
             inBaseCamp: false);
     }
 

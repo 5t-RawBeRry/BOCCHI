@@ -36,19 +36,6 @@
       "label": "戦闘オートローテーション",
       "tooltip": "FATE / CE で使うオートローテーションです。移動中はオフ。None は自分で戦う。"
     },
-    "should_auto_mount": {
-      "label": "移動中はマウント",
-      "tooltip": "FATE や CE への長い移動でマウントし、途中で降りたら乗り直します。"
-    },
-    "preferred_mount_id": {
-      "label": "使うマウント",
-      "roulette": "マウントルーレット",
-      "search": "マウントを検索..."
-    },
-    "sprint_on_aetheryte_approach": {
-      "label": "エーテライトへスプリント",
-      "tooltip": "エーテライトへ歩いて近づくときスプリントを使います。"
-    },
     "stay_mounted_while_waiting_for_ce": {
       "label": "CE 待機中はマウントしたまま",
       "tooltip": "準備中の CE に着いてもマウントしたままです。"
@@ -90,6 +77,10 @@
     "auto_repair_threshold": {
       "label": "この耐久以下で修理（%）",
       "tooltip": "ベースキャンプで、装備中の部位がこの耐久以下なら修理します。"
+    },
+    "enable_automatic_treasure_hunt_during_illegal_mode": {
+      "label": "不正モードで自動トレジャーハント",
+      "tooltip": "FATE / CE のあとキャンプへ戻り、サイトを覚えていれば唱え、残りの宝箱をハントします。"
     }
   }
 }

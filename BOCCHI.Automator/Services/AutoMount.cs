@@ -9,7 +9,7 @@ namespace BOCCHI.Automator.Services;
 public static class AutoMount
 {
     public static void MaybeRemount(
-        AutomatorConfig config,
+        MovementConfig config,
         ICondition conditions,
         IObjectTable objects,
         Vector3 destination,

@@ -10,17 +10,30 @@ namespace BOCCHI.Treasure.Hunt;
 public static class TreasureHuntPathOverrides
 {
     /// <summary>
-    ///     Pads vnav cannot path to (need a jump). Left in treasure_route.json so deleting an
-    ///     entry here re-enables the pad.
+    ///     Pads vnav cannot path to at all. Empty now: the Wanderer's Haven ledge pad (SH 1842) is
+    ///     reachable again because vnav does path toward it and simply pins the character against
+    ///     the ledge, which <see cref="Common.Services.StuckJumpAssist"/> now clears with a hop.
+    ///     Only list a pad here if vnav genuinely cannot route to it — a pad that is merely awkward
+    ///     is better left in, since the stuck watch skips it for that run anyway.
+    ///     Pads stay in treasure_route.json either way, so adding or removing an entry here is the
+    ///     only change needed.
     /// </summary>
-    private static readonly HashSet<(ZoneId Zone, uint NodeId)> UnreachableNodes =
+    private static readonly HashSet<(ZoneId Zone, uint NodeId)> UnreachableNodes = [];
+
+    /// <summary>
+    ///     Visit on the authored route only — peel-off takes a shortcut that falls (#185).
+    /// </summary>
+    private static readonly HashSet<(ZoneId Zone, uint NodeId)> NoPeelNodes =
     [
-        // South Horn, wanderers-haven pad 2 — ledge at (-884.1, 3.8, -682.0), needs a short hop up.
-        (ZoneId.SouthHorn, 1842u),
+        // North Horn Unhallowed Hamlet basement — stairs down from 2053. Authored order is fine.
+        (ZoneId.NorthHorn, 2072u),
     ];
 
     /// <summary>True when this pad is knowingly unreachable and must be left out of the route.</summary>
     public static bool IsUnreachable(ZoneId zone, uint nodeId) => UnreachableNodes.Contains((zone, nodeId));
+
+    /// <summary>True when radar must not divert onto this pad; the authored walk still visits it.</summary>
+    public static bool ShouldNotPeel(ZoneId zone, uint nodeId) => NoPeelNodes.Contains((zone, nodeId));
 
     /// <summary>Reach before opening the coffer.</summary>
     private static readonly Dictionary<(ZoneId Zone, uint NodeId), Vector3[]> ApproachByNode = new()

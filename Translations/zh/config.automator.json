@@ -36,19 +36,6 @@
       "label": "战斗自动循环",
       "tooltip": "危命/紧急遭遇战使用哪个自动循环。赶路时关闭。None 为手动战斗。"
     },
-    "should_auto_mount": {
-      "label": "赶路时上坐骑",
-      "tooltip": "长距离前往危命任务或紧急遭遇战时上坐骑；途中若下了坐骑，会重新上坐骑。"
-    },
-    "preferred_mount_id": {
-      "label": "偏好坐骑",
-      "roulette": "坐骑轮盘",
-      "search": "搜索坐骑……"
-    },
-    "sprint_on_aetheryte_approach": {
-      "label": "前往以太之光时冲刺",
-      "tooltip": "步行接近以太之光时使用冲刺。"
-    },
     "stay_mounted_while_waiting_for_ce": {
       "label": "等待紧急遭遇战时保持坐骑",
       "tooltip": "抵达仍在准备中的紧急遭遇战后保持坐骑。"
@@ -90,6 +77,10 @@
     "auto_repair_threshold": {
       "label": "耐久低于（%）时修理",
       "tooltip": "在调查队营地，修理任意一件耐久达到或低于该数值的已装备部件。"
+    },
+    "enable_automatic_treasure_hunt_during_illegal_mode": {
+      "label": "违规模式中自动寻宝",
+      "tooltip": "危命/紧急遭遇结束后返回营地，会魔寻宝则使用，然后搜寻剩余宝箱。"
     }
   }
 }

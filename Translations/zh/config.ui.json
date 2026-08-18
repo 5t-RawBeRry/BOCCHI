@@ -33,14 +33,6 @@
       "label": "显示货币图表",
       "tooltip": "在统计面板下方显示货币图表。"
     },
-    "tracked_duration": {
-      "label": "历史长度（分钟）",
-      "tooltip": "统计功能保留多少分钟的历史数据。"
-    },
-    "graph_bucket_size": {
-      "label": "图表步进（秒）",
-      "tooltip": "图表上每个柱／点覆盖多少秒。"
-    },
     "show_world_section": {
       "label": "显示危命任务与紧急遭遇战列表",
       "tooltip": "在主窗口中显示进行中的危命任务与紧急遭遇战。"

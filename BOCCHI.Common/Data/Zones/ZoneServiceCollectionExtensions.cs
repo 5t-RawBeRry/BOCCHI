@@ -10,6 +10,7 @@ public static class ZoneServiceCollectionExtensions
         services.AddSingleton<IZoneProvider, ZoneProvider>();
         services.AddSingleton<IPotCycleTracker, PotCycleTracker>();
         services.AddSingleton<PotCycleSyncService>();
+        services.AddSingleton<StuckJumpAssist>();
         return services;
     }
 

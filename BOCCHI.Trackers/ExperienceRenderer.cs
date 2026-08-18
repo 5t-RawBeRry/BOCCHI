@@ -1,4 +1,5 @@
 ﻿using BOCCHI.Common;
+using BOCCHI.Common.Data;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.UI;
@@ -43,7 +44,7 @@ public class ExperienceRenderer
             ui,
             translator.T(".trackers.experience.per_hour"),
             tracker.ExperiencePerHour,
-            tracker.GetExperienceHistory(TimeSpan.FromSeconds(uiConfig.GraphBucketSize)),
+            tracker.GetExperienceHistory(DeltaRateTracker.DefaultGraphBucket),
             "##xp_history",
             uiConfig.ShowExperienceTrackerGraph
         );

@@ -16,5 +16,8 @@
   },
   "dependencies": {
     "label": "依赖"
+  },
+  "movement": {
+    "label": "移动"
   }
 }

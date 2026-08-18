@@ -34,6 +34,7 @@ public class ActivityNavigation
     IPlayer player,
     IFramework framework,
     AutomatorConfig automatorConfig,
+    MovementConfig movementConfig,
     ILogger<ActivityNavigation> logger
 ) : IActivityNavigation
 {
@@ -88,24 +89,45 @@ public class ActivityNavigation
         _ = TeleportOnlyAsync(destination, name, id, generation);
     }
 
+    /// <summary>Horizontal slack when snapping a survey point onto the navmesh.</summary>
+    private const float SurveySnapExtentXZ = 5f;
+
     /// <summary>
-    ///     Authored survey coords often use Y=0; seed altitude via floor query from Y=1024.
+    ///     Vertical search range for a survey point. Generous because the authored coordinate
+    ///     carries no altitude at all — only XZ, which comes straight from the map and is exact.
+    /// </summary>
+    private const float SurveySnapExtentY = 200f;
+
+    /// <summary>
+    ///     Authored survey coords carry XZ only (Y is 0), so the altitude has to be recovered.
+    ///     <para>
+    ///     This used to query <c>PointOnFloor</c> from Y=1024. That call searches beneath the point
+    ///     but takes no vertical extent, so from a kilometre up it never reached the ground and
+    ///     returned its own input — which failed the "did it move?" test and dropped every survey
+    ///     onto the fallback altitude below. The fallback was the nearest aetheryte's Y, which has
+    ///     nothing to do with the destination, so the flag landed correctly while the path did not.
+    ///     </para>
+    ///     <c>NearestPoint</c> takes an explicit vertical half-extent, which is the right tool when
+    ///     only Y is unknown.
     /// </summary>
     private Vector3 SeedDestinationAltitude(Vector3 destination)
     {
-        Vector3 fromHigh = new(destination.X, 1024f, destination.Z);
-        Vector3 floored = vnav.FindPointOnFloor(fromHigh, 5f);
-        if (MathF.Abs(floored.Y - 1024f) > 1f)
+        // Start from our own altitude: same zone, definitively on walkable ground, and far closer
+        // to any survey point than 1024 is.
+        Vector3 seed = new(destination.X, player.Position.Y, destination.Z);
+
+        Vector3 onMesh = vnav.FindPointOnMesh(seed, SurveySnapExtentXZ, SurveySnapExtentY);
+        if (onMesh != seed)
         {
-            return floored;
+            Vector3 floored = vnav.FindPointOnFloor(onMesh, SurveySnapExtentXZ);
+            return floored != onMesh ? floored : onMesh;
         }
 
-        IZone zone = zones.GetZone();
-        AethernetData? near = zone.GetAetherytes()
-            .OrderBy(a => destination.Distance2D(a.Position))
-            .FirstOrDefault();
-        float y = near?.Position.Y ?? player.Position.Y;
-        return new Vector3(destination.X, y, destination.Z);
+        logger.Warning(
+            "Survey point {Pos:F0}: no navmesh within {Extent:F0}y vertically — pathing with our own altitude",
+            destination,
+            SurveySnapExtentY);
+        return seed;
     }
 
     private void StartPath(Vector3 destination, string name, string id, bool treatAsActivity)
@@ -452,7 +474,7 @@ public class ActivityNavigation
                     lifestream,
                     logger,
                     target.Id,
-                    automatorConfig.SprintOnAetheryteApproach);
+                    movementConfig.SprintOnAetheryteApproach);
 
                 _ = manager.Manage(chain);
             }).ConfigureAwait(false);
@@ -496,7 +518,7 @@ public class ActivityNavigation
             lifestream,
             logger,
             target.Id,
-            automatorConfig.SprintOnAetheryteApproach);
+            movementConfig.SprintOnAetheryteApproach);
 
         _ = manager.Manage(AppendPath(chain, chainName, walkTo, treatAsActivity));
     }
@@ -548,8 +570,8 @@ public class ActivityNavigation
                     conditions,
                     objects,
                     dest,
-                    automatorConfig.ShouldAutoMount,
-                    automatorConfig.PreferredMountId,
+                    movementConfig.ShouldAutoMount,
+                    movementConfig.PreferredMountId,
                     inBaseCamp);
             },
         });

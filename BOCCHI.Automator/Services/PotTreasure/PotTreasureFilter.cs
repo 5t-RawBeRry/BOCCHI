@@ -75,6 +75,16 @@ public static class PotTreasureFilter
             .ToList();
     }
 
+    /// <summary>
+    ///     The reroll pads, as filter input. A second-chance chest hides among these rather than the
+    ///     FATE's own spots — they sit in remote areas (250y from the nearest pot spot on average in
+    ///     North Horn, up to 515y), so narrowing must switch pools entirely rather than merge them.
+    /// </summary>
+    public static List<PotTreasureCandidate> BuildRerollPool(IZone zone) =>
+        zone.GetRerollPotChestData()
+            .Select((chest, i) => new PotTreasureCandidate($"R{i + 1}", chest.Position, chest.Level))
+            .ToList();
+
     /// <summary>Smart mode needs authored chest spots to narrow; otherwise it can only sweep.</summary>
     public static bool CanRunSmart(IZone zone, int fateId) =>
         zone.IsPotFate(fateId) && zone.GetPotChestData().ContainsKey(fateId);

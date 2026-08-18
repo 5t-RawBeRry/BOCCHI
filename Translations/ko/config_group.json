@@ -16,5 +16,8 @@
   },
   "dependencies": {
     "label": "의존성"
+  },
+  "movement": {
+    "label": "이동"
   }
 }

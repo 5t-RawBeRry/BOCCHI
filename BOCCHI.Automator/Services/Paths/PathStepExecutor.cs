@@ -24,7 +24,8 @@ public class PathStepExecutor
     IGameGui gui,
     IPathfinder pathfinder,
     IVNavmeshIpc vnav,
-    AutomatorConfig config
+    AutomatorConfig config,
+    MovementConfig movement
 ) : IPathStepExecutor
 {
     public Task<ChainResult> Execute(IPathStep step)
@@ -69,8 +70,8 @@ public class PathStepExecutor
                     conditions,
                     objects,
                     destination,
-                    config.ShouldAutoMount,
-                    config.PreferredMountId,
+                    movement.ShouldAutoMount,
+                    movement.PreferredMountId,
                     zones.GetZone().IsInBasecamp()),
             });
     }

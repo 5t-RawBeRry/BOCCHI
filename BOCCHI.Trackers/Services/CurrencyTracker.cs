@@ -18,9 +18,9 @@ public interface ICurrencyTracker
 
 public class CurrencyTracker(UIConfig config) : ICurrencyTracker, IOnUpdate, IOnTerritoryChanged
 {
-    private readonly DeltaRateTracker goldTracker = new(() => TimeSpan.FromMinutes(config.TrackedDuration));
+    private readonly DeltaRateTracker goldTracker = new(() => DeltaRateTracker.DefaultWindow);
 
-    private readonly DeltaRateTracker silverTracker = new(() => TimeSpan.FromMinutes(config.TrackedDuration));
+    private readonly DeltaRateTracker silverTracker = new(() => DeltaRateTracker.DefaultWindow);
 
     /// <summary>A state dropout shorter than this is a blip, not a session gap — keep recording.</summary>
     private static readonly TimeSpan MaxIgnorableGap = TimeSpan.FromSeconds(5);

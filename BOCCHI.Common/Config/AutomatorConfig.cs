@@ -26,19 +26,9 @@ public class AutomatorConfig : IAutoConfig
     /// <summary>
     ///     Illegal Mode combat automation: Wrath/RSR + BOCCHI AI, or full BossMod / BMR autorotation.
     /// </summary>
-    [EnumSelectDisplay<CombatAutorotation, CombatAutorotationDisplay>(Order = 5, Section = "combat")]
+    [EnumSelect<CombatAutorotation, CombatAutorotationDisplay, CombatAutorotationFilter>(Order = 5, Section = "combat")]
     public CombatAutorotation CombatAutorotation { get; set; } = CombatAutorotation.WrathCombo;
 
-    [Checkbox(Order = 6, Section = "travel")]
-    public bool ShouldAutoMount { get; set; } = true;
-
-    /// <summary>Preferred mount sheet row ID. 0 = Mount Roulette.</summary>
-    [MountSelect(Order = 7, Section = "travel")]
-    public uint PreferredMountId { get; set; } = 0;
-
-    /// <summary>Use Sprint on foot when closing in on an aetheryte.</summary>
-    [Checkbox(Order = 8, Section = "travel")]
-    public bool SprintOnAetheryteApproach { get; set; } = true;
 
     /// <summary>
     ///     Stay mounted while a CE is preparing; dismount when it starts.
@@ -74,6 +64,14 @@ public class AutomatorConfig : IAutoConfig
     ///     Session hint for Completionist UI (run mode is the source of truth while active).
     /// </summary>
     public bool EnableCompletionistMode { get; set; } = false;
+
+    /// <summary>
+    ///     Illegal Mode / Completionist: after CE/FATE, Sight (if known) then hunt, or map hunt
+    ///     without Sight. Only Illegal Mode reads this, so it belongs here rather than on the
+    ///     Treasure page where people configuring Illegal Mode would not find it.
+    /// </summary>
+    [Checkbox(Order = 13, Section = "treasure")]
+    public bool EnableAutomaticTreasureHuntDuringIllegalMode { get; set; } = false;
 
     [Checkbox(Order = 14, Section = "treasure")]
     public bool ShouldCastTreasureSight { get; set; } = false;

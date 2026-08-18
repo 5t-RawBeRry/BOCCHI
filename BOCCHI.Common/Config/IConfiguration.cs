@@ -9,6 +9,8 @@ public interface IConfiguration : IPluginConfiguration
 
     AutomatorConfig AutomatorConfig { get; set; }
 
+    MovementConfig MovementConfig { get; set; }
+
     BuffConfig BuffConfig { get; set; }
 
     MobFarmerConfig MobFarmerConfig { get; set; }

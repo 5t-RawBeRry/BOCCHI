@@ -29,6 +29,7 @@ public class PathfindingHandler
     ITargetManager targetManager,
     IZoneProvider zones,
     AutomatorConfig config,
+    MovementConfig movement,
     UIConfig uiConfig,
     ICondition conditions,
     IChatGui chat,
@@ -141,7 +142,7 @@ public class PathfindingHandler
             if (path.GetNextPathStep()?.PathStepData is Pathfind(var destination, _))
             {
                 AutoMount.MaybeRemount(
-                    config,
+                    movement,
                     conditions,
                     objects,
                     destination,
@@ -267,7 +268,7 @@ public class PathfindingHandler
 
     private void BeginMountThenPause(string reason)
     {
-        if (!config.ShouldAutoMount || conditions[ConditionFlag.Mounted])
+        if (!movement.ShouldAutoMount || conditions[ConditionFlag.Mounted])
         {
             PauseForManualPathing(reason);
             return;
@@ -277,7 +278,7 @@ public class PathfindingHandler
         mountBeforePauseDeadline = DateTime.UtcNow + MountBeforePauseTimeout;
         if (!conditions[ConditionFlag.Mounting])
         {
-            MountWait.TryCast(config.PreferredMountId);
+            MountWait.TryCast(movement.PreferredMountId);
         }
     }
 
@@ -290,7 +291,7 @@ public class PathfindingHandler
         }
 
         if (conditions[ConditionFlag.Mounted]
-            || !config.ShouldAutoMount
+            || !movement.ShouldAutoMount
             || DateTime.UtcNow >= mountBeforePauseDeadline)
         {
             string reason = pendingPauseReason;
@@ -302,7 +303,7 @@ public class PathfindingHandler
         if (!conditions[ConditionFlag.Mounting]
             && EzThrottler.Throttle("Pathfinding::MountBeforePause", 750))
         {
-            MountWait.TryCast(config.PreferredMountId);
+            MountWait.TryCast(movement.PreferredMountId);
         }
 
         return true;

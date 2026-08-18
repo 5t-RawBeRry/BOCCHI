@@ -42,6 +42,7 @@ public class TreasureHunterService
 (
     TreasureConfig config,
     AutomatorConfig automatorConfig,
+    MovementConfig movementConfig,
     IZoneProvider zones,
     IVNavmeshIpc vnav,
     IPathfinder pathfinder,
@@ -206,6 +207,13 @@ public class TreasureHunterService
 
             planningRoute = false;
             List<uint> validNodes = GetValidNodesForNextPlan();
+            ZoneId zoneId = zones.GetZone().ZoneId;
+            if (pendingPreferStartNode is uint noPeel
+                && TreasureHuntPathOverrides.ShouldNotPeel(zoneId, noPeel))
+            {
+                pendingPreferStartNode = null;
+            }
+
             if (pendingPreferStartNode is uint preferLatch
                 && !validNodes.Contains(preferLatch)
                 && layoutById.ContainsKey(preferLatch))
@@ -846,6 +854,11 @@ public class TreasureHunterService
                 continue;
             }
 
+            if (TreasureHuntPathOverrides.ShouldNotPeel(zones.GetZone().ZoneId, id))
+            {
+                continue;
+            }
+
             claimedPads.Add(id);
             result.Add(id);
         }
@@ -990,6 +1003,10 @@ public class TreasureHunterService
         }
 
         uint nearbyId = nearby[0];
+        if (TreasureHuntPathOverrides.ShouldNotPeel(zones.GetZone().ZoneId, nearbyId))
+        {
+            return false;
+        }
 
         if (!TryGetLayout(nearbyId, out TreasureLayoutDatum layout))
         {
@@ -1085,6 +1102,9 @@ public class TreasureHunterService
             ids.Remove(current.NodeId);
         }
 
+        ZoneId zoneId = zones.GetZone().ZoneId;
+        ids.RemoveWhere(id => TreasureHuntPathOverrides.ShouldNotPeel(zoneId, id));
+
         int maxLevel = maxLevelOverrideForNextRun ?? config.HuntMaxLevel;
         List<TreasureData> authored = zones.GetZone().GetTreasureData();
         foreach (TreasureLayoutDatum layout in layoutTreasure)
@@ -1096,7 +1116,8 @@ public class TreasureHunterService
 
             if (!MatchesHuntCofferFilter(layout.ModelId)
                 || IsLayoutCofferOpened(layout.Id)
-                || stuckSkippedNodeIds.Contains(layout.Id))
+                || stuckSkippedNodeIds.Contains(layout.Id)
+                || TreasureHuntPathOverrides.ShouldNotPeel(zoneId, layout.Id))
             {
                 continue;
             }
@@ -1540,7 +1561,7 @@ public class TreasureHunterService
 
         if (inCombat && !vnav.IsRunning())
         {
-            SprintAssist.MaybeCast(automatorConfig.SprintOnAetheryteApproach, zone.IsInBasecamp());
+            SprintAssist.MaybeCast(movementConfig.SprintOnAetheryteApproach, zone.IsInBasecamp());
 
             // Don't re-issue while vnav is still computing the path.
             if (!vnav.IsPathfinding())
@@ -1685,8 +1706,8 @@ public class TreasureHunterService
             conditions,
             objects,
             destination,
-            automatorConfig.ShouldAutoMount,
-            automatorConfig.PreferredMountId,
+            movementConfig.ShouldAutoMount,
+            movementConfig.PreferredMountId,
             inBaseCamp: false);
     }
 
@@ -2266,12 +2287,24 @@ public class TreasureHunterService
             return false;
         }
 
+        // IsInBasecamp is a generous radius (CampRadius), so the hunt can finish "at camp" while the
+        // player is most of that distance away — which reads as "it played the sound but never
+        // returned me". Say which check declined, so that case is distinguishable from the others.
         if (zones.GetZone().IsInBasecamp())
         {
+            log.Info(
+                "Treasure hunt: no Return after hunt — already within the base camp radius ({Distance:F0}y from the aetheryte)",
+                player.Position.Distance2D(zones.GetZone().GetAetherytePosition()));
             return false;
         }
 
-        return steps.Count == 0 || steps[^1].Type != HuntPathfinderStepType.ReturnToBaseCamp;
+        if (steps.Count > 0 && steps[^1].Type == HuntPathfinderStepType.ReturnToBaseCamp)
+        {
+            log.Info("Treasure hunt: no Return after hunt — the route already ends with one");
+            return false;
+        }
+
+        return true;
     }
 
     private void EnsureWalkVias(HuntPathfinderStep step)

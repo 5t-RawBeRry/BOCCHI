@@ -28,6 +28,7 @@ public class IdleHandler(
     IVNavmeshIpc vnav,
     IChainManager chains,
     AutomatorConfig config,
+    MovementConfig movement,
     AutoRotationController autoRotation,
     IUIService ui,
     ITranslator<MainWindow> translator
@@ -127,7 +128,7 @@ public class IdleHandler(
         Vector3 target = candidates[idle.ApproachCandidateIndex];
         idle.ApproachCandidateIndex++;
 
-        SprintAssist.MaybeCast(config.SprintOnAetheryteApproach, inBasecamp: true);
+        SprintAssist.MaybeCast(movement.SprintOnAetheryteApproach, inBasecamp: true);
         pathfinder.PathfindAndMoveTo(new PathfinderConfig(target)
         {
             DistanceThreshold = AethernetNavigation.PathfindArrivalRadius,

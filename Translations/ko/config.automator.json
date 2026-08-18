@@ -36,19 +36,6 @@
       "label": "전투 자동 로테이션",
       "tooltip": "돌발·비상 조우에서 쓸 자동 로테이션입니다. 이동 중에는 끔. None은 직접 싸움."
     },
-    "should_auto_mount": {
-      "label": "이동 중 탈것 탑승",
-      "tooltip": "돌발·비상 조우로 가는 긴 이동에 탑승하고, 중간에 내리면 다시 탑니다."
-    },
-    "preferred_mount_id": {
-      "label": "선호 탈것",
-      "roulette": "탈것 룰렛",
-      "search": "탈것 검색..."
-    },
-    "sprint_on_aetheryte_approach": {
-      "label": "에테라이트로 전력 질주",
-      "tooltip": "에테라이트로 걸어갈 때 전력 질주를 씁니다."
-    },
     "stay_mounted_while_waiting_for_ce": {
       "label": "비상 조우 대기 중 탈것 유지",
       "tooltip": "준비 중인 비상 조우에 도착해도 탈것을 유지합니다."
@@ -90,6 +77,10 @@
     "auto_repair_threshold": {
       "label": "이 내구도 이하에서 수리(%)",
       "tooltip": "베이스캠프에서, 장착 장비가 이 내구도 이하면 수리합니다."
+    },
+    "enable_automatic_treasure_hunt_during_illegal_mode": {
+      "label": "자동 모드 자동 보물 찾기",
+      "tooltip": "돌발/비상 조우 후 캠프로 귀환하고, 마기 보물 탐색을 알고 있으면 사용한 뒤 남은 상자를 찾습니다."
     }
   }
 }

@@ -57,10 +57,6 @@
       "label": "跳过危险天气／妖灵",
       "tooltip": "在新月岛南部的妖灵或其他危险天气时段暂停寻宝。"
     },
-    "enable_automatic_treasure_hunt_during_illegal_mode": {
-      "label": "违规模式中自动寻宝",
-      "tooltip": "危命/紧急遭遇结束后返回营地，会魔寻宝则使用，然后搜寻剩余宝箱。"
-    },
     "use_ninja_hide_on_dangerous_routes": {
       "label": "强敌附近使用忍者隐遁",
       "tooltip": "附近有高知见敌人时，切换到忍者、使用隐遁，再步行接近宝箱的最后一段。"

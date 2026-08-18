@@ -16,5 +16,8 @@
   },
   "dependencies": {
     "label": "依存関係"
+  },
+  "movement": {
+    "label": "移動"
   }
 }

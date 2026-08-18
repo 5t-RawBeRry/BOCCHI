@@ -18,6 +18,7 @@ public class FightingHandler
 (
     MobFarmerConfig config,
     AutomatorConfig automatorConfig,
+    MovementConfig movementConfig,
     IMobFarmer farmer,
     IMobScanner scanner,
     ITargetManager targets,
@@ -61,8 +62,8 @@ public class FightingHandler
                 conditions,
                 objects,
                 farmer.StartingPoint,
-                automatorConfig.ShouldAutoMount,
-                automatorConfig.PreferredMountId,
+                movementConfig.ShouldAutoMount,
+                movementConfig.PreferredMountId,
                 zones.GetZone().IsInBasecamp());
 
             return player.Position.Distance2D(farmer.StartingPoint) <= 2f ? FarmerPhase.Waiting : null;

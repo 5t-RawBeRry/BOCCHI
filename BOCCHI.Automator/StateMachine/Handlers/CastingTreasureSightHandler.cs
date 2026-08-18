@@ -22,6 +22,7 @@ public class CastingTreasureSightHandler
     IAutomatorMemory memory,
     AutomatorConfig config,
     TreasureConfig treasureConfig,
+    AutomatorConfig automatorConfig,
     ITreasureTracker tracker
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.CastingTreasureSight)
 {
@@ -51,7 +52,7 @@ public class CastingTreasureSightHandler
         }
 
         // Post-activity survey latch owns Sight while auto-hunt is enabled.
-        if (treasureConfig.EnableAutomaticTreasureHuntDuringIllegalMode
+        if (automatorConfig.EnableAutomaticTreasureHuntDuringIllegalMode
             && memory.TryRemember<AutomaticTreasureSurveyMemory>(out AutomaticTreasureSurveyMemory survey)
             && survey.PendingSurvey
             && !survey.WaitingForSurveyResult)
@@ -60,7 +61,7 @@ public class CastingTreasureSightHandler
         }
 
         // Periodic basecamp Sight only when auto-hunt is off (latch replaces it otherwise).
-        if (!treasureConfig.EnableAutomaticTreasureHuntDuringIllegalMode
+        if (!automatorConfig.EnableAutomaticTreasureHuntDuringIllegalMode
             && config.ShouldCastTreasureSight
             && GetLastCastDeltaSeconds() >= config.TreasureSightRecastIntervalSeconds)
         {

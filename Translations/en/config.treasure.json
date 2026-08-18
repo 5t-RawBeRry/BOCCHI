@@ -57,10 +57,6 @@
       "label": "Skip dangerous weather / Ashkin",
       "tooltip": "Pause Treasure Hunt on South Horn during Ashkin or other unsafe weather windows."
     },
-    "enable_automatic_treasure_hunt_during_illegal_mode": {
-      "label": "Auto treasure hunt in Illegal Mode",
-      "tooltip": "After a FATE or CE, Return to camp, cast Treasure Sight if you know it, then hunt remaining coffers."
-    },
     "use_ninja_hide_on_dangerous_routes": {
       "label": "Ninja Hide near strong enemies",
       "tooltip": "Near a high-Knowledge enemy, swap to Ninja, Hide, and walk the last stretch to the coffer."

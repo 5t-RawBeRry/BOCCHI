@@ -57,10 +57,6 @@
       "label": "위험 날씨 / 불사류 몬스터 건너뛰기",
       "tooltip": "남부에서 불사류 몬스터나 그 밖의 위험한 날씨 구간에는 보물 찾기를 잠시 멈춥니다."
     },
-    "enable_automatic_treasure_hunt_during_illegal_mode": {
-      "label": "자동 모드 자동 보물 찾기",
-      "tooltip": "돌발/비상 조우 후 캠프로 귀환하고, 마기 보물 탐색을 알고 있으면 사용한 뒤 남은 상자를 찾습니다."
-    },
     "use_ninja_hide_on_dangerous_routes": {
       "label": "강한 적 근처에서 닌자 은신",
       "tooltip": "지식이 높은 적이 가까우면 닌자로 바꾸고, 은신을 사용한 뒤 마지막 구간을 걸어 상자로 갑니다."

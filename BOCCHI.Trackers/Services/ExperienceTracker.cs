@@ -19,7 +19,7 @@ public class ExperienceTracker
     ISupportJobFactory supportJobs
 ) : IExperienceTracker, IOnUpdate
 {
-    private readonly DeltaRateTracker tracker = new(() => TimeSpan.FromMinutes(config.TrackedDuration));
+    private readonly DeltaRateTracker tracker = new(() => DeltaRateTracker.DefaultWindow);
 
     public double ExperiencePerHour => tracker.PerHour;
 

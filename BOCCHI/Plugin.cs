@@ -85,7 +85,7 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<UILanguageDisplay>();
         services.AddSingleton<NoOpFilter<UILanguage>>();
         services.AddSingleton<CombatAutorotationDisplay>();
-        services.AddSingleton<NoOpFilter<CombatAutorotation>>();
+        services.AddSingleton<CombatAutorotationFilter>();
         services.AddSingleton<IFieldRenderer<TriageRaiseJobAttribute>, TriageRaiseJobRenderer>();
 
         services.AddSingleton<MessageOfTheDayService>();
@@ -150,6 +150,7 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         Configuration cfg = plugin.GetPluginConfig() as Configuration ?? new Configuration();
         EnsureAutoConfigInstances(cfg);
         EnsureConfigDefaults(cfg);
+        SanitizeCombatAutorotation(cfg.AutomatorConfig, plugin, logger);
 
         if (cfg.AutomatorConfig.StopAfterReturn)
         {
@@ -212,12 +213,44 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         SanitizeAutomatorConfig(cfg.AutomatorConfig);
         SanitizeTreasureConfig(cfg.TreasureConfig);
         SanitizeBuffConfig(cfg.BuffConfig);
-        SanitizeUIConfig(cfg.UIConfig);
     }
 
     /// <summary>
     ///     UI ranges are not enforced on load — early/partial JSON can leave delays that look like stuck pathing.
     /// </summary>
+    /// <summary>
+    ///     Drop a combat backend whose plugin has been uninstalled. Deliberately keyed on
+    ///     <see cref="IDalamudPluginInterface.InstalledPlugins"/> rather than "is it loaded": load
+    ///     order is not guaranteed, so a plugin that simply has not initialised yet would otherwise
+    ///     look absent and we would silently reset a perfectly good setting. Not installed at all is
+    ///     unambiguous.
+    /// </summary>
+    private static void SanitizeCombatAutorotation(
+        AutomatorConfig automator,
+        IDalamudPluginInterface plugin,
+        IPluginLog logger)
+    {
+        string? required = automator.CombatAutorotation switch
+        {
+            CombatAutorotation.WrathCombo => "WrathCombo",
+            CombatAutorotation.RotationSolverReborn => "RotationSolver",
+            CombatAutorotation.BossMod => "BossMod",
+            CombatAutorotation.BossModReborn => "BossModReborn",
+            _ => null,
+        };
+
+        if (required == null || plugin.InstalledPlugins.Any(p => p.InternalName == required))
+        {
+            return;
+        }
+
+        logger.Info(
+            "Illegal Mode combat was set to {Backend}, but {Plugin} is not installed — falling back to None.",
+            automator.CombatAutorotation,
+            required);
+        automator.CombatAutorotation = CombatAutorotation.None;
+    }
+
     private static void SanitizeAutomatorConfig(AutomatorConfig automator)
     {
         automator.MaxRemoteIdleTimeSeconds = Math.Clamp(automator.MaxRemoteIdleTimeSeconds, 2, 60);
@@ -238,9 +271,4 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         buff.ReapplyThreshold = Math.Clamp(buff.ReapplyThreshold, 0, 25);
     }
 
-    private static void SanitizeUIConfig(UIConfig ui)
-    {
-        ui.TrackedDuration = Math.Clamp(ui.TrackedDuration, 1, 180);
-        ui.GraphBucketSize = Math.Clamp(ui.GraphBucketSize, 1, 60);
-    }
 }

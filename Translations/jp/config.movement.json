@@ -1,0 +1,31 @@
+{
+  "label": "移動",
+  "tooltip": "マウント、スプリント、スタック解除。イリーガルモード、トレジャーハント、キャロットハント、モブファーマーのすべての移動に適用されます。",
+  "sections": {
+    "mount": "マウント・スプリント",
+    "unstuck": "スタック解除"
+  },
+  "fields": {
+    "sprint_on_aetheryte_approach": {
+      "label": "エーテライトへスプリント",
+      "tooltip": "エーテライトへ歩いて近づくときスプリントを使います。"
+    },
+    "should_auto_mount": {
+      "label": "移動中はマウント",
+      "tooltip": "FATE や CE への長い移動でマウントし、途中で降りたら乗り直します。"
+    },
+    "preferred_mount_id": {
+      "label": "使うマウント",
+      "roulette": "マウントルーレット",
+      "search": "マウントを検索..."
+    },
+    "should_jump_when_stuck": {
+      "label": "スタック時にジャンプ",
+      "tooltip": "岩・段差・階段で動けなくなったときにジャンプします。すべての移動に適用されます。"
+    },
+    "jump_when_stuck_seconds": {
+      "label": "ジャンプまでの秒数",
+      "tooltip": "動かない状態がこの秒数続くとジャンプします。"
+    }
+  }
+}

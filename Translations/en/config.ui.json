@@ -33,14 +33,6 @@
       "label": "Show currency graph",
       "tooltip": "Show the currency graph under the tracker."
     },
-    "tracked_duration": {
-      "label": "History length (minutes)",
-      "tooltip": "How many minutes of past data the trackers keep."
-    },
-    "graph_bucket_size": {
-      "label": "Graph step size (seconds)",
-      "tooltip": "Each bar/point on the graph covers this many seconds."
-    },
     "show_world_section": {
       "label": "Show FATEs & CEs list",
       "tooltip": "Show active FATEs and Critical Encounters in the main window."

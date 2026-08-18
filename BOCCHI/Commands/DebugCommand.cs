@@ -2,11 +2,13 @@ using System.Globalization;
 using System.Numerics;
 using Dalamud.Game.ClientState.Objects.Types;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using Lumina.Excel.Sheets;
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Zones;
+using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Common.Services;
 using BOCCHI.Debug;
 using Dalamud.Plugin.Services;
@@ -16,6 +18,7 @@ using Ocelot.Services.Commands;
 using Ocelot.Services.PlayerState;
 using Ocelot.Services.Translation;
 using DalamudObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
+using GameDynamicEvent = FFXIVClientStructs.FFXIV.Client.Game.InstanceContent.DynamicEvent;
 
 namespace BOCCHI.Commands;
 
@@ -73,8 +76,11 @@ public unsafe class DebugCommand
             case "currency":
                 PrintCurrency();
                 break;
+            case "ce":
+                PrintCriticalEncounterMeasurement();
+                break;
             default:
-                chat.PrintError("Usage: /bocchi debug [open|close|toggle|ai-preset|pos|chests|instance|currency]");
+                chat.PrintError("Usage: /bocchi debug [open|close|toggle|ai-preset|pos|chests|instance|currency|ce]");
                 break;
         }
     }
@@ -93,6 +99,102 @@ public unsafe class DebugCommand
             ui == null
                 ? "UIState unavailable."
                 : $"IsInstancedArea={ui->PublicInstance.IsInstancedArea()} InstanceId={ui->PublicInstance.InstanceId}");
+    }
+
+    /// <summary>
+    ///     Measure a Critical Encounter's real registration area. Stand on the blue rim and run this
+    ///     at a few points around it; the largest reading is the radius to author.
+    ///     <para>
+    ///     Needed because every CE radius is hand-authored and most are still the default 20y, while
+    ///     the game exposes no geometry to read instead — neither DynamicEvent nor MycDynamicEvent
+    ///     carries a position or radius. A CE whose real ring is wider than the authored value gets
+    ///     you repathed inward while you are legitimately already inside it.
+    ///     </para>
+    /// </summary>
+    private void PrintCriticalEncounterMeasurement()
+    {
+        List<ActivityData> encounters = zones.GetZone().GetCriticalEncounterData();
+        if (encounters.Count == 0)
+        {
+            BocchiChat.Print(chat, uiConfig, "No authored Critical Encounters in this zone.");
+            return;
+        }
+
+        Vector3 me = player.Position;
+        ActivityData nearest = encounters.MinBy(ce => Flat(me, ce.Position))!;
+
+        float dx = MathF.Abs(me.X - nearest.Position.X);
+        float dz = MathF.Abs(me.Z - nearest.Position.Z);
+        float circle = Flat(me, nearest.Position);
+        float square = MathF.Max(dx, dz);
+        float authored = nearest.CombatRadius ?? 0f;
+        float measured = nearest.AreaShape == ActivityAreaShape.Square ? square : circle;
+
+        BocchiChat.Print(
+            chat,
+            uiConfig,
+            $"CE {nearest.Id} ({nearest.AreaShape}) centre <{nearest.Position.X:0.#}, {nearest.Position.Z:0.#}>  authored {authored:0.#}y");
+        BocchiChat.Print(
+            chat,
+            uiConfig,
+            $"  you are {measured:0.#}y out (circle {circle:0.#}y / square half-extent {square:0.#}y)"
+            + $"  → {(measured > authored ? "OUTSIDE" : "inside")} the authored area");
+        // InvariantCulture: this line is meant to be pasted into source, and a locale decimal comma
+        // turns "29.8f" into "29,8f" — which reads as two arguments and will not compile.
+        BocchiChat.Print(
+            chat,
+            uiConfig,
+            "  " + string.Format(
+                CultureInfo.InvariantCulture,
+                "new({0}, new({1:0.###}f, {2:0.###}f, {3:0.###}f), {4:0.#}f),",
+                nearest.Id,
+                nearest.Position.X,
+                nearest.Position.Y,
+                nearest.Position.Z,
+                measured));
+
+        PrintLiveEventGeometry();
+    }
+
+    /// <summary>
+    ///     Report the centre and radius the game itself holds for each live Critical Encounter.
+    ///     <c>DynamicEvent.MapMarker</c> carries both, so if these agree with what we author by hand
+    ///     the whole authored table could be replaced by reading this at runtime — no measuring, and
+    ///     no drift when a zone is adjusted.
+    /// </summary>
+    private void PrintLiveEventGeometry()
+    {
+        PublicContentOccultCrescent* content = PublicContentOccultCrescent.GetInstance();
+        if (content == null)
+        {
+            BocchiChat.Print(chat, uiConfig, "  (Occult content director unavailable — no live event data)");
+            return;
+        }
+
+        BocchiChat.Print(chat, uiConfig, "Live DynamicEvent markers (id / state / centre / radius):");
+        ref DynamicEventContainer container = ref content->DynamicEventContainer;
+
+        var any = false;
+        for (var i = 0; i < container.Events.Length; i++)
+        {
+            GameDynamicEvent evt = container.Events[i];
+            if (evt.DynamicEventId == 0)
+            {
+                continue;
+            }
+
+            any = true;
+            BocchiChat.Print(
+                chat,
+                uiConfig,
+                $"  {evt.DynamicEventId}  {evt.State}  "
+                + $"<{evt.MapMarker.Position.X:0.#}, {evt.MapMarker.Position.Z:0.#}>  r={evt.MapMarker.Radius:0.#}y");
+        }
+
+        if (!any)
+        {
+            BocchiChat.Print(chat, uiConfig, "  (no events populated right now)");
+        }
     }
 
     /// <summary>

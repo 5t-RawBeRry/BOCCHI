@@ -1,4 +1,5 @@
 ﻿using BOCCHI.Common;
+using BOCCHI.Common.Data;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.UI;
 using BOCCHI.Currency.Services;
@@ -27,7 +28,7 @@ public class CurrencyRenderer
             return;
         }
 
-        TimeSpan graphBucketSize = TimeSpan.FromSeconds(uiConfig.GraphBucketSize);
+        TimeSpan graphBucketSize = DeltaRateTracker.DefaultGraphBucket;
 
         TrackerRateRenderer.RenderPerHour(
             ui,
