@@ -335,7 +335,14 @@ public class FarmingPotChestsHandler
         float distance = player.Position.Distance2D(reveal.Position);
         if (distance > OpenTreasureCofferChain.InteractDistance)
         {
-            EnsurePathing(reveal.Position, allowRemount: false, skipIfOffMesh: false);
+            if (!EnsurePathing(reveal.Position, allowRemount: false))
+            {
+                logger.Warning(
+                    "Pot treasure: no navmesh at revealed coffer {Pos:F0} — giving up on it",
+                    reveal.Position);
+                return false;
+            }
+
             return true;
         }
 
@@ -601,12 +608,9 @@ public class FarmingPotChestsHandler
     }
 
     /// <summary>
-    ///     Stuck means "vnav cannot get us there", and the signal for that is vnav being idle while
-    ///     we are still short of the target — not straight-line distance failing to shrink. A long
-    ///     route around terrain legitimately moves away from the goal for a while, and the old
-    ///     distance timer read that as stuck and threw away reachable pads mid-walk. While vnav is
-    ///     computing or following a path it gets the benefit of the doubt, bounded only by a long
-    ///     backstop for the case where it walks forever without arriving.
+    ///     Stuck means vnav cannot get us there. Long routes may move away from the goal, so only
+    ///     <see cref="PathfindingState.Moving"/> counts as a real path — a Pathfinding/idle loop is
+    ///     the off-mesh retry from #176/#194.
     /// </summary>
     private bool IsApproachStuck(Vector3 target, float distance)
     {
@@ -629,7 +633,9 @@ public class FarmingPotChestsHandler
             return false;
         }
 
-        if (!pathfinder.IsIdle())
+        // Only Moving means vnav actually has a route. Pathfinding+idle looping is the off-mesh
+        // case: EnsurePathing re-issues every 750ms, which used to reset the idle timer forever (#194).
+        if (pathfinder.GetState() == PathfindingState.Moving)
         {
             approachIdleSince = DateTimeOffset.MinValue;
             if (distance < approachBestDist - ApproachProgressThreshold)
@@ -641,8 +647,6 @@ public class FarmingPotChestsHandler
             return DateTimeOffset.UtcNow - approachSince >= ApproachHardTimeout;
         }
 
-        // Idle and not there. EnsurePathing re-issues every 750ms, so staying idle across several
-        // attempts means vnav has no route to this pad — the off-mesh case from #176/#177.
         if (approachIdleSince == DateTimeOffset.MinValue)
         {
             approachIdleSince = DateTimeOffset.UtcNow;
@@ -693,7 +697,14 @@ public class FarmingPotChestsHandler
                     return;
                 }
 
-                EnsurePathing(reveal.Position, allowRemount: false, skipIfOffMesh: false);
+                if (!EnsurePathing(reveal.Position, allowRemount: false))
+                {
+                    logger.Warning(
+                        "Pot treasure: no navmesh at revealed coffer {Pos:F0} - resuming search",
+                        reveal.Position);
+                    SkipCurrentReveal(farm);
+                    return;
+                }
                 return;
             }
 
@@ -859,7 +870,10 @@ public class FarmingPotChestsHandler
                 return;
             }
 
-            EnsurePathing(pathTarget, skipIfOffMesh: false);
+            if (!EnsurePathing(pathTarget))
+            {
+                SkipCurrentBlindChest(farm, pathTarget, "no navmesh at live blind chest");
+            }
             return;
         }
 
@@ -918,11 +932,9 @@ public class FarmingPotChestsHandler
         if ((pathfinder.IsIdle() || drifted) && EzThrottler.Throttle(throttleKey, 750))
         {
             lastPathDestination = pathable;
-            pathfinder.PathfindAndMoveTo(new(pathable)
-            {
-                ShouldSnapToFloor = true,
-                FloorSnapExtents = 40f,
-            });
+            // Already snapped in TreasurePathing. A second 40y floor snap pulled east Daylight
+            // Pottery pads ~30y onto unreachable mesh (#194).
+            pathfinder.PathfindAndMoveTo(new(pathable));
         }
 
         // Remount only for longer walks — not while already on top of a reveal.

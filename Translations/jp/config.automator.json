@@ -40,6 +40,49 @@
       "label": "戦闘オートローテーション",
       "tooltip": "FATE / CE / モブファームの戦闘で使うオートローテーションです。移動中・釣り中はオフ。None は自分で戦う。"
     },
+    "update_boss_mod_presets_automatically": {
+      "label": "プリセットを自動更新",
+      "tooltip": "オンにすると、不正モード開始時とジョブ／近接・遠隔の切り替え時に、BOCCHI AI FATE / BOCCHI AI CE（または AR 側）を標準プリセットで作り直します。オフなら、すでにあるプリセットはそのまま使い、無いときだけ作成します。",
+      "button": "プリセットを更新",
+      "button_tooltip": "BOCCHI AI FATE と BOCCHI AI CE（または AR 側）を標準プリセットで置き換えます。BossMod で編集した内容は上書きされます。"
+    },
+    "boss_mod_movement": {
+      "max_distance_by_role": {
+        "label": "ロールに応じて対象までの最大距離を設定",
+        "tooltip": "近接は近接距離（またはヒットボックス際）を使います。遠隔・キャスター・ヒーラーは遠隔距離を使います。"
+      },
+      "melee_on_hitbox": {
+        "label": "近接はヒットボックス際",
+        "tooltip": "近接ジョブは対象のヒットボックスの縁に立ちます。オフにするとヤルムで距離を指定します。"
+      },
+      "max_distance": {
+        "label": "対象までの最大距離",
+        "tooltip": "BOCCHI AI が対象から離れようとする距離です（ヒットボックスからのヤルム）。"
+      },
+      "max_distance_melee": {
+        "label": "対象までの最大距離 | 近接",
+        "tooltip": "ヒットボックスからの近接距離（ヤルム）。「近接はヒットボックス際」がオンのときは使いません。"
+      },
+      "max_distance_ranged": {
+        "label": "対象までの最大距離 | 遠隔",
+        "tooltip": "遠隔・キャスター・ヒーラーの、ヒットボックスからの距離（ヤルム）です。"
+      },
+      "overdodge": {
+        "label": "オーバードッジ",
+        "tooltip": "経路探索で危険範囲から余分に離れる距離です。",
+        "none": "なし",
+        "small": "小（0.5y）",
+        "medium": "中（1.5y）",
+        "large": "大（3y）"
+      },
+      "delay": {
+        "label": "移動を遅らせる",
+        "tooltip": "BOCCHI AI が動き始めるまでの待ち時間です。長くすると被弾しやすくなります。",
+        "none": "なし",
+        "short": "短（0.5秒）",
+        "long": "長（1秒）"
+      }
+    },
     "stay_mounted_while_waiting_for_ce": {
       "label": "CE 待機中はマウントしたまま",
       "tooltip": "準備中の CE に着いてもマウントしたままです。"

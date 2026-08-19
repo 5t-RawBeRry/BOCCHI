@@ -1,3 +1,4 @@
+using Ocelot.Extensions;
 using Ocelot.Ipc.VNavmesh;
 using System.Numerics;
 
@@ -40,14 +41,27 @@ public static class TreasurePathing
             return true;
         }
 
-        if (TrySnap(vnav, pathable, out pathable))
+        if (TrySnap(vnav, pathable, out Vector3 snapped) && IsNearSeed(pathable, snapped))
         {
+            pathable = snapped;
             return true;
         }
 
         Vector3 atPlayerAltitude = pathable with { Y = playerY };
-        return TrySnap(vnav, atPlayerAltitude, out pathable);
+        if (TrySnap(vnav, atPlayerAltitude, out snapped) && IsNearSeed(atPlayerAltitude, snapped))
+        {
+            pathable = snapped;
+            return true;
+        }
+
+        return false;
     }
+
+    /// <summary>
+    ///     Nearest-mesh can land on a cliff or island tens of yalms away. That is not this coffer.
+    /// </summary>
+    private static bool IsNearSeed(Vector3 seed, Vector3 snapped) =>
+        seed.Distance2D(snapped) <= SnapExtentXZ * 1.5f;
 
     private static bool TrySnap(IVNavmeshIpc vnav, Vector3 seed, out Vector3 snapped)
     {

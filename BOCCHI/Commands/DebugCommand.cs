@@ -348,7 +348,7 @@ public unsafe class DebugCommand
         BocchiChat.Print(
             chat,
             uiConfig,
-            $"Created/updated presets '{presetNaming.FateMiscAi}' and '{presetNaming.CeMiscAi}'.");
+            $"Using presets '{presetNaming.FateMiscAi}' and '{presetNaming.CeMiscAi}' (created only if missing).");
         if (string.IsNullOrWhiteSpace(storedJson))
         {
             BocchiChat.PrintError(

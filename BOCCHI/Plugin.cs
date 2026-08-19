@@ -88,6 +88,7 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<CombatAutorotationDisplay>();
         services.AddSingleton<CombatAutorotationFilter>();
         services.AddSingleton<IFieldRenderer<TriageRaiseJobAttribute>, TriageRaiseJobRenderer>();
+        services.AddSingleton<IFieldRenderer<BossModPresetOptionsAttribute>, BossModPresetOptionsRenderer>();
         services.AddSingleton<IFieldRenderer<FarmSpotListAttribute>, FarmSpotListRenderer>();
         services.AddSingleton<MobFarmerYieldService>();
 

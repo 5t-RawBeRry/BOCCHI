@@ -40,6 +40,49 @@
       "label": "전투 자동 로테이션",
       "tooltip": "돌발·비상 조우·몹 사냥 전투에서 쓸 자동 로테이션입니다. 이동·끌어오기 중에는 끔. None은 직접 싸움."
     },
+    "update_boss_mod_presets_automatically": {
+      "label": "프리셋 자동 업데이트",
+      "tooltip": "켜면 자동 모드를 시작할 때와 직업·근접/원거리를 바꿀 때 BOCCHI AI FATE / BOCCHI AI CE(또는 AR 쌍)를 기본 프리셋으로 다시 만듭니다. 끄면 있는 프리셋은 그대로 두고, 없을 때만 만듭니다.",
+      "button": "프리셋 업데이트",
+      "button_tooltip": "BOCCHI AI FATE와 BOCCHI AI CE(또는 AR 쌍)를 기본 프리셋으로 바꿉니다. BossMod에서 수정한 내용은 덮어씁니다."
+    },
+    "boss_mod_movement": {
+      "max_distance_by_role": {
+        "label": "역할에 따라 대상까지 최대 거리 설정",
+        "tooltip": "근접은 근접 거리(또는 히트박스 가장자리)를 씁니다. 원거리·캐스터·힐러는 원거리 거리를 씁니다."
+      },
+      "melee_on_hitbox": {
+        "label": "근접은 히트박스 가장자리",
+        "tooltip": "근접 직업은 대상 히트박스 가장자리에 섭니다. 끄면 얄름으로 거리를 정합니다."
+      },
+      "max_distance": {
+        "label": "대상까지 최대 거리",
+        "tooltip": "BOCCHI AI가 대상에서 떨어지려는 거리입니다(히트박스 기준 얄름)."
+      },
+      "max_distance_melee": {
+        "label": "대상까지 최대 거리 | 근접",
+        "tooltip": "히트박스 기준 근접 거리(얄름). 「근접은 히트박스 가장자리」가 켜져 있으면 무시합니다."
+      },
+      "max_distance_ranged": {
+        "label": "대상까지 최대 거리 | 원거리",
+        "tooltip": "원거리·캐스터·힐러의 히트박스 기준 거리(얄름)입니다."
+      },
+      "overdodge": {
+        "label": "오버닷지",
+        "tooltip": "경로 탐색에서 위험 구역과 추가로 떨어질 거리입니다.",
+        "none": "없음",
+        "small": "작음 (0.5y)",
+        "medium": "보통 (1.5y)",
+        "large": "큼 (3y)"
+      },
+      "delay": {
+        "label": "이동 지연",
+        "tooltip": "BOCCHI AI가 움직이기 전 대기 시간입니다. 너무 길면 맞을 수 있습니다.",
+        "none": "없음",
+        "short": "짧음 (0.5초)",
+        "long": "김 (1초)"
+      }
+    },
     "stay_mounted_while_waiting_for_ce": {
       "label": "비상 조우 대기 중 탈것 유지",
       "tooltip": "준비 중인 비상 조우에 도착해도 탈것을 유지합니다."

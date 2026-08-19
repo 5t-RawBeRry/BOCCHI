@@ -27,6 +27,8 @@ public sealed class FarmerCombatController(
 {
     public void Prepare()
     {
+        session.OverwriteBossModPresets = automatorConfig.UpdateBossModPresetsAutomatically;
+        session.MovementSettings = BossModMovement.From(automatorConfig, player.IsMelee());
         if (!automatorConfig.CombatAutorotation.UsesCombatAutomation() || !ValidatePluginsForConfig())
         {
             return;
@@ -40,7 +42,12 @@ public sealed class FarmerCombatController(
 
     public void Disable() => session.Disable();
 
-    public void Tick() => session.Tick(CurrentPhantomJobId());
+    public void Tick()
+    {
+        session.OverwriteBossModPresets = automatorConfig.UpdateBossModPresetsAutomatically;
+        session.MovementSettings = BossModMovement.From(automatorConfig, player.IsMelee());
+        session.Tick(CurrentPhantomJobId());
+    }
 
     public void Teardown() => session.Teardown();
 

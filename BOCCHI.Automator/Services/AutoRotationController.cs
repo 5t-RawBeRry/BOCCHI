@@ -39,6 +39,8 @@ public class AutoRotationController(
 
     public void PrepareForIllegalMode()
     {
+        session.OverwriteBossModPresets = config.UpdateBossModPresetsAutomatically;
+        session.MovementSettings = BossModMovement.From(config, player.IsMelee());
         if (!config.CombatAutorotation.UsesCombatAutomation() || !ValidatePluginsForConfig())
         {
             return;
@@ -80,6 +82,8 @@ public class AutoRotationController(
 
     public void Tick()
     {
+        session.OverwriteBossModPresets = config.UpdateBossModPresetsAutomatically;
+        session.MovementSettings = BossModMovement.From(config, player.IsMelee());
         SyncActivityCombat();
         session.Tick(CurrentPhantomJobId());
     }
@@ -89,6 +93,15 @@ public class AutoRotationController(
         // Without this the per-tick sync re-enables the rotation immediately: pot chest farming
         // usually runs while still standing in the pot FATE.
         if (CombatSuppressedByActivity)
+        {
+            return;
+        }
+
+        // Pathfinding / CE wait own the character. Tick would re-Enable AutoTarget and pull
+        // trash on the road (or at the registration rim) while we are still walking in.
+        if (memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _)
+            || memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory _)
+            || memory.TryRemember<WaitingForPotFateMemory>(out WaitingForPotFateMemory _))
         {
             return;
         }

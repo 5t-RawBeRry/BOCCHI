@@ -172,6 +172,11 @@
         "resolved": "3.1.12",
         "contentHash": "iAg6zifihXEFS/t7fiHhZBGAdCp3FavsF4i2ZIDp0JfeYeDVzvmlbY1CNhhIKimaIzrzSi5M/NBFcWvZT2rB/A=="
       },
+      "WrathCombo.API": {
+        "type": "Transitive",
+        "resolved": "0.5.7",
+        "contentHash": "A7KURat4s3efIj+KO5LTy6Vky1Y0Hsnqt4XWBL6xYsLlYSxlqhBCS3Y/LrEkohDuGletwRjfkx8IiLTiVnEmxw=="
+      },
       "FFXIVOcelot": {
         "type": "Project",
         "dependencies": {
@@ -204,6 +209,13 @@
         "dependencies": {
           "FFXIVOcelot": "[1.0.0, )",
           "Pictomancy": "[1.0.10, )"
+        }
+      },
+      "FFXIVOcelot.Rotation": {
+        "type": "Project",
+        "dependencies": {
+          "FFXIVOcelot": "[1.0.0, )",
+          "WrathCombo.API": "[0.5.7, )"
         }
       },
       "FFXIVOcelot.UI": {

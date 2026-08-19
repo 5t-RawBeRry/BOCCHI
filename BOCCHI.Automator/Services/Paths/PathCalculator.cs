@@ -8,6 +8,7 @@ using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Common.Data.Zones.Graph.Traversal;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.Services.Paths;
+using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using Ocelot.Extensions;
 using Ocelot.Services.Logger;
@@ -107,8 +108,13 @@ public class PathCalculator
             return PathCalculationResult.NoTravelNeeded();
         }
 
-        // Already registered in the target FATE — no more travel needed.
-        if (goal.GoalType is FateGoal fateGoal && fateContext.GetFateId() == fateGoal.id)
+        // Combat None: InFate walks to mobs from the rim. AI cannot — stay on the centre path
+        // until we are actually close enough for AutoTarget / StayCloseToTarget.
+        if (goal.GoalType is FateGoal fateGoal
+            && fateContext.GetFateId() == fateGoal.id
+            && (!config.CombatAutorotation.UsesCombatAutomation()
+                || fateContext.IsInCombatWith(fateGoal.id)
+                || IsWithinFateAiHandoff(player.Position, fateGoal.id)))
         {
             logger.Debug("Already inside target FATE.");
             return PathCalculationResult.NoTravelNeeded();
@@ -297,5 +303,18 @@ public class PathCalculator
         }).ToList();
 
         return nodes.Count == 0 ? throw new InvalidOperationException("No nodes for Activity") : nodes.First();
+    }
+
+    private bool IsWithinFateAiHandoff(Vector3 player, FateId id)
+    {
+        float nearest = float.MaxValue;
+        foreach (IBattleNpc target in fateContext.GetTargets())
+        {
+            nearest = MathF.Min(nearest, player.Distance2D(target.Position) - target.HitboxRadius);
+        }
+
+        Fate? live = fates.Snapshot().FirstOrDefault(f => f.Id.Value == id.Value);
+        float toCenter = live != null ? player.Distance2D(live.Position) : float.MaxValue;
+        return NavigationConstants.IsWithinFateAiHandoff(toCenter, nearest);
     }
 }

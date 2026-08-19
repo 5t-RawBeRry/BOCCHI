@@ -40,6 +40,49 @@
       "label": "Combat autorotation",
       "tooltip": "Which autorotation to use in FATEs, CEs, and Mob Farmer fights. Off while traveling or pulling. None = you fight."
     },
+    "update_boss_mod_presets_automatically": {
+      "label": "Update presets automatically",
+      "tooltip": "When on, Illegal Mode rebuilds BOCCHI AI FATE / BOCCHI AI CE (or the AR pair) from the stock presets when it starts and when you change job or melee/ranged. When off, existing presets are kept and only created if missing.",
+      "button": "Update presets",
+      "button_tooltip": "Replace BOCCHI AI FATE and BOCCHI AI CE (or the AR pair) with the stock presets. Edits you made in BossMod are overwritten."
+    },
+    "boss_mod_movement": {
+      "max_distance_by_role": {
+        "label": "Set max distance to target based on role",
+        "tooltip": "Melee uses the melee distance (or stay on hitbox). Ranged, caster, and healer use the ranged distance."
+      },
+      "melee_on_hitbox": {
+        "label": "Melee stay on hitbox",
+        "tooltip": "Melee jobs stand on the edge of the target hitbox. Turn off to set a distance in yalms instead."
+      },
+      "max_distance": {
+        "label": "Max distance to target",
+        "tooltip": "How far BOCCHI AI tries to stay from the target, in yalms past the hitbox."
+      },
+      "max_distance_melee": {
+        "label": "Max distance to target | Melee",
+        "tooltip": "Melee distance in yalms past the hitbox. Ignored while Melee stay on hitbox is on."
+      },
+      "max_distance_ranged": {
+        "label": "Max distance to target | Ranged",
+        "tooltip": "Ranged, caster, and healer distance in yalms past the hitbox."
+      },
+      "overdodge": {
+        "label": "Overdodge",
+        "tooltip": "Extra space BossMod keeps from dangerous areas while pathfinding.",
+        "none": "None",
+        "small": "Small (0.5y)",
+        "medium": "Medium (1.5y)",
+        "large": "Large (3y)"
+      },
+      "delay": {
+        "label": "Delay movement",
+        "tooltip": "Wait this long before BOCCHI AI starts moving. Keep this low or you can get hit.",
+        "none": "None",
+        "short": "Short (0.5s)",
+        "long": "Long (1s)"
+      }
+    },
     "stay_mounted_while_waiting_for_ce": {
       "label": "Stay mounted while waiting for CEs",
       "tooltip": "Stay on your mount after you arrive at a CE that is still preparing."

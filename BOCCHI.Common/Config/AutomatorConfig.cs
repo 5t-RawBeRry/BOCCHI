@@ -37,6 +37,26 @@ public class AutomatorConfig : IAutoConfig
     [EnumSelect<CombatAutorotation, CombatAutorotationDisplay, CombatAutorotationFilter>(Order = 6, Section = "combat")]
     public CombatAutorotation CombatAutorotation { get; set; } = CombatAutorotation.WrathCombo;
 
+    /// <summary>
+    ///     When on, rebuild BOCCHI's BossMod FATE/CE presets from stock JSON on Illegal Mode start
+    ///     and when you change job or melee/ranged. When off, existing presets are kept.
+    /// </summary>
+    [BossModPresetOptions(Order = 7, Indent = 1, Section = "combat")]
+    public bool UpdateBossModPresetsAutomatically { get; set; } = false;
+
+    public bool BossModMaxDistanceByRole { get; set; } = true;
+
+    public bool BossModMeleeOnHitbox { get; set; } = true;
+
+    public float BossModMaxDistance { get; set; } = 15f;
+
+    public float BossModMaxDistanceMelee { get; set; } = 2.6f;
+
+    public float BossModMaxDistanceRanged { get; set; } = 15f;
+
+    public BossModOverdodge BossModOverdodge { get; set; } = BossModOverdodge.None;
+
+    public BossModMovementDelay BossModMovementDelay { get; set; } = BossModMovementDelay.None;
 
     /// <summary>
     ///     Stay mounted while a CE is preparing; dismount when it starts.

@@ -9,6 +9,8 @@ using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
+using Ocelot.Extensions;
+using Ocelot.Pathfinding.Extensions;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
@@ -26,6 +28,7 @@ public class InFateHandler
     AutoRotationController autoRotation,
     IPlayer playerState,
     AutomatorConfig config,
+    IFateRepository fates,
     ILogger<InFateHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.InFate)
 {
@@ -36,7 +39,22 @@ public class InFateHandler
             return StatePriority.Never;
         }
 
-        return context.GetFateId() == fateGoal.id ? StatePriority.VeryHigh : StatePriority.Never;
+        if (context.GetFateId() != fateGoal.id)
+        {
+            return StatePriority.Never;
+        }
+
+        // AI cannot pick up a FATE from the registration rim. Stay in Pathfinding until we are
+        // close enough for AutoTarget / StayCloseToTarget; Combat None walks to mobs from here.
+        if (config.CombatAutorotation.UsesCombatAutomation()
+            && !context.IsInCombatWith(fateGoal.id)
+            && objects.LocalPlayer is { } player
+            && !IsWithinAiHandoff(player, fateGoal.id))
+        {
+            return StatePriority.Never;
+        }
+
+        return StatePriority.VeryHigh;
     }
 
     public override void Enter()
@@ -59,7 +77,11 @@ public class InFateHandler
         if (config.CombatAutorotation.UsesCombatAutomation())
         {
             DismountAssist.TryDismount(conditions);
-            pathfinder.Stop();
+            if (!pathfinder.IsIdle())
+            {
+                pathfinder.Stop();
+            }
+
             return;
         }
 
@@ -89,5 +111,18 @@ public class InFateHandler
 
         approach.Track(fateId);
         return approach;
+    }
+
+    private bool IsWithinAiHandoff(IGameObject player, FateId id)
+    {
+        float nearest = float.MaxValue;
+        foreach (IBattleNpc target in context.GetTargets())
+        {
+            nearest = MathF.Min(nearest, player.Position.Distance2D(target.Position) - target.HitboxRadius);
+        }
+
+        Fate? live = fates.Snapshot().FirstOrDefault(f => f.Id.Value == id.Value);
+        float toCenter = live != null ? player.Position.Distance2D(live.Position) : float.MaxValue;
+        return NavigationConstants.IsWithinFateAiHandoff(toCenter, nearest);
     }
 }

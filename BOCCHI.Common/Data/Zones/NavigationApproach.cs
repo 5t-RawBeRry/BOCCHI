@@ -37,6 +37,22 @@ public static class NavigationConstants
     public const float EventArrivalRadius = 5f;
 
     /// <summary>
+    ///     Yield FATE travel to BossMod AI once this close to a FATE enemy (yalms past hitbox).
+    ///     Registration is the rim of a large circle — too far for AutoTarget / StayCloseToTarget.
+    /// </summary>
+    public const float FateAiHandoffRange = 25f;
+
+    /// <summary>No FATE enemies up yet: yield once this close to the live FATE centre.</summary>
+    public const float FateAiHandoffFromCenter = 25f;
+
+    /// <param name="nearestTargetPastHitbox">
+    ///     Distance past hitbox to the nearest FATE enemy, or <see cref="float.MaxValue"/> if none.
+    /// </param>
+    public static bool IsWithinFateAiHandoff(float distanceToCenter, float nearestTargetPastHitbox) =>
+        nearestTargetPastHitbox <= FateAiHandoffRange
+        || distanceToCenter <= FateAiHandoffFromCenter;
+
+    /// <summary>
     ///     Added to LGB CE combat radius for debug green.
     ///     Red debug = padded − this (the in-game blue registration edge).
     /// </summary>

@@ -9,6 +9,7 @@ using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
+using Ocelot.Pathfinding.Extensions;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
@@ -32,13 +33,52 @@ public class InCriticalEncounterHandler
 {
     public override StatePriority GetScore()
     {
-        if (context.IsInCriticalEncounter())
+        if (!memory.TryRemember<GoalMemory>(out GoalMemory goal)
+            || goal.Goal.GoalType is not CriticalEncounterGoal ceGoal)
+        {
+            return StatePriority.Never;
+        }
+
+        // Waiting handed off, or we already entered (EventId can lag while fighting).
+        if (TryGetCommittedBattleEncounter(out _))
         {
             return StatePriority.VeryHigh;
         }
 
-        // EventId can lag while fighting — still enter so CE combat AI enables.
-        return TryGetCommittedBattleEncounter(out _) ? StatePriority.VeryHigh : StatePriority.Never;
+        if (context.GetCriticalEncounterId() != ceGoal.id)
+        {
+            return StatePriority.Never;
+        }
+
+        // Combat None: EventId is enough. AI AutoTarget would grab trash on the
+        // registration rim — keep walking until we are inside the wait area.
+        if (!config.CombatAutorotation.UsesCombatAutomation())
+        {
+            return StatePriority.VeryHigh;
+        }
+
+        if (objects.LocalPlayer is not { } player)
+        {
+            return StatePriority.Never;
+        }
+
+        CriticalEncounter? found = repo.SnapshotWithoutForkedTower().FirstOrDefault(c => c.Id == ceGoal.id);
+        if (found is not { } ce || !ce.IsActive())
+        {
+            return StatePriority.Never;
+        }
+
+        float combatRadius = NavigationConstants.CriticalEncounterRedRadius(ce.Radius, ce.AreaShape);
+        if (!NavigationConstants.IsInsideCriticalEncounterWaitArea(
+                ce.Position,
+                combatRadius,
+                ce.AreaShape,
+                player.Position))
+        {
+            return StatePriority.Never;
+        }
+
+        return StatePriority.VeryHigh;
     }
 
     public override void Enter()
@@ -70,7 +110,11 @@ public class InCriticalEncounterHandler
         if (config.CombatAutorotation.UsesCombatAutomation())
         {
             DismountAssist.TryDismount(conditions);
-            pathfinder.Stop();
+            if (!pathfinder.IsIdle())
+            {
+                pathfinder.Stop();
+            }
+
             return;
         }
 
