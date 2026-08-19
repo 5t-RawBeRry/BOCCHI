@@ -21,6 +21,7 @@ public class MessageOfTheDayService(IChatGui chat, IClientState client, IFramewo
         "Faye thinks you stink.",
         "MOTD brought to you by Faye, trying to cling onto the last remnants of her relevance.",
         "Chika says that choice is an illusion.",
+        "Xan felt left out. (He is cute)",
     ];
 
     private bool printedThisSession;
