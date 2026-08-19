@@ -1,4 +1,5 @@
 using Ocelot.Config.Renderers.Enum;
+using Ocelot.Ipc.RotationSolverReborn;
 using Ocelot.Services.PluginStatus;
 
 namespace BOCCHI.Common.Config;
@@ -12,13 +13,10 @@ namespace BOCCHI.Common.Config;
 ///     is why the dependency page marks all three as in use when either is selected.
 ///     </para>
 /// </summary>
-public class CombatAutorotationFilter(IPluginStatus plugins, AutomatorConfig config)
+public class CombatAutorotationFilter(IPluginStatus plugins, IRotationSolverRebornIpc rsr, AutomatorConfig config)
     : IEnumFilter<CombatAutorotation>
 {
     private const string WrathCombo = "WrathCombo";
-
-    /// <summary>Dalamud InternalName is still "RotationSolver"; only the display name gained "Reborn".</summary>
-    private const string RotationSolver = "RotationSolver";
 
     private const string BossMod = "BossMod";
 
@@ -36,7 +34,8 @@ public class CombatAutorotationFilter(IPluginStatus plugins, AutomatorConfig con
         return value switch
         {
             CombatAutorotation.WrathCombo => plugins.IsLoaded(WrathCombo) && HasBocchiAi(),
-            CombatAutorotation.RotationSolverReborn => plugins.IsLoaded(RotationSolver) && HasBocchiAi(),
+            CombatAutorotation.RotationSolverReborn =>
+                CombatPluginPresence.RotationSolverReborn(plugins, rsr) && HasBocchiAi(),
             CombatAutorotation.BossMod => plugins.IsLoaded(BossMod),
             CombatAutorotation.BossModReborn => plugins.IsLoaded(BossModReborn),
             _ => false,

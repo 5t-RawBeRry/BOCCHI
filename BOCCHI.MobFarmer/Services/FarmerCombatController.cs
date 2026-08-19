@@ -3,6 +3,7 @@ using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Services;
 using Dalamud.Plugin.Services;
+using Ocelot.Ipc.RotationSolverReborn;
 using Ocelot.Rotation.Services;
 using Ocelot.Services.PlayerState;
 using Ocelot.Services.PluginStatus;
@@ -20,6 +21,7 @@ public sealed class FarmerCombatController(
     IPlayer player,
     IChatGui chat,
     IPluginStatus pluginStatus,
+    IRotationSolverRebornIpc rsr,
     ISupportJobFactory supportJobs
 ) : IFarmerCombatController
 {
@@ -72,7 +74,7 @@ public sealed class FarmerCombatController(
                 return true;
 
             case CombatAutorotation.RotationSolverReborn:
-                if (!pluginStatus.IsLoaded(JobRotationBackendKeys.RotationSolverReborn))
+                if (!CombatPluginPresence.RotationSolverReborn(pluginStatus, rsr))
                 {
                     PrintJobProviderMissing("Rotation Solver Reborn");
                     return false;

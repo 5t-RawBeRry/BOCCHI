@@ -233,7 +233,7 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         string? required = automator.CombatAutorotation switch
         {
             CombatAutorotation.WrathCombo => "WrathCombo",
-            CombatAutorotation.RotationSolverReborn => "RotationSolver",
+            CombatAutorotation.RotationSolverReborn => CombatPluginPresence.RotationSolver,
             CombatAutorotation.BossMod => "BossMod",
             CombatAutorotation.BossModReborn => "BossModReborn",
             _ => null,

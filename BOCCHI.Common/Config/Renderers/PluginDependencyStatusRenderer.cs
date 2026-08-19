@@ -6,6 +6,7 @@ using Ocelot.Config.Renderers;
 using Ocelot.Graphics;
 using Ocelot.Ipc.BossMod;
 using Ocelot.Ipc.Lifestream;
+using Ocelot.Ipc.RotationSolverReborn;
 using Ocelot.Ipc.VNavmesh;
 using Ocelot.Services.PluginStatus;
 using Ocelot.Services.Translation;
@@ -18,6 +19,7 @@ public sealed class PluginDependencyStatusRenderer(
     IVNavmeshIpc vnav,
     IBossModIpc bossMod,
     ILifestreamIpc lifestream,
+    IRotationSolverRebornIpc rsr,
     AutomatorConfig automator
 ) : IFieldRenderer<PluginDependencyStatusAttribute>
 {
@@ -45,8 +47,12 @@ public sealed class PluginDependencyStatusRenderer(
         ImGui.Spacing();
 
         Draw("Wrath Combo", "WrathCombo", translator, inUse: InUse("WrathCombo"));
-        // Dalamud InternalName is still "RotationSolver" (display name is Rotation Solver Reborn).
-        Draw("Rotation Solver Reborn", "RotationSolver", translator, inUse: InUse("RotationSolver"));
+        Draw(
+            "Rotation Solver Reborn",
+            CombatPluginPresence.RotationSolver,
+            translator,
+            RsrIpcIfReachable,
+            InUse(CombatPluginPresence.RotationSolver));
         Draw("BossMod", "BossMod", translator, BossModIpcIfLoaded, InUse("BossMod"));
         Draw("BossMod Reborn", "BossModReborn", translator, BossModIpcIfLoaded, InUse("BossModReborn"));
 
@@ -56,7 +62,8 @@ public sealed class PluginDependencyStatusRenderer(
     private bool InUse(string internalName) => automator.CombatAutorotation switch
     {
         CombatAutorotation.WrathCombo => internalName is "WrathCombo" or "BossMod" or "BossModReborn",
-        CombatAutorotation.RotationSolverReborn => internalName is "RotationSolver" or "BossMod" or "BossModReborn",
+        CombatAutorotation.RotationSolverReborn =>
+            internalName is CombatPluginPresence.RotationSolver or "BossMod" or "BossModReborn",
         CombatAutorotation.BossMod => internalName == "BossMod",
         CombatAutorotation.BossModReborn => internalName == "BossModReborn",
         _ => false,
@@ -73,6 +80,9 @@ public sealed class PluginDependencyStatusRenderer(
             ? (T(translator, "ready"), true, false)
             : (T(translator, "map_loading"), true, true);
     }
+
+    private (string Label, bool Ok, bool Pending) RsrIpcIfReachable(string _, ITranslator translator) =>
+        IpcStatus(rsr.IsAvailable, translator);
 
     private (string Label, bool Ok, bool Pending) BossModIpcIfLoaded(string _, ITranslator translator) =>
         IpcStatus(bossMod.IsAvailable, translator);
@@ -105,7 +115,8 @@ public sealed class PluginDependencyStatusRenderer(
         ITranslator translator,
         Func<string, ITranslator, (string Label, bool Ok, bool Pending)>? ipc)
     {
-        if (pluginStatus.IsLoaded(internalName))
+        if (pluginStatus.IsLoaded(internalName)
+            || (internalName == CombatPluginPresence.RotationSolver && rsr.IsAvailable))
         {
             return ipc?.Invoke(internalName, translator) ?? (T(translator, "ready"), true, false);
         }

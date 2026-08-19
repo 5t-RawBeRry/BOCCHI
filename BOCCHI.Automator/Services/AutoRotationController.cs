@@ -4,6 +4,7 @@ using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Services;
 using Dalamud.Plugin.Services;
+using Ocelot.Ipc.RotationSolverReborn;
 using Ocelot.Rotation.Services;
 using Ocelot.Services.PlayerState;
 using Ocelot.Services.PluginStatus;
@@ -22,6 +23,7 @@ public class AutoRotationController(
     ICriticalEncounterContext criticalEncounters,
     IFateContext fates,
     IPluginStatus pluginStatus,
+    IRotationSolverRebornIpc rsr,
     ISupportJobFactory supportJobs,
     IAutomatorMemory memory
 )
@@ -133,7 +135,7 @@ public class AutoRotationController(
                 return true;
 
             case CombatAutorotation.RotationSolverReborn:
-                if (!pluginStatus.IsLoaded(JobRotationBackendKeys.RotationSolverReborn))
+                if (!CombatPluginPresence.RotationSolverReborn(pluginStatus, rsr))
                 {
                     PrintJobProviderMissing("Rotation Solver Reborn");
                     return false;
