@@ -3,7 +3,7 @@ using Dalamud.Plugin.Services;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Extensions;
-using Ocelot.Ipc.BossMod;
+using Ocelot.Ipc.Lifestream;
 using Ocelot.Ipc.VNavmesh;
 using Ocelot.Services.Pathfinding;
 using System.Numerics;

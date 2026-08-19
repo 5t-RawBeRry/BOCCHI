@@ -13,10 +13,7 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
     /// <summary>Don't flash a rate from the first inventory tick.</summary>
     public static readonly TimeSpan MinElapsedForRate = TimeSpan.FromSeconds(20);
 
-    /// <summary>
-    ///     "Per hour" means this hour. Until a full hour has passed, divide by 1h so one CE
-    ///     shows what it actually dropped instead of ×20 that burst.
-    /// </summary>
+    /// <summary>Sliding window for the live per-hour rate.</summary>
     public static readonly TimeSpan RateHour = TimeSpan.FromHours(1);
 
     private static readonly TimeSpan RecoveryWindow = TimeSpan.FromSeconds(2);
@@ -24,8 +21,6 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
     private readonly List<DeltaSnapshot> snapshots = [];
 
     private long lastValue;
-
-    private long sessionGained;
 
     private TimeSpan accumulatedActive = TimeSpan.Zero;
 
@@ -43,14 +38,20 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
     {
         get
         {
+            Prune();
             TimeSpan elapsed = ActiveElapsed();
             if (elapsed < MinElapsedForRate)
             {
                 return 0;
             }
 
-            double hours = Math.Max(elapsed.TotalHours, RateHour.TotalHours);
-            return sessionGained / hours;
+            long windowGained = SumSince(DateTime.UtcNow - RateHour);
+            if (elapsed < RateHour)
+            {
+                return windowGained / elapsed.TotalHours;
+            }
+
+            return windowGained / RateHour.TotalHours;
         }
     }
 
@@ -87,7 +88,6 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
     {
         snapshots.Clear();
         lastValue = 0;
-        sessionGained = 0;
         accumulatedActive = TimeSpan.Zero;
         activeStartedUtc = null;
         HasValue = false;
@@ -138,13 +138,13 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
             return;
         }
 
-        sessionGained += delta;
         snapshots.Add(new(delta, DateTime.UtcNow));
     }
 
     public float[] GetHistory(TimeSpan sampleDuration)
     {
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(sampleDuration, TimeSpan.Zero);
+        Prune();
 
         TimeSpan duration = getTrackedWindow();
         DateTime now = DateTime.UtcNow;
@@ -199,6 +199,20 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
         return accumulatedActive + extra;
     }
 
+    private long SumSince(DateTime cutoff)
+    {
+        long sum = 0;
+        foreach (DeltaSnapshot snapshot in snapshots)
+        {
+            if (snapshot.Time >= cutoff)
+            {
+                sum += snapshot.Delta;
+            }
+        }
+
+        return sum;
+    }
+
     private void Prune()
     {
         if (snapshots.Count == 0)
@@ -206,7 +220,7 @@ public sealed class DeltaRateTracker(Func<TimeSpan> getTrackedWindow)
             return;
         }
 
-        DateTime cutoff = DateTime.UtcNow - getTrackedWindow();
+        DateTime cutoff = DateTime.UtcNow - RateHour;
 
         int index = 0;
         while (index < snapshots.Count && snapshots[index].Time < cutoff)

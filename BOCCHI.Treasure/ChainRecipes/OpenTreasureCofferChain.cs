@@ -176,8 +176,11 @@ public class OpenTreasureCofferChain
         }
     }
 
-    private Vector3 PathableTreasurePosition(Vector3 position) =>
-        TreasurePathing.PathablePosition(position, player.Position.Y);
+    private Vector3 PathableTreasurePosition(Vector3 position)
+    {
+        _ = TreasurePathing.TrySnapToNavmesh(position, player.Position.Y, vnav, out Vector3 pathable);
+        return pathable;
+    }
 
     /// <summary>Pandora success: Opened/FadedOut flags, or already listed in the Loot window.</summary>
     public static unsafe bool IsOpenedOrLooted(IGameObject chest)

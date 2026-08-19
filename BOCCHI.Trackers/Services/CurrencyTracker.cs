@@ -1,6 +1,9 @@
 using BOCCHI.Common.Data;
+using BOCCHI.Common.Data.OccultCrescent;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
+using Dalamud.Game.Chat;
+using Dalamud.Plugin.Services;
 using Ocelot.Lifecycle;
 
 namespace BOCCHI.Currency.Services;
@@ -16,8 +19,12 @@ public interface ICurrencyTracker
     float[] GetSilverHistory(TimeSpan sampleDuration);
 }
 
-public class CurrencyTracker(IZoneProvider zones) : ICurrencyTracker, IOnUpdate, IOnTerritoryChanged
+public class CurrencyTracker(IZoneProvider zones, IChatGui chat)
+    : ICurrencyTracker, IOnUpdate, IOnTerritoryChanged, IOnStart, IOnStop
 {
+    /// <summary>Chat: “You obtain …” — quantity then item id.</summary>
+    private const uint ObtainedItemLogMessageId = 4592;
+
     private readonly DeltaRateTracker goldTracker = new(() => DeltaRateTracker.DefaultWindow);
 
     private readonly DeltaRateTracker silverTracker = new(() => DeltaRateTracker.DefaultWindow);
@@ -41,11 +48,33 @@ public class CurrencyTracker(IZoneProvider zones) : ICurrencyTracker, IOnUpdate,
             Limit = 250
         };
 
+    public void OnStart() => chat.LogMessage += OnChatLogMessage;
+
+    public void OnStop() => chat.LogMessage -= OnChatLogMessage;
+
     public void OnTerritoryChanged(uint territory) => ApplyZone(zones.GetZone().IsOccultCrescentZone());
 
     public void Update()
     {
         ApplyZone(zones.GetZone().IsOccultCrescentZone());
+        RecordFromInventory();
+    }
+
+    private void OnChatLogMessage(ILogMessage message)
+    {
+        if (!inOccultCrescent
+            || message.LogMessageId != ObtainedItemLogMessageId
+            || !message.TryGetIntParameter(1, out int itemId)
+            || !OccultCurrencies.IsTrackedCurrency((uint)itemId))
+        {
+            return;
+        }
+
+        RecordFromInventory();
+    }
+
+    private void RecordFromInventory()
+    {
         if (!inOccultCrescent)
         {
             return;

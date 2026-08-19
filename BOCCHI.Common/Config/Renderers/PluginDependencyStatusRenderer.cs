@@ -5,6 +5,7 @@ using Dalamud.Plugin;
 using Ocelot.Config.Renderers;
 using Ocelot.Graphics;
 using Ocelot.Ipc.BossMod;
+using Ocelot.Ipc.Lifestream;
 using Ocelot.Ipc.VNavmesh;
 using Ocelot.Services.PluginStatus;
 using Ocelot.Services.Translation;

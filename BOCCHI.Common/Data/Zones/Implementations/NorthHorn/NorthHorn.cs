@@ -108,21 +108,21 @@ public class NorthHorn
     [
         new(2081, new(-440f, 47.02659f, -790f), PreferredAethernetId: MolderingOutskirts.Id), // A Rotten Affair
         new(2078, new(-402.0002f, 29.76808f, -252.9997f)), // Allure of the Occult
-        new(2075, new(510f, 16.76658f, -29.99999f), 30f, TheCrownOfKarnak.Id), // Eye to Eye (not Unhallowed — water gap)
-        new(2082, new(-855.7433f, 70.67716f, 482.1518f), 30f), // Gale-force Encounter
-        new(2079, new(-170f, 30f, -500f), 30f), // Inconstant Gardener
-        new(2074, new(724f, 70f, 220f), 30f), // Raging Thrall
-        new(2083, new(-661.0049f, 87f, -54.00021f), 30f, MolderingOutskirts.Id), // Scale Model
-        new(2076, new(95f, 10f, 470f), 30f), // Shoreline Showdown
-        new(2080, new(-90f, 67.47852f, 865.9999f), 30f), // Territorial Dispute
-        new(2084, new(140f, 37f, -708f), 30f), // Thunderregnum
-        new(2077, new(330f, 0f, -250f), 30f, SinkingSanctuary.Id) // Waved Away
+        new(2075, new(510f, 16.76658f, -29.99999f), PreferredAethernetId: TheCrownOfKarnak.Id), // Eye to Eye (not Unhallowed — water gap)
+        new(2082, new(-855.7433f, 70.67716f, 482.1518f)), // Gale-force Encounter
+        new(2079, new(-170f, 30f, -500f)), // Inconstant Gardener
+        new(2074, new(724f, 70f, 220f)), // Raging Thrall
+        new(2083, new(-661.0049f, 87f, -54.00021f), PreferredAethernetId: MolderingOutskirts.Id), // Scale Model
+        new(2076, new(95f, 10f, 470f)), // Shoreline Showdown
+        new(2080, new(-90f, 67.47852f, 865.9999f)), // Territorial Dispute
+        new(2084, new(140f, 37f, -708f)), // Thunderregnum
+        new(2077, new(330f, 0f, -250f), PreferredAethernetId: SinkingSanctuary.Id) // Waved Away
     ];
 
     public override List<ActivityData> GetPotFateData() =>
     [
         new(2072, new(233f, 7.729229f, -470f), PreferredAethernetId: SinkingSanctuary.Id), // Daylight Pottery (North)
-        new(2073, new(-505.2822f, 53.14409f, 244.041f), 38f, SuspendedMasonry.Id) // In a Pot of Bother (South)
+        new(2073, new(-505.2822f, 53.14409f, 244.041f), PreferredAethernetId: SuspendedMasonry.Id) // In a Pot of Bother (South)
     ];
 
     // Staging positions. Registration size comes from live LGB MapRange, not these rows.

@@ -32,8 +32,7 @@ internal static class CombatActivityHandler
         IPathfinder pathfinder,
         string throttlePrefix,
         bool shouldApproachTarget,
-        bool stopPathfinderInCombat = false,
-        bool deferCombatToBossModAi = false
+        bool stopPathfinderInCombat = false
     )
     {
         List<IBattleNpc> list = targets as List<IBattleNpc> ?? targets.ToList();
@@ -48,19 +47,13 @@ internal static class CombatActivityHandler
         bool nearTarget = distance <= DismountRange;
 
         if (conditions[ConditionFlag.Mounted]
-            && (nearTarget || (deferCombatToBossModAi && conditions[ConditionFlag.InCombat]))
+            && nearTarget
             && EzThrottler.Throttle($"{throttlePrefix}::Unmount")
             && Actions.Unmount.CanCast())
         {
             Actions.Unmount.Cast();
             pathfinder.Stop();
             return false;
-        }
-
-        if (deferCombatToBossModAi)
-        {
-            // BossMod AI owns combat movement; vnav already stopped.
-            return true;
         }
 
         if (stopPathfinderInCombat && conditions[ConditionFlag.InCombat])

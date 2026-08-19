@@ -69,11 +69,6 @@ public class AutomatorConfig : IAutoConfig
     public TriageRaiseJobPreference PreferredTriageRaiseJob { get; set; } = TriageRaiseJobPreference.PhantomChemist;
 
     /// <summary>
-    ///     Session hint for Completionist UI (run mode is the source of truth while active).
-    /// </summary>
-    public bool EnableCompletionistMode { get; set; } = false;
-
-    /// <summary>
     ///     Illegal Mode / Completionist: after CE/FATE, Sight (if known) then hunt, or map hunt
     ///     without Sight. Only Illegal Mode reads this, so it belongs here rather than on the
     ///     Treasure page where people configuring Illegal Mode would not find it.

@@ -54,6 +54,12 @@ public static class NavigationConstants
     /// <summary>Debug green pad beyond red for square CEs (same idea as circle pad).</summary>
     public const float CriticalEncounterSquareRadiusPadding = 7f;
 
+    /// <summary>
+    ///     Inset from the blue registration edge. Waiting / arrival on the rim does not place you
+    ///     into the instance (Tiny Terror, A Beast Unleashed).
+    /// </summary>
+    public const float CriticalEncounterWaitInset = 8f;
+
     /// <summary>Circle travel stand-off around the cyan ring — closer to centre than the rim.</summary>
     public const float CriticalEncounterApproachMinRatio = 0.25f;
 
@@ -113,8 +119,9 @@ public static class NavigationConstants
     }
 
     /// <summary>
-    ///     True when <paramref name="point"/> is inside the CE registration area (the in-game blue
-    ///     ring/box). <paramref name="combatRadius"/> is the LGB size (circle radius or square half-extent).
+    ///     True when <paramref name="point"/> is inside the CE wait area — the blue registration
+    ///     ring/box, inset by <see cref="CriticalEncounterWaitInset"/> so travel does not stop on
+    ///     the rim. <paramref name="combatRadius"/> is the LGB size (circle radius or square half-extent).
     /// </summary>
     public static bool IsInsideCriticalEncounterWaitArea(
         Vector3 center,
@@ -127,14 +134,20 @@ public static class NavigationConstants
             return false;
         }
 
+        float wait = MathF.Max(EventArrivalRadius, combatRadius - CriticalEncounterWaitInset);
+        if (wait > combatRadius)
+        {
+            wait = combatRadius;
+        }
+
         if (shape == ActivityAreaShape.Square)
         {
             float dx = MathF.Abs(point.X - center.X);
             float dz = MathF.Abs(point.Z - center.Z);
-            return MathF.Max(dx, dz) <= combatRadius;
+            return MathF.Max(dx, dz) <= wait;
         }
 
-        return point.Distance2D(center) <= combatRadius;
+        return point.Distance2D(center) <= wait;
     }
 }
 

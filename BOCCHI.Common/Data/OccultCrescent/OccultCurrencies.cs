@@ -132,4 +132,13 @@ public static class OccultCurrencies
 
         return addon.Text.ToString().Trim();
     }
+
+    public static bool IsSilverCurrency(uint itemId) =>
+        itemId == SilverPieceItemId || itemId == SilverObolItemId;
+
+    public static bool IsGoldCurrency(uint itemId) =>
+        itemId == GoldPieceItemId || itemId == GoldObolItemId;
+
+    public static bool IsTrackedCurrency(uint itemId) =>
+        IsSilverCurrency(itemId) || IsGoldCurrency(itemId);
 }

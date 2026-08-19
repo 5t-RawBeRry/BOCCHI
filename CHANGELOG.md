@@ -1,4 +1,5 @@
-# 4.1.0.2
+# 4.1.0.3
 
-### Fixes
-- Illegal Mode no longer steals your target in FATEs and Critical Encounters. Targeting is left to BOCCHI AI (or you). Mob Farmer still targets while farming.
+- Gold, silver, and phantom XP per hour now show a live rate for the last hour (extrapolated until you have a full hour), instead of total earned so far.
+- Illegal Mode walks a few yalms past the Critical Encounter registration edge before waiting, so it actually gets placed in (Tiny Terror, A Beast Unleashed).
+- Pot chest farming snaps pads onto the navmesh (and skips them) instead of sending vnav airborne coordinates.

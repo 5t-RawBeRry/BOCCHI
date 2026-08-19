@@ -4,6 +4,7 @@ using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
@@ -55,25 +56,14 @@ public class InFateHandler
             return;
         }
 
-        List<IBattleNpc> fateTargets = context.GetTargets().ToList();
-        bool ai = config.CombatAutorotation.UsesCombatAutomation();
-
-        if (ai)
+        if (config.CombatAutorotation.UsesCombatAutomation())
         {
-            // Hand the whole fight over — the preset's StayCloseToTarget paths melee into range
-            // itself, so BOCCHI closing the distance would only fight it.
-            CombatActivityHandler.HandleTargets(
-                player,
-                playerState,
-                fateTargets,
-                conditions,
-                pathfinder,
-                "InFate",
-                shouldApproachTarget: false,
-                deferCombatToBossModAi: true);
+            DismountAssist.TryDismount(conditions);
+            pathfinder.Stop();
             return;
         }
 
+        List<IBattleNpc> fateTargets = context.GetTargets().ToList();
         InitialCombatApproachMemory<FateId> approach = GetApproachMemory(context.GetFateId());
         if (CombatActivityHandler.HandleTargets(
                 player,

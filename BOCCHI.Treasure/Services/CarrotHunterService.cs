@@ -17,7 +17,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Extensions;
-using Ocelot.Ipc.BossMod;
+using Ocelot.Ipc.Lifestream;
 using Ocelot.Ipc.VNavmesh;
 using Ocelot.Lifecycle;
 using Ocelot.Services.Pathfinding;

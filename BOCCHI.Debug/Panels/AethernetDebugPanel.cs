@@ -6,7 +6,7 @@ using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using Lumina.Excel.Sheets;
-using Ocelot.Ipc.BossMod;
+using Ocelot.Ipc.Lifestream;
 using Ocelot.Services.UI;
 using System.Numerics;
 using System.Text;

@@ -52,7 +52,7 @@ public static class DismountAssist
         // Cast while mounted regardless of IsJumping: the dismount hop counts as jumping, and
         // bailing here meant a character that never touched down never dismounted at all.
         // No CanCast() gate — GetActionStatus reports non-zero for this general action, and the
-        // paths that actually work (UnmountStep, Actions.TryUnmount) only check IsMounted.
+        // paths that actually work (UnmountStep) only check IsMounted.
         if (!conditions[ConditionFlag.Mounting]
             && EzThrottler.Throttle("DismountAssist::Dismount", 250))
         {

@@ -14,7 +14,7 @@ using BOCCHI.Common.Services.Paths;
 using Dalamud.Plugin.Services;
 using Ocelot.Chain;
 using Ocelot.Extensions;
-using Ocelot.Ipc.BossMod;
+using Ocelot.Ipc.Lifestream;
 using Ocelot.Ipc.VNavmesh;
 using Ocelot.Lifecycle;
 using Ocelot.Services.Logger;
@@ -102,7 +102,6 @@ public class Automator
         if (turningOn)
         {
             modeGuard.EnsureExclusive(AutomationMode.IllegalMode);
-            automatorConfig.EnableCompletionistMode = false;
         }
 
         AutomatorRunMode target = turningOn ? AutomatorRunMode.IllegalMode : AutomatorRunMode.Off;
@@ -130,11 +129,6 @@ public class Automator
             return;
         }
 
-        if (turningOn)
-        {
-            automatorConfig.EnableCompletionistMode = false;
-        }
-
         context.SetRunMode(target);
         BocchiChat.Print(chat, uiConfig, translator.T(turningOn
             ? ".automation.pots_treasure.on"
@@ -156,7 +150,6 @@ public class Automator
             return;
         }
 
-        automatorConfig.EnableCompletionistMode = turningOn;
         context.SetRunMode(target);
         BocchiChat.Print(chat, uiConfig, translator.T(turningOn
             ? ".completionist.mode_on"
@@ -359,11 +352,6 @@ public class Automator
         };
 
         logger.Info("Left Occult Crescent — turning off {Mode}", context.RunMode);
-
-        if (context.IsCompletionist)
-        {
-            automatorConfig.EnableCompletionistMode = false;
-        }
 
         context.SetRunMode(AutomatorRunMode.Off);
         BocchiChat.Print(chat, uiConfig, translator.T(offMessage));

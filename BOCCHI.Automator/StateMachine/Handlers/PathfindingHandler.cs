@@ -141,11 +141,12 @@ public class PathfindingHandler
             // Remount mid-route if Treasure Sight (or anything else) left us on foot.
             if (path.GetNextPathStep()?.PathStepData is Pathfind(var destination, _))
             {
-                AutoMount.MaybeRemount(
-                    movement,
+                MountWait.TryCastIfNeeded(
                     conditions,
                     objects,
                     destination,
+                    movement.ShouldAutoMount,
+                    movement.PreferredMountId,
                     zones.GetZone().IsInBasecamp());
             }
 

@@ -17,6 +17,7 @@ using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
 using Ocelot.Chain;
 using Ocelot.Extensions;
+using Ocelot.Ipc.VNavmesh;
 using Ocelot.Pathfinding.Extensions;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
@@ -46,6 +47,7 @@ public class FarmingPotChestsHandler
     PotsConfig potsConfig,
     IAutomatorContext context,
     PandoraAutoOpenHold pandoraAutoOpen,
+    IVNavmeshIpc vnav,
     ILogger<FarmingPotChestsHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.FarmingPotChests)
 {
@@ -333,7 +335,7 @@ public class FarmingPotChestsHandler
         float distance = player.Position.Distance2D(reveal.Position);
         if (distance > OpenTreasureCofferChain.InteractDistance)
         {
-            EnsurePathing(reveal.Position, allowRemount: false);
+            EnsurePathing(reveal.Position, allowRemount: false, skipIfOffMesh: false);
             return true;
         }
 
@@ -531,7 +533,16 @@ public class FarmingPotChestsHandler
                 return;
             }
 
-            EnsurePathing(target);
+            if (!EnsurePathing(target))
+            {
+                logger.Warning(
+                    "Pot treasure: no navmesh at {Label} {Pos:F0} — skipping candidate ({Remaining} left)",
+                    farm.Candidates.Peek().Label,
+                    target,
+                    farm.Candidates.Count - 1);
+                SkipCurrentCandidate(farm);
+            }
+
             return;
         }
 
@@ -682,7 +693,7 @@ public class FarmingPotChestsHandler
                     return;
                 }
 
-                EnsurePathing(reveal.Position, allowRemount: false);
+                EnsurePathing(reveal.Position, allowRemount: false, skipIfOffMesh: false);
                 return;
             }
 
@@ -818,7 +829,11 @@ public class FarmingPotChestsHandler
                     return;
                 }
 
-                EnsurePathing(chestPosition);
+                if (!EnsurePathing(chestPosition))
+                {
+                    SkipCurrentBlindChest(farm, chestPosition, "no navmesh at blind chest");
+                }
+
                 return;
             }
 
@@ -844,7 +859,7 @@ public class FarmingPotChestsHandler
                 return;
             }
 
-            EnsurePathing(pathTarget);
+            EnsurePathing(pathTarget, skipIfOffMesh: false);
             return;
         }
 
@@ -875,14 +890,26 @@ public class FarmingPotChestsHandler
     ///     False once we are closing on a coffer to open. The open path dismounts first, so remounting
     ///     mid-approach just fights it — the two take turns and neither wins.
     /// </param>
-    private void EnsurePathing(Vector3 destination, bool allowRemount = true)
+    /// <param name="skipIfOffMesh">
+    ///     Authored pads: skip when vnav has no polygon. Live coffers still walk with a floor snap.
+    /// </param>
+    /// <returns>False when the pad is off-mesh and <paramref name="skipIfOffMesh"/> is set.</returns>
+    private bool EnsurePathing(Vector3 destination, bool allowRemount = true, bool skipIfOffMesh = true)
     {
-        Vector3 pathable = PathableTreasurePosition(destination);
+        if (!TreasurePathing.TrySnapToNavmesh(destination, player.Position.Y, vnav, out Vector3 pathable))
+        {
+            if (skipIfOffMesh)
+            {
+                return false;
+            }
+
+            pathable = TreasurePathing.PathablePosition(destination, player.Position.Y);
+        }
 
         // Long hops use the FATE/CE aethernet planner; short ones stay on vnav.
         if (TryTravelByPlan(pathable))
         {
-            return;
+            return true;
         }
 
         // Re-path when the destination moves, not only when vnav is idle.
@@ -891,14 +918,26 @@ public class FarmingPotChestsHandler
         if ((pathfinder.IsIdle() || drifted) && EzThrottler.Throttle(throttleKey, 750))
         {
             lastPathDestination = pathable;
-            pathfinder.PathfindAndMoveTo(new(pathable));
+            pathfinder.PathfindAndMoveTo(new(pathable)
+            {
+                ShouldSnapToFloor = true,
+                FloorSnapExtents = 40f,
+            });
         }
 
         // Remount only for longer walks — not while already on top of a reveal.
         if (allowRemount && player.Position.Distance2D(pathable) > 15f)
         {
-            AutoMount.MaybeRemount(movement, conditions, objects, pathable, zones.GetZone().IsInBasecamp());
+            MountWait.TryCastIfNeeded(
+                conditions,
+                objects,
+                pathable,
+                movement.ShouldAutoMount,
+                movement.PreferredMountId,
+                zones.GetZone().IsInBasecamp());
         }
+
+        return true;
     }
 
     /// <summary>
@@ -989,8 +1028,11 @@ public class FarmingPotChestsHandler
         );
     }
 
-    private Vector3 PathableTreasurePosition(Vector3 position) =>
-        TreasurePathing.PathablePosition(position, player.Position.Y);
+    private Vector3 PathableTreasurePosition(Vector3 position)
+    {
+        _ = TreasurePathing.TrySnapToNavmesh(position, player.Position.Y, vnav, out Vector3 pathable);
+        return pathable;
+    }
 
     private bool TryAcquireReveal(PotChestFarmMemory farm, out IGameObject? reveal)
     {

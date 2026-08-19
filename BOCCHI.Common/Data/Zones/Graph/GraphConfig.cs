@@ -8,7 +8,7 @@ namespace BOCCHI.Common.Data.Zones.Graph;
 /// <summary>How CE join / combat area is measured around <see cref="ActivityData.Position"/>.</summary>
 public enum ActivityAreaShape
 {
-    /// <summary>Euclidean radius (LGB MapRange for CEs; <see cref="ActivityData.CombatRadius"/> for FATEs).</summary>
+    /// <summary>Euclidean radius (LGB MapRange for CEs).</summary>
     Circle = 0,
 
     /// <summary>Axis-aligned square; size is half-extent (center → edge).</summary>
@@ -16,16 +16,14 @@ public enum ActivityAreaShape
 }
 
 /// <param name="Position">Path / wait destination (CE staging or FATE start).</param>
-/// <param name="CombatRadius">FATE engage radius. CEs leave this null and use live LGB size.</param>
 /// <param name="PreferredAethernetId">PlaceNameId of preferred inbound shard, if any.</param>
 /// <param name="AreaShape">Circle (default) or axis-aligned square (e.g. A Beast Unleashed).</param>
 /// <param name="StandRadius">
-///     Standable area when smaller than the registration rim. Null uses CombatRadius for both.
+///     Standable area when smaller than the registration rim. Null uses the live LGB size.
 /// </param>
 public record ActivityData(
     int Id,
     Vector3 Position,
-    float? CombatRadius = null,
     uint? PreferredAethernetId = null,
     ActivityAreaShape AreaShape = ActivityAreaShape.Circle,
     float? StandRadius = null);
@@ -68,4 +66,17 @@ public class GraphConfig(IPathfinder pathfinder, ILogger logger)
     }
 
     public async Task<float> GetWalkingCost(Node from, Node to) => await GetWalkingCost(from.Position, to.Position);
+}
+
+/// <summary>
+///     vnav reports <c>Distance 0</c> for a path it could not build (fewer than two nodes).
+///     Treat that as unreachable so traversal does not prefer a failed path as free.
+/// </summary>
+public static class PathReachability
+{
+    public static bool IsReachable(this Path path) => path.Nodes.Count >= 2;
+
+    /// <summary>Path cost, or <see cref="float.PositiveInfinity"/> when vnav could not reach it.</summary>
+    public static float CostOrUnreachable(this Path path) =>
+        path.IsReachable() ? path.Distance : float.PositiveInfinity;
 }

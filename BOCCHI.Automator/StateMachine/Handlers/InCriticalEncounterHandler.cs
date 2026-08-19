@@ -3,6 +3,7 @@ using BOCCHI.Automator.Services;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Goals;
+using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Conditions;
@@ -66,7 +67,13 @@ public class InCriticalEncounterHandler
             return;
         }
 
-        // Materialise once — GetTargets is a lazy OrderBy over the object table.
+        if (config.CombatAutorotation.UsesCombatAutomation())
+        {
+            DismountAssist.TryDismount(conditions);
+            pathfinder.Stop();
+            return;
+        }
+
         List<IBattleNpc> targets = context.GetTargets().ToList();
         if (targets.Count == 0 && TryGetCommittedBattleEncounter(out CriticalEncounter committed))
         {
@@ -80,8 +87,7 @@ public class InCriticalEncounterHandler
             conditions,
             pathfinder,
             "InCriticalEncounter",
-            shouldApproachTarget: false,
-            deferCombatToBossModAi: config.CombatAutorotation.UsesCombatAutomation());
+            shouldApproachTarget: false);
     }
 
     private bool TryGetCommittedBattleEncounter(out CriticalEncounter ce)
