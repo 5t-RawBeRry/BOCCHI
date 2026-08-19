@@ -66,9 +66,6 @@ public static class NavigationConstants
     /// <summary>Circle travel stand-off outer (≤ stand ratio).</summary>
     public const float CriticalEncounterApproachMaxRatio = 0.4f;
 
-    /// <summary>Angular jitter (degrees) for CE wait stand-off around the approach ray.</summary>
-    public const float CriticalEncounterApproachJitter = 60f;
-
     /// <summary>Square CEs: max Chebyshev stand-off from center as a fraction of half-extent.</summary>
     public const float CriticalEncounterSquareApproachMaxRatio = 0.25f;
 
@@ -168,7 +165,6 @@ public static class NavigationApproach
     /// </param>
     public static Vector3 GetCriticalEncounterApproachPosition(
         Vector3 center,
-        Vector3 from,
         float combatRadius,
         ActivityAreaShape shape = ActivityAreaShape.Circle,
         float standRadius = 0f)
@@ -210,7 +206,6 @@ public static class NavigationApproach
         {
             return GetCriticalEncounterApproachPosition(
                 goal.Position,
-                from,
                 meta.CombatRadius,
                 meta.AreaShape,
                 meta.StandRadius);
@@ -259,7 +254,7 @@ public static class NavigationApproach
             }
 
             approach = GetCriticalEncounterApproachPosition(
-                center, from, radius, shape, candidate.StandRadius ?? 0f);
+                center, radius, shape, candidate.StandRadius ?? 0f);
             return true;
         }
 

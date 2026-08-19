@@ -12,11 +12,7 @@ public static class TreasurePathing
     /// <summary>Vertical search — authored / map Y is often tens of yalms off the floor.</summary>
     private const float SnapExtentY = 200f;
 
-    /// <summary>
-    ///     Rewrite only known-bogus reveal altitudes (Y ≈ -500) so vnav can land.
-    ///     Do not pull valid authored pads to the player's Y — that put North Horn
-    ///     candidates off-mesh (e.g. Y 49 → 90) and failed polygon lookup.
-    /// </summary>
+    /// <summary>Rewrite Y ≈ -500 reveal altitudes. Do not snap authored pads to the player's Y.</summary>
     public static Vector3 PathablePosition(Vector3 position, float playerY)
     {
         if (MathF.Abs(position.Y + 500f) < 0.5f)

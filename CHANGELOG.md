@@ -1,5 +1,6 @@
 # 4.1.0.3
 
-- Gold, silver, and phantom XP per hour now show a live rate for the last hour (extrapolated until you have a full hour), instead of total earned so far.
-- Illegal Mode walks a few yalms past the Critical Encounter registration edge before waiting, so it actually gets placed in (Tiny Terror, A Beast Unleashed).
-- Pot chest farming snaps pads onto the navmesh (and skips them) instead of sending vnav airborne coordinates.
+### Fixes
+- Gold, silver, and phantom XP per hour show a live hourly rate (your pace so far, then the last hour) instead of sitting at earned-so-far until an hour has passed.
+- Illegal Mode no longer waits on the Critical Encounter registration edge. It walks a little further in first, so Tiny Terror and A Beast Unleashed actually place you. (#192)
+- Pot chest farming snaps pads onto the navmesh and skips spots vnav cannot reach, instead of asking it to walk into the air.
