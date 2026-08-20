@@ -38,6 +38,10 @@ public sealed class PotCycleSyncService
 
     private static readonly TimeSpan FetchRetryDelay = TimeSpan.FromSeconds(20);
 
+    private static readonly TimeSpan FetchRateLimitMinDelay = TimeSpan.FromMinutes(2);
+
+    private static readonly TimeSpan FetchRateLimitMaxDelay = TimeSpan.FromMinutes(10);
+
     private ushort fingerprintTerritory;
 
     private string? instanceKey;
@@ -60,6 +64,10 @@ public sealed class PotCycleSyncService
     private DateTime nextUploadAttemptUtc = DateTime.MinValue;
 
     private DateTime nextFetchAttemptUtc = DateTime.MinValue;
+
+    private TimeSpan fetchRateLimitDelay = FetchRateLimitMinDelay;
+
+    private bool loggedFetchRateLimit;
 
     private bool uploadInFlight;
 
@@ -147,14 +155,39 @@ public sealed class PotCycleSyncService
         fetchInFlight = false;
         if (!fetch.Success)
         {
-            nextFetchAttemptUtc = DateTime.UtcNow + FetchRetryDelay;
-            if (fetch.Error is { } fetchError)
+            bool rateLimited = IsRateLimited(fetch.Status);
+            if (rateLimited)
             {
-                logger.Warn("[PotCycleSync] fetch failed: {Message}", fetchError);
+                nextFetchAttemptUtc = DateTime.UtcNow + fetchRateLimitDelay;
+                if (!loggedFetchRateLimit)
+                {
+                    loggedFetchRateLimit = true;
+                    logger.Warn(
+                        "[PotCycleSync] fetch rate-limited — retrying in {Minutes:0}m",
+                        fetchRateLimitDelay.TotalMinutes);
+                }
+                else
+                {
+                    logger.Debug(
+                        "[PotCycleSync] fetch rejected: {Status} — next try in {Minutes:0}m",
+                        fetch.Status ?? "?",
+                        fetchRateLimitDelay.TotalMinutes);
+                }
+
+                fetchRateLimitDelay = TimeSpan.FromMinutes(
+                    Math.Min(FetchRateLimitMaxDelay.TotalMinutes, fetchRateLimitDelay.TotalMinutes * 2));
             }
             else
             {
-                logger.Warn("[PotCycleSync] fetch rejected: {Status}", fetch.Status ?? "?");
+                nextFetchAttemptUtc = DateTime.UtcNow + FetchRetryDelay;
+                if (fetch.Error is { } fetchError)
+                {
+                    logger.Warn("[PotCycleSync] fetch failed: {Message}", fetchError);
+                }
+                else
+                {
+                    logger.Warn("[PotCycleSync] fetch rejected: {Status}", fetch.Status ?? "?");
+                }
             }
 
             return;
@@ -162,6 +195,8 @@ public sealed class PotCycleSyncService
 
         lastFetchedInstanceKey = fetch.InstanceKey;
         nextFetchAttemptUtc = DateTime.UtcNow;
+        fetchRateLimitDelay = FetchRateLimitMinDelay;
+        loggedFetchRateLimit = false;
 
         // Every outcome below is logged. Whether this sync is worth its worker at all comes down to
         // how often a fetch actually lands, and until now a miss, a territory mismatch and a
@@ -201,7 +236,9 @@ public sealed class PotCycleSyncService
             fetch.SpawnUnix);
     }
 
-    /// <summary>First 8 chars of an instance key, for log lines.</summary>
+    private static bool IsRateLimited(string? status) =>
+        status is "TooManyRequests" or "429";
+
     private static string Shorten(string? key) =>
         key is { Length: >= 8 } ? key[..8] : key ?? "?";
 

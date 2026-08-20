@@ -1,7 +1,8 @@
 # 4.1.0.5
 
 ### Fixes
-- Rotation Solver Reborn shows Ready again when it is loaded, and Illegal Mode can set Henched again. 4.1.0.4’s IPC check used the wrong type and blocked the rotation.
-- Pot FATE/CE cutoffs are measured to the next pot spawn, not spawn minus leave-early. Leave-early only controls when to walk to the pot, so a 5m FATE cutoff no longer blocks FATEs for 10m when leave-early is also 5.
+- Rotation Solver Reborn turns on Henched in FATEs and CEs instead of staying Off while BOCCHI AI is already running.
+- Pot FATE and CE cutoffs are minutes until the next pot spawn. Leave-early only controls when you walk there, so those sliders no longer stack.
 - Treasure Hunt Ninja Hide uses your actual Knowledge, not South Horn sync, so high-Knowledge characters stop hiding from trash that will not aggro (#197).
-- Illegal Mode no longer stays on Waiting for CE after the encounter starts when EventId / enemy tags lag — it enters the CE and switches the BossMod preset.
+- Illegal Mode stays in a Critical Encounter after battle starts, so Wrath / RSR keep fighting instead of dropping the CE and turning combat off.
+- Pot timer sync backs off when the worker is rate-limited, instead of retrying every 20 seconds.

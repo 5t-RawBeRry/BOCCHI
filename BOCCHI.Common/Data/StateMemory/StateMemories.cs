@@ -69,6 +69,17 @@ public sealed class WaitingForCriticalEncounterMemory(CriticalEncounterId encoun
 }
 
 /// <summary>
+///     InCriticalEncounter already started for this CE. Keep the goal even if EventId / wait-ring
+///     lag after you walk toward the boss (otherwise GoalValidator drops it and Wrath turns off).
+/// </summary>
+public sealed class CommittedCriticalEncounterMemory(CriticalEncounterId encounterId)
+{
+    public CriticalEncounterId EncounterId { get; } = encounterId;
+
+    public bool IsFor(CriticalEncounterId id) => EncounterId == id;
+}
+
+/// <summary>
 ///     In FATE/CE combat — block travel replan until the activity goal is dropped.
 ///     Avoids edge stutter when FATE sync flickers and Pathfinding fights BOCCHI AI.
 /// </summary>

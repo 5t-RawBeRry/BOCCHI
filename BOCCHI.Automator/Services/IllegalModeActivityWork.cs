@@ -17,7 +17,8 @@ internal static class IllegalModeActivityWork
         || memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory _)
         || memory.TryRemember<WaitingForPotFateMemory>(out WaitingForPotFateMemory _)
         || memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _)
-        || memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _);
+        || memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _)
+        || memory.TryRemember<CommittedCriticalEncounterMemory>(out CommittedCriticalEncounterMemory _);
 
     /// <summary>Anything that should keep the treasure filler from surveying / hunting.</summary>
     public static bool HasFillerBlockingActivity(IAutomatorMemory memory) =>
@@ -37,6 +38,7 @@ internal static class IllegalModeActivityWork
         memory.Forget<WaitingForCriticalEncounterMemory>();
         memory.Forget<WaitingForPotFateMemory>();
         memory.Forget<SuspendTravelForActivityMemory>();
+        memory.Forget<CommittedCriticalEncounterMemory>();
         if (includePotChests)
         {
             memory.Forget<PotChestFarmMemory>();

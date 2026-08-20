@@ -39,6 +39,17 @@ public class InCriticalEncounterHandler
             return StatePriority.Never;
         }
 
+        if (memory.TryRemember<CommittedCriticalEncounterMemory>(out CommittedCriticalEncounterMemory committed)
+            && committed.IsFor(ceGoal.id))
+        {
+            CriticalEncounter? latched = repo.SnapshotWithoutForkedTower()
+                .FirstOrDefault(c => c.Id == ceGoal.id);
+            if (latched is { } stillUp && stillUp.IsActive())
+            {
+                return StatePriority.VeryHigh;
+            }
+        }
+
         // Waiting handed off, or we already entered (EventId can lag while fighting).
         if (TryGetCommittedBattleEncounter(out _))
         {
@@ -85,6 +96,7 @@ public class InCriticalEncounterHandler
     {
         base.Enter();
         memory.Forget<WaitingForCriticalEncounterMemory>();
+        memory.Forget<CommittedCriticalEncounterMemory>();
         memory.TryAdd(new SuspendTravelForActivityMemory());
         memory.Forget<GoalPathStepMemory>();
         pathfinder.Stop();
@@ -97,12 +109,18 @@ public class InCriticalEncounterHandler
             ceId = ceGoal.id.Value;
         }
 
+        if (ceId is ushort entered)
+        {
+            memory.TryAdd(new CommittedCriticalEncounterMemory(new(entered)));
+        }
+
         logger.Info("Entered CE {Id} — travel suspended", ceId?.ToString() ?? "?");
     }
 
     public override void Exit(AutomatorState next)
     {
         memory.Forget<SuspendTravelForActivityMemory>();
+        memory.Forget<CommittedCriticalEncounterMemory>();
         autoRotation.DisableAi();
         logger.Info("Left CE — travel resumed");
         base.Exit(next);

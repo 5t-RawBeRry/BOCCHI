@@ -83,9 +83,16 @@ public class GoalValidator
             return false;
         }
 
-        // Battle: only keep the goal when we are committed (EventId, waited here, or
-        // SuspendTravel with real participation / still on the registration ring).
-        // Pathing-only / SuspendTravel alone kept driving to coords or staying In CE (#196).
+        // Battle: keep the goal when we actually entered In CE, waited here, or still have
+        // EventId / CE-tagged enemies / the registration ring. Pathing-only used to keep
+        // driving to coords or staying In CE (#196). Forgetting the wait latch on Enter
+        // then requiring the inset wait disc dropped Appalling Behavior mid-fight.
+        if (memory.TryRemember<CommittedCriticalEncounterMemory>(out CommittedCriticalEncounterMemory committed)
+            && committed.IsFor(id))
+        {
+            return true;
+        }
+
         if (criticalEncounterContext.GetCriticalEncounterId() == id)
         {
             return true;
@@ -292,6 +299,12 @@ public class GoalValidator
 
     private bool IsCommittedToCriticalEncounter(CriticalEncounterId id)
     {
+        if (memory.TryRemember<CommittedCriticalEncounterMemory>(out CommittedCriticalEncounterMemory committed)
+            && committed.IsFor(id))
+        {
+            return true;
+        }
+
         if (criticalEncounterContext.GetCriticalEncounterId() == id)
         {
             return true;
