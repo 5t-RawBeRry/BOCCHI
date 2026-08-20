@@ -81,6 +81,17 @@
         "none": "없음",
         "short": "짧음 (0.5초)",
         "long": "김 (1초)"
+      },
+      "separate_dodge_delay": {
+        "label": "회피와 일반 이동 지연 분리",
+        "tooltip": "위 지연과 별도로, AoE 회피할 때만 다른 대기 시간을 씁니다."
+      },
+      "dodge_delay": {
+        "label": "회피 이동 지연",
+        "tooltip": "회피를 시작하기 전 대기 시간입니다. 「회피와 일반 이동 지연 분리」가 켜져 있을 때만 적용됩니다.",
+        "none": "없음",
+        "short": "짧음 (0.5초)",
+        "long": "김 (1초)"
       }
     },
     "stay_mounted_while_waiting_for_ce": {

@@ -153,14 +153,34 @@ public static class NavigationConstants
             wait = combatRadius;
         }
 
+        return IsInsideCriticalEncounterArea(center, wait, shape, point);
+    }
+
+    /// <summary>
+    ///     True inside the full registration edge (red debug), with no wait inset.
+    ///     Use after arrival so waiting is not yanked back from the stand ring toward the rim.
+    /// </summary>
+    public static bool IsInsideCriticalEncounterRegistrationArea(
+        Vector3 center,
+        float combatRadius,
+        ActivityAreaShape shape,
+        Vector3 point) =>
+        combatRadius > 0f && IsInsideCriticalEncounterArea(center, combatRadius, shape, point);
+
+    private static bool IsInsideCriticalEncounterArea(
+        Vector3 center,
+        float radiusOrHalfExtent,
+        ActivityAreaShape shape,
+        Vector3 point)
+    {
         if (shape == ActivityAreaShape.Square)
         {
             float dx = MathF.Abs(point.X - center.X);
             float dz = MathF.Abs(point.Z - center.Z);
-            return MathF.Max(dx, dz) <= wait;
+            return MathF.Max(dx, dz) <= radiusOrHalfExtent;
         }
 
-        return point.Distance2D(center) <= wait;
+        return point.Distance2D(center) <= radiusOrHalfExtent;
     }
 }
 

@@ -21,7 +21,7 @@ public static class KnowledgeThreat
     /// <summary>Mounted Hide starts this much earlier so we can dismount first.</summary>
     public const float MountedThreatEnterBonus = 5f;
 
-    /// <summary>Occult Crescent Knowledge cap (North Horn / 7.55+).</summary>
+    /// <summary>Player Occult Crescent Knowledge cap (North Horn / 7.55+). Mobs can read higher.</summary>
     public const int MaxKnowledgeLevel = 40;
 
     public static unsafe int? TryGetPlayerForayLevel(IObjectTable objects)
@@ -109,6 +109,11 @@ public static class KnowledgeThreat
         return found;
     }
 
+    /// <summary>
+    ///     Mob Knowledge must be ≥ player Knowledge + offset (player cap is
+    ///     <see cref="MaxKnowledgeLevel"/>; mobs may be higher). Do not clamp the sum to the
+    ///     player cap — that made offset 6 at Knowledge 40 still hide from every 40+ enemy.
+    /// </summary>
     public static int HideAtOrAbove(int playerForayLevel, int hideOffset) =>
-        Math.Clamp(playerForayLevel + hideOffset, 1, MaxKnowledgeLevel);
+        Math.Max(1, playerForayLevel + hideOffset);
 }

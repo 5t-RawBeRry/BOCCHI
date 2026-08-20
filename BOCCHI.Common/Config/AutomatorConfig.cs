@@ -58,6 +58,10 @@ public class AutomatorConfig : IAutoConfig
 
     public BossModMovementDelay BossModMovementDelay { get; set; } = BossModMovementDelay.None;
 
+    public bool BossModSeparateDodgeDelay { get; set; } = false;
+
+    public BossModMovementDelay BossModDodgeMovementDelay { get; set; } = BossModMovementDelay.None;
+
     /// <summary>
     ///     Stay mounted while a CE is preparing; dismount when it starts.
     /// </summary>

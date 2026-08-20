@@ -81,6 +81,17 @@
         "none": "なし",
         "short": "短（0.5秒）",
         "long": "長（1秒）"
+      },
+      "separate_dodge_delay": {
+        "label": "回避と通常で別の遅延",
+        "tooltip": "上の遅延とは別に、AoE 回避のときだけ別の待ち時間を使います。"
+      },
+      "dodge_delay": {
+        "label": "回避の移動遅延",
+        "tooltip": "回避を始めるまでの待ち時間です。「回避と通常で別の遅延」がオンのときだけ使います。",
+        "none": "なし",
+        "short": "短（0.5秒）",
+        "long": "長（1秒）"
       }
     },
     "stay_mounted_while_waiting_for_ce": {

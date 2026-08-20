@@ -50,6 +50,11 @@ public class MobFarmerDebugDrawer
                 ? new(0.9f, 0.1f, 0.9f)
                 : new Color(0.9f, 0.1f, 0.1f);
             overlay.StrokeLine(origin, mob.Position, color);
+
+            if (MobProfiles.GetAggro(mob.NameId) != MobAggro.Unknown)
+            {
+                overlay.StrokeCircle(mob.Position, MobProfiles.DetectionRange, AggroColor(mob.NameId));
+            }
         }
 
         foreach(IBattleNpc mob in scanner.InCombat)
@@ -57,4 +62,12 @@ public class MobFarmerDebugDrawer
             overlay.StrokeLine(origin, mob.Position, new(0.1f, 0.9f, 0.1f));
         }
     }
+
+    private static Color AggroColor(uint nameId) => MobProfiles.GetAggro(nameId) switch
+    {
+        MobAggro.Sight => new(1f, 0.85f, 0.2f),
+        MobAggro.Magic => new(0.45f, 0.4f, 1f),
+        MobAggro.Proximity => new(1f, 0.35f, 0.1f),
+        _ => new(0.6f, 0.6f, 0.6f),
+    };
 }

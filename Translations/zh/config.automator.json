@@ -81,6 +81,17 @@
         "none": "无",
         "short": "短（0.5秒）",
         "long": "长（1秒）"
+      },
+      "separate_dodge_delay": {
+        "label": "回避与普通过分开延迟",
+        "tooltip": "与上面的延迟分开，仅在躲避 AoE 时使用另一套等待时间。"
+      },
+      "dodge_delay": {
+        "label": "回避移动延迟",
+        "tooltip": "开始躲避前的等待时间。仅在开启「回避与普通过分开延迟」时生效。",
+        "none": "无",
+        "short": "短（0.5秒）",
+        "long": "长（1秒）"
       }
     },
     "stay_mounted_while_waiting_for_ce": {

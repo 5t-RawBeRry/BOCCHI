@@ -59,13 +59,15 @@ public class WaitingForCriticalEncounterHandler
             return StatePriority.Never;
         }
 
-        // Already arrived — keep Waiting unless we drifted outside the red zone.
+        // Already arrived — keep Waiting until outside the full red registration edge.
+        // The inset wait disc is only for first arrival; using it here yanked you back to the
+        // cyan stand as soon as you walked toward the rim.
         if (hasWaitLatch)
         {
             if (objects.LocalPlayer is { } latchedPlayer)
             {
                 float latchedRadius = NavigationConstants.CriticalEncounterRedRadius(ce.Radius, ce.AreaShape);
-                if (!NavigationConstants.IsInsideCriticalEncounterWaitArea(
+                if (!NavigationConstants.IsInsideCriticalEncounterRegistrationArea(
                         ce.Position,
                         latchedRadius,
                         ce.AreaShape,
@@ -164,7 +166,7 @@ public class WaitingForCriticalEncounterHandler
             return false;
         }
 
-        return CriticalEncounterBattleHandoff.IsReady(wait, ce.Id, context, conditions);
+        return CriticalEncounterBattleHandoff.IsReady(wait, ce.Id, context);
     }
 
     private bool TryGetGoalEncounter(out CriticalEncounter ce)

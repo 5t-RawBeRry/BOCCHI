@@ -56,6 +56,10 @@ const OCCULT_POT_FATE_IDS = new Set([1976, 1977, 2072, 2073]);
 const CARROT_OBJECT_BASE_ID = 2010139;
 /** Only return pot anchors newer than this (seconds). */
 const POT_CYCLE_MAX_AGE_SECONDS = 45 * 60;
+/** Drop pot_cycles older than this (seconds). Must exceed GET max age. */
+const POT_CYCLE_RETAIN_SECONDS = 2 * 60 * 60;
+/** Cap delete batch so cleanup does not burn the whole free-tier write budget. */
+const POT_CYCLE_PRUNE_BATCH = 2000;
 
 function jsonResponse(body: unknown, status = 200, extraHeaders: Record<string, string> = {}): Response {
   return Response.json(body, {
@@ -920,11 +924,9 @@ async function submitPotCycle(request: Request, env: Env): Promise<Response> {
     WHERE NOT EXISTS (
       SELECT 1
       FROM pot_cycles
-      WHERE installation_hash = ?
-        AND instance_key = ?
+      WHERE instance_key = ?
         AND pot_fate_id = ?
         AND spawn_at_unix = ?
-        AND created_at_utc >= datetime('now', '-10 minutes')
     )
   `).bind(
     instanceKey,
@@ -935,7 +937,6 @@ async function submitPotCycle(request: Request, env: Env): Promise<Response> {
     pot.installationHash.trim(),
     pot.pluginVersion.trim(),
     observedAtUtc,
-    pot.installationHash.trim(),
     instanceKey,
     pot.potFateId,
     pot.spawnAtUnix,
@@ -1295,5 +1296,24 @@ export default {
     console.log("Observation processor completed", cofferResult);
     const carrotResult = await processPendingCarrotObservations(env);
     console.log("Carrot processor completed", carrotResult);
+    const pruned = await pruneStalePotCycles(env);
+    console.log("Pot cycle prune completed", pruned);
   },
 } satisfies ExportedHandler<Env>;
+
+/** Free-tier D1 is 100k writes/day — pot_cycles was inserting 100k+ rows/day alone. */
+async function pruneStalePotCycles(env: Env): Promise<{ deleted: number }> {
+  const cutoffUnix = Math.floor(Date.now() / 1000) - POT_CYCLE_RETAIN_SECONDS;
+  const result = await env.DB.prepare(`
+    DELETE FROM pot_cycles
+    WHERE id IN (
+      SELECT id
+      FROM pot_cycles
+      WHERE spawn_at_unix < ?
+      ORDER BY id
+      LIMIT ?
+    )
+  `).bind(cutoffUnix, POT_CYCLE_PRUNE_BATCH).run();
+
+  return { deleted: result.meta.changes ?? 0 };
+}

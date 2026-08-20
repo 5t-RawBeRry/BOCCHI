@@ -1,30 +1,24 @@
 using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Services;
-using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Plugin.Services;
 
 namespace BOCCHI.Automator.Services;
 
-/// <summary>Shared CE Preparing→Battle handoff signals (EventId lag / enemies / grace).</summary>
+/// <summary>
+///     Shared CE Preparing→Battle handoff signals (EventId lag / CE-tagged enemies).
+///     Open-world InCombat and a timed grace alone are not enough — trash near a false
+///     wait ring used to flip Illegal Mode into In CE (#196).
+/// </summary>
 internal static class CriticalEncounterBattleHandoff
 {
-    public static readonly TimeSpan Grace = TimeSpan.FromSeconds(3);
-
     public static bool IsReady(
         WaitingForCriticalEncounterMemory wait,
         CriticalEncounterId encounterId,
-        ICriticalEncounterContext context,
-        ICondition conditions)
+        ICriticalEncounterContext context)
     {
         wait.MarkBattleStarted();
 
-        if (context.HasEncounterEnemies(encounterId) || conditions[ConditionFlag.InCombat])
-        {
-            return true;
-        }
-
-        return wait.BattleStartedAtUtc is { } started
-               && DateTimeOffset.UtcNow - started >= Grace;
+        return context.GetCriticalEncounterId() == encounterId
+               || context.HasEncounterEnemies(encounterId);
     }
 }

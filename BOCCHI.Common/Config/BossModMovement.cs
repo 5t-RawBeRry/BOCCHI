@@ -44,7 +44,12 @@ public static class BossModMovement
             range = FormatRange(config.BossModMaxDistanceRanged);
         }
 
-        return new(range, config.BossModOverdodge.ToString(), config.BossModMovementDelay.ToString());
+        return new(
+            range,
+            config.BossModOverdodge.ToString(),
+            config.BossModMovementDelay.ToString(),
+            config.BossModSeparateDodgeDelay ? "Enabled" : "Disabled",
+            config.BossModSeparateDodgeDelay ? config.BossModDodgeMovementDelay.ToString() : "None");
     }
 
     public static string FormatRange(float yards)

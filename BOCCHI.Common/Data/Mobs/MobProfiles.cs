@@ -3,14 +3,25 @@ using BOCCHI.Common.Data.OccultCrescent;
 namespace BOCCHI.Common.Data.Mobs;
 
 /// <summary>
-///     Authored mob weakness / spawn data. Not consumed by runtime yet — Mob Farmer uses
-///     <see cref="MobData.MobsWithSpawnCondition"/>.
+///     Authored mob weakness / spawn / aggro data. Mob Farmer still selects from
+///     <see cref="MobData.MobsWithSpawnCondition"/>; aggro is used for debug rings and pull spacing.
 /// </summary>
 public static class MobProfiles
 {
+    /// <summary>
+    ///     OC trash starts detecting around 8.8y (kuru). 9y is generally safe; sight can be closer from behind.
+    /// </summary>
+    public const float DetectionRange = 9f;
+
     private static readonly Dictionary<Mob, MobProfile> Profiles = BuildProfiles();
 
     public static bool TryGet(Mob mob, out MobProfile profile) => Profiles.TryGetValue(mob, out profile);
+
+    public static MobAggro GetAggro(Mob mob) =>
+        Profiles.TryGetValue(mob, out MobProfile profile) ? profile.Aggro : MobAggro.Unknown;
+
+    public static MobAggro GetAggro(uint nameId) =>
+        MobData.TryFromNameId(nameId, out Mob mob) ? GetAggro(mob) : MobAggro.Unknown;
 
     public static MobElement GetWeaknesses(Mob mob) =>
         Profiles.TryGetValue(mob, out MobProfile profile) ? profile.Weaknesses : MobElement.None;
@@ -132,17 +143,17 @@ public static class MobProfiles
         p[Mob.Gourmand] = P(0, MobElement.Fire, S(ashkin: true, paralysis: true, slow: true), MobSpawnCondition.Night);
         p[Mob.Dullahan] = P(0, MobElement.Thunder, S(ashkin: true, stop: true), MobSpawnCondition.Night);
         p[Mob.Mousse] = P(0, MobElement.None, S(doom: true, paralysis: true, blind: true), MobSpawnCondition.Rain);
-        p[Mob.Dhruva] = P(0, MobElement.Wind, S(doom: true, stop: true, slow: true), MobSpawnCondition.Clouds);
+        p[Mob.Dhruva] = P(0, MobElement.Wind, S(doom: true, stop: true, slow: true), MobSpawnCondition.Clouds, MobAggro.Magic);
         p[Mob.Mimic] = P(0, MobElement.Thunder, S(stop: true, blind: true), MobSpawnCondition.AtmosphericPhantasms);
         p[Mob.Bomb] = P(0, MobElement.Ice, S(doom: true, stop: true, slow: true, stun: true), MobSpawnCondition.ClearSkies);
-        p[Mob.Fool] = P(0, MobElement.None, S(paralysis: true, slow: true, blind: true));
+        p[Mob.Fool] = P(0, MobElement.None, S(paralysis: true, slow: true, blind: true), aggro: MobAggro.Proximity);
     }
 
     private static void AddNorthHorn(Dictionary<Mob, MobProfile> p)
     {
         // Susceptibilities not authored for NH yet — elements / levels / spawn only.
         p[Mob.Bicephalus] = P(0, MobElement.Fire, spawn: MobSpawnCondition.Night);
-        p[Mob.Glutton] = P(0, MobElement.Wind, spawn: MobSpawnCondition.Night);
+        p[Mob.Glutton] = P(0, MobElement.Wind, spawn: MobSpawnCondition.Night, aggro: MobAggro.Proximity);
         p[Mob.Ankou] = P(0, MobElement.Ice, spawn: MobSpawnCondition.Night);
 
         p[Mob.Weapon] = P(20, MobElement.Fire);
@@ -189,34 +200,35 @@ public static class MobProfiles
         p[Mob.Blackguard2] = P(39, MobElement.Wind);
         p[Mob.Parthenope] = P(40, MobElement.Ice);
         p[Mob.Gargoyle] = P(40, MobElement.Wind);
-        p[Mob.BirdOfTheCrescent] = P(41, MobElement.Wind);
-        p[Mob.Gazellehawk] = P(42, MobElement.Ice | MobElement.Wind);
-        p[Mob.Zirnitra2] = P(42, MobElement.Ice);
+        // Aggro types from kuru (sight / magic / proximity; detect ~8.8y, 9y generally safe).
+        p[Mob.BirdOfTheCrescent] = P(41, MobElement.Wind, aggro: MobAggro.Sight);
+        p[Mob.Gazellehawk] = P(42, MobElement.Ice | MobElement.Wind, aggro: MobAggro.Sight);
+        p[Mob.Zirnitra2] = P(42, MobElement.Ice, aggro: MobAggro.Sight);
         p[Mob.Necrodium] = P(42, MobElement.Wind);
-        p[Mob.Flame2] = P(42, MobElement.Wind);
-        p[Mob.Haunt] = P(43, MobElement.Thunder);
-        p[Mob.Bile] = P(43, MobElement.Thunder);
-        p[Mob.Nanka] = P(44, MobElement.Ice);
-        p[Mob.Accursed] = P(44, MobElement.Wind);
-        p[Mob.Arioch] = P(45, MobElement.Wind);
-        p[Mob.OiseauRare] = P(45, MobElement.Wind);
-        p[Mob.Carrier] = P(46, MobElement.Fire);
-        p[Mob.Gusion] = P(47, MobElement.Fire);
-        p[Mob.Succubus] = P(47, MobElement.Wind);
-        p[Mob.Jester] = P(48, MobElement.Wind);
-        p[Mob.Geshunpest2] = P(48, MobElement.Wind);
-        p[Mob.Bombadeel] = P(48, MobElement.Ice);
+        p[Mob.Flame2] = P(42, MobElement.Wind, aggro: MobAggro.Magic);
+        p[Mob.Haunt] = P(43, MobElement.Thunder, aggro: MobAggro.Proximity);
+        p[Mob.Bile] = P(43, MobElement.Thunder, aggro: MobAggro.Sight);
+        p[Mob.Nanka] = P(44, MobElement.Ice, aggro: MobAggro.Sight);
+        p[Mob.Accursed] = P(44, MobElement.Wind, aggro: MobAggro.Sight);
+        p[Mob.Arioch] = P(45, MobElement.Wind, aggro: MobAggro.Proximity);
+        p[Mob.OiseauRare] = P(45, MobElement.Wind, aggro: MobAggro.Sight);
+        p[Mob.Skatene] = P(45, MobElement.None, aggro: MobAggro.Sight);
+        p[Mob.Carrier] = P(46, MobElement.Fire, aggro: MobAggro.Proximity);
+        p[Mob.Wamoura] = P(46, MobElement.None, aggro: MobAggro.Sight);
+        p[Mob.Gusion] = P(47, MobElement.Fire, aggro: MobAggro.Sight);
+        p[Mob.Succubus] = P(47, MobElement.Wind, aggro: MobAggro.Sight);
+        p[Mob.Jester] = P(48, MobElement.Wind, aggro: MobAggro.Sight);
+        p[Mob.Geshunpest2] = P(48, MobElement.Wind, aggro: MobAggro.Proximity);
+        p[Mob.Bombadeel] = P(48, MobElement.Ice, aggro: MobAggro.Proximity);
     }
 
     private static MobProfile P(
         byte level,
         MobElement weaknesses,
         MobSusceptibility susceptible = MobSusceptibility.None,
-        MobSpawnCondition spawn = MobSpawnCondition.None) =>
-        new(weaknesses, level, spawn, susceptible);
-
-    private static MobProfile P(byte level, MobElement weaknesses, MobSpawnCondition spawn) =>
-        new(weaknesses, level, spawn);
+        MobSpawnCondition spawn = MobSpawnCondition.None,
+        MobAggro aggro = MobAggro.Unknown) =>
+        new(weaknesses, level, spawn, susceptible, aggro);
 
     private static MobSusceptibility S(
         bool doom = false,

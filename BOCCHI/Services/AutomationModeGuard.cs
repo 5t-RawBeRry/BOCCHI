@@ -22,6 +22,7 @@ public class AutomationModeGuard
     Func<IMobFarmer> farmerFactory,
     Func<ITreasureHunter> hunterFactory,
     Func<ICarrotHunter> carrotHunterFactory,
+    AutomatorConfig automatorConfig,
     IBuffRunner buffRunner,
     IPathfinder pathfinder,
     IVNavmeshIpc vnav,
@@ -53,27 +54,44 @@ public class AutomationModeGuard
         stopping = true;
         try
         {
-            // Soft-pause Illegal Mode / Completionist for hunt (resume when hunt ends); don't Toggle off.
             if (mode == AutomationMode.TreasureHunt
                 && (Automator.IsIllegalMode || Automator.IsCompletionist))
             {
-                Automator.SetSuspendedForTreasure(true);
+                // Auto hunt: soft-pause Illegal Mode and resume when the hunt ends. Manual hunt with
+                // auto off: only one primary mode — turn Illegal Mode off instead of running both.
+                if (automatorConfig.EnableAutomaticTreasureHuntDuringIllegalMode)
+                {
+                    Automator.SetSuspendedForTreasure(true);
+                }
+                else
+                {
+                    StopIllegalOrCompletionist();
+                }
             }
             else if (mode == AutomationMode.TreasureHunt && Farmer.Running)
             {
                 Farmer.SetSuspended(true, FarmerYieldReason.TreasureHunt);
             }
+            else if (mode is AutomationMode.IllegalMode or AutomationMode.Completionist)
+            {
+                if (mode == AutomationMode.IllegalMode && Automator.IsCompletionist)
+                {
+                    Automator.ToggleCompletionist();
+                }
+                else if (mode == AutomationMode.Completionist && Automator.IsIllegalMode)
+                {
+                    Automator.Toggle();
+                }
+
+                StopStandaloneTreasureHunt();
+                if (Hunter.Running && Hunter.ManagedByIllegalModeFiller)
+                {
+                    Automator.SetSuspendedForTreasure(true);
+                }
+            }
             else if (mode is not AutomationMode.IllegalMode and not AutomationMode.Completionist)
             {
                 StopIllegalOrCompletionist();
-            }
-            else if (mode == AutomationMode.IllegalMode && Automator.IsCompletionist)
-            {
-                Automator.ToggleCompletionist();
-            }
-            else if (mode == AutomationMode.Completionist && Automator.IsIllegalMode)
-            {
-                Automator.Toggle();
             }
 
             if (mode != AutomationMode.PotsAndTreasure && PotsTreasure.Running)
@@ -191,5 +209,18 @@ public class AutomationModeGuard
         {
             Automator.ToggleCompletionist();
         }
+    }
+
+    /// <summary>
+    ///     Manual / Mob Farmer hunts — not the Illegal Mode filler or Pots &amp; Treasure pipeline.
+    /// </summary>
+    private void StopStandaloneTreasureHunt()
+    {
+        if (!Hunter.Running || Hunter.ManagedByIllegalModeFiller || Hunter.ManagedByPotsTreasure)
+        {
+            return;
+        }
+
+        Hunter.Toggle();
     }
 }

@@ -11,6 +11,7 @@ using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.Services.Paths;
+using BOCCHI.Treasure.Services;
 using Dalamud.Plugin.Services;
 using Ocelot.Chain;
 using Ocelot.Extensions;
@@ -46,6 +47,7 @@ public class Automator
     UIConfig uiConfig,
     AutoRotationController autoRotation,
     IAutomationModeGuard modeGuard,
+    Func<ITreasureHunter> hunterFactory,
     ITranslator<MainWindow> translator,
     ILogger<Automator> logger
 ) : IAutomator, IOnUpdate, IOnStop
@@ -159,12 +161,15 @@ public class Automator
 
     private void ApplyRunModeSideEffects(bool turningOn)
     {
-        SuspendedForTreasure = false;
         if (!turningOn)
         {
+            SuspendedForTreasure = false;
             StopAutomation();
             return;
         }
+
+        ITreasureHunter hunter = hunterFactory();
+        SuspendedForTreasure = hunter.Running && hunter.ManagedByIllegalModeFiller;
 
         memory.Forget<NavigationInterruptedMemory>();
         autoRotation.PrepareForIllegalMode();

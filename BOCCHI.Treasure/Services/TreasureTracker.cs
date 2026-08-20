@@ -20,6 +20,9 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
     /// <summary>WideText / chat: “You sense the presence of X silver … and Y bronze …”.</summary>
     private const uint ActiveChestLogMessageId = 10965;
 
+    /// <summary>WideText / chat: “There appear to be no treasure coffers in the area...”</summary>
+    private const uint NoActiveChestsLogMessageId = 10966;
+
     private readonly IAddonLifecycle addonLifecycle;
     private readonly IChatGui chat;
     private readonly IDataManager data;
@@ -137,8 +140,18 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
 
     private void OnChatLogMessage(ILogMessage message)
     {
-        if (message.LogMessageId != ActiveChestLogMessageId
-            || !zones.GetZone().IsOccultCrescentZone())
+        if (!zones.GetZone().IsOccultCrescentZone())
+        {
+            return;
+        }
+
+        if (message.LogMessageId == NoActiveChestsLogMessageId)
+        {
+            ApplySightCounts(0, 0);
+            return;
+        }
+
+        if (message.LogMessageId != ActiveChestLogMessageId)
         {
             return;
         }
@@ -181,6 +194,14 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
         string text = textNode->NodeText.ToString();
         if (string.IsNullOrWhiteSpace(text))
         {
+            return;
+        }
+
+        string emptyPattern = LogMessageHelper.GetLogMessagePattern(data, NoActiveChestsLogMessageId);
+        if (!string.IsNullOrEmpty(emptyPattern) && Regex.IsMatch(text, emptyPattern))
+        {
+            lastParseWideText = DateTime.Now;
+            ApplySightCounts(0, 0);
             return;
         }
 

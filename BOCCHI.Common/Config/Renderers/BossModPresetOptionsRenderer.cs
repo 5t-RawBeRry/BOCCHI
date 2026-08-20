@@ -113,6 +113,23 @@ public sealed class BossModPresetOptionsRenderer(ICombatRotationSession session,
             changed = true;
         }
 
+        bool separateDodge = config.BossModSeparateDodgeDelay;
+        if (Checkbox(translator, "separate_dodge_delay", ref separateDodge))
+        {
+            config.BossModSeparateDodgeDelay = separateDodge;
+            changed = true;
+        }
+
+        if (separateDodge)
+        {
+            var dodgeDelay = config.BossModDodgeMovementDelay;
+            if (Combo(translator, "dodge_delay", ref dodgeDelay))
+            {
+                config.BossModDodgeMovementDelay = dodgeDelay;
+                changed = true;
+            }
+        }
+
         ImGui.PopItemWidth();
 
         session.MovementSettings = BossModMovement.From(config, player.IsMelee());

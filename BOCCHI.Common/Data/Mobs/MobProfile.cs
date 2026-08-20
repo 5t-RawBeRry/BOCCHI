@@ -37,9 +37,19 @@ public enum MobSpawnCondition : byte
     Night
 }
 
+/// <summary>How the mob notices the player. Range is <see cref="MobProfiles.DetectionRange"/>.</summary>
+public enum MobAggro : byte
+{
+    Unknown = 0,
+    Sight,
+    Magic,
+    Proximity
+}
+
 /// <summary>Authored open-world mob metadata for Mob Farmer / future filters.</summary>
 public readonly record struct MobProfile(
     MobElement Weaknesses,
     byte Level = 0,
     MobSpawnCondition SpawnCondition = MobSpawnCondition.None,
-    MobSusceptibility Susceptible = MobSusceptibility.None);
+    MobSusceptibility Susceptible = MobSusceptibility.None,
+    MobAggro Aggro = MobAggro.Unknown);

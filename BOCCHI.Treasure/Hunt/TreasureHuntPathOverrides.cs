@@ -50,6 +50,14 @@ public static class TreasureHuntPathOverrides
         [
             new(-640f, 160.1f, 780f),
         ],
+        // Unhallowed Hamlet basement (2072) — stairs from 2053. Plain vnav drops west and sticks
+        // around (-389, -76, 126) instead of finishing the stair run (#195 / #185).
+        [(ZoneId.NorthHorn, 2072)] =
+        [
+            new(-210f, 3.5f, 108f),
+            new(-245f, -45f, 118f),
+            new(-275f, -80f, 124f),
+        ],
     };
 
     /// <summary>Leave through after the coffer so the next leg does not re-enter the hazard.</summary>
@@ -64,6 +72,13 @@ public static class TreasureHuntPathOverrides
         [(ZoneId.NorthHorn, 2058)] =
         [
             new(-640f, 160.1f, 780f),
+        ],
+        // Climb back out toward 2053 / next Unhallowed pads after the basement coffer.
+        [(ZoneId.NorthHorn, 2072)] =
+        [
+            new(-275f, -80f, 124f),
+            new(-245f, -45f, 118f),
+            new(-210f, 3.5f, 108f),
         ],
     };
 

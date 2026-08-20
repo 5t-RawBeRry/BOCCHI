@@ -100,6 +100,14 @@ public class InCriticalEncounterHandler
         logger.Info("Entered CE {Id} — travel suspended", ceId?.ToString() ?? "?");
     }
 
+    public override void Exit(AutomatorState next)
+    {
+        memory.Forget<SuspendTravelForActivityMemory>();
+        autoRotation.DisableAi();
+        logger.Info("Left CE — travel resumed");
+        base.Exit(next);
+    }
+
     public override void Handle()
     {
         if (objects.LocalPlayer is not { } player)
@@ -150,22 +158,45 @@ public class InCriticalEncounterHandler
             return false;
         }
 
-        // Stay committed after enter when EventId / wait-area lag.
-        if (memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _))
-        {
-            ce = encounter;
-            return true;
-        }
-
         // Waiting handed off — take CE even if wait-area geometry mismatches.
         if (memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory wait)
             && wait.IsFor(encounter.Id)
-            && CriticalEncounterBattleHandoff.IsReady(wait, encounter.Id, context, conditions))
+            && CriticalEncounterBattleHandoff.IsReady(wait, encounter.Id, context))
         {
             ce = encounter;
             return true;
         }
 
-        return false;
+        // Stay committed after enter only with real participation or still on the ring
+        // (EventId lag). SuspendTravel alone used to keep In CE forever (#196).
+        if (!memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _))
+        {
+            return false;
+        }
+
+        if (context.GetCriticalEncounterId() == encounter.Id
+            || context.HasEncounterEnemies(encounter.Id))
+        {
+            ce = encounter;
+            return true;
+        }
+
+        if (objects.LocalPlayer is not { } player)
+        {
+            return false;
+        }
+
+        float combatRadius = NavigationConstants.CriticalEncounterRedRadius(encounter.Radius, encounter.AreaShape);
+        if (!NavigationConstants.IsInsideCriticalEncounterWaitArea(
+                encounter.Position,
+                combatRadius,
+                encounter.AreaShape,
+                player.Position))
+        {
+            return false;
+        }
+
+        ce = encounter;
+        return true;
     }
 }

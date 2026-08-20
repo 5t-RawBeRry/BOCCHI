@@ -81,6 +81,17 @@
         "none": "None",
         "short": "Short (0.5s)",
         "long": "Long (1s)"
+      },
+      "separate_dodge_delay": {
+        "label": "Separate dodge delay",
+        "tooltip": "Use a different delay when BOCCHI AI is dodging AoEs instead of the delay above."
+      },
+      "dodge_delay": {
+        "label": "Dodge delay movement",
+        "tooltip": "Wait this long before BOCCHI AI starts a dodge. Only used when Separate dodge delay is on.",
+        "none": "None",
+        "short": "Short (0.5s)",
+        "long": "Long (1s)"
       }
     },
     "stay_mounted_while_waiting_for_ce": {

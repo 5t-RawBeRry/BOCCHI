@@ -30,6 +30,7 @@ public class GoalValidator
     IFieldNoteTracker fieldNotes,
     IStartableCriticalEncounterFinder startableCriticalEncounters,
     ICondition conditions,
+    IObjectTable objects,
     ILogger<GoalValidator> logger
 ) : IGoalValidator
 {
@@ -82,8 +83,9 @@ public class GoalValidator
             return false;
         }
 
-        // Battle: only keep the goal when we are committed (in the CE, waited here, or travel suspended).
-        // Pathing-only / completionist fallthrough kept driving to coords after Register ended.
+        // Battle: only keep the goal when we are committed (EventId, waited here, or
+        // SuspendTravel with real participation / still on the registration ring).
+        // Pathing-only / SuspendTravel alone kept driving to coords or staying In CE (#196).
         if (criticalEncounterContext.GetCriticalEncounterId() == id)
         {
             return true;
@@ -96,7 +98,7 @@ public class GoalValidator
             return true;
         }
 
-        if (memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _))
+        if (IsSuspendedInCriticalEncounter(id))
         {
             return true;
         }
@@ -301,7 +303,40 @@ public class GoalValidator
             return true;
         }
 
-        return memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _);
+        return IsSuspendedInCriticalEncounter(id);
+    }
+
+    /// <summary>
+    ///     In CE travel latch only counts with EventId, CE-tagged enemies, or still inside the wait ring.
+    /// </summary>
+    private bool IsSuspendedInCriticalEncounter(CriticalEncounterId id)
+    {
+        if (!memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _))
+        {
+            return false;
+        }
+
+        if (criticalEncounterContext.GetCriticalEncounterId() == id
+            || criticalEncounterContext.HasEncounterEnemies(id))
+        {
+            return true;
+        }
+
+        CriticalEncounter? ce = criticalEncounterRepository.SnapshotWithoutForkedTower()
+            .FirstOrDefault(c => c.Id == id);
+        if (ce is not { } encounter || !encounter.IsActive() || objects.LocalPlayer is not { } player)
+        {
+            return false;
+        }
+
+        float combatRadius = NavigationConstants.CriticalEncounterRedRadius(
+            encounter.Radius,
+            encounter.AreaShape);
+        return NavigationConstants.IsInsideCriticalEncounterWaitArea(
+            encounter.Position,
+            combatRadius,
+            encounter.AreaShape,
+            player.Position);
     }
 
     private bool HasLivePreferredPot() =>
