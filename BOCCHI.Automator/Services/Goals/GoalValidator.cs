@@ -87,25 +87,7 @@ public class GoalValidator
         // EventId / CE-tagged enemies / the registration ring. Pathing-only used to keep
         // driving to coords or staying In CE (#196). Forgetting the wait latch on Enter
         // then requiring the inset wait disc dropped Appalling Behavior mid-fight.
-        if (memory.TryRemember<CommittedCriticalEncounterMemory>(out CommittedCriticalEncounterMemory committed)
-            && committed.IsFor(id))
-        {
-            return true;
-        }
-
-        if (criticalEncounterContext.GetCriticalEncounterId() == id)
-        {
-            return true;
-        }
-
-        if (memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory wait)
-            && wait.IsFor(id))
-        {
-            wait.MarkBattleStarted();
-            return true;
-        }
-
-        if (IsSuspendedInCriticalEncounter(id))
+        if (IsCommittedToCriticalEncounter(id))
         {
             return true;
         }
@@ -254,12 +236,11 @@ public class GoalValidator
             automatorConfig.PreferPotFates,
             automatorConfig.ShouldFarmPotChests,
             automatorConfig.ShouldPrepositionToPots);
-        (TimeSpan cutoff, int lead) = GetIllegalPotWindow();
+        TimeSpan cutoff = GetIllegalFateCutoff();
         PotFallbackStartDecision decision = PotFallbackWindow.Evaluate(
             cycle,
             DateTimeOffset.UtcNow,
             cutoff,
-            lead,
             potFarming,
             "FATE");
         return decision.AllowStart;
@@ -411,11 +392,8 @@ public class GoalValidator
             true);
     }
 
-    private (TimeSpan Cutoff, int Lead) GetIllegalPotWindow() =>
-    (
-        TimeSpan.FromMinutes(Math.Max(0, potsConfig.FateFallbackCutoffMinutes)),
-        potsConfig.PotSpawnLeadMinutes
-    );
+    private TimeSpan GetIllegalFateCutoff() =>
+        TimeSpan.FromMinutes(Math.Max(0, potsConfig.FateFallbackCutoffMinutes));
 
     private bool TryFindLiveAllowedPot(out Fate pot)
     {

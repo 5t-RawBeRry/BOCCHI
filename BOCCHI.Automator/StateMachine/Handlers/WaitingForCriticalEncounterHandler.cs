@@ -131,11 +131,7 @@ public class WaitingForCriticalEncounterHandler
             return;
         }
 
-        if (ce.IsActive())
-        {
-            wait.MarkBattleStarted();
-        }
-        else if (!ce.IsPreparing())
+        if (!ce.IsActive() && !ce.IsPreparing())
         {
             return;
         }
@@ -167,7 +163,7 @@ public class WaitingForCriticalEncounterHandler
             return false;
         }
 
-        return CriticalEncounterBattleHandoff.IsReady(wait, ce, context, player.Position);
+        return CriticalEncounterBattleHandoff.IsReady(ce, context, player.Position);
     }
 
     private bool TryGetGoalEncounter(out CriticalEncounter ce)

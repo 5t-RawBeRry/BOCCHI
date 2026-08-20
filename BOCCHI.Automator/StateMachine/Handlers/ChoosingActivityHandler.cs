@@ -174,12 +174,11 @@ public class ChoosingActivityHandler
             }
             else
             {
-                (TimeSpan cutoff, int lead) = GetIllegalPotWindow();
+                TimeSpan cutoff = GetIllegalFateCutoff();
                 PotFallbackStartDecision decision = PotFallbackWindow.Evaluate(
                     cycle,
                     now,
                     cutoff,
-                    lead,
                     potFarming,
                     "FATE");
                 if (!decision.AllowStart)
@@ -303,11 +302,8 @@ public class ChoosingActivityHandler
         return false;
     }
 
-    private (TimeSpan Cutoff, int Lead) GetIllegalPotWindow() =>
-    (
-        TimeSpan.FromMinutes(Math.Max(0, potsConfig.FateFallbackCutoffMinutes)),
-        potsConfig.PotSpawnLeadMinutes
-    );
+    private TimeSpan GetIllegalFateCutoff() =>
+        TimeSpan.FromMinutes(Math.Max(0, potsConfig.FateFallbackCutoffMinutes));
 
     private int GetPotPrepositionLead() => potsConfig.PotSpawnLeadMinutes;
 

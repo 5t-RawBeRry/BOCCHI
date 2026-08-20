@@ -180,7 +180,7 @@ public class InCriticalEncounterHandler
         if (memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory wait)
             && wait.IsFor(encounter.Id)
             && objects.LocalPlayer is { } waitingPlayer
-            && CriticalEncounterBattleHandoff.IsReady(wait, encounter, context, waitingPlayer.Position))
+            && CriticalEncounterBattleHandoff.IsReady(encounter, context, waitingPlayer.Position))
         {
             ce = encounter;
             return true;

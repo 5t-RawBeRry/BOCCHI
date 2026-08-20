@@ -5,5 +5,6 @@
 - Pot FATE and CE cutoffs are minutes until the next pot spawn. Leave-early only controls when you walk there, so those sliders no longer stack.
 - Treasure Hunt Ninja Hide uses your actual Knowledge, not South Horn sync, so high-Knowledge characters stop hiding from trash that will not aggro (#197).
 - Illegal Mode stays in a Critical Encounter after battle starts, so Wrath / RSR keep fighting instead of dropping the CE and turning combat off.
+- Waiting for CE hands off into the fight when registration signals lag after battle starts, so combat AI still turns on.
 - Pot timer sync backs off when the worker is rate-limited, instead of retrying every 20 seconds.
 - Lost on the Wind (CE 61) uses a circle registration area again instead of being treated as a square.

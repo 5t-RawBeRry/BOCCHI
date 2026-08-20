@@ -58,14 +58,7 @@ public sealed class WaitingForCriticalEncounterMemory(CriticalEncounterId encoun
 {
     public CriticalEncounterId EncounterId { get; } = encounterId;
 
-    public DateTimeOffset? BattleStartedAtUtc { get; private set; }
-
     public bool IsFor(CriticalEncounterId id) => EncounterId == id;
-
-    public void MarkBattleStarted()
-    {
-        BattleStartedAtUtc ??= DateTimeOffset.UtcNow;
-    }
 }
 
 /// <summary>

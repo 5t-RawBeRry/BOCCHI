@@ -129,9 +129,10 @@ public class CriticalEncounterRepository
                 continue;
             }
 
-            ActivityData? authored = zone.GetCriticalEncounterData()
-                .FirstOrDefault(a => a.Id == criticalEncounter.Id.Value);
-            ActivityAreaShape shape = NavigationConstants.ResolveCriticalEncounterShape(authored, area.IsSquare);
+            ActivityAreaShape shape = NavigationConstants.ResolveCriticalEncounterShape(
+                zone,
+                criticalEncounter.Id.Value,
+                area.IsSquare);
             criticalEncounter.ApplyCombatGeometry(area.Radius, shape, area.Center);
             zone.ApplyCriticalEncounterCombat(criticalEncounter.Id.Value, area.Radius, shape);
         }

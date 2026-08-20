@@ -36,11 +36,7 @@ public sealed record PotCycleSnapshot
         CurrentActivePotFateId != 0 || HasPredictedNextPot;
 }
 
-public readonly record struct PotFallbackStartDecision(
-    bool AllowStart,
-    string Reason,
-    DateTimeOffset DepartureAt = default,
-    TimeSpan TimeUntilDeparture = default);
+public readonly record struct PotFallbackStartDecision(bool AllowStart, string Reason);
 
 public interface IPotCycleTracker
 {
@@ -314,7 +310,6 @@ public static class PotFallbackWindow
         PotCycleSnapshot cycle,
         DateTimeOffset now,
         TimeSpan cutoffWindow,
-        int spawnLeadMinutes,
         bool potFarmingEnabled,
         string activityName)
     {
@@ -325,22 +320,15 @@ public static class PotFallbackWindow
 
         if (!cycle.HasPredictedNextPot)
         {
-            return new(true, $"{activityName} allowed: no pot departure predicted yet.");
+            return new(true, $"{activityName} allowed: no pot spawn predicted yet.");
         }
 
-        DateTimeOffset departureAt = cycle.PredictedNextSpawnAt
-            - TimeSpan.FromMinutes(Math.Max(0, spawnLeadMinutes));
         TimeSpan timeUntilSpawn = cycle.PredictedNextSpawnAt - now;
-        TimeSpan timeUntilDeparture = departureAt - now;
 
         // Overdue prediction (missed spawn) must not block FATEs / force preposition forever.
         if (now > cycle.PredictedNextSpawnAt + PotCycleTracker.PredictionStaleGrace)
         {
-            return new(
-                true,
-                $"{activityName} allowed: pot prediction overdue (stale).",
-                departureAt,
-                timeUntilDeparture);
+            return new(true, $"{activityName} allowed: pot prediction overdue (stale).");
         }
 
         // Cutoff is minutes until the pot spawns — independent of spawn-lead (leave-early).
@@ -350,16 +338,10 @@ public static class PotFallbackWindow
         {
             return new(
                 false,
-                $"{activityName} blocked: next pot in {Format(timeUntilSpawn)} (cutoff {cutoffWindow.TotalMinutes:0}m).",
-                departureAt,
-                timeUntilDeparture);
+                $"{activityName} blocked: next pot in {Format(timeUntilSpawn)} (cutoff {cutoffWindow.TotalMinutes:0}m).");
         }
 
-        return new(
-            true,
-            $"{activityName} allowed: next pot in {Format(timeUntilSpawn)}.",
-            departureAt,
-            timeUntilDeparture);
+        return new(true, $"{activityName} allowed: next pot in {Format(timeUntilSpawn)}.");
     }
 
     /// <summary>

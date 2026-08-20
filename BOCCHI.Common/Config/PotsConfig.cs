@@ -21,13 +21,15 @@ public class PotsConfig : IAutoConfig
     public int PotSpawnLeadMinutes { get; set; } = 3;
 
     /// <summary>
-    ///     Do not start a FATE when pot departure is within this many minutes (0 = disabled).
+    ///     Do not start a FATE when the next pot spawn is within this many minutes (0 = disabled).
+    ///     Independent of <see cref="PotSpawnLeadMinutes"/> (leave-early).
     /// </summary>
     [IntRange(0, 30, Order = 2, Section = "timing")]
     public int FateFallbackCutoffMinutes { get; set; } = 5;
 
     /// <summary>
-    ///     Do not start a Critical Encounter when pot departure is within this many minutes (0 = disabled).
+    ///     Do not start a Critical Encounter when the next pot spawn is within this many minutes
+    ///     (0 = disabled). Independent of <see cref="PotSpawnLeadMinutes"/> (leave-early).
     /// </summary>
     [IntRange(0, 30, Order = 3, Section = "timing")]
     public int CeFallbackCutoffMinutes { get; set; } = 10;

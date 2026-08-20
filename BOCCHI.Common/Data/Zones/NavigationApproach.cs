@@ -97,6 +97,12 @@ public static class NavigationConstants
                 ? ActivityAreaShape.Square
                 : ActivityAreaShape.Circle;
 
+    public static ActivityAreaShape ResolveCriticalEncounterShape(IZone zone, int eventId, bool lgbIsSquare)
+    {
+        ActivityData? authored = zone.GetCriticalEncounterData().FirstOrDefault(a => a.Id == eventId);
+        return ResolveCriticalEncounterShape(authored, lgbIsSquare);
+    }
+
     /// <summary>Random stand-off ring while waiting for a predicted pot FATE.</summary>
     public const float PotPrepositionMinRadius = 12f;
 

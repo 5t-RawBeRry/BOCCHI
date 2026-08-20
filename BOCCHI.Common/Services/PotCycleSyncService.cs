@@ -198,14 +198,10 @@ public sealed class PotCycleSyncService
         fetchRateLimitDelay = FetchRateLimitMinDelay;
         loggedFetchRateLimit = false;
 
-        // Every outcome below is logged. Whether this sync is worth its worker at all comes down to
-        // how often a fetch actually lands, and until now a miss, a territory mismatch and a
-        // rejected anchor all returned silently — indistinguishable from the service doing nothing.
         if (!fetch.Found || fetch.PotFateId == 0 || fetch.SpawnUnix <= 0)
         {
             logger.Debug(
-                "[PotCycleSync] fetch miss — no cycle published for key {Key}… (the key rotates, so a "
-                + "miss can mean nobody shared, or that we asked under a key nobody shared under)",
+                "[PotCycleSync] fetch miss — no cycle for key {Key}…",
                 Shorten(fetch.InstanceKey));
             return;
         }
@@ -459,6 +455,8 @@ public sealed class PotCycleSyncService
         lastFetchedInstanceKey = null;
         lastUploadedInstanceKey = null;
         nextFetchAttemptUtc = DateTime.MinValue;
+        fetchRateLimitDelay = FetchRateLimitMinDelay;
+        loggedFetchRateLimit = false;
 
         // Entering a zone (or returning after leave) must not keep a previous instance's pot clock.
         // Stale HasKnownAnchor blocks sync fetch and makes Illegal Mode leave for pots too early/late.
@@ -481,6 +479,8 @@ public sealed class PotCycleSyncService
         lastFetchedInstanceKey = null;
         lastUploadedInstanceKey = null;
         nextFetchAttemptUtc = DateTime.MinValue;
+        fetchRateLimitDelay = FetchRateLimitMinDelay;
+        loggedFetchRateLimit = false;
     }
 
     private sealed class UploadOutcome

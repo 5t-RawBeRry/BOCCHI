@@ -68,7 +68,6 @@ public class StartableCriticalEncounterFinder
                 cycle,
                 now,
                 TimeSpan.FromMinutes(Math.Max(0, potsConfig.CeFallbackCutoffMinutes)),
-                potsConfig.PotSpawnLeadMinutes,
                 potFarming,
                 "CE");
             if (!decision.AllowStart)
