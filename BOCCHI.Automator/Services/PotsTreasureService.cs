@@ -408,7 +408,6 @@ public class PotsTreasureService
         return PotFallbackWindow.ShouldPreposition(
             cycle,
             DateTimeOffset.UtcNow,
-            TimeSpan.Zero,
             potsConfig.PotSpawnLeadMinutes,
             potFarmingEnabled: true);
     }

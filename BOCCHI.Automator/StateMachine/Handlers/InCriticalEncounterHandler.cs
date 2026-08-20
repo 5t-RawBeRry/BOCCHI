@@ -161,7 +161,8 @@ public class InCriticalEncounterHandler
         // Waiting handed off — take CE even if wait-area geometry mismatches.
         if (memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory wait)
             && wait.IsFor(encounter.Id)
-            && CriticalEncounterBattleHandoff.IsReady(wait, encounter.Id, context))
+            && objects.LocalPlayer is { } waitingPlayer
+            && CriticalEncounterBattleHandoff.IsReady(wait, encounter, context, waitingPlayer.Position))
         {
             ce = encounter;
             return true;

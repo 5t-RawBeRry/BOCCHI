@@ -394,7 +394,6 @@ public class GoalValidator
         return PotFallbackWindow.ShouldPreposition(
             cycle,
             DateTimeOffset.UtcNow,
-            potsOnly ? TimeSpan.Zero : TimeSpan.FromMinutes(Math.Max(0, potsConfig.FateFallbackCutoffMinutes)),
             potsConfig.PotSpawnLeadMinutes,
             true);
     }

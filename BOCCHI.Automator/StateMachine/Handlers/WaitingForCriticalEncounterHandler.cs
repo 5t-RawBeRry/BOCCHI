@@ -161,12 +161,13 @@ public class WaitingForCriticalEncounterHandler
         }
 
         if (!memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory wait)
-            || !wait.IsFor(ce.Id))
+            || !wait.IsFor(ce.Id)
+            || objects.LocalPlayer is not { } player)
         {
             return false;
         }
 
-        return CriticalEncounterBattleHandoff.IsReady(wait, ce.Id, context);
+        return CriticalEncounterBattleHandoff.IsReady(wait, ce, context, player.Position);
     }
 
     private bool TryGetGoalEncounter(out CriticalEncounter ce)

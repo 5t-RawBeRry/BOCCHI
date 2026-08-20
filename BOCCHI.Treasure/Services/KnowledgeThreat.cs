@@ -4,6 +4,7 @@ using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using ECommons.GameFunctions;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using Ocelot.Extensions;
 
 namespace BOCCHI.Treasure.Services;
@@ -24,13 +25,38 @@ public static class KnowledgeThreat
     /// <summary>Player Occult Crescent Knowledge cap (North Horn / 7.55+). Mobs can read higher.</summary>
     public const int MaxKnowledgeLevel = 40;
 
+    /// <summary>
+    ///     <see cref="PlayerState.GetContentValue"/> key — Occult Crescent effective (synced) Knowledge.
+    /// </summary>
+    public const uint ContentValueEffectiveKnowledge = 6;
+
+    /// <summary>
+    ///     <see cref="PlayerState.GetContentValue"/> key — Occult Crescent current (actual) Knowledge.
+    /// </summary>
+    public const uint ContentValueCurrentKnowledge = 7;
+
+    /// <summary>
+    ///     Player Knowledge used for Hide thresholds. Prefer actual Knowledge (content value 7), not
+    ///     South Horn sync / <c>ForayInfo.Level</c> — enemies ignore sync for aggro (#197).
+    /// </summary>
     public static unsafe int? TryGetPlayerForayLevel(IObjectTable objects)
     {
+        PlayerState* playerState = PlayerState.Instance();
+        if (playerState != null)
+        {
+            uint current = playerState->GetContentValue(ContentValueCurrentKnowledge);
+            if (current > 0)
+            {
+                return (int)current;
+            }
+        }
+
         if (objects.LocalPlayer is not { } player)
         {
             return null;
         }
 
+        // Outside content / state not loaded — character foray level (synced while in South Horn).
         byte level = ((BattleChara*)player.Address)->ForayInfo.Level;
         return level > 0 ? level : null;
     }

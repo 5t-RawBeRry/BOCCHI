@@ -42,9 +42,9 @@
     },
     "update_boss_mod_presets_automatically": {
       "label": "プリセットを自動更新",
-      "tooltip": "オンにすると、不正モード開始時とジョブ／近接・遠隔の切り替え時に、BOCCHI AI FATE / BOCCHI AI CE（または AR 側）を標準プリセットで作り直します。オフなら、すでにあるプリセットはそのまま使い、無いときだけ作成します。",
+      "tooltip": "オンにすると、不正モード開始時とジョブ／近接・遠隔の切り替え時に、下の距離・オーバードッジ・遅延設定を入れて BOCCHI AI FATE / BOCCHI AI CE（または AR 側）を作り直します。オフなら、すでにあるプリセットはそのまま使い、無いときだけ作成します。",
       "button": "プリセットを更新",
-      "button_tooltip": "BOCCHI AI FATE と BOCCHI AI CE（または AR 側）を標準プリセットで置き換えます。BossMod で編集した内容は上書きされます。"
+      "button_tooltip": "下の距離・オーバードッジ・遅延設定を入れて BOCCHI AI FATE と BOCCHI AI CE（または AR 側）を作り直します。BossMod で他に編集した内容は上書きされます。"
     },
     "boss_mod_movement": {
       "max_distance_by_role": {

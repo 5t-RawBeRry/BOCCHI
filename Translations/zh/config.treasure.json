@@ -71,7 +71,7 @@
     },
     "knowledge_hide_offset": {
       "label": "知见高出这么多时隐遁",
-      "tooltip": "附近敌人的知见至少为你的知见加上该数值时隐遁。0＝相同或更高。"
+      "tooltip": "附近敌人的知见至少为你的实际知见加上该数值时隐遁（不是南部同步值）。0＝相同或更高。"
     },
     "knowledge_threat_enter_distance": {
       "label": "该距离内开始隐遁（米）",

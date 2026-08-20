@@ -71,7 +71,7 @@
     },
     "knowledge_hide_offset": {
       "label": "Hide when Knowledge is this much higher",
-      "tooltip": "Hide when a nearby enemy's Knowledge is at least yours plus this. 0 = same or higher."
+      "tooltip": "Hide when a nearby enemy's Knowledge is at least your actual Knowledge plus this (not South Horn sync). 0 = same or higher."
     },
     "knowledge_threat_enter_distance": {
       "label": "Start Hide within (yalms)",

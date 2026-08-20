@@ -42,9 +42,9 @@
     },
     "update_boss_mod_presets_automatically": {
       "label": "自动更新预设",
-      "tooltip": "开启后，违规模式启动以及切换职业或近战/远程时，会用自带预设重建 BOCCHI AI FATE / BOCCHI AI CE（或 AR 那一对）。关闭则保留已有预设，仅在缺失时创建。",
+      "tooltip": "开启后，违规模式启动以及切换职业或近战/远程时，会按下方案中的距离、过闪和延迟设置重建 BOCCHI AI FATE / BOCCHI AI CE（或 AR 那一对）。关闭则保留已有预设，仅在缺失时创建。",
       "button": "更新预设",
-      "button_tooltip": "用自带预设替换 BOCCHI AI FATE 和 BOCCHI AI CE（或 AR 那一对）。你在 BossMod 里改过的内容会被覆盖。"
+      "button_tooltip": "按下方案中的距离、过闪和延迟设置重建 BOCCHI AI FATE 和 BOCCHI AI CE（或 AR 那一对）。你在 BossMod 里改过的其他内容会被覆盖。"
     },
     "boss_mod_movement": {
       "max_distance_by_role": {

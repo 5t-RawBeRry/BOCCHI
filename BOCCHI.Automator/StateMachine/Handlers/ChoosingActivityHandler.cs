@@ -272,38 +272,23 @@ public class ChoosingActivityHandler
             return SkipPreposition("pot FATE is already live — going to it, not prepositioning");
         }
 
-        PotFallbackStartDecision decision = PotFallbackWindow.Evaluate(
-            cycle,
-            DateTimeOffset.UtcNow,
-            GetPotPrepositionCutoff(),
-            GetPotPrepositionLead(),
-            true,
-            "preposition");
-
-        if (decision.AllowStart)
+        if (!PotFallbackWindow.ShouldPreposition(
+                cycle,
+                DateTimeOffset.UtcNow,
+                GetPotPrepositionLead(),
+                potFarmingEnabled: true))
         {
-            return SkipPreposition(DescribeOutsideWindow(decision));
+            TimeSpan untilSpawn = cycle.PredictedNextSpawnAt - DateTimeOffset.UtcNow;
+            return SkipPreposition(
+                untilSpawn <= TimeSpan.Zero
+                    ? "pot prediction is stale (spawn never observed)"
+                    : $"outside the leave-early window — next pot in {untilSpawn.TotalMinutes:0}m "
+                      + $"(lead {GetPotPrepositionLead()}m)");
         }
 
         lastPrepositionSkip = null;
         potId = predicted;
         return true;
-    }
-
-    private static string DescribeOutsideWindow(PotFallbackStartDecision decision)
-    {
-        if (decision.DepartureAt == default)
-        {
-            return "no pot departure predicted";
-        }
-
-        // Stale prediction escape hatch.
-        if (decision.TimeUntilDeparture <= TimeSpan.Zero)
-        {
-            return "pot prediction is stale (spawn never observed)";
-        }
-
-        return $"outside the window — pot departure in {decision.TimeUntilDeparture.TotalMinutes:0}m";
     }
 
     /// <summary>Always false; records why so the reason can be logged once per change.</summary>
@@ -323,9 +308,6 @@ public class ChoosingActivityHandler
         TimeSpan.FromMinutes(Math.Max(0, potsConfig.FateFallbackCutoffMinutes)),
         potsConfig.PotSpawnLeadMinutes
     );
-
-    private TimeSpan GetPotPrepositionCutoff() =>
-        PotsOnly ? TimeSpan.Zero : TimeSpan.FromMinutes(Math.Max(0, potsConfig.FateFallbackCutoffMinutes));
 
     private int GetPotPrepositionLead() => potsConfig.PotSpawnLeadMinutes;
 

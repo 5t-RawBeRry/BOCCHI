@@ -71,7 +71,7 @@
     },
     "knowledge_hide_offset": {
       "label": "지식이 이만큼 높으면 은신",
-      "tooltip": "근처 적의 지식이 내 지식 + 이 값 이상일 때 은신을 씁니다. 0 = 같거나 더 높음."
+      "tooltip": "근처 적의 지식이 내 실제 지식 + 이 값 이상일 때 은신을 씁니다(남부 동기화 값이 아님). 0 = 같거나 더 높음."
     },
     "knowledge_threat_enter_distance": {
       "label": "이 거리 이내에서 은신 시작(일름)",

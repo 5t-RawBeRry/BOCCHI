@@ -42,9 +42,9 @@
     },
     "update_boss_mod_presets_automatically": {
       "label": "Update presets automatically",
-      "tooltip": "When on, Illegal Mode rebuilds BOCCHI AI FATE / BOCCHI AI CE (or the AR pair) from the stock presets when it starts and when you change job or melee/ranged. When off, existing presets are kept and only created if missing.",
+      "tooltip": "When on, Illegal Mode rebuilds BOCCHI AI FATE / BOCCHI AI CE (or the AR pair) with the distance, overdodge, and delay settings below when it starts and when you change job or melee/ranged. When off, existing presets are kept and only created if missing.",
       "button": "Update presets",
-      "button_tooltip": "Replace BOCCHI AI FATE and BOCCHI AI CE (or the AR pair) with the stock presets. Edits you made in BossMod are overwritten."
+      "button_tooltip": "Rebuild BOCCHI AI FATE and BOCCHI AI CE (or the AR pair) with the distance, overdodge, and delay settings below. Other edits you made in BossMod are overwritten."
     },
     "boss_mod_movement": {
       "max_distance_by_role": {

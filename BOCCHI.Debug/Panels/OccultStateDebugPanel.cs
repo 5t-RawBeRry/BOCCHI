@@ -12,6 +12,7 @@ using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.STD;
@@ -80,7 +81,26 @@ public sealed unsafe class OccultStateDebugPanel(
         }
 
         int? foray = KnowledgeThreat.TryGetPlayerForayLevel(objects);
-        ui.LabelledValue("ForayInfo.Level", foray?.ToString(CultureInfo.InvariantCulture) ?? "(none)");
+        ui.LabelledValue("Hide uses Knowledge (actual)", foray?.ToString(CultureInfo.InvariantCulture) ?? "(none)");
+        PlayerState* playerState = PlayerState.Instance();
+        if (playerState != null)
+        {
+            ui.LabelledValue(
+                "ContentValue current (7)",
+                playerState->GetContentValue(KnowledgeThreat.ContentValueCurrentKnowledge)
+                    .ToString(CultureInfo.InvariantCulture));
+            ui.LabelledValue(
+                "ContentValue effective/sync (6)",
+                playerState->GetContentValue(KnowledgeThreat.ContentValueEffectiveKnowledge)
+                    .ToString(CultureInfo.InvariantCulture));
+        }
+
+        if (objects.LocalPlayer is { } local)
+        {
+            byte synced = ((BattleChara*)local.Address)->ForayInfo.Level;
+            ui.LabelledValue("ForayInfo.Level (synced)", synced.ToString(CultureInfo.InvariantCulture));
+        }
+
         if (state == null)
         {
             ui.Text("OccultCrescentState null.");
@@ -88,7 +108,7 @@ public sealed unsafe class OccultStateDebugPanel(
         }
 
         ui.LabelledValue("KnowledgeLevelSync", state->KnowledgeLevelSync);
-        ui.LabelledValue("CurrentKnowledge", state->CurrentKnowledge);
+        ui.LabelledValue("CurrentKnowledge (XP)", state->CurrentKnowledge);
         ui.LabelledValue("NeededKnowledge", state->NeededKnowledge);
         ui.LabelledValue("NeededJobExperience", state->NeededJobExperience);
         ui.LabelledValue("CurrentSupportJob", state->CurrentSupportJob);

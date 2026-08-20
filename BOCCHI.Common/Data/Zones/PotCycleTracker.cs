@@ -328,13 +328,12 @@ public static class PotFallbackWindow
             return new(true, $"{activityName} allowed: no pot departure predicted yet.");
         }
 
-        DateTimeOffset departureAt = cycle.PredictedNextSpawnAt - TimeSpan.FromMinutes(Math.Max(0, spawnLeadMinutes));
+        DateTimeOffset departureAt = cycle.PredictedNextSpawnAt
+            - TimeSpan.FromMinutes(Math.Max(0, spawnLeadMinutes));
+        TimeSpan timeUntilSpawn = cycle.PredictedNextSpawnAt - now;
         TimeSpan timeUntilDeparture = departureAt - now;
 
         // Overdue prediction (missed spawn) must not block FATEs / force preposition forever.
-        // Staleness is measured from the predicted *spawn*, same as PotCycleTracker.RollIdlePrediction
-        // and GoalValidator. Measuring it from departureAt made the window close spawnLead minutes
-        // early, so a lead above the 5m grace stopped prepositioning before the pot even popped.
         if (now > cycle.PredictedNextSpawnAt + PotCycleTracker.PredictionStaleGrace)
         {
             return new(
@@ -344,26 +343,31 @@ public static class PotFallbackWindow
                 timeUntilDeparture);
         }
 
-        if (timeUntilDeparture <= cutoffWindow)
+        // Cutoff is minutes until the pot spawns — independent of spawn-lead (leave-early).
+        // Measuring against departure (= spawn − lead) stacked the sliders and blocked FATEs
+        // for lead+cutoff minutes (e.g. lead 5 + FATE 5 ⇒ no FATEs for 10m).
+        if (cutoffWindow > TimeSpan.Zero && timeUntilSpawn <= cutoffWindow)
         {
             return new(
                 false,
-                $"{activityName} blocked: pot departure in {Format(timeUntilDeparture)} (cutoff {cutoffWindow.TotalMinutes:0}m).",
+                $"{activityName} blocked: next pot in {Format(timeUntilSpawn)} (cutoff {cutoffWindow.TotalMinutes:0}m).",
                 departureAt,
                 timeUntilDeparture);
         }
 
         return new(
             true,
-            $"{activityName} allowed: pot departure in {Format(timeUntilDeparture)}.",
+            $"{activityName} allowed: next pot in {Format(timeUntilSpawn)}.",
             departureAt,
             timeUntilDeparture);
     }
 
+    /// <summary>
+    ///     True when it is time to walk to the next pot (spawn lead), regardless of FATE/CE cutoffs.
+    /// </summary>
     public static bool ShouldPreposition(
         PotCycleSnapshot cycle,
         DateTimeOffset now,
-        TimeSpan cutoffWindow,
         int spawnLeadMinutes,
         bool potFarmingEnabled)
     {
@@ -372,16 +376,13 @@ public static class PotFallbackWindow
             return false;
         }
 
-        // Staleness is handled inside Evaluate (which allows the start, so !AllowStart is false here).
-        PotFallbackStartDecision decision = Evaluate(
-            cycle,
-            now,
-            cutoffWindow,
-            spawnLeadMinutes,
-            potFarmingEnabled,
-            "preposition");
+        if (now > cycle.PredictedNextSpawnAt + PotCycleTracker.PredictionStaleGrace)
+        {
+            return false;
+        }
 
-        return !decision.AllowStart;
+        TimeSpan timeUntilSpawn = cycle.PredictedNextSpawnAt - now;
+        return timeUntilSpawn <= TimeSpan.FromMinutes(Math.Max(0, spawnLeadMinutes));
     }
 
     private static string Format(TimeSpan value)

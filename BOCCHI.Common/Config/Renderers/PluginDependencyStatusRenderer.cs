@@ -115,18 +115,32 @@ public sealed class PluginDependencyStatusRenderer(
         ITranslator translator,
         Func<string, ITranslator, (string Label, bool Ok, bool Pending)>? ipc)
     {
-        if (pluginStatus.IsLoaded(internalName)
-            || (internalName == CombatPluginPresence.RotationSolver && rsr.IsAvailable))
+        bool loaded = pluginStatus.IsLoaded(internalName);
+        bool rsrReachable = internalName == CombatPluginPresence.RotationSolver && rsr.IsAvailable;
+        if (!loaded && !rsrReachable)
         {
-            return ipc?.Invoke(internalName, translator) ?? (T(translator, "ready"), true, false);
+            if (plugin.InstalledPlugins.Any(p => p.InternalName == internalName))
+            {
+                return (T(translator, "not_enabled"), false, false);
+            }
+
+            return (T(translator, "not_installed"), false, false);
         }
 
-        if (plugin.InstalledPlugins.Any(p => p.InternalName == internalName))
+        // Loaded plugin counts as Ready. Optional IPC probes (BossMod / RSR) can still refine,
+        // but RSR must not show Not working when the plugin is running and only IPC typing failed.
+        if (ipc == null)
         {
-            return (T(translator, "not_enabled"), false, false);
+            return (T(translator, "ready"), true, false);
         }
 
-        return (T(translator, "not_installed"), false, false);
+        var (label, ok, pending) = ipc.Invoke(internalName, translator);
+        if (!ok && loaded)
+        {
+            return (T(translator, "ready"), true, false);
+        }
+
+        return (label, ok, pending);
     }
 
     private static uint StatusColor(bool ok, bool pending) =>
