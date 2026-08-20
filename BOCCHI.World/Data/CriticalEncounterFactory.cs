@@ -28,7 +28,7 @@ public class CriticalEncounterFactory(IZoneProvider zones, CriticalEncounterGeom
         float combat = 0f;
         if (geometry.TryGet(ev.DynamicEventId) is { Radius: > 0 } area)
         {
-            shape = area.IsSquare ? ActivityAreaShape.Square : ActivityAreaShape.Circle;
+            shape = NavigationConstants.ResolveCriticalEncounterShape(authored, area.IsSquare);
             combat = area.Radius;
             padded = NavigationConstants.CriticalEncounterPaddedRadius(combat, shape);
             lgbCenter = area.Center;

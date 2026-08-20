@@ -117,7 +117,7 @@ public class SouthHorn
         new(1977, new(-481f, 75f, 528f), PreferredAethernetId: Stonemarsh.Id) // "Pleading Pots" (South)
     ];
 
-    // Staging positions. Registration size comes from live LGB MapRange, not these rows.
+    // Staging + AreaShape. Registration size/centre come from live LGB MapRange, not these rows.
     public override List<ActivityData> GetCriticalEncounterData() =>
     [
         new(33, new(300.109f, 70f, 730.029f), PreferredAethernetId: Eldergrowth.Id), // "Scourge of the Mind"

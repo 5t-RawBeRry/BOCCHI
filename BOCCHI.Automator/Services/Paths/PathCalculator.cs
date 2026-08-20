@@ -159,7 +159,9 @@ public class PathCalculator
             && geometry.TryGet(ceGoalForRadius.id.Value) is { Radius: > 0 } area)
         {
             ceCombatRadius = area.Radius;
-            ceShape = area.IsSquare ? ActivityAreaShape.Square : ActivityAreaShape.Circle;
+            ActivityData? authored = zone.GetCriticalEncounterData()
+                .FirstOrDefault(a => a.Id == ceGoalForRadius.id.Value);
+            ceShape = NavigationConstants.ResolveCriticalEncounterShape(authored, area.IsSquare);
             zone.ApplyCriticalEncounterCombat(ceGoalForRadius.id.Value, ceCombatRadius, ceShape);
             pathGoal = new Node
             {

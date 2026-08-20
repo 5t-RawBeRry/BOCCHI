@@ -17,7 +17,10 @@ public enum ActivityAreaShape
 
 /// <param name="Position">Path / wait destination (CE staging or FATE start).</param>
 /// <param name="PreferredAethernetId">PlaceNameId of preferred inbound shard, if any.</param>
-/// <param name="AreaShape">Circle (default) or axis-aligned square (e.g. A Beast Unleashed).</param>
+/// <param name="AreaShape">
+///     Circle (default) or axis-aligned square. Wins over LGB TriggerBoxShape when a CE row
+///     exists (only A Beast Unleashed is authored Square today).
+/// </param>
 /// <param name="StandRadius">
 ///     Standable area when smaller than the registration rim. Null uses the live LGB size.
 /// </param>

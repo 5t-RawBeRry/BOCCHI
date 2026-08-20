@@ -85,6 +85,18 @@ public static class NavigationConstants
     /// <summary>Square CEs: max Chebyshev stand-off from center as a fraction of half-extent.</summary>
     public const float CriticalEncounterSquareApproachMaxRatio = 0.25f;
 
+    /// <summary>
+    ///     Registration size/centre still come from LGB. Shape prefers the zone CE table when we
+    ///     have a row — LGB <c>TriggerBoxShape</c> can disagree with the blue ring (e.g. Lost on
+    ///     the Wind is a circle). Only authored squares (A Beast Unleashed) stay square.
+    /// </summary>
+    public static ActivityAreaShape ResolveCriticalEncounterShape(ActivityData? authored, bool lgbIsSquare) =>
+        authored is not null
+            ? authored.AreaShape
+            : lgbIsSquare
+                ? ActivityAreaShape.Square
+                : ActivityAreaShape.Circle;
+
     /// <summary>Random stand-off ring while waiting for a predicted pot FATE.</summary>
     public const float PotPrepositionMinRadius = 12f;
 
@@ -279,7 +291,9 @@ public static class NavigationApproach
             activity = candidate;
             Vector3 center = area.Center;
             float radius = area.Radius;
-            ActivityAreaShape shape = area.IsSquare ? ActivityAreaShape.Square : ActivityAreaShape.Circle;
+            ActivityAreaShape shape = NavigationConstants.ResolveCriticalEncounterShape(
+                candidate,
+                area.IsSquare);
 
             if (NavigationConstants.IsInsideCriticalEncounterWaitArea(
                     center, radius, shape, from))

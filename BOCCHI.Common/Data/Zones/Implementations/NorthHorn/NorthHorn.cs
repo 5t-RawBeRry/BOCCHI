@@ -125,7 +125,7 @@ public class NorthHorn
         new(2073, new(-505.2822f, 53.14409f, 244.041f), PreferredAethernetId: SuspendedMasonry.Id) // In a Pot of Bother (South)
     ];
 
-    // Staging positions. Registration size comes from live LGB MapRange, not these rows.
+    // Staging + AreaShape. Registration size/centre come from live LGB MapRange, not these rows.
     public override List<ActivityData> GetCriticalEncounterData() =>
     [
         new(56, new(237.91f, 15f, 351.69f), AreaShape: ActivityAreaShape.Square), // A Beast Unleashed
@@ -138,6 +138,7 @@ public class NorthHorn
         new(58, new(-390f, 68f, 700f)), // Familiar Tactics
         new(52, new(659f, 132f, 659f), PreferredAethernetId: TheCrownOfKarnak.Id), // Forbidden Folios
         new(54, new(765f, 70f, 0f)), // Imbalanced Diet
+        // Circle (LGB TriggerBoxShape can report box for this one).
         new(61, new(-150f, 70f, -860f), PreferredAethernetId: MolderingOutskirts.Id), // Lost on the Wind
         new(49, new(-870f, 20f, -560f)), // Many Mouths to Feed
         new(51, new(-519f, 48f, -641f)), // Quarried Away

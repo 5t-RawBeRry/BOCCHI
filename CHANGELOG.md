@@ -6,3 +6,4 @@
 - Treasure Hunt Ninja Hide uses your actual Knowledge, not South Horn sync, so high-Knowledge characters stop hiding from trash that will not aggro (#197).
 - Illegal Mode stays in a Critical Encounter after battle starts, so Wrath / RSR keep fighting instead of dropping the CE and turning combat off.
 - Pot timer sync backs off when the worker is rate-limited, instead of retrying every 20 seconds.
+- Lost on the Wind (CE 61) uses a circle registration area again instead of being treated as a square.

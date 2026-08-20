@@ -129,7 +129,9 @@ public class CriticalEncounterRepository
                 continue;
             }
 
-            ActivityAreaShape shape = area.IsSquare ? ActivityAreaShape.Square : ActivityAreaShape.Circle;
+            ActivityData? authored = zone.GetCriticalEncounterData()
+                .FirstOrDefault(a => a.Id == criticalEncounter.Id.Value);
+            ActivityAreaShape shape = NavigationConstants.ResolveCriticalEncounterShape(authored, area.IsSquare);
             criticalEncounter.ApplyCombatGeometry(area.Radius, shape, area.Center);
             zone.ApplyCriticalEncounterCombat(criticalEncounter.Id.Value, area.Radius, shape);
         }

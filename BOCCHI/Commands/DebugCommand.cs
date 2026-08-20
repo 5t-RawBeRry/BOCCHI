@@ -123,7 +123,11 @@ public unsafe class DebugCommand
         float circle = Flat(me, nearest.Position);
         float square = MathF.Max(dx, dz);
         bool haveLgb = geometry.TryGetCombat((ushort)nearest.Id, out float lgbRadius, out ActivityAreaShape lgbShape);
-        ActivityAreaShape shape = haveLgb ? lgbShape : nearest.AreaShape;
+        ActivityAreaShape shape = haveLgb
+            ? NavigationConstants.ResolveCriticalEncounterShape(
+                nearest,
+                lgbShape == ActivityAreaShape.Square)
+            : nearest.AreaShape;
         float measured = shape == ActivityAreaShape.Square ? square : circle;
         float compare = haveLgb ? lgbRadius : 0f;
 
