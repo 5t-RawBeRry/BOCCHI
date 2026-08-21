@@ -125,19 +125,11 @@
     },
     "yield_to_treasure_hunt": {
       "label": "타이머로 보물 찾기",
-      "tooltip": "N분마다 보물 시야 수가 충분하면 파밍을 멈추고 보물 찾기를 합니다. 최근 시야 결과가 필요합니다."
+      "tooltip": "N분마다 보물 페이지의 동/은 % 임계값을 충족하면 파밍을 멈추고 보물 찾기를 합니다. 최근 시야 결과가 필요합니다."
     },
     "treasure_hunt_interval_minutes": {
       "label": "찾기 주기(분)",
       "tooltip": "파밍 중 얼마나 자주 보물 찾기를 검토할지입니다."
-    },
-    "treasure_hunt_min_bronze_percent": {
-      "label": "동이 이 % 이상이면 찾기",
-      "tooltip": "활성 동 상자가 30개 중 이 비율 이상이면 찾기를 시작합니다."
-    },
-    "treasure_hunt_min_silver_percent": {
-      "label": "은이 이 % 이상이면 찾기",
-      "tooltip": "활성 은 상자가 8개 중 이 비율 이상이면 찾기를 시작합니다."
     },
     "yield_to_crystal_buffs": {
       "label": "크리스탈 버프가 떨어지기 전에 재적용",

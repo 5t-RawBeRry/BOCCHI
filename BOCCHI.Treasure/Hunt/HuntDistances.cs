@@ -41,6 +41,7 @@ public static class HuntDistances
     /// <summary>
     /// After Sight, only trim empties this close — not the full skip radius —
     /// so a dense cluster is not wiped while standing in the middle of it.
+    /// Treasure hunt overrides via TreasureConfig.EmptyPadTrustDistance.
     /// </summary>
     public const float EmptyPadRegionTrustRadius = LayoutProximityRadius;
 

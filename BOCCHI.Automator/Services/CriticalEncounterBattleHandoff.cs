@@ -35,7 +35,7 @@ internal static class CriticalEncounterBattleHandoff
             encounter.Radius,
             encounter.AreaShape);
         return NavigationConstants.IsInsideCriticalEncounterRegistrationArea(
-            encounter.Position,
+            encounter.RegistrationCenter,
             combatRadius,
             encounter.AreaShape,
             playerPosition);

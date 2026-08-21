@@ -7,7 +7,7 @@
     "travel": "Travel",
     "jobs": "Phantom jobs",
     "triage": "Triage",
-    "treasure": "Treasure Sight",
+    "treasure": "Treasure",
     "delays": "Delays",
     "repair": "Repair"
   },
@@ -138,7 +138,7 @@
     },
     "enable_automatic_treasure_hunt_during_illegal_mode": {
       "label": "Auto treasure hunt in Illegal Mode",
-      "tooltip": "After a FATE or CE, Return to camp, cast Treasure Sight if you know it, then hunt remaining coffers."
+      "tooltip": "After a FATE or CE, return to camp and survey with Treasure Sight if you know it. Starts a hunt only when fill meets the bronze/silver % on the Treasure page. Without Sight, uses the built-in map (thresholds ignored)."
     }
   }
 }

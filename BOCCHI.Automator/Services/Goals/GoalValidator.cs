@@ -327,7 +327,7 @@ public class GoalValidator
             encounter.Radius,
             encounter.AreaShape);
         return NavigationConstants.IsInsideCriticalEncounterWaitArea(
-            encounter.Position,
+            encounter.RegistrationCenter,
             combatRadius,
             encounter.AreaShape,
             player.Position);

@@ -7,7 +7,7 @@
     "travel": "赶路",
     "jobs": "辅助职业",
     "triage": "急救",
-    "treasure": "魔寻宝",
+    "treasure": "寻宝",
     "delays": "等待",
     "repair": "修理"
   },
@@ -138,7 +138,7 @@
     },
     "enable_automatic_treasure_hunt_during_illegal_mode": {
       "label": "违规模式中自动寻宝",
-      "tooltip": "危命/紧急遭遇结束后返回营地，会魔寻宝则使用，然后搜寻剩余宝箱。"
+      "tooltip": "危命/紧急遭遇结束后返回营地，会魔寻宝则调查。仅当寻宝页铜/银％满足时才寻宝。不会魔寻宝时改用内置地图并忽略阈值。"
     }
   }
 }

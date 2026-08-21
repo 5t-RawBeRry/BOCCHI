@@ -68,7 +68,7 @@ public class WaitingForCriticalEncounterHandler
             {
                 float latchedRadius = NavigationConstants.CriticalEncounterRedRadius(ce.Radius, ce.AreaShape);
                 if (!NavigationConstants.IsInsideCriticalEncounterRegistrationArea(
-                        ce.Position,
+                        ce.RegistrationCenter,
                         latchedRadius,
                         ce.AreaShape,
                         latchedPlayer.Position))
@@ -88,7 +88,7 @@ public class WaitingForCriticalEncounterHandler
 
         float combatRadius = NavigationConstants.CriticalEncounterRedRadius(ce.Radius, ce.AreaShape);
         if (!NavigationConstants.IsInsideCriticalEncounterWaitArea(
-                ce.Position,
+                ce.RegistrationCenter,
                 combatRadius,
                 ce.AreaShape,
                 player.Position))

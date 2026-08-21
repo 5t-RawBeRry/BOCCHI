@@ -125,19 +125,11 @@
     },
     "yield_to_treasure_hunt": {
       "label": "Treasure Hunt on a timer",
-      "tooltip": "Every N minutes, if Treasure Sight counts are high enough, pause farming and run Treasure Hunt. Needs a recent Sight reading."
+      "tooltip": "Every N minutes, pause farming and run Treasure Hunt if fill meets the bronze/silver % on the Treasure page. Needs a recent Treasure Sight reading."
     },
     "treasure_hunt_interval_minutes": {
       "label": "Hunt every (minutes)",
       "tooltip": "How often to consider a Treasure Hunt while farming."
-    },
-    "treasure_hunt_min_bronze_percent": {
-      "label": "Hunt if bronze at least (%)",
-      "tooltip": "Start a hunt when active bronze coffers are at or above this percent of 30."
-    },
-    "treasure_hunt_min_silver_percent": {
-      "label": "Hunt if silver at least (%)",
-      "tooltip": "Start a hunt when active silver coffers are at or above this percent of 8."
     },
     "yield_to_crystal_buffs": {
       "label": "Refresh crystal buffs when low",

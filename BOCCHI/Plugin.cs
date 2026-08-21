@@ -269,6 +269,9 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
     {
         treasure.TreasureSightEveryNLocations = Math.Clamp(treasure.TreasureSightEveryNLocations, 1, 50);
         treasure.HuntMaxLevel = Math.Clamp(treasure.HuntMaxLevel, 1, 50);
+        treasure.HuntMinBronzePercent = Math.Clamp(treasure.HuntMinBronzePercent, 0, 100);
+        treasure.HuntMinSilverPercent = Math.Clamp(treasure.HuntMinSilverPercent, 0, 100);
+        treasure.EmptyPadTrustDistance = Math.Clamp(treasure.EmptyPadTrustDistance, 10f, 60f);
     }
 
     private static void SanitizeBuffConfig(BuffConfig buff)

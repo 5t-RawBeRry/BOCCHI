@@ -7,7 +7,7 @@
     "travel": "移動",
     "jobs": "ファントムジョブ",
     "triage": "トリアージ",
-    "treasure": "トレジャーサイト",
+    "treasure": "トレジャー",
     "delays": "待機",
     "repair": "修理"
   },
@@ -138,7 +138,7 @@
     },
     "enable_automatic_treasure_hunt_during_illegal_mode": {
       "label": "不正モードで自動トレジャーハント",
-      "tooltip": "FATE / CE のあとキャンプへ戻り、サイトを覚えていれば唱え、残りの宝箱をハントします。"
+      "tooltip": "FATE / CE のあとキャンプへ戻り、サイトを覚えていれば調査します。トレジャーページの銅／銀％を満たすときだけハントします。サイト未習得時は内蔵マップを使い、閾値は無視します。"
     }
   }
 }

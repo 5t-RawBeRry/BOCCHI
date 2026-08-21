@@ -1,5 +1,6 @@
 using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.Paths;
@@ -155,6 +156,7 @@ public class PathCalculator
 
         float ceCombatRadius = 0f;
         ActivityAreaShape ceShape = ActivityAreaShape.Circle;
+        Vector3? ceWaitCenter = null;
         if (goal.GoalType is CriticalEncounterGoal ceGoalForRadius
             && geometry.TryGet(ceGoalForRadius.id.Value) is { Radius: > 0 } area)
         {
@@ -164,26 +166,27 @@ public class PathCalculator
                 ceGoalForRadius.id.Value,
                 area.IsSquare);
             zone.ApplyCriticalEncounterCombat(ceGoalForRadius.id.Value, ceCombatRadius, ceShape);
-            pathGoal = new Node
-            {
-                Id = goalNode.Id,
-                Type = goalNode.Type,
-                Position = area.Center,
-                Metadata = goalNode.Metadata
-            };
+            // Travel toward authored staging; arrival uses LGB registration (with skew guard).
+            pathGoal = goalNode;
+            ceWaitCenter = area.Center.Distance2D(goalNode.Position)
+                           > CriticalEncounter.MaxRegistrationCenterSkew
+                ? goalNode.Position
+                : area.Center;
             logger.Debug(
-                "CE {Id} path goal at {Pos:F0} ({Shape}, combat radius {Radius:F0})",
+                "CE {Id} path goal at authored {Pos:F0} ({Shape}, combat radius {Radius:F0}, wait centre {Center:F0})",
                 ceGoalForRadius.id.Value,
                 pathGoal.Position,
                 ceShape,
-                ceCombatRadius);
+                ceCombatRadius,
+                ceWaitCenter.Value);
         }
 
         Vector3 arrivalCheck = potPrepositionStandOff ?? pathGoal.Position;
         float distanceToGoal = player.Position.Distance2D(arrivalCheck);
         bool insideCeWait = ceCombatRadius > 0f
+                            && ceWaitCenter is { } waitAt
                             && NavigationConstants.IsInsideCriticalEncounterWaitArea(
-                                arrivalCheck,
+                                waitAt,
                                 ceCombatRadius,
                                 ceShape,
                                 player.Position);

@@ -47,32 +47,53 @@ public class TreasureConfig : IAutoConfig
     [Checkbox(Order = 10, Section = "hunt")]
     public bool HuntSilverChestsOnly { get; set; } = false;
 
+    /// <summary>
+    ///     Illegal Mode auto-hunt and Mob Farmer yield-to-hunt: start when bronze fill is at least
+    ///     this percent of 30 (or silver meets its own threshold).
+    /// </summary>
+    [IntRange(0, 100, Order = 11, Section = "hunt")]
+    public int HuntMinBronzePercent { get; set; } = 50;
+
+    /// <summary>
+    ///     Illegal Mode auto-hunt and Mob Farmer yield-to-hunt: start when silver fill is at least
+    ///     this percent of 8 (or bronze meets its own threshold).
+    /// </summary>
+    [IntRange(0, 100, Order = 12, Section = "hunt")]
+    public int HuntMinSilverPercent { get; set; } = 50;
+
+    /// <summary>
+    ///     How close (yalms) before an empty pad is trusted and skipped. Lower walks closer
+    ///     (safer when chests load late); higher skips from farther away.
+    /// </summary>
+    [FloatRange(10f, 60f, Order = 13, Section = "hunt")]
+    public float EmptyPadTrustDistance { get; set; } = 25f;
+
     /// <summary>Pause treasure hunting during Ashkin / unsafe weather windows (South Horn).</summary>
-    [Checkbox(Order = 11, Section = "hunt")]
+    [Checkbox(Order = 14, Section = "hunt")]
     public bool SkipUnsafeTreasureWindows { get; set; } = true;
 
     /// <summary>Use real Ninja Hide near high-knowledge hostiles while hunting coffers.</summary>
-    [Checkbox(Order = 13, Section = "ninja_hide")]
+    [Checkbox(Order = 15, Section = "ninja_hide")]
     public bool UseNinjaHideOnDangerousRoutes { get; set; } = false;
 
     /// <summary>While Hide is up, swap to Phantom Thief and cast Occult Sprint for move speed.</summary>
-    [Checkbox(Order = 14, Section = "ninja_hide")]
+    [Checkbox(Order = 16, Section = "ninja_hide")]
     public bool UseOccultSprintWhileHidden { get; set; } = false;
 
     /// <summary>Gearset number (1-based) that equips Ninja. 0 = already on Ninja only.</summary>
-    [IntRange(0, 100, Order = 15, Section = "ninja_hide")]
+    [IntRange(0, 100, Order = 17, Section = "ninja_hide")]
     public int NinjaGearsetNumber { get; set; } = 0;
 
     /// <summary>Hide when mob knowledge ≥ player knowledge + this offset.</summary>
-    [IntRange(-5, 10, Order = 16, Section = "ninja_hide")]
+    [IntRange(-5, 10, Order = 18, Section = "ninja_hide")]
     public int KnowledgeHideOffset { get; set; } = 0;
 
     /// <summary>Start Hide when a knowledge threat is within this distance (yalms).</summary>
-    [FloatRange(5f, 40f, Order = 17, Section = "ninja_hide")]
+    [FloatRange(5f, 40f, Order = 19, Section = "ninja_hide")]
     public float KnowledgeThreatEnterDistance { get; set; } = 10f;
 
     /// <summary>Clear Hide requirement when threats are beyond this distance (yalms).</summary>
-    [FloatRange(10f, 60f, Order = 18, Section = "ninja_hide")]
+    [FloatRange(10f, 60f, Order = 20, Section = "ninja_hide")]
     public float KnowledgeThreatExitDistance { get; set; } = 20f;
 
     /// <summary>

@@ -81,7 +81,7 @@ public class InCriticalEncounterHandler
 
         float combatRadius = NavigationConstants.CriticalEncounterRedRadius(ce.Radius, ce.AreaShape);
         if (!NavigationConstants.IsInsideCriticalEncounterWaitArea(
-                ce.Position,
+                ce.RegistrationCenter,
                 combatRadius,
                 ce.AreaShape,
                 player.Position))
@@ -207,7 +207,7 @@ public class InCriticalEncounterHandler
 
         float combatRadius = NavigationConstants.CriticalEncounterRedRadius(encounter.Radius, encounter.AreaShape);
         if (!NavigationConstants.IsInsideCriticalEncounterWaitArea(
-                encounter.Position,
+                encounter.RegistrationCenter,
                 combatRadius,
                 encounter.AreaShape,
                 player.Position))

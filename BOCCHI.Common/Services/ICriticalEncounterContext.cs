@@ -19,5 +19,5 @@ public interface ICriticalEncounterContext
     bool HasEncounterEnemies(CriticalEncounterId id);
 
     bool IsInZone(IPlayerCharacter player, CriticalEncounter encounter) =>
-        player.Position.Distance2D(encounter.Position) <= encounter.Radius;
+        player.Position.Distance2D(encounter.RegistrationCenter) <= encounter.Radius;
 }

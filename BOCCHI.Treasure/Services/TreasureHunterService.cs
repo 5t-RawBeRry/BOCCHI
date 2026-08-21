@@ -1275,7 +1275,7 @@ public class TreasureHunterService
 
             // Trim only nearby same-floor empties after Sight.
             if (!IsLayoutPadEmpty(spot.Position, nodeId)
-                || player.Position.Distance2D(spot.Position) > HuntDistances.EmptyPadRegionTrustRadius
+                || player.Position.Distance2D(spot.Position) > config.EmptyPadTrustDistance
                 || !IsSameFloor(spot.Position))
             {
                 continue;
@@ -1825,7 +1825,7 @@ public class TreasureHunterService
 
         float dist = player.Position.Distance2D(layoutDestination);
 
-        if (dist <= HuntDistances.LayoutProximityRadius)
+        if (dist <= config.EmptyPadTrustDistance)
         {
             return true;
         }

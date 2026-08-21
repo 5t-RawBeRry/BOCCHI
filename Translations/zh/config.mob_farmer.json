@@ -125,19 +125,11 @@
     },
     "yield_to_treasure_hunt": {
       "label": "定时寻宝",
-      "tooltip": "每隔 N 分钟，若寻宝视觉数量足够，暂停刷怪并跑寻宝。需要最近一次视觉结果。"
+      "tooltip": "每隔 N 分钟，若寻宝页铜/银％阈值满足，暂停刷怪并跑寻宝。需要最近一次视觉结果。"
     },
     "treasure_hunt_interval_minutes": {
       "label": "寻宝间隔（分钟）",
       "tooltip": "刷怪时多久考虑一次寻宝。"
-    },
-    "treasure_hunt_min_bronze_percent": {
-      "label": "铜箱达到该％则寻宝",
-      "tooltip": "当前铜箱占 30 的比例达到或超过该值时开始寻宝。"
-    },
-    "treasure_hunt_min_silver_percent": {
-      "label": "银箱达到该％则寻宝",
-      "tooltip": "当前银箱占 8 的比例达到或超过该值时开始寻宝。"
     },
     "yield_to_crystal_buffs": {
       "label": "水晶增益将尽时重施",

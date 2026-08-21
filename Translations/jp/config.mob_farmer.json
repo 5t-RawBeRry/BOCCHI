@@ -125,19 +125,11 @@
     },
     "yield_to_treasure_hunt": {
       "label": "タイマーでトレジャーハント",
-      "tooltip": "N分ごとに、トレジャーサイトの数が足りていればファームを止めてハントします。直近のサイト結果が必要です。"
+      "tooltip": "N分ごとに、トレジャーページの銅／銀％閾値を満たしていればファームを止めてハントします。直近のサイト結果が必要です。"
     },
     "treasure_hunt_interval_minutes": {
       "label": "ハント間隔（分）",
       "tooltip": "ファーム中、どれくらいの頻度でハントを検討するかです。"
-    },
-    "treasure_hunt_min_bronze_percent": {
-      "label": "銅がこの％以上ならハント",
-      "tooltip": "アクティブな銅が 30 個中この割合以上ならハントします。"
-    },
-    "treasure_hunt_min_silver_percent": {
-      "label": "銀がこの％以上ならハント",
-      "tooltip": "アクティブな銀が 8 個中この割合以上ならハントします。"
     },
     "yield_to_crystal_buffs": {
       "label": "クリスタルバフが切れる前にかけ直す",

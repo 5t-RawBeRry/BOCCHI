@@ -6,6 +6,7 @@ using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using BOCCHI.MobFarmer.Data;
 using BOCCHI.MobFarmer.Services;
+using BOCCHI.Treasure.Hunt;
 using BOCCHI.Treasure.Services;
 using Ocelot.Lifecycle;
 
@@ -224,15 +225,6 @@ public sealed class MobFarmerYieldService
             return false;
         }
 
-        float bronzePct = tracker.BronzeChests / 30f * 100f;
-        float silverPct = tracker.SilverChests / 8f * 100f;
-        bool bronzeOk = bronzePct >= farmerConfig.TreasureHuntMinBronzePercent;
-        bool silverOk = silverPct >= farmerConfig.TreasureHuntMinSilverPercent;
-        if (treasureConfig.HuntSilverChestsOnly)
-        {
-            return silverOk;
-        }
-
-        return bronzeOk || silverOk;
+        return TreasureHuntFillGate.MeetsMinimumFill(tracker, treasureConfig);
     }
 }

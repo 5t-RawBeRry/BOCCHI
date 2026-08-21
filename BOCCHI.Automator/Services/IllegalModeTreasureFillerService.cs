@@ -4,6 +4,7 @@ using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
+using BOCCHI.Treasure.Hunt;
 using BOCCHI.Treasure.Services;
 using Ocelot.Lifecycle;
 using Ocelot.Services.Logger;
@@ -21,6 +22,7 @@ public class IllegalModeTreasureFillerService
     ISupportJobFactory supportJobs,
     IZoneProvider zones,
     AutomatorConfig automatorConfig,
+    TreasureConfig treasureConfig,
     ILogger<IllegalModeTreasureFillerService> logger
 ) : IOnUpdate
 {
@@ -198,6 +200,7 @@ public class IllegalModeTreasureFillerService
             return;
         }
 
+        // No Sight → no live fill counts. Always run the built-in map; thresholds only apply after a survey.
         survey.PendingMapHunt = false;
         EnterHuntPhase(fromSurvey: false);
     }
@@ -232,6 +235,15 @@ public class IllegalModeTreasureFillerService
             return;
         }
 
+        if (!TreasureHuntFillGate.MeetsMinimumFill(tracker, treasureConfig))
+        {
+            logger.Info(
+                "Illegal Mode: survey fill below threshold ({Silver} silver, {Bronze} bronze) — continuing CE/FATE farming",
+                silver,
+                bronze);
+            return;
+        }
+
         logger.Info(
             "Illegal Mode: survey found {Silver} silver, {Bronze} bronze — starting hunt",
             silver,
@@ -263,6 +275,11 @@ public class IllegalModeTreasureFillerService
         }
 
         if (tracker.SilverChests + tracker.BronzeChests <= 0)
+        {
+            return false;
+        }
+
+        if (!TreasureHuntFillGate.MeetsMinimumFill(tracker, treasureConfig))
         {
             return false;
         }

@@ -1,10 +1,9 @@
-# 4.1.0.5
+# 4.1.0.6
+
+### Features
+- Treasure Hunt: choose how close to walk before skipping an empty coffer pad (default 25 yalms).
 
 ### Fixes
-- Rotation Solver Reborn turns on Henched in FATEs and CEs instead of staying Off while BOCCHI AI is already running.
-- Pot FATE and CE cutoffs are minutes until the next pot spawn. Leave-early only controls when you walk there, so those sliders no longer stack.
-- Treasure Hunt Ninja Hide uses your actual Knowledge, not South Horn sync, so high-Knowledge characters stop hiding from trash that will not aggro (#197).
-- Illegal Mode stays in a Critical Encounter after battle starts, so Wrath / RSR keep fighting instead of dropping the CE and turning combat off.
-- Waiting for CE hands off into the fight when registration signals lag after battle starts, so combat AI still turns on.
-- Pot timer sync backs off when the worker is rate-limited, instead of retrying every 20 seconds.
-- Lost on the Wind (CE 61) uses a circle registration area again instead of being treated as a square.
+- Wrath no longer spams Invalid lease by re-arming the job every combat frame.
+- Illegal Mode auto treasure hunt only starts when bronze/silver fill meets the Treasure page thresholds (same as Mob Farmer). Without Treasure Sight it still uses the built-in map.
+- Illegal Mode no longer stops early on the way to Eternal Watch (and similar CEs) thinking it already arrived.

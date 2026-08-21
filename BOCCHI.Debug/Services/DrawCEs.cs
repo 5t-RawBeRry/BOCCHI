@@ -25,17 +25,17 @@ public class DrawCEs(IOverlayRenderer overlay, ICriticalEncounterRepository ces,
 
             if (ce.AreaShape == ActivityAreaShape.Square)
             {
-                StrokeSquare(ce.Position, padded, Color.Green);
-                StrokeSquare(ce.Position, yellow, new(1f, 1f, 0f));
-                StrokeSquare(ce.Position, red, Color.Red);
-                StrokeSquare(ce.Position, stand, new(0f, 1f, 1f));
+                StrokeSquare(ce.RegistrationCenter, padded, Color.Green);
+                StrokeSquare(ce.RegistrationCenter, yellow, new(1f, 1f, 0f));
+                StrokeSquare(ce.RegistrationCenter, red, Color.Red);
+                StrokeSquare(ce.RegistrationCenter, stand, new(0f, 1f, 1f));
             }
             else
             {
-                overlay.StrokeCircle(ce.Position, padded, Color.Green);
-                overlay.StrokeCircle(ce.Position, yellow, new(1f, 1f, 0f));
-                overlay.StrokeCircle(ce.Position, red, Color.Red);
-                overlay.StrokeCircle(ce.Position, stand, new(0f, 1f, 1f));
+                overlay.StrokeCircle(ce.RegistrationCenter, padded, Color.Green);
+                overlay.StrokeCircle(ce.RegistrationCenter, yellow, new(1f, 1f, 0f));
+                overlay.StrokeCircle(ce.RegistrationCenter, red, Color.Red);
+                overlay.StrokeCircle(ce.RegistrationCenter, stand, new(0f, 1f, 1f));
             }
         }
 

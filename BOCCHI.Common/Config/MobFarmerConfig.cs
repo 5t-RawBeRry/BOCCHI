@@ -95,15 +95,9 @@ public class MobFarmerConfig : IAutoConfig
     [IntRange(5, 60, Order = 26, Indent = 1, Requires = nameof(YieldToTreasureHunt), Section = "yields")]
     public int TreasureHuntIntervalMinutes { get; set; } = 15;
 
-    [IntRange(0, 100, Order = 27, Indent = 1, Requires = nameof(YieldToTreasureHunt), Section = "yields")]
-    public int TreasureHuntMinBronzePercent { get; set; } = 50;
-
-    [IntRange(0, 100, Order = 28, Indent = 1, Requires = nameof(YieldToTreasureHunt), Section = "yields")]
-    public int TreasureHuntMinSilverPercent { get; set; } = 50;
-
-    [Checkbox(Order = 29, Section = "yields")]
+    [Checkbox(Order = 27, Section = "yields")]
     public bool YieldToCrystalBuffs { get; set; } = false;
 
-    [Checkbox(Order = 30, Section = "debug")]
+    [Checkbox(Order = 28, Section = "debug")]
     public bool RenderDebugLines { get; set; } = false;
 }

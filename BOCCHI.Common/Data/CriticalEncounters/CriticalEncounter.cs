@@ -33,7 +33,14 @@ public class CriticalEncounter(
 
     public ActivityAreaShape AreaShape { get; private set; } = areaShape;
 
+    /// <summary>Authored staging / travel aim. Not overwritten by LGB MapRange centre.</summary>
     public Vector3 Position { get; private set; } = ResolvePosition(ev, fallbackPosition);
+
+    /// <summary>
+    ///     Live registration centre from LGB (blue ring). Falls back to <see cref="Position"/> when
+    ///     geometry is missing or looks wrong relative to authored staging.
+    /// </summary>
+    public Vector3 RegistrationCenter { get; private set; } = ResolvePosition(ev, fallbackPosition);
 
     public DynamicEventState State { get; private set; } = ev.State;
 
@@ -105,7 +112,43 @@ public class CriticalEncounter(
         if (!float.IsNaN(live.X))
         {
             Position = live;
+            if (float.IsNaN(RegistrationCenter.X))
+            {
+                RegistrationCenter = live;
+            }
         }
+    }
+
+    /// <summary>
+    ///     LGB MapRange centres farther than this from authored staging are treated as a bad match
+    ///     (wrong volume) — keep staging as the registration origin instead.
+    /// </summary>
+    public const float MaxRegistrationCenterSkew = 100f;
+
+    /// <summary>Apply live LGB registration size and centre (unpadded combat radius).</summary>
+    public void ApplyCombatGeometry(float combatRadius, ActivityAreaShape shape, Vector3? center = null)
+    {
+        AreaShape = shape;
+        Radius = combatRadius > 0f
+            ? NavigationConstants.CriticalEncounterPaddedRadius(combatRadius, shape)
+            : 0f;
+
+        if (center is not { } lgb || float.IsNaN(lgb.X))
+        {
+            RegistrationCenter = Position;
+            return;
+        }
+
+        // Never move Position off authored staging — LGB is often an entrance marker, and a wrong
+        // MapRange match used to yank Waiting / In CE onto the Lost Citadel approach (Eternal Watch).
+        if (!float.IsNaN(fallbackPosition.X)
+            && lgb.Distance2D(fallbackPosition) > MaxRegistrationCenterSkew)
+        {
+            RegistrationCenter = fallbackPosition;
+            return;
+        }
+
+        RegistrationCenter = lgb;
     }
 
     public TimeSpan? GetTimeUntilStart()
@@ -122,18 +165,4 @@ public class CriticalEncounter(
     public bool IsPreparing() => State is DynamicEventState.Register or DynamicEventState.Warmup;
 
     public bool IsActive() => State is DynamicEventState.Battle;
-
-    /// <summary>Apply live LGB registration size and centre (unpadded combat radius).</summary>
-    public void ApplyCombatGeometry(float combatRadius, ActivityAreaShape shape, Vector3? center = null)
-    {
-        AreaShape = shape;
-        Radius = combatRadius > 0f
-            ? NavigationConstants.CriticalEncounterPaddedRadius(combatRadius, shape)
-            : 0f;
-
-        if (center is { } c && !float.IsNaN(c.X))
-        {
-            Position = c;
-        }
-    }
 }
