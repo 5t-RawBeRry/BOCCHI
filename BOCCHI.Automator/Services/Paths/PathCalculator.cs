@@ -161,25 +161,31 @@ public class PathCalculator
         if (goal.GoalType is CriticalEncounterGoal ceGoalForRadius
             && geometry.TryGet(ceGoalForRadius.id.Value) is { Radius: > 0 } area)
         {
-            ceCombatRadius = area.Radius;
             ceShape = NavigationConstants.ResolveCriticalEncounterShape(
                 zone,
                 ceGoalForRadius.id.Value,
                 area.IsSquare);
-            zone.ApplyCriticalEncounterCombat(ceGoalForRadius.id.Value, ceCombatRadius, ceShape);
-            // Travel toward authored staging; arrival uses LGB registration (with skew guard).
+            // Travel toward authored staging; sanitize LGB wait centre + radius (Eternal Watch had a
+            // ~560y MapRange near staging that pulled approach onto Lost Citadel).
             pathGoal = goalNode;
-            ceWaitCenter = area.Center.Distance2D(goalNode.Position)
-                           > CriticalEncounter.MaxRegistrationCenterSkew
-                ? goalNode.Position
-                : area.Center;
+            CriticalEncounter.SanitizeRegistration(
+                goalNode.Position,
+                area.Center,
+                area.Radius,
+                out Vector3 waitAt,
+                out float sizeOk,
+                out bool rejected);
+            ceWaitCenter = waitAt;
+            ceCombatRadius = sizeOk;
+            zone.ApplyCriticalEncounterCombat(ceGoalForRadius.id.Value, ceCombatRadius, ceShape);
             logger.Debug(
-                "CE {Id} path goal at authored {Pos:F0} ({Shape}, combat radius {Radius:F0}, wait centre {Center:F0})",
+                "CE {Id} path goal at authored {Pos:F0} ({Shape}, combat radius {Radius:F0}, wait centre {Center:F0}{Note})",
                 ceGoalForRadius.id.Value,
                 pathGoal.Position,
                 ceShape,
                 ceCombatRadius,
-                ceWaitCenter.Value);
+                ceWaitCenter.Value,
+                rejected ? ", bad MapRange size/centre ignored" : "");
         }
 
         Vector3 arrivalCheck = potPrepositionStandOff ?? pathGoal.Position;
