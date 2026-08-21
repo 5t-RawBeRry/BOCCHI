@@ -172,10 +172,10 @@ public class PathCalculator
                 goalNode.Position,
                 area.Center,
                 area.Radius,
-                out Vector3 waitAt,
+                out Vector3 sanitizedCenter,
                 out float sizeOk,
                 out bool rejected);
-            ceWaitCenter = waitAt;
+            ceWaitCenter = sanitizedCenter;
             ceCombatRadius = sizeOk;
             zone.ApplyCriticalEncounterCombat(ceGoalForRadius.id.Value, ceCombatRadius, ceShape);
             logger.Debug(

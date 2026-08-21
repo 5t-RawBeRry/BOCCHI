@@ -58,7 +58,10 @@ public class FightingHandler
                 return null;
             }
 
-            if (config.ShouldHandleTargeting
+            // Pulling uses BOCCHI auto-target; once Fighting + combat AI is on, leave
+            // targeting to BossMod AutoTarget / Wrath / RSR.
+            if (!useAi
+                && config.ShouldHandleTargeting
                 && inCombat.Count > 0
                 && EzThrottler.Throttle("MobFarmer::Fighting::Target", 250))
             {
