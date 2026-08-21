@@ -6,6 +6,7 @@
 - Mob Farmer pull buffs can cast **Counterstance** (Phantom Monk → Fleetfooted) late in the buff sequence so the short mitigation covers the start of the pull.
 
 ### Fixes
+- Dying in a CE no longer drops the CE goal / resumes travel before Accept Raise — commitment is kept until you leave for a non-Dead state.
 - Mob Farmer auto-target is only used during the pull; once Fighting starts with combat AI on, targeting is left to BossMod / Wrath / RSR.
 - Mob Farmer waits for Ringing Respite after Quickstep when they share a cooldown, instead of skipping Respite as soon as Geomancer is equipped.
 - Pot chest second-chance / long hops use Return + aethernet instead of walking across the map when the destination is not on the path map.
