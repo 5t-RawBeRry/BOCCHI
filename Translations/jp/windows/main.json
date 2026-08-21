@@ -140,7 +140,7 @@
       "path_map": "経路マップ",
       "path_map_idle": "不正モード開始時に読み込みます",
       "path_map_loading": "読み込み中…",
-      "path_map_building": "構築中（完了までIllegal Modeは待ちます）…",
+      "path_map_building": "構築中（完了まで不正モードは待ちます）…",
       "path_map_ready_cache": "準備完了（保存済み）",
       "path_map_ready_shipped": "準備完了（同梱）",
       "path_map_ready_built": "準備完了（いま構築）",
@@ -152,7 +152,7 @@
       "illegal_mode_off_left_zone": "[BOCCHI] オカルトクレセントを離れたため不正モード オフ",
       "pathfinding_refreshed": "[BOCCHI] ルートを作り直しました",
       "pathfinding_refreshed_no_goal": "[BOCCHI] ルートを解除しました（いま行く先がありません）",
-      "path_routing_failed": "[BOCCHI] そのFATE/CEへのルートを計画できませんでした（経路マップ再構築後も失敗）。「経路マップを再構築」を押すかIllegal Modeを切り替えて、もう一度試してください。",
+      "path_routing_failed": "[BOCCHI] そのFATE/CEへのルートを計画できませんでした（経路マップ再構築後も失敗）。「経路マップを再構築」を押すか不正モードを切り替えて、もう一度試してください。",
       "pot_chest_farm": "マジックポット宝箱回収",
       "chests_remaining": "残り宝箱数",
       "time_idle": "待機時間"

@@ -21,8 +21,8 @@ public static class HuntDistances
     public const float SamePadRecheckRadiusSq = SamePadRecheckRadius * SamePadRecheckRadius;
 
     /// <summary>
-    ///     Empty-pad trust / committed approach. Treasure hunt does not skip empties at this range —
-    ///     silvers may not have streamed yet.
+    ///     Carrot Hunt: trust an empty pad this close without a nearby live carrot.
+    ///     Treasure Hunt empty skips use <c>TreasureConfig.EmptyPadTrustDistance</c>.
     /// </summary>
     public const float EmptyPadSkipRadius = 100f;
 
@@ -39,9 +39,8 @@ public static class HuntDistances
     public const float SameFloorVerticalTolerance = 12f;
 
     /// <summary>
-    /// After Sight, only trim empties this close — not the full skip radius —
-    /// so a dense cluster is not wiped while standing in the middle of it.
-    /// Treasure hunt overrides via TreasureConfig.EmptyPadTrustDistance.
+    ///     Carrot Hunt: trust empty farther out when another live carrot proves the region
+    ///     has streamed. Treasure Hunt uses <c>EmptyPadTrustDistance</c> instead.
     /// </summary>
     public const float EmptyPadRegionTrustRadius = LayoutProximityRadius;
 

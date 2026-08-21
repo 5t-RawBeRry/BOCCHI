@@ -140,7 +140,7 @@
       "path_map": "경로 맵",
       "path_map_idle": "자동 모드를 켜면 로드됩니다",
       "path_map_loading": "불러오는 중…",
-      "path_map_building": "만드는 중 (끝날 때까지 Illegal Mode가 기다림)…",
+      "path_map_building": "만드는 중 (끝날 때까지 자동 모드가 기다림)…",
       "path_map_ready_cache": "준비됨 (저장됨)",
       "path_map_ready_shipped": "준비됨 (번들)",
       "path_map_ready_built": "준비됨 (방금 만듦)",
@@ -152,7 +152,7 @@
       "illegal_mode_off_left_zone": "[BOCCHI] 초승달 섬를 떠나 자동 모드 꺼짐",
       "pathfinding_refreshed": "[BOCCHI] 경로를 다시 짰습니다",
       "pathfinding_refreshed_no_goal": "[BOCCHI] 경로를 지웠습니다 (지금 갈 곳이 없음)",
-      "path_routing_failed": "[BOCCHI] 해당 FATE/CE로 가는 경로를 짤 수 없습니다(경로 맵 재구성 후에도 실패). 「경로 맵 다시 만들기」를 누르거나 Illegal Mode를 전환한 뒤 다시 시도하세요.",
+      "path_routing_failed": "[BOCCHI] 해당 FATE/CE로 가는 경로를 짤 수 없습니다(경로 맵 재구성 후에도 실패). 「경로 맵 다시 만들기」를 누르거나 자동 모드를 전환한 뒤 다시 시도하세요.",
       "pot_chest_farm": "항아리 상자 파밍",
       "chests_remaining": "남은 상자",
       "time_idle": "대기 시간"

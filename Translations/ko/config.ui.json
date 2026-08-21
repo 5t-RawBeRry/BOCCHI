@@ -54,8 +54,8 @@
       "tooltip": "메인 창 상태 칩 아래에 버프 적용/중지 버튼을 표시합니다."
     },
     "show_automation_section": {
-      "label": "불법 모드 섹션 표시",
-      "tooltip": "메인 창에 불법 모드 조작을 표시합니다."
+      "label": "자동 모드 섹션 표시",
+      "tooltip": "메인 창에 자동 모드 조작을 표시합니다."
     },
     "show_completionist_section": {
       "label": "컬렉터 섹션 표시",
