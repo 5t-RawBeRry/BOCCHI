@@ -120,24 +120,22 @@ public class CriticalEncounter(
     }
 
     /// <summary>
-    ///     LGB MapRange centres farther than this from authored staging are treated as a bad match
-    ///     (wrong volume) — keep staging as the registration origin instead.
+    ///     Reject LGB centres this far from authored staging (wrong volume).
     /// </summary>
     public const float MaxRegistrationCenterSkew = 100f;
 
     /// <summary>
-    ///     Unpadded LGB radii above this are rejected (Eternal Watch reported ~560y and pulled
-    ///     approach / Waiting onto the Lost Citadel wall while the centre looked fine).
+    ///     Reject unpadded LGB radii above this (e.g. Eternal Watch ~560y).
     /// </summary>
     public const float MaxRegistrationRadius = 80f;
 
     /// <summary>
-    ///     Unpadded registration size when the LGB MapRange centre or size is rejected.
+    ///     Fallback unpadded radius when LGB centre or size is rejected.
     /// </summary>
     public const float FallbackRegistrationRadius = 40f;
 
     /// <summary>
-    ///     Pick a usable wait centre + unpadded radius from live LGB vs authored staging.
+    ///     Choose wait centre + unpadded radius from live LGB vs authored staging.
     /// </summary>
     public static void SanitizeRegistration(
         Vector3 authoredStaging,
@@ -177,8 +175,7 @@ public class CriticalEncounter(
             return;
         }
 
-        // Never move Position off authored staging. Reject far centres and absurd radii — a ~560y
-        // MapRange centred near Eternal Watch staging still covered Lost Citadel for wait / approach.
+        // Keep authored staging as Position; sanitize LGB wait centre / radius.
         SanitizeRegistration(fallbackPosition, lgb, combatRadius, out Vector3 waitAt, out float sizeOk, out _);
         RegistrationCenter = waitAt;
         Radius = NavigationConstants.CriticalEncounterPaddedRadius(sizeOk, shape);

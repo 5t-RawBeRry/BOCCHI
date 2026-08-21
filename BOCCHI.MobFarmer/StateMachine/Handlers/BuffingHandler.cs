@@ -88,7 +88,7 @@ public class BuffingHandler
             }
         }
 
-        // Late in buffing so short Fleetfooted covers the start of the pull, not job-swap idle.
+        // Counterstance last so Fleetfooted covers pull start, not buff idle.
         if (!counterstanceDone)
         {
             FarmerPhase? stance = TryCounterstance();
@@ -146,12 +146,11 @@ public class BuffingHandler
 
     private FarmerPhase? TryGeomancerBuffs()
     {
+        // Respite shares a short CD with Quickstep — wait below; do not gate on current Recast here.
         bool wantBell = config.ApplyBattleBell && BattleBell.GetRecastTime() <= config.MaximumBattleBellWaitTime;
         bool wantRespite = config.ApplyRingingRespite
                            && supportJobs.Create(SupportJobId.PhantomGeomancer).Level
                            >= PhantomActions.RingingRespiteUnlock;
-        // Do not gate wantRespite on current Recast — Quickstep puts Respite on a short shared CD;
-        // we wait that out below (or skip if longer than Max wait).
 
         if (!wantBell)
         {
@@ -197,8 +196,7 @@ public class BuffingHandler
         if (!respiteDone)
         {
             float respiteCd = RingingRespite.GetRecastTime();
-            // Quickstep shares a CD group with Respite — after Dancer, Recast is often ~3–5s.
-            // Wait it out when within Max wait; only skip when the remaining CD is longer than that.
+            // Shared CD with Quickstep: wait within Max wait, skip if longer.
             if (respiteCd > config.MaximumBattleBellWaitTime)
             {
                 respiteDone = true;

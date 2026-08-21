@@ -119,9 +119,7 @@ public class InCriticalEncounterHandler
 
     public override void Exit(AutomatorState next)
     {
-        // Dead always outscores In CE. Forgetting commitment here made GoalValidator treat the
-        // Battle CE as "still pathing" and drop it before Accept Raise (BossMod already
-        // force-disables AR on death; Enter re-enables after revive).
+        // Keep CE commitment across Dead so raise does not drop the goal as "still pathing".
         if (next == AutomatorState.Dead)
         {
             autoRotation.DisableAi();

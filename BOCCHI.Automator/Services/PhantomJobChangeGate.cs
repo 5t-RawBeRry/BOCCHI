@@ -7,8 +7,7 @@ namespace BOCCHI.Automator.Services;
 public static class PhantomJobChangeGate
 {
     /// <summary>
-    ///     After <see cref="ConditionFlag.InCombat"/> clears, the game still rejects
-    ///     ChangeSupportJob for a short window ("unable to change phantom jobs at this time").
+    ///     Brief settle after combat clears before ChangeSupportJob is accepted.
     /// </summary>
     private static readonly TimeSpan PostCombatSettle = TimeSpan.FromSeconds(4);
 
@@ -16,9 +15,7 @@ public static class PhantomJobChangeGate
 
     private static DateTimeOffset combatClearedUtc = DateTimeOffset.MinValue;
 
-    /// <summary>
-    ///     True when ChangeSupportJob is likely to fail with "unable to change phantom jobs".
-    /// </summary>
+    /// <summary>True when a phantom job swap is likely to be rejected.</summary>
     public static bool IsBlocked(ICondition conditions)
     {
         bool inCombat = conditions[ConditionFlag.InCombat];

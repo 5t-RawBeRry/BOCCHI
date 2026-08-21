@@ -252,7 +252,7 @@ public sealed class PotCycleSyncService
         }
 
         long spawnUnix = snap.AnchorSpawnAt.ToUnixTimeSeconds();
-        // Pot/spawn only — fingerprint FATE churn must not re-upload the same timer (Worker quota).
+        // Skip re-upload when only the FATE fingerprint rotated.
         if (lastUploadedTerritory == territory
             && lastUploadedPotFateId == snap.AnchorPotFateId
             && lastUploadedSpawnUnix == spawnUnix)

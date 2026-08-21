@@ -54,9 +54,7 @@ public class PathCalculator
 
         ZoneGraph graph = await zone.GetGraph();
 
-        // The traverser routes to a Node, not a graph member — the live-FATE path already feeds it a
-        // synthetic node — so an arbitrary point needs no graph entry of its own. Return / aethernet
-        // calculators estimate inbound shards by distance when there are no wired edges (pot chests).
+        // Goal is a free Node (like live FATE); Return / aethernet estimate when there are no wired edges.
         Node goalNode = new()
         {
             Type = NodeType.PotChest,
@@ -67,8 +65,7 @@ public class PathCalculator
         traverser.AddCalculator(new WalkTeleportWalkCalculator());
         traverser.AddCalculator(new DirectWalkCalculator());
 
-        // Return costs a cast but lands at camp with every aethernet shard in reach, which beats
-        // walking across the zone. It does not drop the pot, so a chest search can use it too.
+        // Prefer Return over long walks; does not drop the pot.
         if (distance > NavigationConstants.MaxDirectWalkDistance)
         {
             traverser.AddCalculator(new ReturnTeleportWalkCalculator());
@@ -165,8 +162,7 @@ public class PathCalculator
                 zone,
                 ceGoalForRadius.id.Value,
                 area.IsSquare);
-            // Travel toward authored staging; sanitize LGB wait centre + radius (Eternal Watch had a
-            // ~560y MapRange near staging that pulled approach onto Lost Citadel).
+            // Authored staging for travel; sanitize LGB wait centre / radius.
             pathGoal = goalNode;
             CriticalEncounter.SanitizeRegistration(
                 goalNode.Position,

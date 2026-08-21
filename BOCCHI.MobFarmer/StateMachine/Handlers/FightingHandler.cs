@@ -58,8 +58,7 @@ public class FightingHandler
                 return null;
             }
 
-            // Pulling uses BOCCHI auto-target; once Fighting + combat AI is on, leave
-            // targeting to BossMod AutoTarget / Wrath / RSR.
+            // Auto-target during pull only; with combat AI on, leave targeting to the AI.
             if (!useAi
                 && config.ShouldHandleTargeting
                 && inCombat.Count > 0
