@@ -41,7 +41,7 @@
     },
     "spots": {
       "label": "Farm spots",
-      "tooltip": "Named gather points. Start uses the highest-priority enabled spot (nearest on a tie). Empty = use where you press Start. Stack / stop is for caves and SW Tower.",
+      "tooltip": "Named farm points. Start uses the highest-priority enabled spot (nearest on a tie). Empty list = start where you stand. Optional stack/stop is for caves and SW Tower.",
       "empty": "No spots — Start uses where you are standing.",
       "add": "Add spot here",
       "remove": "Remove",
@@ -81,7 +81,7 @@
     },
     "apply_ringing_respite": {
       "label": "Use Ringing Respite",
-      "tooltip": "With Battle Bell (or on its own): Geomancer III heals you when you take hits. Needs Geomancer 3."
+      "tooltip": "With Battle Bell (or on its own): Geomancer III heals you when you take hits. Needs Geomancer III."
     },
     "apply_quickstep": {
       "label": "Use Quickstep",
@@ -113,19 +113,19 @@
     },
     "use_provoke": {
       "label": "Use Provoke while pulling",
-      "tooltip": "Tanks also fire Provoke on the current target during Gathering."
+      "tooltip": "Tanks also fire Provoke on the current target while Pulling enemies."
     },
     "use_gap_closer": {
       "label": "Use gap closer while pulling",
-      "tooltip": "Tanks also use Intervene / Onslaught / Shadowstride / Trajectory during Gathering."
+      "tooltip": "Tanks also use Intervene / Onslaught / Shadowstride / Trajectory while Pulling enemies."
     },
     "yield_to_pots": {
       "label": "Stop for Magic Pots",
-      "tooltip": "Pause farming for a live or soon-to-spawn Magic Pot (and pot chests if that Illegal Mode option is on). Timing is on the Pots page. Resumes the farm after."
+      "tooltip": "Pause farming for a live or soon-to-spawn Magic Pot (and pot chests if that General option is on). Timing is under Pot timing. Resumes afterward."
     },
     "yield_to_treasure_hunt": {
       "label": "Treasure Hunt on a timer",
-      "tooltip": "Every N minutes, pause farming and run Treasure Hunt if fill meets the bronze/silver % on the Treasure page. Needs a recent Treasure Sight reading."
+      "tooltip": "Every N minutes, pause farming and run Treasure Hunt if fill meets the bronze/silver % on Treasure Hunter. Needs a recent Treasure Sight reading."
     },
     "treasure_hunt_interval_minutes": {
       "label": "Hunt every (minutes)",

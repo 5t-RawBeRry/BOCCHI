@@ -45,7 +45,8 @@
       "in_critical_encounter": "비상 조우 중",
       "returning_to_job": "원래 잡으로 바꾸는 중",
       "leveling_phantom_job": "서포트 잡 전환 중",
-      "farming_pot_chests": "항아리 상자 수집 중"
+      "farming_pot_chests": "항아리 상자 수집 중",
+      "triaging": "부활 중"
     },
     "farmer_phases": {
       "waiting": "대기",

@@ -25,8 +25,12 @@
       "tooltip": "Adds a percentage next to Active bronze / Active silver on the Treasure tab."
     },
     "return_to_base_camp_after_hunt": {
-      "label": "Return after hunt",
-      "tooltip": "Cast Return to base camp after Treasure Hunt finishes the last coffer, or after Carrot Hunt finishes its route."
+      "label": "Cast Return after hunt",
+      "tooltip": "After Treasure Hunt or Carrot Hunt finishes. Off while Loop Carrot Hunt is running between passes."
+    },
+    "loop_carrot_hunt": {
+      "label": "Loop Carrot Hunt",
+      "tooltip": "Carrot Hunt only. Skip empty pads; after each Fortune Carrot, check every pad again. If a full pass finds none, keep checking until Stop or you run out of carrots."
     },
     "play_sound_on_hunt_complete": {
       "label": "Play sound when Treasure Hunt finishes",
@@ -55,15 +59,15 @@
     },
     "hunt_min_bronze_percent": {
       "label": "Min bronze fill to auto-hunt (%)",
-      "tooltip": "Illegal Mode auto-hunt and Mob Farmer timed hunts need Treasure Sight first. Starts when bronze is at least this % of 30 (or silver meets its own %). Without Sight, Illegal Mode uses the built-in map and ignores this."
+      "tooltip": "With Treasure Sight: auto-hunts (Illegal Mode + Mob Farmer timer) start when bronze fill is at least this % of 30 — or when silver meets its own %. Without Sight, Illegal Mode uses the built-in map and ignores this."
     },
     "hunt_min_silver_percent": {
       "label": "Min silver fill to auto-hunt (%)",
-      "tooltip": "Illegal Mode auto-hunt and Mob Farmer timed hunts need Treasure Sight first. Starts when silver is at least this % of 8 (or bronze meets its own %). Without Sight, Illegal Mode uses the built-in map and ignores this."
+      "tooltip": "With Treasure Sight: auto-hunts start when silver fill is at least this % of 8 — or when bronze meets its own %. Without Sight, Illegal Mode uses the built-in map and ignores this."
     },
     "empty_pad_trust_distance": {
       "label": "Empty pad check distance",
-      "tooltip": "How close (yalms) to walk before treating a coffer pad as empty and moving on. Default 25. Lower walks closer (safer when chests load late); higher skips from farther away."
+      "tooltip": "How close (yalms) to walk before treating a coffer pad as empty and moving on. Default 25. Lower = walk closer (safer when coffers load late); higher = skip from farther away."
     },
     "skip_unsafe_treasure_windows": {
       "label": "Skip dangerous weather / Ashkin",
@@ -82,8 +86,8 @@
       "tooltip": "Gearset number that equips Ninja (as shown in the gearset list, starting at 1). 0 = do not swap — you must already be on Ninja."
     },
     "knowledge_hide_offset": {
-      "label": "Hide when Knowledge is this much higher",
-      "tooltip": "Hide when a nearby enemy's Knowledge is at least your actual Knowledge plus this (not South Horn sync). 0 = same or higher."
+      "label": "Hide vs enemies this many Knowledge above you",
+      "tooltip": "Hide when a nearby enemy's Knowledge is at least yours plus this. Higher = only stronger enemies. Negative = also weaker ones. Uses your real Knowledge, not the synced South Horn value. 0 = same Knowledge or higher."
     },
     "knowledge_threat_enter_distance": {
       "label": "Start Hide within (yalms)",

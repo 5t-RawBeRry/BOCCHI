@@ -40,7 +40,7 @@ public class AutoRotationController(
     public void PrepareForIllegalMode()
     {
         session.OverwriteBossModPresets = config.UpdateBossModPresetsAutomatically;
-        session.MovementSettings = BossModMovement.From(config, player.IsMelee());
+        session.MovementSettings = BossModMovement.From(config, player.IsMelee(), player.GetClassJob()?.RowId);
         if (!config.CombatAutorotation.UsesCombatAutomation() || !ValidatePluginsForConfig())
         {
             return;
@@ -83,7 +83,7 @@ public class AutoRotationController(
     public void Tick()
     {
         session.OverwriteBossModPresets = config.UpdateBossModPresetsAutomatically;
-        session.MovementSettings = BossModMovement.From(config, player.IsMelee());
+        session.MovementSettings = BossModMovement.From(config, player.IsMelee(), player.GetClassJob()?.RowId);
         SyncActivityCombat();
         session.Tick(CurrentPhantomJobId());
     }

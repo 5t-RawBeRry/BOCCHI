@@ -1,6 +1,6 @@
 {
   "label": "General",
-  "tooltip": "FATEs, Critical Encounters, pots, mounting, BOCCHI AI, Triage Mode, Return, and repair.",
+  "tooltip": "FATEs, Critical Encounters, pots, BOCCHI AI, Triage Mode, Return, and repair.",
   "sections": {
     "activities": "Activities",
     "combat": "Combat",
@@ -18,7 +18,7 @@
     },
     "prefer_pot_fates": {
       "label": "Prefer pot FATEs",
-      "tooltip": "Always do Magic Pot FATEs. When on, priority is pot → Critical Encounter → other FATEs. When off, it is Critical Encounter → pot → other FATEs. On the FATEs tab they stay checked and say “required” until you turn this off."
+      "tooltip": "Always do Magic Pot FATEs (priority: pot → CE → other FATEs). Off: CE → pot → other. On the FATEs page, pots stay checked as required until you turn this off."
     },
     "should_farm_pot_chests": {
       "label": "Farm pot chests after pot FATEs",
@@ -26,7 +26,7 @@
     },
     "should_preposition_to_pots": {
       "label": "Wait near pots before they spawn",
-      "tooltip": "Leave early and stand near where the next pot FATE should appear. Timing is under Pot timing. Needs \"Do FATEs\" on, and that pot FATE allowed under Allowed FATEs (or \"Prefer pot FATEs\" on)."
+      "tooltip": "Leave early and wait near the next pot spawn. Timing is under Pot timing. Needs Do FATEs, and that pot allowed (or Prefer pot FATEs)."
     },
     "should_do_critical_encounters": {
       "label": "Do Critical Encounters",
@@ -34,7 +34,7 @@
     },
     "leave_fate_travel_for_ce_seconds": {
       "label": "Leave FATE travel for a CE when (seconds left)",
-      "tooltip": "While walking to a FATE, only switch to a Critical Encounter when its registration has this many seconds or fewer left. 0 = switch as soon as a CE is up. Once you are in the FATE or already fighting it, it still finishes first."
+      "tooltip": "While walking to a FATE, switch to a CE only when its registration has this many seconds or fewer left. Higher = leave the FATE trip sooner. 0 = switch as soon as a CE is up. Already in or fighting the FATE: finish it first."
     },
     "combat_autorotation": {
       "label": "Combat autorotation",
@@ -42,9 +42,9 @@
     },
     "update_boss_mod_presets_automatically": {
       "label": "Update presets automatically",
-      "tooltip": "When on, Illegal Mode rebuilds BOCCHI AI FATE / BOCCHI AI CE (or the AR pair) with the distance, overdodge, and delay settings below when it starts and when you change job or melee/ranged. When off, existing presets are kept and only created if missing.",
+      "tooltip": "When on, Illegal Mode rebuilds the BOCCHI AI FATE/CE presets (or the matching BossMod autorotation pair) from the distance, overdodge, and delay settings below on start and when you change job or melee/ranged. When off, existing presets are kept and only created if missing.",
       "button": "Update presets",
-      "button_tooltip": "Rebuild BOCCHI AI FATE and BOCCHI AI CE (or the AR pair) with the distance, overdodge, and delay settings below. Other edits you made in BossMod are overwritten."
+      "button_tooltip": "Rebuild the BOCCHI AI FATE and CE presets (or the matching BossMod autorotation pair) from the settings below. Overwrites other BossMod edits on those presets."
     },
     "boss_mod_movement": {
       "max_distance_by_role": {
@@ -53,19 +53,19 @@
       },
       "melee_on_hitbox": {
         "label": "Melee stay on hitbox",
-        "tooltip": "Melee jobs stand on the edge of the target hitbox. Turn off to set a distance in yalms instead."
+        "tooltip": "Melee jobs stand on the edge of the target hitbox. Turn off to set a distance in yalms instead. Sage always uses 5y and Dancer 10y when distance-by-role is on."
       },
       "max_distance": {
         "label": "Max distance to target",
-        "tooltip": "How far BOCCHI AI tries to stay from the target, in yalms past the hitbox."
+        "tooltip": "How far BOCCHI AI may stay from the target (yalms)."
       },
       "max_distance_melee": {
         "label": "Max distance to target | Melee",
-        "tooltip": "Melee distance in yalms past the hitbox. Ignored while Melee stay on hitbox is on."
+        "tooltip": "Melee max distance to the target (yalms). Ignored while Melee stay on hitbox is on."
       },
       "max_distance_ranged": {
         "label": "Max distance to target | Ranged",
-        "tooltip": "Ranged, caster, and healer distance in yalms past the hitbox."
+        "tooltip": "Ranged, caster, and healer max distance to the target (yalms)."
       },
       "overdodge": {
         "label": "Overdodge",
@@ -126,7 +126,7 @@
     },
     "max_remote_idle_time_seconds": {
       "label": "Max wait before Return (seconds)",
-      "tooltip": "After a FATE or CE, wait a random time between 2 seconds and this before Return. Skipped when a Treasure Sight survey is queued — that Returns straight away so Sight lands before the next activity."
+      "tooltip": "After a FATE or CE, wait a random time from 2s up to this before Return. If Treasure Sight is queued, Return immediately so Sight can land."
     },
     "max_base_teleport_delay_seconds": {
       "label": "Max wait before leaving camp (seconds)",
@@ -138,7 +138,7 @@
     },
     "enable_automatic_treasure_hunt_during_illegal_mode": {
       "label": "Auto treasure hunt in Illegal Mode",
-      "tooltip": "After a FATE or CE, return to camp and survey with Treasure Sight if you know it. Starts a hunt only when fill meets the bronze/silver % on the Treasure page. Without Sight, uses the built-in map (thresholds ignored)."
+      "tooltip": "After a FATE or CE, return to camp and run Treasure Sight if known. Starts a hunt only when fill meets the bronze/silver % on Treasure Hunter. Without Sight, uses the built-in map (those % ignored)."
     }
   }
 }

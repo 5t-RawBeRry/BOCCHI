@@ -7,7 +7,7 @@
   "fields": {
     "disabled_critical_encounter_ids": {
       "label": "Allowed Critical Encounters",
-      "tooltip": "Uncheck a Critical Encounter to skip it.",
+      "tooltip": "Uncheck a Critical Encounter to skip it. Check to allow it.",
       "empty": "No Critical Encounters listed for this zone."
     }
   }

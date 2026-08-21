@@ -45,7 +45,8 @@
       "in_critical_encounter": "In CE",
       "returning_to_job": "Switching back to job",
       "leveling_phantom_job": "Switching phantom job",
-      "farming_pot_chests": "Farming pot chests"
+      "farming_pot_chests": "Farming pot chests",
+      "triaging": "Raising players"
     },
     "farmer_phases": {
       "waiting": "Waiting",
@@ -101,7 +102,7 @@
     "jobs_header": "Phantom jobs",
     "outside_zone": "Enter South Horn or North Horn to see that zone’s field-note checklist.",
     "survey_tooltip": "Click to flag the map. Ctrl+click to travel there.",
-    "survey_tooltip_flag_only": "Click to place a map flag. Ctrl+click travel needs a ready navmesh.",
+    "survey_tooltip_flag_only": "Click to place a map flag. Ctrl+click travel needs the travel plugin ready for this zone.",
     "sources": {
       "persistent_pots": "Persistent / Pleading Pots",
       "black_regiment": "The Black Regiment",
@@ -216,7 +217,7 @@
   "treasure": {
     "title": "Treasure Hunter",
     "requires_vnav": "Needs the vnavmesh plugin.",
-    "waiting_navmesh": "Waiting for the map to be ready…",
+    "waiting_navmesh": "Waiting for the travel plugin to finish loading this zone…",
     "start_hunt": "Start Treasure Hunt",
     "start_hunt_tooltip": "Route bronze and silver coffers from the map, open them, and skip empty pads.",
     "pause_hunt": "Pause",
@@ -238,7 +239,7 @@
     "managed_by_mob_farmer": "Hunt is controlled by Mob Farmer (runs on its timer).",
     "managed_by_carrot": "Carrot Hunt is running — stop it below before starting Treasure Hunt.",
     "managed_by_treasure": "Treasure Hunt is running — stop it above before starting Carrot Hunt.",
-    "distance_to_chest": "Distance to chest",
+    "distance_to_chest": "Distance to coffer",
     "nearby_title": "Nearby treasures",
     "none_nearby": "No treasures nearby.",
     "active_bronze": "Active bronze",

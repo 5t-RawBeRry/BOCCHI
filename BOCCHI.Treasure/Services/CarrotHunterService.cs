@@ -267,6 +267,11 @@ public sealed class CarrotHunterService
             vnav.Stop();
         }
 
+        if (TryRestartLoop())
+        {
+            return;
+        }
+
         if (treasureConfig.ReturnToBaseCampAfterHunt && !zones.GetZone().IsInBasecamp())
         {
             log.Information("Carrot hunt: route finished — returning to base camp");
@@ -279,6 +284,29 @@ public sealed class CarrotHunterService
 
         BocchiChat.Print(chat, uiConfig, FinishedRouteMessage);
         Teardown();
+    }
+
+    /// <summary>
+    ///     Loop mode: a full empty pass means nothing left this wave — clear skips and
+    ///     check every pad again for respawns. Stops when Fortune Carrots run out.
+    /// </summary>
+    private bool TryRestartLoop()
+    {
+        if (!treasureConfig.LoopCarrotHunt)
+        {
+            return false;
+        }
+
+        if (!fortuneCarrot.HasAny())
+        {
+            BocchiChat.PrintError(chat, uiConfig, OutOfCarrotsMessage);
+            return false;
+        }
+
+        finishedAuthoredIds.Clear();
+        log.Information("Carrot hunt: full empty pass — rechecking all pads for respawns");
+        RecalculateAndAdvance();
+        return Phase != CarrotHuntPhase.Idle;
     }
 
     private void BeginRouteToCurrentAuthored()
@@ -1424,8 +1452,17 @@ public sealed class CarrotHunterService
     {
         if (currentAuthored is { } authored)
         {
-            finishedAuthoredIds.Add(authored.Id);
             log.Debug("Carrot hunt: finished authored {Id} near {Pos:F0}", authored.Id, currentTargetPosition);
+            if (treasureConfig.LoopCarrotHunt)
+            {
+                // Finding a carrot means others may have respawned — every pad must be checked again.
+                finishedAuthoredIds.Clear();
+                log.Debug("Carrot hunt: loop — cleared empty skips after using a carrot");
+            }
+            else
+            {
+                finishedAuthoredIds.Add(authored.Id);
+            }
         }
 
         vnav.Stop();

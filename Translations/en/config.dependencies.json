@@ -11,7 +11,7 @@
       "using": "Using {0}",
       "in_use": "in use",
       "ready": "Ready",
-      "map_loading": "Map still loading",
+      "map_loading": "Map still loading — wait until Status shows Ready",
       "not_working": "Not working",
       "not_enabled": "Not enabled",
       "not_installed": "Not installed"

@@ -45,7 +45,8 @@
       "in_critical_encounter": "CE中",
       "returning_to_job": "ジョブに戻しています",
       "leveling_phantom_job": "サポートジョブ切替中",
-      "farming_pot_chests": "マジックポット宝箱を回収中"
+      "farming_pot_chests": "マジックポット宝箱を回収中",
+      "triaging": "蘇生中"
     },
     "farmer_phases": {
       "waiting": "待機中",

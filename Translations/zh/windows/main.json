@@ -45,7 +45,8 @@
       "in_critical_encounter": "紧急遭遇战中",
       "returning_to_job": "正在切回职业",
       "leveling_phantom_job": "正在切换辅助职业",
-      "farming_pot_chests": "正在收取魔法罐宝箱"
+      "farming_pot_chests": "正在收取魔法罐宝箱",
+      "triaging": "正在救人"
     },
     "farmer_phases": {
       "waiting": "等待中",

@@ -132,7 +132,7 @@ public sealed class BossModPresetOptionsRenderer(ICombatRotationSession session,
 
         ImGui.PopItemWidth();
 
-        session.MovementSettings = BossModMovement.From(config, player.IsMelee());
+        session.MovementSettings = BossModMovement.From(config, player.IsMelee(), player.GetClassJob()?.RowId);
         if (recreate)
         {
             session.TryForceRecreateBossModPresets(PresetKind(config.CombatAutorotation));
