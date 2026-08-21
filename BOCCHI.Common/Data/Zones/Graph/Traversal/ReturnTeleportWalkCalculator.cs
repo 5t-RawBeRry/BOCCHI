@@ -42,23 +42,20 @@ public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
             return Task.FromResult<TraversalCandidate?>(null);
         }
 
-        Node? inbound = graph.GetUsableInboundTeleport(goal);
-        if (inbound?.Metadata is not TeleportNodeMetadata meta)
+        IReadOnlyList<(Node Teleport, float Cost)> inbounds = graph.GetUsableInboundTeleports(goal);
+        if (inbounds.Count == 0 || inbounds[0].Teleport.Metadata is not TeleportNodeMetadata meta)
         {
             return Task.FromResult<TraversalCandidate?>(null);
         }
 
-        Edge? walkToGoalFromInbound = graph.GetEdge(inbound, goal);
-        if (walkToGoalFromInbound == null)
-        {
-            return Task.FromResult<TraversalCandidate?>(null);
-        }
+        Node inbound = inbounds[0].Teleport;
+        float walkToGoalFromInbound = inbounds[0].Cost;
 
         // Return already lands at base camp — no aethernet hop.
         if (inbound.Type == NodeType.BaseCampAetheryte)
         {
             return Task.FromResult<TraversalCandidate?>(new(
-                NavigationConstants.ReturnCost + toBaseCampNodeEdge.Cost + walkToGoalFromInbound.Cost,
+                NavigationConstants.ReturnCost + toBaseCampNodeEdge.Cost + walkToGoalFromInbound,
                 [
                     PathStep.Return(),
                     // Destination is already offset via GetEventPosition — don't also give vnav a 20y arrival.
@@ -69,7 +66,7 @@ public class ReturnTeleportWalkCalculator : IGraphCandidateCalculator
         }
 
         return Task.FromResult<TraversalCandidate?>(new(
-            NavigationConstants.ReturnCost + toBaseCampNodeEdge.Cost + NavigationConstants.AethernetHopCost + walkToGoalFromInbound.Cost,
+            NavigationConstants.ReturnCost + toBaseCampNodeEdge.Cost + NavigationConstants.AethernetHopCost + walkToGoalFromInbound,
             [
                 PathStep.Return(),
                 PathStep.Teleport(meta.AetheryteId),

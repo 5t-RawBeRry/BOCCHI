@@ -278,6 +278,12 @@ public sealed class PotChestFarmMemory
     /// </summary>
     public bool OnRerollPool { get; set; }
 
+    /// <summary>
+    ///     True after opening at least one coffer this farm. Later search stays on second-chance
+    ///     (reroll) pads only — never back to the pot FATE's own spots.
+    /// </summary>
+    public bool HasOpenedChest { get; set; }
+
     /// <summary>When we started waiting for the current (peek) blind chest to spawn.</summary>
     public DateTimeOffset WaitingForSpawnSince { get; set; } = DateTimeOffset.MinValue;
 

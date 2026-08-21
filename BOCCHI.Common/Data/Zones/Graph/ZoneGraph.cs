@@ -234,8 +234,27 @@ public class ZoneGraph
         GetUsableInboundTeleports(goal).FirstOrDefault().Teleport;
 
     /// <summary>Routing view — only shards the player has unlocked.</summary>
-    public IReadOnlyList<(Node Teleport, float Cost)> GetUsableInboundTeleports(Node goal) =>
-        GetInboundTeleports(goal).Where(entry => IsTeleportUsable(entry.Teleport)).ToList();
+    public IReadOnlyList<(Node Teleport, float Cost)> GetUsableInboundTeleports(Node goal)
+    {
+        IReadOnlyList<(Node Teleport, float Cost)> wired = GetInboundTeleports(goal)
+            .Where(entry => IsTeleportUsable(entry.Teleport))
+            .ToList();
+        if (wired.Count > 0)
+        {
+            return wired;
+        }
+
+        // Pot chest search (and other live destinations) feed a synthetic Node with no graph
+        // edges — estimate inbound cost by 2D so Return / aethernet can still beat a cross-map walk.
+        return EstimateUsableInboundTeleports(goal.Position);
+    }
+
+    /// <summary>Nearest unlocked shards to an arbitrary point, ordered by 2D walk estimate.</summary>
+    public IReadOnlyList<(Node Teleport, float Cost)> EstimateUsableInboundTeleports(Vector3 goalPosition) =>
+        GetUsableTeleportNodes()
+            .Select(tp => (Teleport: tp, Cost: tp.Position.Distance2D(goalPosition)))
+            .OrderBy(entry => entry.Cost)
+            .ToList();
 
     /// <summary>All teleport→activity walk edges, preferred shard first, then by walk cost.</summary>
     public IReadOnlyList<(Node Teleport, float Cost)> GetInboundTeleports(Node goal)

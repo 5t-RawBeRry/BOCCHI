@@ -16,17 +16,14 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
 
     public async Task<TraversalCandidate?> CalculateAsync(ZoneGraph graph, Vector3 start, Node goal, IPathfinder pathfinder)
     {
-        Node? inbound = graph.GetUsableInboundTeleport(goal);
-        if (inbound?.Metadata is not TeleportNodeMetadata inboundMeta)
+        IReadOnlyList<(Node Teleport, float Cost)> inbounds = graph.GetUsableInboundTeleports(goal);
+        if (inbounds.Count == 0 || inbounds[0].Teleport.Metadata is not TeleportNodeMetadata inboundMeta)
         {
             return null;
         }
 
-        Edge? walkToGoalFromInbound = graph.GetEdge(inbound, goal);
-        if (walkToGoalFromInbound == null)
-        {
-            return null;
-        }
+        Node inbound = inbounds[0].Teleport;
+        float walkToGoalFromInbound = inbounds[0].Cost;
 
         (Node Departure, float WalkCost)? resolved = await ResolveDeparture(graph, start, pathfinder);
         if (resolved == null)
@@ -45,7 +42,7 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
             float direct = start.Distance2D(goal.Position);
             if (direct <= NavigationConstants.MaxDirectWalkDistance)
             {
-                return BuildWalkOnly(start, goal, walkToDepartureCost + walkToGoalFromInbound.Cost);
+                return BuildWalkOnly(start, goal, walkToDepartureCost + walkToGoalFromInbound);
             }
 
             if (TryBuildTeleportViaAlternateInbound(
@@ -64,7 +61,7 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
                 start,
                 goal,
                 departure,
-                walkToDepartureCost + walkToGoalFromInbound.Cost);
+                walkToDepartureCost + walkToGoalFromInbound);
         }
 
         // Field → base camp via shard loses to Return; leave to ReturnTeleportWalk.
@@ -74,7 +71,7 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
         }
 
         return new(
-            walkToDepartureCost + NavigationConstants.AethernetHopCost + walkToGoalFromInbound.Cost,
+            walkToDepartureCost + NavigationConstants.AethernetHopCost + walkToGoalFromInbound,
             BuildTeleportSteps(departure, inboundMeta.AetheryteId, goal, inbound, start));
     }
 

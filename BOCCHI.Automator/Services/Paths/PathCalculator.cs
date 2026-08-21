@@ -55,7 +55,8 @@ public class PathCalculator
         ZoneGraph graph = await zone.GetGraph();
 
         // The traverser routes to a Node, not a graph member — the live-FATE path already feeds it a
-        // synthetic node — so an arbitrary point needs no graph entry of its own.
+        // synthetic node — so an arbitrary point needs no graph entry of its own. Return / aethernet
+        // calculators estimate inbound shards by distance when there are no wired edges (pot chests).
         Node goalNode = new()
         {
             Type = NodeType.PotChest,

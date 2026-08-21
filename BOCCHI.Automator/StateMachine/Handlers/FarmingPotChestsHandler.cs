@@ -296,6 +296,7 @@ public class FarmingPotChestsHandler
             if (evt.Kind == PotTreasureHintKind.CofferReveal)
             {
                 farm.HoldingAfterBuffLoss = true;
+                farm.HasOpenedChest = true;
             }
         }
 
@@ -326,6 +327,7 @@ public class FarmingPotChestsHandler
         }
 
         farm.HoldingAfterBuffLoss = true;
+        farm.HasOpenedChest = true;
 
         if (DismountAssist.TryDismount(conditions, ReportDismount))
         {
@@ -395,7 +397,7 @@ public class FarmingPotChestsHandler
 
             if (evt.Kind == PotTreasureHintKind.Hint)
             {
-                farm.SeedPool(PotTreasureFilter.BuildPool(zones.GetZone(), farm.FateId.Value));
+                farm.SeedPool(BuildActivePool(farm));
                 if (farm.Pool.Count == 0)
                 {
                     logger.Warning("Pot treasure: no authored chest spots for this pot — blind fallback");
@@ -743,6 +745,7 @@ public class FarmingPotChestsHandler
     private void AdvancePastOpenedReveal(PotChestFarmMemory farm)
     {
         pathfinder.Stop();
+        farm.HasOpenedChest = true;
         if (farm.Candidates.Count > 0)
         {
             farm.Candidates.Dequeue();
@@ -783,6 +786,27 @@ public class FarmingPotChestsHandler
             farm.Phase = PotChestFarmPhase.SearchingCandidates;
             farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
             farm.SettledAtUtc = DateTimeOffset.MinValue;
+            return;
+        }
+
+        // Already looted one coffer — only second-chance pads from here on.
+        if (farm.HasOpenedChest)
+        {
+            if (!EnsureSecondChancePool(farm))
+            {
+                return;
+            }
+
+            if (farm.Pool.Count > 0 && farm.HintsApplied < MaxHintReadings && HasTreasureBuff())
+            {
+                logger.Debug(
+                    "Pot treasure: second-chance set spent — re-reading from {Count} reroll pad(s)",
+                    farm.Pool.Count);
+                farm.NarrowTo(farm.Pool);
+                return;
+            }
+
+            FallBackToBlind(farm);
             return;
         }
 
@@ -1186,6 +1210,7 @@ public class FarmingPotChestsHandler
         }
 
         farm.OnRerollPool = true;
+        farm.HasOpenedChest = true;
         farm.SeedPool(reroll);
 
         // Seed with all of them; the next compass reading narrows within the reroll set.
@@ -1198,6 +1223,48 @@ public class FarmingPotChestsHandler
             reroll.Count);
     }
 
+    /// <summary>
+    ///     After the first coffer, search only second-chance pads. Ends the farm when rerolls are
+    ///     disabled or missing — walking the pot FATE pads again cannot find that chest.
+    /// </summary>
+    private bool EnsureSecondChancePool(PotChestFarmMemory farm)
+    {
+        if (farm.OnRerollPool && farm.Pool.Count > 0)
+        {
+            return true;
+        }
+
+        if (!ShouldIncludeRerolls)
+        {
+            logger.Info("Pot treasure: coffer opened and second-chance farming is off — ending farm");
+            FinishFarm();
+            return false;
+        }
+
+        List<PotTreasureCandidate> reroll = PotTreasureFilter.BuildRerollPool(zones.GetZone());
+        if (reroll.Count == 0)
+        {
+            logger.Warning("Pot treasure: coffer opened but this zone has no authored reroll pads — ending farm");
+            FinishFarm();
+            return false;
+        }
+
+        farm.OnRerollPool = true;
+        farm.SeedPool(reroll);
+        ResetApproachWatch();
+        ClearTravelPlan();
+        logger.Info(
+            "Pot treasure: first coffer opened — locking search to {Count} second-chance pad(s)",
+            reroll.Count);
+        return true;
+    }
+
+    /// <summary>Authored spots for the current search: pot FATE pads, or rerolls after a coffer.</summary>
+    private List<PotTreasureCandidate> BuildActivePool(PotChestFarmMemory farm) =>
+        farm.HasOpenedChest || farm.OnRerollPool
+            ? PotTreasureFilter.BuildRerollPool(zones.GetZone())
+            : PotTreasureFilter.BuildPool(zones.GetZone(), farm.FateId.Value);
+
     /// <summary>Same opt-in the blind sweep uses, so pool and sweep cover the same pads.</summary>
     private bool ShouldIncludeRerolls =>
         context.IsPotsAndTreasure || potsConfig.ShouldFarmRerollPotChests;
@@ -1207,15 +1274,40 @@ public class FarmingPotChestsHandler
         hints.Disarm();
         IZone zone = zones.GetZone();
         List<Vector3> positions = [];
-        if (zone.GetPotChestData().TryGetValue(farm.FateId.Value, out List<PotChestData>? chests))
-        {
-            positions.AddRange(chests.Select(c => c.Position));
-        }
 
-        // Include reroll pads on the same opt-in as the blind-start path.
-        if (ShouldIncludeRerolls)
+        // After opening one coffer, only second-chance pads can host the next — never the pot
+        // FATE spots again (those were the first-chest set).
+        if (farm.HasOpenedChest || farm.OnRerollPool)
         {
+            if (!ShouldIncludeRerolls)
+            {
+                logger.Info("Pot treasure: second-chance farming is off after a coffer — ending farm");
+                FinishFarm();
+                return;
+            }
+
             positions.AddRange(zone.GetRerollPotChestData().Select(c => c.Position));
+            if (positions.Count == 0)
+            {
+                logger.Warning("Pot treasure: no second-chance pads left to sweep — ending farm");
+                FinishFarm();
+                return;
+            }
+
+            farm.OnRerollPool = true;
+        }
+        else
+        {
+            if (zone.GetPotChestData().TryGetValue(farm.FateId.Value, out List<PotChestData>? chests))
+            {
+                positions.AddRange(chests.Select(c => c.Position));
+            }
+
+            // First-chest blind can still visit reroll pads as a last resort.
+            if (ShouldIncludeRerolls)
+            {
+                positions.AddRange(zone.GetRerollPotChestData().Select(c => c.Position));
+            }
         }
 
         positions = positions
@@ -1229,7 +1321,10 @@ public class FarmingPotChestsHandler
         }
 
         farm.BeginBlindFallback(positions);
-        logger.Debug("Pot treasure: blind sweep with {Count} positions", positions.Count);
+        logger.Debug(
+            "Pot treasure: blind sweep with {Count} positions ({Kind})",
+            positions.Count,
+            farm.HasOpenedChest || farm.OnRerollPool ? "second-chance only" : "pot + second-chance");
     }
 
     private void FinishFarm()
