@@ -15,6 +15,38 @@ namespace BOCCHI.Automator.Services.PotTreasure;
 /// </summary>
 public static class PotTreasureFilter
 {
+    /// <summary>How close a revealed coffer must be to count as on a pot pad.</summary>
+    public const float RevealSpotTolerance = 22f;
+
+    /// <summary>True when a revealed treasure sits on a pot pad, not a nearer hunt coffer.</summary>
+    public static bool IsOnAuthoredPotSpot(
+        Vector3 position,
+        IEnumerable<Vector3> potSpots,
+        IEnumerable<Vector3> foreignSpots,
+        float tolerance = RevealSpotTolerance)
+    {
+        float nearestPot = float.MaxValue;
+        foreach (Vector3 spot in potSpots)
+        {
+            nearestPot = MathF.Min(nearestPot, position.Distance2D(spot));
+        }
+
+        if (nearestPot > tolerance)
+        {
+            return false;
+        }
+
+        foreach (Vector3 known in foreignSpots)
+        {
+            if (position.Distance2D(known) < nearestPot)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     /// <summary>Octants are 45° wide, so a hint constrains the bearing to ±22.5°.</summary>
     public const float OctantTolerance = 22.5f;
 

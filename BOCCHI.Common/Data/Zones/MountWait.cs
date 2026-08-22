@@ -99,7 +99,6 @@ public static class MountWait
         }
     }
 
-    /// <summary>Cast mount while pathing if far enough, not in base camp, and not already mounted.</summary>
     public static void TryCastIfNeeded(
         ICondition conditions,
         IObjectTable objects,

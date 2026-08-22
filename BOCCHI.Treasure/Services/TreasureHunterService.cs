@@ -855,7 +855,9 @@ public class TreasureHunterService
                 continue;
             }
 
-            if (TreasureHuntPathOverrides.ShouldNotPeel(zones.GetZone().ZoneId, id))
+            ZoneId zoneId = zones.GetZone().ZoneId;
+            if (TreasureHuntPathOverrides.IsUnreachable(zoneId, id)
+                || TreasureHuntPathOverrides.ShouldNotPeel(zoneId, id))
             {
                 continue;
             }

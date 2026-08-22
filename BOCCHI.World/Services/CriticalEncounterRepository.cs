@@ -96,7 +96,6 @@ public class CriticalEncounterRepository
             return;
         }
 
-        // One pass: index live events, then refresh tracked encounters from the dictionary.
         DynamicEvent[] events = oc->DynamicEventContainer.Events.ToArray();
         Dictionary<uint, DynamicEvent> live = [];
         Dictionary<CriticalEncounterId, CriticalEncounter> current = [];
@@ -134,14 +133,10 @@ public class CriticalEncounterRepository
                 criticalEncounter.Id.Value,
                 area.IsSquare);
             criticalEncounter.ApplyCombatGeometry(area.Radius, shape, area.Center);
-            CriticalEncounter.SanitizeRegistration(
-                criticalEncounter.Position,
-                area.Center,
-                area.Radius,
-                out _,
-                out float sizeOk,
-                out _);
-            zone.ApplyCriticalEncounterCombat(criticalEncounter.Id.Value, sizeOk, shape);
+            zone.ApplyCriticalEncounterCombat(
+                criticalEncounter.Id.Value,
+                criticalEncounter.UnpaddedCombatRadius,
+                shape);
         }
 
         BuildSnapshots(tracked);

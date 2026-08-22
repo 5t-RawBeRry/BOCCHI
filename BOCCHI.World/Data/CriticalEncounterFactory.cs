@@ -21,31 +21,14 @@ public class CriticalEncounterFactory(IZoneProvider zones, CriticalEncounterGeom
         ActivityData? authored = zone.GetCriticalEncounterData()
             .FirstOrDefault(a => a.Id == ev.DynamicEventId);
         Vector3 fallback = authored?.Position ?? Vector3.NaN;
-
         ActivityAreaShape shape = authored?.AreaShape ?? ActivityAreaShape.Circle;
-        float padded = 0f;
-        Vector3? lgbCenter = null;
-        float lgbRadius = 0f;
+
+        CriticalEncounter created = new(id, ev, 0, fallback, shape);
         if (geometry.TryGet(ev.DynamicEventId) is { Radius: > 0 } area)
         {
             shape = NavigationConstants.ResolveCriticalEncounterShape(authored, area.IsSquare);
-            CriticalEncounter.SanitizeRegistration(
-                fallback,
-                area.Center,
-                area.Radius,
-                out _,
-                out float sizeOk,
-                out _);
-            padded = NavigationConstants.CriticalEncounterPaddedRadius(sizeOk, shape);
-            lgbCenter = area.Center;
-            lgbRadius = area.Radius;
-            zone.ApplyCriticalEncounterCombat(ev.DynamicEventId, sizeOk, shape);
-        }
-
-        CriticalEncounter created = new(id, ev, padded, fallback, shape);
-        if (lgbCenter is { } center)
-        {
-            created.ApplyCombatGeometry(lgbRadius, shape, center);
+            created.ApplyCombatGeometry(area.Radius, shape, area.Center);
+            zone.ApplyCriticalEncounterCombat(ev.DynamicEventId, created.UnpaddedCombatRadius, shape);
         }
 
         return created;

@@ -56,7 +56,6 @@ public static class TreasureHuntPathOverrides
         [
             new(-919f, 157.8f, 641f),
         ],
-        // Same near-island via as approach — do not use the off-mesh (-700,160,800) point.
         [(ZoneId.NorthHorn, 2058)] =
         [
             new(-640f, 160.1f, 780f),

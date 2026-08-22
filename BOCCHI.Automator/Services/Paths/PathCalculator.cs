@@ -61,23 +61,14 @@ public class PathCalculator
             Position = destination,
         };
 
-        GraphTraverser traverser = new(graph, pathfinder, logger);
-        traverser.AddCalculator(new WalkTeleportWalkCalculator());
-        traverser.AddCalculator(new DirectWalkCalculator());
+        List<PathStep> steps = await FindResolvedPathSteps(
+            graph,
+            zone,
+            player.Position,
+            goalNode,
+            distance > NavigationConstants.MaxDirectWalkDistance);
 
-        // Prefer Return over long walks; does not drop the pot.
-        if (distance > NavigationConstants.MaxDirectWalkDistance)
-        {
-            traverser.AddCalculator(new ReturnTeleportWalkCalculator());
-        }
-
-        List<PathStep> steps = await traverser.FindPath(player.Position, goalNode);
-        List<IPathStep> resolved = steps
-            .Select(step => AethernetNavigation.ResolveAetherytePathStep(step, zone, player.Position))
-            .Cast<IPathStep>()
-            .ToList();
-
-        if (resolved.Count == 0)
+        if (steps.Count == 0)
         {
             logger.Debug("No route to {Pos:F0} ({Dist:F0}y) — caller falls back to walking", destination, distance);
             return PathCalculationResult.Failed();
@@ -85,11 +76,11 @@ public class PathCalculator
 
         logger.Debug(
             "Position path planned: {Count} step(s) toward {Pos:F0} ({Dist:F0}y)",
-            resolved.Count,
+            steps.Count,
             destination,
             distance);
 
-        return PathCalculationResult.Planned(resolved);
+        return PathCalculationResult.Planned(steps);
     }
 
     private async Task<PathCalculationResult> Calculate(IGoal goal, bool allowAutoRebuild)
@@ -166,8 +157,6 @@ public class PathCalculator
             ActivityData? authoredCe = zone.GetCriticalEncounterData()
                 .FirstOrDefault(a => a.Id == ceGoalForRadius.id.Value);
             ceStandRadius = authoredCe?.StandRadius ?? 0f;
-            // Authored staging for graph routing; final walk uses sanitized wait centre.
-            pathGoal = goalNode;
             CriticalEncounter.SanitizeRegistration(
                 goalNode.Position,
                 area.Center,
@@ -210,46 +199,25 @@ public class PathCalculator
             return PathCalculationResult.NoTravelNeeded();
         }
 
-        GraphTraverser traverser = new(graph, pathfinder, logger);
-        // Teleport-first: from camp this is usually instant. DirectWalk only for short hops.
-        traverser.AddCalculator(new WalkTeleportWalkCalculator());
-        traverser.AddCalculator(new DirectWalkCalculator());
-
-        // Long trips: always add the Return calculator (#172).
-        if (!insideCeWait && distanceToGoal > NavigationConstants.MaxDirectWalkDistance)
-        {
-            traverser.AddCalculator(new ReturnTeleportWalkCalculator());
-        }
-
-        List<PathStep> steps = await traverser.FindPath(player.Position, pathGoal);
-        List<PathStep> resolvedSteps = steps
-            .Select(step => AethernetNavigation.ResolveAetherytePathStep(step, zone, player.Position))
-            .ToList();
+        List<PathStep> resolvedSteps = await FindResolvedPathSteps(
+            graph,
+            zone,
+            player.Position,
+            pathGoal,
+            !insideCeWait && distanceToGoal > NavigationConstants.MaxDirectWalkDistance);
 
         if (potPrepositionStandOff is { } standOff)
         {
-            // Pot preposition: rewrite the last Pathfind only (#174).
-            int lastPathfind = resolvedSteps.FindLastIndex(step => step.PathStepData is Pathfind);
-            if (lastPathfind >= 0)
-            {
-                float range = resolvedSteps[lastPathfind].PathStepData is Pathfind(_, var r) ? r : 0f;
-                resolvedSteps[lastPathfind] = PathStep.Pathfind(standOff, range);
-            }
+            RewriteLastPathfind(resolvedSteps, standOff);
         }
         else if (ceCombatRadius > 0f && ceWaitCenter is { } waitAt)
         {
-            // CE: walk to the sanitized wait ring, not authored staging when they differ.
-            int lastPathfind = resolvedSteps.FindLastIndex(step => step.PathStepData is Pathfind);
-            if (lastPathfind >= 0)
-            {
-                float red = NavigationConstants.CriticalEncounterRedRadius(
-                    NavigationConstants.CriticalEncounterPaddedRadius(ceCombatRadius, ceShape),
-                    ceShape);
-                Vector3 approach = NavigationApproach.GetCriticalEncounterApproachPosition(
-                    waitAt, red, ceShape, ceStandRadius);
-                float range = resolvedSteps[lastPathfind].PathStepData is Pathfind(_, var r) ? r : 0f;
-                resolvedSteps[lastPathfind] = PathStep.Pathfind(approach, range);
-            }
+            float red = NavigationConstants.CriticalEncounterRedRadius(
+                NavigationConstants.CriticalEncounterPaddedRadius(ceCombatRadius, ceShape),
+                ceShape);
+            Vector3 approach = NavigationApproach.GetCriticalEncounterApproachPosition(
+                waitAt, red, ceShape, ceStandRadius);
+            RewriteLastPathfind(resolvedSteps, approach);
         }
 
         int stepsBeforeTeleportOnlyStrip = resolvedSteps.Count;
@@ -264,7 +232,6 @@ public class PathCalculator
 
         if (resolvedSteps.Count == 0)
         {
-            // Teleport-only mode stripped walks — PathfindingHandler pauses for manual travel.
             if (config.StopAfterReturn && stepsBeforeTeleportOnlyStrip > 0)
             {
                 logger.Debug(
@@ -344,5 +311,38 @@ public class PathCalculator
         Fate? live = fates.Snapshot().FirstOrDefault(f => f.Id.Value == id.Value);
         float toCenter = live != null ? player.Distance2D(live.Position) : float.MaxValue;
         return NavigationConstants.IsWithinFateAiHandoff(toCenter, nearest);
+    }
+
+    private async Task<List<PathStep>> FindResolvedPathSteps(
+        ZoneGraph graph,
+        IZone zone,
+        Vector3 from,
+        Node goal,
+        bool addReturnCalculator)
+    {
+        GraphTraverser traverser = new(graph, pathfinder, logger);
+        traverser.AddCalculator(new WalkTeleportWalkCalculator());
+        traverser.AddCalculator(new DirectWalkCalculator());
+        if (addReturnCalculator)
+        {
+            traverser.AddCalculator(new ReturnTeleportWalkCalculator());
+        }
+
+        List<PathStep> steps = await traverser.FindPath(from, goal);
+        return steps
+            .Select(step => AethernetNavigation.ResolveAetherytePathStep(step, zone, from))
+            .ToList();
+    }
+
+    private static void RewriteLastPathfind(List<PathStep> steps, Vector3 destination)
+    {
+        int lastPathfind = steps.FindLastIndex(step => step.PathStepData is Pathfind);
+        if (lastPathfind < 0)
+        {
+            return;
+        }
+
+        float range = steps[lastPathfind].PathStepData is Pathfind(_, var r) ? r : 0f;
+        steps[lastPathfind] = PathStep.Pathfind(destination, range);
     }
 }

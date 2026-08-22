@@ -3,9 +3,12 @@
 ### Features
 
 ### Fixes
-- Company of Stone (and other camp-adjacent CEs): mount before leaving base camp when the destination is far enough — no more walking halfway on foot first (#198).
-- Eternal Watch (and similar CEs): travel no longer aims a huge stand-off from a bad MapRange size, arrives north/south of staging, then Returns and retries. Final walk now targets the wait ring centre (not staging when they differ). Eternal Watch staging moved to the ground ring (YuYu report).
-- `/bocchi debug ce` (optional id, e.g. `ce 46`): stand where travel stops and paste output — shows authored staging, LGB, BOCCHI wait boundary, and whether you are inside.
-- Pot chests: when an authored pad is a bit off, still recognize and walk to a live coffer near the pad instead of standing on the wrong spot forever.
-- Treasure Hunt **Empty pad check distance** default is now **60** yalms (was 25). Existing configs keep their saved value.
-- Treasure Hunt skips Unhallowed Hamlet coffer **2072** (basement stairs) — unreliable pathing and high death risk.
+- **Illegal Mode:** mount right away when heading to farther FATEs or Critical Encounters (e.g. Company of Stone) instead of walking halfway from base camp first.
+- **Eternal Watch** and similar CEs: travel no longer stops outside the ring, Returns, and retries. Walks to the wait area on the ground instead of an unreachable spot above it.
+- **Pot chests:** if a chest spawns a short walk from the expected spot, walk to the live chest instead of standing on the wrong place.
+- **Treasure Hunt:** default **Empty pad check distance** is now **60** yalms (was 25). Your saved setting is unchanged.
+- **Treasure Hunt:** skips the Unhallowed Hamlet basement coffer (stairs) — bad pathing and high death risk.
+- **Wrath + Phantom Black Mage:** Occult Toad stays off (was cast repeatedly for no benefit).
+
+### Support
+- `/bocchi debug ce` (optional id, e.g. `ce 46`): run where travel stops wrong and paste the output for bug reports.

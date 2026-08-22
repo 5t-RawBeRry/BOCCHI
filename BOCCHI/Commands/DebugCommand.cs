@@ -5,6 +5,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using Lumina.Excel.Sheets;
+using BOCCHI.Automator.Services.PotTreasure;
 using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.CriticalEncounters;
@@ -419,14 +420,11 @@ public unsafe class DebugCommand
         float hunt = huntSpots.Count == 0 ? float.MaxValue : huntSpots.Min(p => Flat(obj.Position, p));
         string distances = $"pot={pot:0.#}y hunt={hunt:0.#}y";
 
-        if (pot > 12f)
-        {
-            return $"REJECT (not on a pot spot; {distances})";
-        }
-
-        return hunt < pot
-            ? $"REJECT (nearer a hunt coffer; {distances})"
-            : $"ACCEPT as pot reveal ({distances})";
+        return PotTreasureFilter.IsOnAuthoredPotSpot(obj.Position, potSpots, huntSpots)
+            ? $"ACCEPT as pot reveal ({distances})"
+            : pot > PotTreasureFilter.RevealSpotTolerance
+                ? $"REJECT (not on a pot spot; {distances})"
+                : $"REJECT (nearer a hunt coffer; {distances})";
     }
 
     private static float Flat(Vector3 a, Vector3 b) =>

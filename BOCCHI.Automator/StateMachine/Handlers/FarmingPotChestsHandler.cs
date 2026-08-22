@@ -55,13 +55,6 @@ public class FarmingPotChestsHandler
 
     private const float RevealSearchRadius = 28f;
 
-    /// <summary>
-    ///     Fallback for unknown reveal BaseIds: coffer must be this close to an authored pot pad,
-    ///     and nearer that pad than any hunt coffer. 12y was tight for slightly wrong pads
-    ///     (Lisath map 27.9 / 3.7) — farm stood on the pad and ignored the chest a short walk away.
-    /// </summary>
-    private const float RevealSpotTolerance = 22f;
-
     /// <summary>On-pad distance for the elixir probe (not coffer interact range).</summary>
     private const float CandidateProbeRadius = 5f;
 
@@ -353,8 +346,6 @@ public class FarmingPotChestsHandler
         return true;
     }
 
-    // Info, not Debug: this is the line that tells us whether the dismount fired at all, and it is
-    // no use if it lands below the level people actually read.
     private void ReportDismount(string detail) =>
         logger.Debug("Pot treasure: dismount {Detail}", detail);
 
@@ -364,10 +355,6 @@ public class FarmingPotChestsHandler
         if (HasTreasureBuff())
         {
             hints.Arm();
-
-            // Read the first hint where we are. Walking back to the pot centre only mattered when
-            // spots were binned by direction *from* the centre; hints are player-relative now, so
-            // the trip is pure overhead — and after a chest it dragged us back across the map.
             pathfinder.Stop();
             farm.Phase = PotChestFarmPhase.ElixirAtCenter;
             farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
@@ -677,7 +664,7 @@ public class FarmingPotChestsHandler
         {
             if (OpenTreasureCofferChain.IsOpenedOrLooted(reveal))
             {
-                AdvancePastOpenedReveal(farm);
+                FinishReveal(farm, markOpened: true);
                 return;
             }
 
@@ -698,7 +685,7 @@ public class FarmingPotChestsHandler
                     logger.Warning(
                         "Pot treasure: stuck approaching revealed coffer at {Pos:F0} - resuming search",
                         reveal.Position);
-                    SkipCurrentReveal(farm);
+                    FinishReveal(farm, markOpened: false);
                     return;
                 }
 
@@ -707,7 +694,7 @@ public class FarmingPotChestsHandler
                     logger.Warning(
                         "Pot treasure: no navmesh at revealed coffer {Pos:F0} - resuming search",
                         reveal.Position);
-                    SkipCurrentReveal(farm);
+                    FinishReveal(farm, markOpened: false);
                     return;
                 }
                 return;
@@ -745,28 +732,17 @@ public class FarmingPotChestsHandler
         }
     }
 
-    private void AdvancePastOpenedReveal(PotChestFarmMemory farm)
+    private void FinishReveal(PotChestFarmMemory farm, bool markOpened)
     {
         pathfinder.Stop();
-        farm.HasOpenedChest = true;
-        if (farm.Candidates.Count > 0)
+        if (markOpened)
         {
-            farm.Candidates.Dequeue();
+            farm.HasOpenedChest = true;
+            logger.Debug(
+                "Pot treasure: reveal already open — next candidate ({Remaining} left)",
+                farm.Candidates.Count);
         }
 
-        farm.ElixirAttempts = 0;
-        farm.SettledAtUtc = DateTimeOffset.MinValue;
-        farm.WaitingForSpawnSince = DateTimeOffset.MinValue;
-        ResetApproachWatch();
-        logger.Debug(
-            "Pot treasure: reveal already open — next candidate ({Remaining} left)",
-            farm.Candidates.Count);
-        ResumeSearchOrBlind(farm);
-    }
-
-    private void SkipCurrentReveal(PotChestFarmMemory farm)
-    {
-        pathfinder.Stop();
         if (farm.Candidates.Count > 0)
         {
             farm.Candidates.Dequeue();
@@ -1190,14 +1166,7 @@ public class FarmingPotChestsHandler
         return true;
     }
 
-    /// <summary>
-    ///     A second-chance chest hides among the reroll pads, not the FATE's own spots — so the
-    ///     narrowing pool has to swap over wholesale. Without this the offer was acknowledged and
-    ///     discarded, and the search carried on among spots the chest could not be at, which is why
-    ///     rerolls looked like "it just keeps walking the normal route" (#188).
-    ///     Those pads sit in remote second-chance areas, so this depends on the route planner being
-    ///     able to teleport; walking 250-500y would spend the rest of the buff getting there.
-    /// </summary>
+    /// <summary>Second-chance chests use reroll pads, not the pot FATE spots (#188).</summary>
     private void SwitchToRerollPool(PotChestFarmMemory farm)
     {
         if (!ShouldIncludeRerolls || farm.OnRerollPool)
@@ -1205,25 +1174,15 @@ public class FarmingPotChestsHandler
             return;
         }
 
-        List<PotTreasureCandidate> reroll = PotTreasureFilter.BuildRerollPool(zones.GetZone());
-        if (reroll.Count == 0)
+        if (!TryActivateRerollPool(farm, markOpenedChest: true, narrowImmediately: true))
         {
             logger.Warning("Pot treasure: reroll offered but this zone has no authored reroll pads");
             return;
         }
 
-        farm.OnRerollPool = true;
-        farm.HasOpenedChest = true;
-        farm.SeedPool(reroll);
-
-        // Seed with all of them; the next compass reading narrows within the reroll set.
-        farm.NarrowTo(reroll);
-        ResetApproachWatch();
-        ClearTravelPlan();
-
         logger.Info(
             "Pot treasure: second chest offered — switching to {Count} reroll pad(s)",
-            reroll.Count);
+            farm.Pool.Count);
     }
 
     /// <summary>
@@ -1244,21 +1203,44 @@ public class FarmingPotChestsHandler
             return false;
         }
 
-        List<PotTreasureCandidate> reroll = PotTreasureFilter.BuildRerollPool(zones.GetZone());
-        if (reroll.Count == 0)
+        if (!TryActivateRerollPool(farm, markOpenedChest: false, narrowImmediately: false))
         {
             logger.Warning("Pot treasure: coffer opened but this zone has no authored reroll pads — ending farm");
             FinishFarm();
             return false;
         }
 
-        farm.OnRerollPool = true;
-        farm.SeedPool(reroll);
-        ResetApproachWatch();
-        ClearTravelPlan();
         logger.Info(
             "Pot treasure: first coffer opened — locking search to {Count} second-chance pad(s)",
-            reroll.Count);
+            farm.Pool.Count);
+        return true;
+    }
+
+    private bool TryActivateRerollPool(
+        PotChestFarmMemory farm,
+        bool markOpenedChest,
+        bool narrowImmediately)
+    {
+        List<PotTreasureCandidate> reroll = PotTreasureFilter.BuildRerollPool(zones.GetZone());
+        if (reroll.Count == 0)
+        {
+            return false;
+        }
+
+        farm.OnRerollPool = true;
+        if (markOpenedChest)
+        {
+            farm.HasOpenedChest = true;
+        }
+
+        farm.SeedPool(reroll);
+        if (narrowImmediately)
+        {
+            farm.NarrowTo(reroll);
+        }
+
+        ResetApproachWatch();
+        ClearTravelPlan();
         return true;
     }
 
@@ -1368,32 +1350,8 @@ public class FarmingPotChestsHandler
                 .Select(t => t.Position!.Value));
     }
 
-    private bool IsOnAuthoredSpot(Vector3 position)
-    {
-        float nearestPot = float.MaxValue;
-        foreach (Vector3 spot in authoredSpots)
-        {
-            nearestPot = MathF.Min(nearestPot, position.Distance2D(spot));
-        }
-
-        if (nearestPot > RevealSpotTolerance)
-        {
-            return false;
-        }
-
-        // North Horn puts an ordinary hunt coffer 2.2y from a pot spot, so no radius can tell the
-        // two apart on its own. Both sit on their own authored position though, so whichever one
-        // this object is nearer to is what it is.
-        foreach (Vector3 known in foreignSpots)
-        {
-            if (position.Distance2D(known) < nearestPot)
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
+    private bool IsOnAuthoredSpot(Vector3 position) =>
+        PotTreasureFilter.IsOnAuthoredPotSpot(position, authoredSpots, foreignSpots);
 
     /// <summary>Rebuild <see cref="tickChests"/> once per tick for reveal matching.</summary>
     private void RefreshTickChests(PotChestFarmMemory farm)

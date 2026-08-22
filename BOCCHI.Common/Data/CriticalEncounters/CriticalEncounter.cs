@@ -31,6 +31,9 @@ public class CriticalEncounter(
     /// <summary>Padded size used for debug outer ring (circle radius or square half-extent).</summary>
     public float Radius { get; private set; } = radius;
 
+    /// <summary>Unpadded wait radius after LGB sanitization.</summary>
+    public float UnpaddedCombatRadius { get; private set; }
+
     public ActivityAreaShape AreaShape { get; private set; } = areaShape;
 
     /// <summary>Authored staging / travel aim. Not overwritten by LGB MapRange centre.</summary>
@@ -177,12 +180,13 @@ public class CriticalEncounter(
             float size = combatRadius > 0f && combatRadius <= MaxRegistrationRadius
                 ? combatRadius
                 : FallbackRegistrationRadius;
+            UnpaddedCombatRadius = size;
             Radius = NavigationConstants.CriticalEncounterPaddedRadius(size, shape);
             return;
         }
 
-        // Keep authored staging as Position; sanitize LGB wait centre / radius.
         SanitizeRegistration(fallbackPosition, lgb, combatRadius, out Vector3 waitAt, out float sizeOk, out _);
+        UnpaddedCombatRadius = sizeOk;
         RegistrationCenter = waitAt;
         Radius = NavigationConstants.CriticalEncounterPaddedRadius(sizeOk, shape);
     }
