@@ -134,7 +134,14 @@ public class CriticalEncounterRepository
                 criticalEncounter.Id.Value,
                 area.IsSquare);
             criticalEncounter.ApplyCombatGeometry(area.Radius, shape, area.Center);
-            zone.ApplyCriticalEncounterCombat(criticalEncounter.Id.Value, area.Radius, shape);
+            CriticalEncounter.SanitizeRegistration(
+                criticalEncounter.Position,
+                area.Center,
+                area.Radius,
+                out _,
+                out float sizeOk,
+                out _);
+            zone.ApplyCriticalEncounterCombat(criticalEncounter.Id.Value, sizeOk, shape);
         }
 
         BuildSnapshots(tracked);

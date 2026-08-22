@@ -67,7 +67,7 @@
     },
     "empty_pad_trust_distance": {
       "label": "Empty pad check distance",
-      "tooltip": "How close (yalms) to walk before treating a coffer pad as empty and moving on. Default 25. Lower = walk closer (safer when coffers load late); higher = skip from farther away."
+      "tooltip": "How close (yalms) to walk before treating a coffer pad as empty and moving on. Lower = walk closer (safer when coffers load late); higher = skip from farther away."
     },
     "skip_unsafe_treasure_windows": {
       "label": "Skip dangerous weather / Ashkin",

@@ -125,6 +125,11 @@ public class CriticalEncounter(
     public const float MaxRegistrationCenterSkew = 100f;
 
     /// <summary>
+    ///     Reject LGB centres this far above/below authored staging (elevated MapRange vs ground ring).
+    /// </summary>
+    public const float MaxRegistrationElevationSkew = 20f;
+
+    /// <summary>
     ///     Reject unpadded LGB radii above this (e.g. Eternal Watch ~560y).
     /// </summary>
     public const float MaxRegistrationRadius = 80f;
@@ -146,7 +151,8 @@ public class CriticalEncounter(
         out bool rejected)
     {
         bool badCenter = !float.IsNaN(authoredStaging.X)
-                         && lgbCenter.Distance2D(authoredStaging) > MaxRegistrationCenterSkew;
+                         && (lgbCenter.Distance2D(authoredStaging) > MaxRegistrationCenterSkew
+                             || MathF.Abs(lgbCenter.Y - authoredStaging.Y) > MaxRegistrationElevationSkew);
         bool badRadius = lgbRadius <= 0f || lgbRadius > MaxRegistrationRadius;
         rejected = badCenter || badRadius;
         if (rejected)

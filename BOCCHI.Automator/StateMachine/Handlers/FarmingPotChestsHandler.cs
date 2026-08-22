@@ -51,16 +51,16 @@ public class FarmingPotChestsHandler
     ILogger<FarmingPotChestsHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.FarmingPotChests)
 {
-    private const float ChestSearchRadius = 5f;
+    private const float ChestSearchRadius = 18f;
 
     private const float RevealSearchRadius = 28f;
 
     /// <summary>
-    ///     Only used by the fallback for a reveal BaseId we do not know yet. Not enough on its own —
-    ///     North Horn has hunt coffers 2.2y and 7.3y from pot spots — so <see cref="IsOnAuthoredSpot"/>
-    ///     also requires the object be nearer a pot spot than any hunt coffer position.
+    ///     Fallback for unknown reveal BaseIds: coffer must be this close to an authored pot pad,
+    ///     and nearer that pad than any hunt coffer. 12y was tight for slightly wrong pads
+    ///     (Lisath map 27.9 / 3.7) — farm stood on the pad and ignored the chest a short walk away.
     /// </summary>
-    private const float RevealSpotTolerance = 12f;
+    private const float RevealSpotTolerance = 22f;
 
     /// <summary>On-pad distance for the elixir probe (not coffer interact range).</summary>
     private const float CandidateProbeRadius = 5f;
@@ -526,28 +526,31 @@ public class FarmingPotChestsHandler
         }
 
         Vector3 target = farm.Candidates.Peek().Position;
-        float distance = player.Position.Distance2D(target);
+        // Prefer a live coffer near the pad when the authored point is a bit off.
+        IGameObject? live = FindUnopenedRevealNear(target) ?? FindUnopenedChestNear(target);
+        Vector3 pathTarget = live?.Position ?? target;
+        float distance = player.Position.Distance2D(pathTarget);
 
         if (distance > CandidateProbeRadius)
         {
             farm.SettledAtUtc = DateTimeOffset.MinValue;
-            if (IsApproachStuck(target, distance))
+            if (IsApproachStuck(pathTarget, distance))
             {
                 logger.Warning(
                     "Pot treasure: stuck approaching {Label} at {Pos:F0} — skipping candidate ({Remaining} left)",
                     farm.Candidates.Peek().Label,
-                    target,
+                    pathTarget,
                     farm.Candidates.Count - 1);
                 SkipCurrentCandidate(farm);
                 return;
             }
 
-            if (!EnsurePathing(target))
+            if (!EnsurePathing(pathTarget))
             {
                 logger.Warning(
                     "Pot treasure: no navmesh at {Label} {Pos:F0} — skipping candidate ({Remaining} left)",
                     farm.Candidates.Peek().Label,
-                    target,
+                    pathTarget,
                     farm.Candidates.Count - 1);
                 SkipCurrentCandidate(farm);
             }
@@ -568,12 +571,12 @@ public class FarmingPotChestsHandler
             return;
         }
 
-        IGameObject? live = FindChestNear(target) ?? FindRevealNear(player.Position);
-        if (live != null)
+        IGameObject? settledChest = FindChestNear(target) ?? FindRevealNear(player.Position);
+        if (settledChest != null)
         {
             farm.Phase = PotChestFarmPhase.OpeningReveal;
             farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
-            TryOpenChest(live);
+            TryOpenChest(settledChest);
             return;
         }
 

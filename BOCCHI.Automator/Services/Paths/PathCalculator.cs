@@ -155,6 +155,7 @@ public class PathCalculator
         float ceCombatRadius = 0f;
         ActivityAreaShape ceShape = ActivityAreaShape.Circle;
         Vector3? ceWaitCenter = null;
+        float ceStandRadius = 0f;
         if (goal.GoalType is CriticalEncounterGoal ceGoalForRadius
             && geometry.TryGet(ceGoalForRadius.id.Value) is { Radius: > 0 } area)
         {
@@ -162,7 +163,10 @@ public class PathCalculator
                 zone,
                 ceGoalForRadius.id.Value,
                 area.IsSquare);
-            // Authored staging for travel; sanitize LGB wait centre / radius.
+            ActivityData? authoredCe = zone.GetCriticalEncounterData()
+                .FirstOrDefault(a => a.Id == ceGoalForRadius.id.Value);
+            ceStandRadius = authoredCe?.StandRadius ?? 0f;
+            // Authored staging for graph routing; final walk uses sanitized wait centre.
             pathGoal = goalNode;
             CriticalEncounter.SanitizeRegistration(
                 goalNode.Position,
@@ -187,9 +191,9 @@ public class PathCalculator
         Vector3 arrivalCheck = potPrepositionStandOff ?? pathGoal.Position;
         float distanceToGoal = player.Position.Distance2D(arrivalCheck);
         bool insideCeWait = ceCombatRadius > 0f
-                            && ceWaitCenter is { } waitAt
+                            && ceWaitCenter is { } waitCenter
                             && NavigationConstants.IsInsideCriticalEncounterWaitArea(
-                                waitAt,
+                                waitCenter,
                                 ceCombatRadius,
                                 ceShape,
                                 player.Position);
@@ -230,6 +234,21 @@ public class PathCalculator
             {
                 float range = resolvedSteps[lastPathfind].PathStepData is Pathfind(_, var r) ? r : 0f;
                 resolvedSteps[lastPathfind] = PathStep.Pathfind(standOff, range);
+            }
+        }
+        else if (ceCombatRadius > 0f && ceWaitCenter is { } waitAt)
+        {
+            // CE: walk to the sanitized wait ring, not authored staging when they differ.
+            int lastPathfind = resolvedSteps.FindLastIndex(step => step.PathStepData is Pathfind);
+            if (lastPathfind >= 0)
+            {
+                float red = NavigationConstants.CriticalEncounterRedRadius(
+                    NavigationConstants.CriticalEncounterPaddedRadius(ceCombatRadius, ceShape),
+                    ceShape);
+                Vector3 approach = NavigationApproach.GetCriticalEncounterApproachPosition(
+                    waitAt, red, ceShape, ceStandRadius);
+                float range = resolvedSteps[lastPathfind].PathStepData is Pathfind(_, var r) ? r : 0f;
+                resolvedSteps[lastPathfind] = PathStep.Pathfind(approach, range);
             }
         }
 

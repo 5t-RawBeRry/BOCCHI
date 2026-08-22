@@ -74,7 +74,7 @@ public class TreasureConfig : IAutoConfig
     ///     (safer when chests load late); higher skips from farther away.
     /// </summary>
     [FloatRange(10f, 60f, Order = 14, Section = "hunt")]
-    public float EmptyPadTrustDistance { get; set; } = 25f;
+    public float EmptyPadTrustDistance { get; set; } = 60f;
 
     /// <summary>Pause treasure hunting during Ashkin / unsafe weather windows (South Horn).</summary>
     [Checkbox(Order = 15, Section = "hunt")]

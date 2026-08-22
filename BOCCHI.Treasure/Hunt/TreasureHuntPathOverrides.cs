@@ -10,24 +10,20 @@ namespace BOCCHI.Treasure.Hunt;
 public static class TreasureHuntPathOverrides
 {
     /// <summary>
-    ///     Pads vnav cannot path to at all. Empty now: the Wanderer's Haven ledge pad (SH 1842) is
-    ///     reachable again because vnav does path toward it and simply pins the character against
-    ///     the ledge, which <see cref="Common.Services.StuckJumpAssist"/> now clears with a hop.
-    ///     Only list a pad here if vnav genuinely cannot route to it — a pad that is merely awkward
-    ///     is better left in, since the stuck watch skips it for that run anyway.
-    ///     Pads stay in treasure_route.json either way, so adding or removing an entry here is the
-    ///     only change needed.
+    ///     Pads vnav cannot path to at all. Only list a pad here if vnav genuinely cannot route to it —
+    ///     a pad that is merely awkward is better left in, since the stuck watch skips it for that run anyway.
+    ///     Also remove the pad from treasure_route.json when adding it here.
     /// </summary>
-    private static readonly HashSet<(ZoneId Zone, uint NodeId)> UnreachableNodes = [];
+    private static readonly HashSet<(ZoneId Zone, uint NodeId)> UnreachableNodes =
+    [
+        // Unhallowed Hamlet basement — vnav cannot finish the stair run reliably; high death risk.
+        (ZoneId.NorthHorn, 2072u),
+    ];
 
     /// <summary>
     ///     Visit on the authored route only — peel-off takes a shortcut that falls (#185).
     /// </summary>
-    private static readonly HashSet<(ZoneId Zone, uint NodeId)> NoPeelNodes =
-    [
-        // North Horn Unhallowed Hamlet basement — stairs down from 2053. Authored order is fine.
-        (ZoneId.NorthHorn, 2072u),
-    ];
+    private static readonly HashSet<(ZoneId Zone, uint NodeId)> NoPeelNodes = [];
 
     /// <summary>True when this pad is knowingly unreachable and must be left out of the route.</summary>
     public static bool IsUnreachable(ZoneId zone, uint nodeId) => UnreachableNodes.Contains((zone, nodeId));
@@ -50,14 +46,6 @@ public static class TreasureHuntPathOverrides
         [
             new(-640f, 160.1f, 780f),
         ],
-        // Unhallowed Hamlet basement (2072) — stairs from 2053. Plain vnav drops west and sticks
-        // around (-389, -76, 126) instead of finishing the stair run (#195 / #185).
-        [(ZoneId.NorthHorn, 2072)] =
-        [
-            new(-210f, 3.5f, 108f),
-            new(-245f, -45f, 118f),
-            new(-275f, -80f, 124f),
-        ],
     };
 
     /// <summary>Leave through after the coffer so the next leg does not re-enter the hazard.</summary>
@@ -72,13 +60,6 @@ public static class TreasureHuntPathOverrides
         [(ZoneId.NorthHorn, 2058)] =
         [
             new(-640f, 160.1f, 780f),
-        ],
-        // Climb back out toward 2053 / next Unhallowed pads after the basement coffer.
-        [(ZoneId.NorthHorn, 2072)] =
-        [
-            new(-275f, -80f, 124f),
-            new(-245f, -45f, 118f),
-            new(-210f, 3.5f, 108f),
         ],
     };
 

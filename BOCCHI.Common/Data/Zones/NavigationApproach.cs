@@ -1,3 +1,4 @@
+using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Common.Services;
 using Ocelot.Extensions;
@@ -258,9 +259,12 @@ public static class NavigationApproach
         if (goal.Type == NodeType.CriticalEncounter
             && goal.Metadata is ActivityNodeMetadata { CombatRadius: > 0 } meta)
         {
+            float radius = meta.CombatRadius > CriticalEncounter.MaxRegistrationRadius
+                ? CriticalEncounter.FallbackRegistrationRadius
+                : meta.CombatRadius;
             return GetCriticalEncounterApproachPosition(
                 goal.Position,
-                meta.CombatRadius,
+                radius,
                 meta.AreaShape,
                 meta.StandRadius);
         }
@@ -295,11 +299,16 @@ public static class NavigationApproach
             }
 
             activity = candidate;
-            Vector3 center = area.Center;
-            float radius = area.Radius;
             ActivityAreaShape shape = NavigationConstants.ResolveCriticalEncounterShape(
                 candidate,
                 area.IsSquare);
+            CriticalEncounter.SanitizeRegistration(
+                candidate.Position,
+                area.Center,
+                area.Radius,
+                out Vector3 center,
+                out float radius,
+                out _);
 
             if (NavigationConstants.IsInsideCriticalEncounterWaitArea(
                     center, radius, shape, from))

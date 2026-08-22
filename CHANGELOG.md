@@ -1,17 +1,11 @@
-# 4.1.0.7
+# 4.1.0.8
 
 ### Features
-- Mob Farmer: dedicated BossMod presets **BOCCHI AR MOB** / **BOCCHI AI MOB** so pack farming uses open-world targeting instead of FATE AR.
-- Full AR stock presets (**BOCCHI AR FATE/CE/MOB**) enable job AOE by default, with optimized Veyn WAR tracks. Recreate presets or use Update presets under Combat.
-- Mob Farmer pull buffs: optional **Counterstance** (Fleetfooted), applied late so it covers the start of the pull.
 
 ### Fixes
-- Mob Farmer: auto-target only while pulling; once fighting with combat AI on, targeting is left to the AI.
-- Mob Farmer: Ringing Respite waits out the shared cooldown after Quickstep instead of skipping.
-- Dying in a CE no longer drops the encounter and resumes travel before you accept a raise.
-- Pot chests: long / second-chance hops use Return + aethernet when the destination is off the path map; after opening a pot chest, only second-chance pads are searched.
-- Wrath: recreates the lease after a job change (no more Invalid lease spam leaving autorotation off); only Occult Elixir is force-disabled; only Healer Targeting Mode stays locked.
-- Auto treasure hunt without Treasure Sight pauses the map route for a FATE/CE, then resumes the same hunt afterward.
-- Eternal Watch-class CEs no longer use absurd combat radii that stop approach on the wrong wall.
-- Pot cycle sync only uploads when the pot or spawn time changes.
-- Triage / phantom job swaps wait a few seconds after combat before changing jobs, so Chemist / White Mage are less often rejected with "unable to change phantom jobs".
+- Company of Stone (and other camp-adjacent CEs): mount before leaving base camp when the destination is far enough — no more walking halfway on foot first (#198).
+- Eternal Watch (and similar CEs): travel no longer aims a huge stand-off from a bad MapRange size, arrives north/south of staging, then Returns and retries. Final walk now targets the wait ring centre (not staging when they differ). Eternal Watch staging moved to the ground ring (YuYu report).
+- `/bocchi debug ce` (optional id, e.g. `ce 46`): stand where travel stops and paste output — shows authored staging, LGB, BOCCHI wait boundary, and whether you are inside.
+- Pot chests: when an authored pad is a bit off, still recognize and walk to a live coffer near the pad instead of standing on the wrong spot forever.
+- Treasure Hunt **Empty pad check distance** default is now **60** yalms (was 25). Existing configs keep their saved value.
+- Treasure Hunt skips Unhallowed Hamlet coffer **2072** (basement stairs) — unreliable pathing and high death risk.
