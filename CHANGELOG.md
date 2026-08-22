@@ -1,7 +1,5 @@
 # 4.1.0.8
 
-### Features
-
 ### Fixes
 - **Illegal Mode:** mount right away when heading to farther FATEs or Critical Encounters (e.g. Company of Stone) instead of walking halfway from base camp first.
 - **Eternal Watch** and similar CEs: travel no longer stops outside the ring, Returns, and retries. Walks to the wait area on the ground instead of an unreachable spot above it.
