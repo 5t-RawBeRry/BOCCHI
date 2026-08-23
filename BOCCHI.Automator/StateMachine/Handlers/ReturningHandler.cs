@@ -52,7 +52,7 @@ public class ReturningHandler
 
         // Map-hunt filler (no Treasure Sight): hunt owns Return / routing while actively
         // moving. When paused for a FATE/CE, allow Automator Return (e.g. camp for buffs)
-        // or Choosing would softlock Idle away from crystals (#pause-yield).
+        // so Choosing is not stuck Idle away from crystals.
         if (IsIllegalModeMapHuntFillerActive())
         {
             return StatePriority.Never;

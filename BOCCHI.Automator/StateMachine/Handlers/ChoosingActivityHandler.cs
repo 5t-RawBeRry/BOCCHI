@@ -47,8 +47,7 @@ public class ChoosingActivityHandler
             return StatePriority.Never;
         }
 
-        // Yield to ApplyingBuffs only when a crystal is in range. Otherwise Choosing would
-        // softlock Idle (especially with map-hunt paused for a FATE/CE away from camp).
+        // Only yield to buffs when a crystal is nearby — otherwise Choosing softlocks Idle.
         if (buffConfig.ShouldAutomateBuffs
             && buffs.ShouldRefreshAny()
             && zones.GetZone().GetNearbyKnowledgeCrystals().Any())

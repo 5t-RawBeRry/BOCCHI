@@ -84,8 +84,7 @@ public class ApplyingBuffsHandler
 
         stateMachine.Update();
 
-        // Manual BuffRunner aborts here; Illegal Mode must too or we softlock
-        // (ApplyingBuffsMemory → VeryHigh forever, no mount / no FATE path).
+        // Manual BuffRunner aborts on NoCrystalsFound; Illegal Mode must clear the latch too.
         if (stateMachine.State == BuffState.NoCrystalsFound)
         {
             logger.Warning("Illegal Mode buff run aborted — no knowledge crystals nearby");
