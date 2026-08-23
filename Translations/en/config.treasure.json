@@ -11,26 +11,26 @@
   "fields": {
     "draw_line_to_bronze_chests": {
       "label": "Lines to bronze coffers",
-      "tooltip": "Only while out of combat."
+      "tooltip": "On: while out of combat, draw a brown line to nearby bronze coffers.\nOff: no line."
     },
     "draw_line_to_silver_chests": {
       "label": "Lines to silver coffers",
-      "tooltip": "Only while out of combat."
+      "tooltip": "On: while out of combat, draw a silver line to nearby silver coffers.\nOff: no line."
     },
     "draw_line_to_carrots": {
       "label": "Lines to carrots",
-      "tooltip": "Only while out of combat."
+      "tooltip": "On: while out of combat, draw a green line to nearby carrots.\nOff: no line."
     },
     "show_percentage_active_treasure_count": {
       "label": "Show remaining coffers as %"
     },
     "return_to_base_camp_after_hunt": {
       "label": "Cast Return after hunt",
-      "tooltip": "On: cast Return after Treasure Hunt or Carrot Hunt finishes.\nOff: while Loop Carrot Hunt is running between passes."
+      "tooltip": "On: cast Return after Treasure Hunt or Carrot Hunt finishes.\nOff: do not cast Return when the hunt ends.\nLoop Carrot Hunt: Return waits until looping stops."
     },
     "loop_carrot_hunt": {
       "label": "Loop Carrot Hunt",
-      "tooltip": "Skip empty pads; after each Fortune Carrot, check every pad again. If a full pass finds none, keep checking until Stop or you run out of carrots."
+      "tooltip": "On: skip empty pads; after each Fortune Carrot, check every pad again. If a full pass finds none, keep checking until Stop or you run out of carrots.\nOff: one pass, then finish."
     },
     "play_sound_on_hunt_complete": {
       "label": "Play sound when Treasure Hunt finishes"
@@ -42,7 +42,7 @@
     },
     "cast_treasure_sight_during_hunt": {
       "label": "Cast Treasure Sight during hunt",
-      "tooltip": "Cast at the start, then every N locations. Stops early if Sight says nothing is left."
+      "tooltip": "On: cast at the start, then every N locations. Stops early if Sight says nothing is left.\nOff: do not cast Sight during the hunt."
     },
     "treasure_sight_every_n_locations": {
       "label": "Treasure Sight every N locations",
@@ -69,15 +69,15 @@
     },
     "skip_unsafe_treasure_windows": {
       "label": "Skip dangerous weather / Ashkin",
-      "tooltip": "Pause Treasure Hunt on South Horn during Ashkin or other unsafe weather."
+      "tooltip": "On: pause Treasure Hunt on South Horn during Ashkin or other unsafe weather.\nOff: keep hunting through those windows."
     },
     "use_ninja_hide_on_dangerous_routes": {
       "label": "Ninja Hide near strong enemies",
-      "tooltip": "Treasure Hunt and Carrot Hunt. Near a high-Knowledge enemy, swap to Ninja, Hide, and walk the last stretch."
+      "tooltip": "On: near a high-Knowledge enemy, swap to Ninja, Hide, and walk the last stretch.\nOff: do not use Hide for route threats.\nTreasure Hunt and Carrot Hunt."
     },
     "use_occult_sprint_while_hidden": {
       "label": "Occult Sprint while Hidden",
-      "tooltip": "While Hidden, switch to Phantom Thief and cast Occult Sprint."
+      "tooltip": "On: while Hidden, switch to Phantom Thief and cast Occult Sprint.\nOff: stay Hidden without Occult Sprint."
     },
     "ninja_gearset_number": {
       "label": "Ninja gearset number",
@@ -88,10 +88,12 @@
       "tooltip": "Hide when a nearby enemy's Knowledge is at least yours plus this. Higher = only stronger enemies. Negative = also weaker ones. Uses your real Knowledge, not synced South Horn. 0 = same Knowledge or higher."
     },
     "knowledge_threat_enter_distance": {
-      "label": "Start Hide within (yalms)"
+      "label": "Start Hide within (yalms)",
+      "tooltip": "Start Hide when a dangerous enemy is this close. While mounted, starts 5 yalms earlier."
     },
     "knowledge_threat_exit_distance": {
-      "label": "Keep Hide until farther than (yalms)"
+      "label": "Keep Hide until farther than (yalms)",
+      "tooltip": "Once Hide is on, keep it until enemies are farther than this."
     }
   }
 }

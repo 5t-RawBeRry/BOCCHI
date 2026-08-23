@@ -21,11 +21,11 @@
     },
     "should_farm_pot_chests": {
       "label": "Farm pot chests after pot FATEs",
-      "tooltip": "After a pot FATE, drink Magical Elixir and follow the compass while Cache Me lasts.\nNo hint: walks known chest spots instead."
+      "tooltip": "On: after a pot FATE, drink Magical Elixir and follow the compass while Cache Me lasts. No hint: walks known chest spots instead.\nOff: leave after the pot FATE without farming chests."
     },
     "should_preposition_to_pots": {
       "label": "Wait near pots before they spawn",
-      "tooltip": "Leave early and wait near the next pot. Timing is under Pot timing. Needs Do FATEs, and that pot allowed (or Prefer pot FATEs)."
+      "tooltip": "On: leave early and wait near the next pot. Timing is under Pot timing. Needs Do FATEs, and that pot allowed (or Prefer pot FATEs).\nOff: do not leave early for pots."
     },
     "should_do_critical_encounters": {
       "label": "Do Critical Encounters"
@@ -96,7 +96,7 @@
     },
     "stop_after_return": {
       "label": "Stop after return and teleport",
-      "tooltip": "After a FATE or CE: Return, teleport toward the next one, mount, then stop. Toggle Illegal Mode to resume."
+      "tooltip": "On: after a FATE or CE: Return, teleport toward the next one, mount, then stop. Toggle Illegal Mode to resume.\nOff: keep running after Return."
     },
     "phantom_jobs_leveling_mode": {
       "label": "Level phantom jobs automatically",
@@ -136,7 +136,7 @@
     },
     "enable_automatic_treasure_hunt_during_illegal_mode": {
       "label": "Auto treasure hunt in Illegal Mode",
-      "tooltip": "After a FATE or CE, return to camp and run Treasure Sight if known. Starts a hunt when bronze/silver fill meets the % on Treasure Hunter.\nWithout Sight: uses the built-in map (those % ignored), pauses for FATE/CE, then resumes."
+      "tooltip": "On: after a FATE or CE, return to camp and run Treasure Sight if known. Starts a hunt when bronze/silver fill meets the % on Treasure Hunter.\nWithout Sight: uses the built-in map (those % ignored), pauses for FATE/CE, then resumes.\nOff: do not start treasure hunts from Illegal Mode."
     }
   }
 }

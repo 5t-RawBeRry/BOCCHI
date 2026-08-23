@@ -11,26 +11,26 @@
   "fields": {
     "draw_line_to_bronze_chests": {
       "label": "청동 보물상자 연결선",
-      "tooltip": "비전투 중에만."
+      "tooltip": "켜짐: 비전투 중 근처 청동 상자로 갈색 선.\n꺼짐: 선 없음."
     },
     "draw_line_to_silver_chests": {
       "label": "백은 보물상자 연결선",
-      "tooltip": "비전투 중에만."
+      "tooltip": "켜짐: 비전투 중 근처 백은 상자로 은색 선.\n꺼짐: 선 없음."
     },
     "draw_line_to_carrots": {
       "label": "재물당근 연결선",
-      "tooltip": "비전투 중에만."
+      "tooltip": "켜짐: 비전투 중 근처 재물당근으로 초록 선.\n꺼짐: 선 없음."
     },
     "show_percentage_active_treasure_count": {
       "label": "남은 상자를 %로 표시"
     },
     "return_to_base_camp_after_hunt": {
       "label": "보물 찾기 후 귀환",
-      "tooltip": "켜짐: 보물 찾기 또는 재물당근 찾기가 끝난 뒤 귀환.\n꺼짐: 루프 중 패스 사이."
+      "tooltip": "켜짐: 보물 찾기 또는 재물당근 찾기가 끝난 뒤 귀환.\n꺼짐: 끝나면 귀환하지 않음.\n재물당근 루프: 루프가 끝날 때까지 귀환하지 않음."
     },
     "loop_carrot_hunt": {
       "label": "재물당근 찾기 루프",
-      "tooltip": "빈 지점은 건너뛰고, 포춘 당근 후 모든 지점을 다시 확인합니다. 한 바퀴에 없으면 계속 확인. 중지하거나 당근이 떨어지면 멈춤."
+      "tooltip": "켜짐: 빈 지점은 건너뛰고, 포춘 당근 후 모든 지점을 다시 확인. 한 바퀴에 없으면 계속 확인. 중지하거나 당근이 떨어지면 멈춤.\n꺼짐: 한 바퀴 후 종료."
     },
     "play_sound_on_hunt_complete": {
       "label": "보물 찾기 끝나면 소리 재생"
@@ -42,7 +42,7 @@
     },
     "cast_treasure_sight_during_hunt": {
       "label": "보물 찾기 중 마기 보물 탐색",
-      "tooltip": "시작 시 쓰고, 이후 N지점마다. 탐색이 남은 상자 없음이면 일찍 멈춤."
+      "tooltip": "켜짐: 시작 시 쓰고, 이후 N지점마다. 탐색이 남은 상자 없음이면 일찍 멈춤.\n꺼짐: 보물 찾기 중 탐색을 쓰지 않음."
     },
     "treasure_sight_every_n_locations": {
       "label": "마기 보물 탐색 N지점마다",
@@ -69,15 +69,15 @@
     },
     "skip_unsafe_treasure_windows": {
       "label": "위험 날씨 / 불사류 몬스터 건너뛰기",
-      "tooltip": "남부에서 불사류나 위험한 날씨 동안 보물 찾기를 잠시 멈춤."
+      "tooltip": "켜짐: 남부에서 불사류나 위험한 날씨 동안 보물 찾기를 잠시 멈춤.\n꺼짐: 그 동안에도 보물 찾기를 계속."
     },
     "use_ninja_hide_on_dangerous_routes": {
       "label": "강한 적 근처에서 닌자 은신",
-      "tooltip": "보물 찾기와 당근 찾기. 지식이 높은 적이 가까우면 닌자로 바꾸고 은신을 쓴 뒤, 마지막 구간을 걸음."
+      "tooltip": "켜짐: 지식이 높은 적이 가까우면 닌자로 바꾸고 은신을 쓴 뒤, 마지막 구간을 걸음.\n꺼짐: 경로 위협에 은신을 쓰지 않음.\n보물 찾기와 재물당근 찾기."
     },
     "use_occult_sprint_while_hidden": {
       "label": "은신 중 오컬트 스프린트",
-      "tooltip": "은신 중 팬텀 시프로 바꿔 오컬트 스프린트를 씀."
+      "tooltip": "켜짐: 은신 중 팬텀 시프로 바꿔 오컬트 스프린트를 씀.\n꺼짐: 은신만 유지하고 오컬트 스프린트는 쓰지 않음."
     },
     "ninja_gearset_number": {
       "label": "닌자 기어셋 번호",
@@ -88,10 +88,12 @@
       "tooltip": "근처 적의 지식이 내 실제 지식 + 이 값 이상이면 은신. 높을수록 더 강한 적만. 음수 = 더 약한 적에도. 남부 동기화 값이 아님. 0 = 같거나 더 높음."
     },
     "knowledge_threat_enter_distance": {
-      "label": "이 거리 이내에서 은신 시작(일름)"
+      "label": "이 거리 이내에서 은신 시작(일름)",
+      "tooltip": "위험한 적이 이 거리 안으로 오면 은신 시작. 탑승 중에는 5일름 더 일찍 시작."
     },
     "knowledge_threat_exit_distance": {
-      "label": "이 거리보다 멀어질 때까지 은신 유지(일름)"
+      "label": "이 거리보다 멀어질 때까지 은신 유지(일름)",
+      "tooltip": "은신 후 적이 이보다 멀어질 때까지 유지."
     }
   }
 }
