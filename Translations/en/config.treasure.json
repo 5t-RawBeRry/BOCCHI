@@ -1,10 +1,11 @@
 {
   "label": "Treasure Hunter",
-  "tooltip": "Coffer lines on the map and Treasure Hunt routes.",
+  "tooltip": "Coffer and carrot lines, Treasure Hunt, and Carrot Hunt.",
   "sections": {
     "radar": "Radar",
     "completion": "When hunt ends",
-    "hunt": "Hunt",
+    "carrot_hunt": "Carrot Hunt",
+    "treasure_hunt": "Treasure Hunt",
     "ninja_hide": "Ninja Hide"
   },
   "fields": {
@@ -29,7 +30,7 @@
     },
     "loop_carrot_hunt": {
       "label": "Loop Carrot Hunt",
-      "tooltip": "Carrot Hunt only. Skip empty pads; after each Fortune Carrot, check every pad again. If a full pass finds none, keep checking until Stop or you run out of carrots."
+      "tooltip": "Skip empty pads; after each Fortune Carrot, check every pad again. If a full pass finds none, keep checking until Stop or you run out of carrots."
     },
     "play_sound_on_hunt_complete": {
       "label": "Play sound when Treasure Hunt finishes"
@@ -72,7 +73,7 @@
     },
     "use_ninja_hide_on_dangerous_routes": {
       "label": "Ninja Hide near strong enemies",
-      "tooltip": "Near a high-Knowledge enemy, swap to Ninja, Hide, and walk the last stretch to the coffer."
+      "tooltip": "Treasure Hunt and Carrot Hunt. Near a high-Knowledge enemy, swap to Ninja, Hide, and walk the last stretch."
     },
     "use_occult_sprint_while_hidden": {
       "label": "Occult Sprint while Hidden",

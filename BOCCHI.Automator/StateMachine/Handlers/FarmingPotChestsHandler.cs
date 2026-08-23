@@ -943,13 +943,15 @@ public class FarmingPotChestsHandler
         // Remount only for longer walks — not while already on top of a reveal.
         if (allowRemount && player.Position.Distance2D(pathable) > 15f)
         {
+            IZone zone = zones.GetZone();
             MountWait.TryCastIfNeeded(
                 conditions,
                 objects,
                 pathable,
                 movement.ShouldAutoMount,
                 movement.PreferredMountId,
-                zones.GetZone().IsInBasecamp());
+                zone.IsInBasecamp(),
+                zone);
         }
 
         return true;

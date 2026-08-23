@@ -1,4 +1,5 @@
 using BOCCHI.Buff.Data;
+using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.KnowledgeCrystals;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
@@ -19,7 +20,9 @@ public class ApproachingKnowledgeCrystalHandler
     IPlayer player,
     IPathfinder pathfinder,
     ICondition conditions,
-    IAutomatorMemory memory
+    IObjectTable objects,
+    IAutomatorMemory memory,
+    MovementConfig movement
 ) : FlowStateHandler<BuffState>(BuffState.ApproachingKnowledgeCrystal)
 {
     private const float CrystalInteractionRange = 5f;
@@ -45,12 +48,12 @@ public class ApproachingKnowledgeCrystalHandler
         {
             pathfinder.Stop();
 
-        if (DismountAssist.TryDismount(conditions))
-        {
-            return null;
-        }
+            if (DismountAssist.TryDismount(conditions))
+            {
+                return null;
+            }
 
-        return BuffState.ChoosingBuffToApply;
+            return BuffState.ChoosingBuffToApply;
         }
 
         // Standalone Apply Buffs /buff — cast in place only; Illegal Mode still walks in.
@@ -63,11 +66,6 @@ public class ApproachingKnowledgeCrystalHandler
             return null;
         }
 
-        if (pathfinder.GetState() != PathfindingState.Idle)
-        {
-            return null;
-        }
-
         BuffZone? buffZone = zone.GetBuffZone();
         KnowledgeCrystalData closest = crystals[0];
         // Prefer the authored camp annulus only when the closest crystal is that camp crystal.
@@ -76,11 +74,23 @@ public class ApproachingKnowledgeCrystalHandler
                 ? bz.GetApproachPoint(player.Position)
                 : closest.Position.GetApproachPosition(player.Position, CrystalInteractionRange - 0.2f);
 
-        pathfinder.PathfindAndMoveTo(new(destination)
+        if (pathfinder.GetState() == PathfindingState.Idle)
         {
-            DistanceThreshold = 1.0f,
-            ShouldSnapToFloor = true
-        });
+            pathfinder.PathfindAndMoveTo(new(destination)
+            {
+                DistanceThreshold = 1.0f,
+                ShouldSnapToFloor = true
+            });
+        }
+
+        MountWait.TryCastIfNeeded(
+            conditions,
+            objects,
+            destination,
+            movement.ShouldAutoMount,
+            movement.PreferredMountId,
+            inBaseCamp: zone.IsInBasecamp(),
+            zone: zone);
 
         return null;
     }

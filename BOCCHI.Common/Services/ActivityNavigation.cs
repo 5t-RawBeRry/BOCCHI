@@ -461,9 +461,10 @@ public class ActivityNavigation
                     pathfinder,
                     vnav,
                     lifestream,
+                    conditions,
+                    movementConfig,
                     logger,
-                    target.Id,
-                    movementConfig.SprintOnAetheryteApproach);
+                    target.Id);
 
                 _ = manager.Manage(chain);
             }).ConfigureAwait(false);
@@ -505,9 +506,10 @@ public class ActivityNavigation
             pathfinder,
             vnav,
             lifestream,
+            conditions,
+            movementConfig,
             logger,
-            target.Id,
-            movementConfig.SprintOnAetheryteApproach);
+            target.Id);
 
         _ = manager.Manage(AppendPath(chain, chainName, walkTo, treatAsActivity));
     }

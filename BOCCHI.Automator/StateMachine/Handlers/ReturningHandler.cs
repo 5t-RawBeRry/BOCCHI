@@ -50,8 +50,9 @@ public class ReturningHandler
             return StatePriority.Never;
         }
 
-        // Map-hunt filler (no Treasure Sight): hunt owns Return / routing. Automator stays awake
-        // so FATE/CE can interrupt, but must not cast Return in parallel with the hunt.
+        // Map-hunt filler (no Treasure Sight): hunt owns Return / routing while actively
+        // moving. When paused for a FATE/CE, allow Automator Return (e.g. camp for buffs)
+        // or Choosing would softlock Idle away from crystals (#pause-yield).
         if (IsIllegalModeMapHuntFillerActive())
         {
             return StatePriority.Never;
@@ -235,7 +236,8 @@ public class ReturningHandler
 
     private bool IsIllegalModeMapHuntFillerActive()
     {
-        if (hunter.ManagedByIllegalModeFiller && hunter.Running)
+        // Paused = yielded to FATE/CE; Automator must be able to Return / buff / choose.
+        if (hunter.ManagedByIllegalModeFiller && hunter.Running && !hunter.Paused)
         {
             return true;
         }

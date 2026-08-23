@@ -52,7 +52,8 @@ public sealed class CarrotHunterService
     IChatGui chat,
     IPluginLog log,
     ITranslator<MainWindow> translator,
-    PandoraAutoOpenHold pandoraAutoOpen
+    PandoraAutoOpenHold pandoraAutoOpen,
+    NinjaHideAssist ninjaHide
 ) : ICarrotHunter, IOnUpdate, IOnStop
 {
     private const float BunnySearchRadius = 10f;
@@ -89,6 +90,8 @@ public sealed class CarrotHunterService
     private ulong? currentLiveCarrotId;
 
     private Vector3 currentTargetPosition;
+
+    private bool ninjaHideRequired;
 
     private DateTime waitingForBunnySince = DateTime.MinValue;
 
@@ -620,12 +623,7 @@ public sealed class CarrotHunterService
             return;
         }
 
-        if (!vnav.IsRunning() && !vnav.IsPathfinding())
-        {
-            vnav.PathfindAndMoveCloseTo(currentTargetPosition, false, OpenTreasureCofferChain.PathArrivalRange);
-        }
-
-        MaybeMount(currentTargetPosition);
+        TryNavigateToward(currentTargetPosition, OpenTreasureCofferChain.PathArrivalRange);
     }
 
     private void TickUsingItem()
@@ -719,11 +717,7 @@ public sealed class CarrotHunterService
         if (dist3d > HuntDistances.BunnyInteractRadius
             && !(dist2d <= HuntDistances.StuckNearRadius && IsStuckNearTarget(dist2d)))
         {
-            if (!vnav.IsRunning() && !vnav.IsPathfinding())
-            {
-                vnav.PathfindAndMoveCloseTo(bunny.Position, false, OpenTreasureCofferChain.PathArrivalRange);
-            }
-
+            TryNavigateToward(bunny.Position, OpenTreasureCofferChain.PathArrivalRange);
             return;
         }
 
@@ -1519,6 +1513,11 @@ public sealed class CarrotHunterService
 
     private void MaybeMount(Vector3 destination)
     {
+        if (ninjaHideRequired || ninjaHide.IsStealthed)
+        {
+            return;
+        }
+
         // Mount allowed in camp (matches treasure hunt).
         MountWait.TryCastIfNeeded(
             conditions,
@@ -1527,6 +1526,104 @@ public sealed class CarrotHunterService
             movementConfig.ShouldAutoMount,
             movementConfig.PreferredMountId,
             inBaseCamp: false);
+    }
+
+    /// <summary>Path/mount only after Hide is ready when required. Same gate as Treasure Hunt.</summary>
+    private bool TryNavigateToward(Vector3 destination, float arrivalRadius)
+    {
+        if (!ApplyNinjaHideGate())
+        {
+            return false;
+        }
+
+        if (!vnav.IsRunning() && !vnav.IsPathfinding()
+            && player.Position.Distance2D(destination) > arrivalRadius)
+        {
+            vnav.PathfindAndMoveCloseTo(destination, false, arrivalRadius);
+        }
+
+        MaybeMount(destination);
+        return true;
+    }
+
+    /// <returns>False while still preparing Hide (caller should wait).</returns>
+    private bool ApplyNinjaHideGate()
+    {
+        if (!treasureConfig.UseNinjaHideOnDangerousRoutes)
+        {
+            ninjaHideRequired = false;
+            return true;
+        }
+
+        UpdateNinjaHideRequired();
+
+        if (!ninjaHideRequired)
+        {
+            ninjaHide.RestorePreviousGearsetIfNeeded();
+            return true;
+        }
+
+        if (conditions[ConditionFlag.InCombat])
+        {
+            return true;
+        }
+
+        if (ninjaHide.EnsureReady(treasureConfig.NinjaGearsetNumber))
+        {
+            if (treasureConfig.UseOccultSprintWhileHidden)
+            {
+                ninjaHide.TryOccultSprintWhileHidden();
+            }
+
+            return true;
+        }
+
+        vnav.Stop();
+        pathfinder.Stop();
+        return false;
+    }
+
+    private void UpdateNinjaHideRequired()
+    {
+        if (KnowledgeThreat.TryFindIsleblazer(
+                objects,
+                player.Position,
+                KnowledgeThreat.IsleblazerUnhideDistance,
+                out _))
+        {
+            ninjaHideRequired = false;
+            return;
+        }
+
+        if (KnowledgeThreat.TryGetPlayerForayLevel(objects) is not int foray)
+        {
+            ninjaHideRequired = false;
+            return;
+        }
+
+        int hideAt = KnowledgeThreat.HideAtOrAbove(foray, treasureConfig.KnowledgeHideOffset);
+        float enter = treasureConfig.KnowledgeThreatEnterDistance;
+        if (ninjaHide.IsMounted)
+        {
+            enter += KnowledgeThreat.MountedThreatEnterBonus;
+        }
+
+        float exit = Math.Max(treasureConfig.KnowledgeThreatExitDistance, enter);
+
+        if (ninjaHideRequired)
+        {
+            if (!KnowledgeThreat.TryFindThreat(objects, player.Position, hideAt, exit, out _, out _))
+            {
+                ninjaHideRequired = false;
+            }
+
+            return;
+        }
+
+        if (KnowledgeThreat.TryFindThreat(objects, player.Position, hideAt, enter, out _, out _))
+        {
+            ninjaHideRequired = true;
+        }
     }
 
     private bool TryRecoverFromStuckWalk(int authoredId, float distance)
@@ -1717,10 +1814,12 @@ public sealed class CarrotHunterService
         finishedAuthoredIds.Clear();
         tour.Clear();
         tourIndex = 0;
+        ninjaHideRequired = false;
         ClearCurrent();
         stopwatch.Reset();
         vnav.Stop();
         pathfinder.Stop();
+        ninjaHide.RestorePreviousGearsetIfNeeded();
         pandoraAutoOpen.Release();
         log.Information("Carrot hunt stopped");
     }

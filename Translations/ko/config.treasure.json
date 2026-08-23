@@ -1,10 +1,11 @@
 {
   "label": "보물 찾기",
-  "tooltip": "지도의 보물상자 선과 보물 찾기 경로.",
+  "tooltip": "상자·당근 선, 보물 찾기, 재물당근 찾기.",
   "sections": {
     "radar": "레이더",
-    "completion": "보물 찾기 종료 시",
-    "hunt": "보물 찾기",
+    "completion": "종료 시",
+    "carrot_hunt": "재물당근 찾기",
+    "treasure_hunt": "보물 찾기",
     "ninja_hide": "닌자 은신"
   },
   "fields": {
@@ -29,7 +30,7 @@
     },
     "loop_carrot_hunt": {
       "label": "재물당근 찾기 루프",
-      "tooltip": "재물당근 찾기 전용. 빈 지점은 건너뛰고, 포춘 당근 후 모든 지점을 다시 확인합니다. 한 바퀴에 없으면 계속 확인. 중지하거나 당근이 떨어지면 멈춤."
+      "tooltip": "빈 지점은 건너뛰고, 포춘 당근 후 모든 지점을 다시 확인합니다. 한 바퀴에 없으면 계속 확인. 중지하거나 당근이 떨어지면 멈춤."
     },
     "play_sound_on_hunt_complete": {
       "label": "보물 찾기 끝나면 소리 재생"
@@ -72,7 +73,7 @@
     },
     "use_ninja_hide_on_dangerous_routes": {
       "label": "강한 적 근처에서 닌자 은신",
-      "tooltip": "지식이 높은 적이 가까우면 닌자로 바꾸고 은신을 쓴 뒤, 마지막 구간을 걸어 상자로 감."
+      "tooltip": "보물 찾기와 당근 찾기. 지식이 높은 적이 가까우면 닌자로 바꾸고 은신을 쓴 뒤, 마지막 구간을 걸음."
     },
     "use_occult_sprint_while_hidden": {
       "label": "은신 중 오컬트 스프린트",
