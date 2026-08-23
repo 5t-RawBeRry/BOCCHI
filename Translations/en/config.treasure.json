@@ -10,40 +10,38 @@
   "fields": {
     "draw_line_to_bronze_chests": {
       "label": "Lines to bronze coffers",
-      "tooltip": "While out of combat, draw a brown line from you to nearby bronze coffers."
+      "tooltip": "Only while out of combat."
     },
     "draw_line_to_silver_chests": {
       "label": "Lines to silver coffers",
-      "tooltip": "While out of combat, draw a silver line from you to nearby silver coffers."
+      "tooltip": "Only while out of combat."
     },
     "draw_line_to_carrots": {
       "label": "Lines to carrots",
-      "tooltip": "While out of combat, draw a green line from you to nearby carrots."
+      "tooltip": "Only while out of combat."
     },
     "show_percentage_active_treasure_count": {
-      "label": "Show remaining coffers as %",
-      "tooltip": "Adds a percentage next to Active bronze / Active silver on the Treasure tab."
+      "label": "Show remaining coffers as %"
     },
     "return_to_base_camp_after_hunt": {
       "label": "Cast Return after hunt",
-      "tooltip": "After Treasure Hunt or Carrot Hunt finishes. Off while Loop Carrot Hunt is running between passes."
+      "tooltip": "On: cast Return after Treasure Hunt or Carrot Hunt finishes.\nOff: while Loop Carrot Hunt is running between passes."
     },
     "loop_carrot_hunt": {
       "label": "Loop Carrot Hunt",
       "tooltip": "Carrot Hunt only. Skip empty pads; after each Fortune Carrot, check every pad again. If a full pass finds none, keep checking until Stop or you run out of carrots."
     },
     "play_sound_on_hunt_complete": {
-      "label": "Play sound when Treasure Hunt finishes",
-      "tooltip": "Play an MP3 when Treasure Hunt finishes."
+      "label": "Play sound when Treasure Hunt finishes"
     },
     "hunt_complete_sound": {
       "label": "Hunt finished sound",
-      "tooltip": "Pick an MP3 from the plugin Sounds folder. Click a name to preview it.",
+      "tooltip": "MP3 from the plugin Sounds folder. Click a name to preview.",
       "open_folder": "Open sound folder — drop MP3s here to add your own."
     },
     "cast_treasure_sight_during_hunt": {
       "label": "Cast Treasure Sight during hunt",
-      "tooltip": "Cast Treasure Sight at the start, then every N locations. Stops early if Sight says nothing is left."
+      "tooltip": "Cast at the start, then every N locations. Stops early if Sight says nothing is left."
     },
     "treasure_sight_every_n_locations": {
       "label": "Treasure Sight every N locations",
@@ -54,24 +52,23 @@
       "tooltip": "Skip coffers whose nearby enemies are above this level. 50 = no limit."
     },
     "hunt_silver_chests_only": {
-      "label": "Silver coffers only",
-      "tooltip": "Treasure Hunt only visits silver coffers and skips bronze pads."
+      "label": "Silver coffers only"
     },
     "hunt_min_bronze_percent": {
       "label": "Min bronze fill to auto-hunt (%)",
-      "tooltip": "With Treasure Sight: auto-hunts (Illegal Mode + Mob Farmer timer) start when bronze fill is at least this % of 30 — or when silver meets its own %. Without Sight, Illegal Mode uses the built-in map and ignores this."
+      "tooltip": "With Treasure Sight: auto-hunts start when bronze fill is at least this % of 30 — or when silver meets its own %.\nWithout Sight: Illegal Mode uses the built-in map and ignores this."
     },
     "hunt_min_silver_percent": {
       "label": "Min silver fill to auto-hunt (%)",
-      "tooltip": "With Treasure Sight: auto-hunts start when silver fill is at least this % of 8 — or when bronze meets its own %. Without Sight, Illegal Mode uses the built-in map and ignores this."
+      "tooltip": "With Treasure Sight: auto-hunts start when silver fill is at least this % of 8 — or when bronze meets its own %.\nWithout Sight: Illegal Mode uses the built-in map and ignores this."
     },
     "empty_pad_trust_distance": {
       "label": "Empty pad check distance",
-      "tooltip": "How close (yalms) to walk before treating a coffer pad as empty and moving on. Lower = walk closer (safer when coffers load late); higher = skip from farther away."
+      "tooltip": "How close (yalms) before treating a pad as empty and moving on. Lower = walk closer (safer when coffers load late); higher = skip sooner."
     },
     "skip_unsafe_treasure_windows": {
       "label": "Skip dangerous weather / Ashkin",
-      "tooltip": "Pause Treasure Hunt on South Horn during Ashkin or other unsafe weather windows."
+      "tooltip": "Pause Treasure Hunt on South Horn during Ashkin or other unsafe weather."
     },
     "use_ninja_hide_on_dangerous_routes": {
       "label": "Ninja Hide near strong enemies",
@@ -79,23 +76,21 @@
     },
     "use_occult_sprint_while_hidden": {
       "label": "Occult Sprint while Hidden",
-      "tooltip": "While Hidden, switch to Phantom Thief and cast Occult Sprint for a big speed boost."
+      "tooltip": "While Hidden, switch to Phantom Thief and cast Occult Sprint."
     },
     "ninja_gearset_number": {
       "label": "Ninja gearset number",
-      "tooltip": "Gearset number that equips Ninja (as shown in the gearset list, starting at 1). 0 = do not swap — you must already be on Ninja."
+      "tooltip": "Gearset that equips Ninja (list number, starting at 1). 0 = do not swap — you must already be on Ninja."
     },
     "knowledge_hide_offset": {
       "label": "Hide vs enemies this many Knowledge above you",
-      "tooltip": "Hide when a nearby enemy's Knowledge is at least yours plus this. Higher = only stronger enemies. Negative = also weaker ones. Uses your real Knowledge, not the synced South Horn value. 0 = same Knowledge or higher."
+      "tooltip": "Hide when a nearby enemy's Knowledge is at least yours plus this. Higher = only stronger enemies. Negative = also weaker ones. Uses your real Knowledge, not synced South Horn. 0 = same Knowledge or higher."
     },
     "knowledge_threat_enter_distance": {
-      "label": "Start Hide within (yalms)",
-      "tooltip": "Begin Hide when a dangerous enemy is this close."
+      "label": "Start Hide within (yalms)"
     },
     "knowledge_threat_exit_distance": {
-      "label": "Keep Hide until farther than (yalms)",
-      "tooltip": "Once Hide is on, keep it until enemies are farther than this."
+      "label": "Keep Hide until farther than (yalms)"
     }
   }
 }

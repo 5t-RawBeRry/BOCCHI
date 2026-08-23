@@ -87,6 +87,8 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<NoOpFilter<UILanguage>>();
         services.AddSingleton<CombatAutorotationDisplay>();
         services.AddSingleton<CombatAutorotationFilter>();
+        services.AddSingleton<AutoRepairMethodDisplay>();
+        services.AddSingleton<NoOpFilter<AutoRepairMethod>>();
         services.AddSingleton<IFieldRenderer<TriageRaiseJobAttribute>, TriageRaiseJobRenderer>();
         services.AddSingleton<IFieldRenderer<BossModPresetOptionsAttribute>, BossModPresetOptionsRenderer>();
         services.AddSingleton<IFieldRenderer<FarmSpotListAttribute>, FarmSpotListRenderer>();
@@ -116,6 +118,7 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
 
         services.AddSingleton<UnmountStep>();
         services.AddSingleton<RepairStep>();
+        services.AddSingleton<NpcRepairStep>();
         services.AddSingleton<IRepairService, RepairService>();
         services.AddSingleton<AethernetTeleportChain>();
 #if DEBUG

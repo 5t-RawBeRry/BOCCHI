@@ -411,7 +411,7 @@
         "Id": 53,
         "PreferredAethernetId": null,
         "CombatRadius": 0,
-        "AreaShape": 0
+        "AreaShape": 1
       }
     },
     "967a1ddb-f508-4bd2-97ab-d229174f713e": {

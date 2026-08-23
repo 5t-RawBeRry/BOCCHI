@@ -19,7 +19,7 @@ public enum ActivityAreaShape
 /// <param name="PreferredAethernetId">PlaceNameId of preferred inbound shard, if any.</param>
 /// <param name="AreaShape">
 ///     Circle (default) or axis-aligned square. Wins over LGB TriggerBoxShape when a CE row
-///     exists (only A Beast Unleashed is authored Square today).
+///     exists (authored squares today: A Beast Unleashed, Cursed Resurgence).
 /// </param>
 /// <param name="StandRadius">
 ///     Standable area when smaller than the registration rim. Null uses the live LGB size.

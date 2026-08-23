@@ -32,8 +32,10 @@ public sealed class BossModPresetOptionsRenderer(ICombatRotationSession session,
         string fieldKey = $"config.automator.fields.{prop.Name.ToSnakeCase()}";
         bool changed = false;
         bool recreate = false;
+        bool updateAuto = config.UpdateBossModPresetsAutomatically;
 
-        using (ImRaii.Disabled(!session.BossModPresetsAvailable))
+        // Auto-update already rewrites presets when settings change — button is redundant then.
+        using (ImRaii.Disabled(!session.BossModPresetsAvailable || updateAuto))
         {
             if (ImGui.Button(translator.T($"{fieldKey}.button")))
             {
@@ -43,10 +45,12 @@ public sealed class BossModPresetOptionsRenderer(ICombatRotationSession session,
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            Ocelot.Extensions.PropertyInfoExtensions.DrawWrappedTooltip(translator.T($"{fieldKey}.button_tooltip"));
+            string buttonTip = updateAuto
+                ? translator.T($"{fieldKey}.button_tooltip_auto_on")
+                : translator.T($"{fieldKey}.button_tooltip");
+            Ocelot.Extensions.PropertyInfoExtensions.DrawWrappedTooltip(buttonTip);
         }
 
-        var updateAuto = config.UpdateBossModPresetsAutomatically;
         if (ImGui.Checkbox(prop.Label(owner, translator), ref updateAuto))
         {
             config.UpdateBossModPresetsAutomatically = updateAuto;

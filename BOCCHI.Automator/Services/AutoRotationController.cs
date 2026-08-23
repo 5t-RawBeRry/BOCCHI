@@ -71,7 +71,11 @@ public class AutoRotationController(
     /// </summary>
     public void DisableAi()
     {
+        // Keep AI on only while In FATE / In CE owns the character (travel suspended).
+        // A leftover CE EventId alone used to block Disable — Cursed Concern tagged travellers
+        // and left RSR/BMR fighting trash while mounted (#200).
         if (!CombatSuppressedByActivity
+            && memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _)
             && (criticalEncounters.IsInCriticalEncounter() || fates.IsInFate()))
         {
             return;
@@ -102,6 +106,13 @@ public class AutoRotationController(
         if (memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory _)
             || memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory _)
             || memory.TryRemember<WaitingForPotFateMemory>(out WaitingForPotFateMemory _))
+        {
+            return;
+        }
+
+        // EventId / IsInFate alone is not enough — only arm after In FATE / In CE entered
+        // (SuspendTravel). Otherwise a CE you ride past keeps BOCCHI AI CE + RSR on (#200).
+        if (!memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _))
         {
             return;
         }

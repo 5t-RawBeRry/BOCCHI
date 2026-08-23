@@ -132,7 +132,7 @@ public class NorthHorn
         new(63, new(500f, 56f, -310f)), // Accept No Imitators
         new(62, new(-82f, 12f, 485f)), // Ahead of the Competition
         new(59, new(807f, 61f, -562f)), // Appalling Behavior
-        new(53, new(-688f, 90f, 150f)), // Cursed Resurgence
+        new(53, new(-688f, 90f, 150f), AreaShape: ActivityAreaShape.Square), // Cursed Resurgence
         new(57, new(224f, 52f, -860f)), // Dark Artistry
         new(50, new(-215f, 18f, -65f)), // Doubled Trouble
         new(58, new(-390f, 68f, 700f)), // Familiar Tactics

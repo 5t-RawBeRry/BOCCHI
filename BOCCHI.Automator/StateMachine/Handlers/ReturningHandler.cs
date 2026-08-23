@@ -7,6 +7,7 @@ using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
+using BOCCHI.Treasure.Services;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
@@ -32,7 +33,8 @@ public class ReturningHandler
     ICriticalEncounterRepository criticalEncounters,
     IPlayer player,
     IGateService gate,
-    AutoRotationController autoRotation
+    AutoRotationController autoRotation,
+    ITreasureHunter hunter
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Returning)
 {
     public override StatePriority GetScore()
@@ -44,6 +46,13 @@ public class ReturningHandler
 
         // Treasure hunt is the idle filler in Pots & Treasure — never Return-to-camp.
         if (automator.IsPotsAndTreasure)
+        {
+            return StatePriority.Never;
+        }
+
+        // Map-hunt filler (no Treasure Sight): hunt owns Return / routing. Automator stays awake
+        // so FATE/CE can interrupt, but must not cast Return in parallel with the hunt.
+        if (IsIllegalModeMapHuntFillerActive())
         {
             return StatePriority.Never;
         }
@@ -222,6 +231,17 @@ public class ReturningHandler
         }
 
         return ReturnYesNo.IsReturnConfirmation(&yesno->AtkUnitBase);
+    }
+
+    private bool IsIllegalModeMapHuntFillerActive()
+    {
+        if (hunter.ManagedByIllegalModeFiller && hunter.Running)
+        {
+            return true;
+        }
+
+        return memory.TryRemember<AutomaticTreasureSurveyMemory>(out AutomaticTreasureSurveyMemory survey)
+               && survey.PendingMapHunt;
     }
 
     private bool IsNearActiveFateGoal()
