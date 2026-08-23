@@ -50,16 +50,22 @@ public class ReturningHandler
             return StatePriority.Never;
         }
 
-        // Map-hunt filler (no Treasure Sight): hunt owns Return / routing while actively
-        // moving. When paused for a FATE/CE, allow Automator Return (e.g. camp for buffs)
-        // so Choosing is not stuck Idle away from crystals.
-        if (IsIllegalModeMapHuntFillerActive())
+        // Return while dead accepts the death prompt and force-respawns.
+        if (conditions[ConditionFlag.Unconscious])
         {
             return StatePriority.Never;
         }
 
-        // Return while dead accepts the death prompt and force-respawns.
-        if (conditions[ConditionFlag.Unconscious])
+        // Pathfinding already dequeued Return — this latch must win even if a map hunt was
+        // just latched, or Teleport starts from the field and Lifestream fires short of camp.
+        if (memory.TryRemember<ReturningStateMemory>(out ReturningStateMemory _))
+        {
+            return StatePriority.VeryHigh;
+        }
+
+        // Map-hunt filler (no Treasure Sight): hunt owns opportunistic Return / routing while
+        // actively moving. When paused for a FATE/CE, allow Automator Return (e.g. camp for buffs).
+        if (IsIllegalModeMapHuntFillerActive())
         {
             return StatePriority.Never;
         }
@@ -69,11 +75,6 @@ public class ReturningHandler
             || memory.TryRemember<PendingPotChestFarmMemory>(out PendingPotChestFarmMemory _))
         {
             return StatePriority.Never;
-        }
-
-        if (memory.TryRemember<ReturningStateMemory>(out ReturningStateMemory _))
-        {
-            return StatePriority.VeryHigh;
         }
 
         // After activity, get to camp for Treasure Sight before the next CE/FATE.

@@ -229,5 +229,5 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
     }
 
     private static float DefaultLifestreamReadyRadius() =>
-        MathF.Max(2f, AethernetData.DefaultDeadRadius) + AethernetNavigation.PathfindArrivalRadius;
+        MathF.Max(2f, AethernetData.DefaultDeadRadius);
 }
