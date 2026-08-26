@@ -297,7 +297,6 @@ public static class NavigationApproach
             if (geometry?.TryResolveForAuthored(
                     (ushort)candidate.Id,
                     candidate.Position,
-                    out _,
                     out _) is not { Radius: > 0 } area)
             {
                 continue;

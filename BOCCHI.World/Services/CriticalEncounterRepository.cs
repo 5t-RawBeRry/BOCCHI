@@ -126,7 +126,6 @@ public class CriticalEncounterRepository
             if (geometry.TryResolveForAuthored(
                     criticalEncounter.Id.Value,
                     criticalEncounter.Position,
-                    out _,
                     out _) is not { Radius: > 0 } area)
             {
                 continue;

@@ -205,13 +205,6 @@ public class TreasureHunterService
 
             planningRoute = false;
             List<uint> validNodes = GetValidNodesForNextPlan();
-            ZoneId zoneId = zones.GetZone().ZoneId;
-            if (pendingPreferStartNode is uint noPeel
-                && TreasureHuntPathOverrides.ShouldNotPeel(zoneId, noPeel))
-            {
-                pendingPreferStartNode = null;
-            }
-
             if (pendingPreferStartNode is uint preferLatch
                 && !validNodes.Contains(preferLatch)
                 && layoutById.ContainsKey(preferLatch))
@@ -865,9 +858,7 @@ public class TreasureHunterService
                 continue;
             }
 
-            ZoneId zoneId = zones.GetZone().ZoneId;
-            if (TreasureHuntPathOverrides.IsUnreachable(zoneId, id)
-                || TreasureHuntPathOverrides.ShouldNotPeel(zoneId, id))
+            if (TreasureHuntPathOverrides.IsUnreachable(zones.GetZone().ZoneId, id))
             {
                 continue;
             }
@@ -1021,11 +1012,6 @@ public class TreasureHunterService
         }
 
         uint nearbyId = nearby[0];
-        if (TreasureHuntPathOverrides.ShouldNotPeel(zones.GetZone().ZoneId, nearbyId))
-        {
-            return false;
-        }
-
         if (!TryGetLayout(nearbyId, out TreasureLayoutDatum layout))
         {
             return false;
@@ -1120,9 +1106,6 @@ public class TreasureHunterService
             ids.Remove(current.NodeId);
         }
 
-        ZoneId zoneId = zones.GetZone().ZoneId;
-        ids.RemoveWhere(id => TreasureHuntPathOverrides.ShouldNotPeel(zoneId, id));
-
         int maxLevel = maxLevelOverrideForNextRun ?? config.HuntMaxLevel;
         List<TreasureData> authored = zones.GetZone().GetTreasureData();
         foreach (TreasureLayoutDatum layout in layoutTreasure)
@@ -1134,8 +1117,7 @@ public class TreasureHunterService
 
             if (!MatchesHuntCofferFilter(layout.ModelId)
                 || IsLayoutCofferOpened(layout.Id)
-                || stuckSkippedNodeIds.Contains(layout.Id)
-                || TreasureHuntPathOverrides.ShouldNotPeel(zoneId, layout.Id))
+                || stuckSkippedNodeIds.Contains(layout.Id))
             {
                 continue;
             }

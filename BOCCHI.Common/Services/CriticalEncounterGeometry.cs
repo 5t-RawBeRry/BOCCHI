@@ -1,5 +1,4 @@
 using BOCCHI.Common.Data.CriticalEncounters;
-using BOCCHI.Common.Data.Zones.Graph;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using Lumina.Data.Files;
@@ -38,24 +37,6 @@ public sealed class CriticalEncounterGeometry(
     private readonly Dictionary<uint, CriticalEncounterArea> cache = [];
 
     private ushort cachedTerritory;
-
-    public unsafe CriticalEncounterArea? TryGet(ushort dynamicEventId) =>
-        TryGet(dynamicEventId, out _);
-
-    /// <summary>Unpadded registration size from LGB, or false when it cannot be resolved.</summary>
-    public bool TryGetCombat(ushort dynamicEventId, out float radius, out ActivityAreaShape shape)
-    {
-        if (TryGet(dynamicEventId) is { Radius: > 0 } area)
-        {
-            radius = area.Radius;
-            shape = area.IsSquare ? ActivityAreaShape.Square : ActivityAreaShape.Circle;
-            return true;
-        }
-
-        radius = 0f;
-        shape = ActivityAreaShape.Circle;
-        return false;
-    }
 
     /// <param name="detail">Why lookup succeeded or failed — for <c>/bocchi debug ce</c>.</param>
     public unsafe CriticalEncounterArea? TryGet(ushort dynamicEventId, out string detail)
@@ -188,10 +169,8 @@ public sealed class CriticalEncounterGeometry(
     public CriticalEncounterArea? TryResolveForAuthored(
         ushort dynamicEventId,
         Vector3 authoredStaging,
-        out string detail,
-        out bool usedAlternate)
+        out string detail)
     {
-        usedAlternate = false;
         CriticalEncounterArea? raw = TryGet(dynamicEventId, out string rawDetail);
         if (raw is not { Radius: > 0 } area)
         {
@@ -213,35 +192,9 @@ public sealed class CriticalEncounterGeometry(
             return area;
         }
 
-        if (TryFindNearestValidMapRange(authoredStaging, out CriticalEncounterArea alt, out string altDetail))
-        {
-            usedAlternate = true;
-            detail = $"alternate {altDetail} (rejected {rawDetail})";
-            logger.Debug(
-                "CE {Id}: rejected MapRange ({Raw}); using ground alternate centre {Center:F0} radius {Radius:F1}y",
-                dynamicEventId,
-                rawDetail,
-                alt.Center,
-                alt.Radius);
-            return alt;
-        }
-
-        detail = $"rejected {rawDetail}; no ground alternate within {AlternateMapRangeSearchRadius:0}y";
-        return area;
-    }
-
-    private bool TryFindNearestValidMapRange(
-        Vector3 authoredStaging,
-        out CriticalEncounterArea best,
-        out string detail)
-    {
-        best = default;
-        detail = "";
         float bestDist = float.MaxValue;
-        string bestPath = "";
-        uint bestId = 0;
-        bool found = false;
-
+        CriticalEncounterArea? best = null;
+        string bestLabel = "";
         foreach ((string path, LayerCommon.InstanceObject instance, LayerCommon.MapRangeInstanceObject range) in LoadMapRanges())
         {
             CriticalEncounterArea candidate = Build(instance, range);
@@ -251,8 +204,8 @@ public sealed class CriticalEncounterGeometry(
                 candidate.Radius,
                 out _,
                 out _,
-                out bool rejected);
-            if (rejected)
+                out bool altRejected);
+            if (altRejected)
             {
                 continue;
             }
@@ -265,18 +218,23 @@ public sealed class CriticalEncounterGeometry(
 
             bestDist = dist;
             best = candidate;
-            bestPath = path;
-            bestId = instance.InstanceId;
-            found = true;
+            bestLabel = $"MapRange {instance.InstanceId} at {dist:0.#}y in {path}";
         }
 
-        if (!found)
+        if (best is { } alt)
         {
-            return false;
+            detail = $"alternate {bestLabel} (rejected {rawDetail})";
+            logger.Debug(
+                "CE {Id}: rejected MapRange ({Raw}); using ground alternate centre {Center:F0} radius {Radius:F1}y",
+                dynamicEventId,
+                rawDetail,
+                alt.Center,
+                alt.Radius);
+            return alt;
         }
 
-        detail = $"MapRange {bestId} at {bestDist:0.#}y in {bestPath}";
-        return true;
+        detail = $"rejected {rawDetail}; no ground alternate within {AlternateMapRangeSearchRadius:0}y";
+        return area;
     }
 
     private List<(string Path, LayerCommon.InstanceObject Instance, LayerCommon.MapRangeInstanceObject Range)> LoadMapRanges()

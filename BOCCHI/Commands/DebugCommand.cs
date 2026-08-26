@@ -128,8 +128,7 @@ public unsafe class DebugCommand
         CriticalEncounterArea? lgbMaybe = geometry.TryResolveForAuthored(
             (ushort)authored.Id,
             authored.Position,
-            out string lgbDetail,
-            out bool usedAlternate);
+            out string lgbDetail);
         bool haveLgb = lgbMaybe is { Radius: > 0 };
         CriticalEncounterArea lgbArea = haveLgb ? lgbMaybe!.Value : default;
         ActivityAreaShape shape = haveLgb
@@ -210,10 +209,10 @@ public unsafe class DebugCommand
                 red,
                 waitBoundary,
                 sanitized
-                    ? usedAlternate
+                    ? lgbDetail.StartsWith("alternate", StringComparison.Ordinal)
                         ? " (sanitized; ground alternate MapRange)"
                         : " (sanitized LGB)"
-                    : usedAlternate
+                    : lgbDetail.StartsWith("alternate", StringComparison.Ordinal)
                         ? " (ground alternate MapRange)"
                         : ""));
         BocchiChat.Print(

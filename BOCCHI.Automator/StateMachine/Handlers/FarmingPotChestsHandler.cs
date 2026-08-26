@@ -186,18 +186,37 @@ public class FarmingPotChestsHandler
         {
             // Travel chains block the handler for a long time — a compass hint that lands mid-walk
             // would otherwise be applied from the arrival pad, not from where Magical Elixir was used.
-            if (TryInterruptTravelForPendingHint(farm))
+            bool interrupt = false;
+            if (farm.Mode == PotChestFarmMode.Smart
+                && farm.Phase is (PotChestFarmPhase.SearchingCandidates
+                    or PotChestFarmPhase.ElixirAtCenter
+                    or PotChestFarmPhase.OpeningReveal)
+                && hints.TryGetEventSince(farm.HintRevisionBaseline, out PotTreasureHintEvent travelHint)
+                && travelHint.Kind == PotTreasureHintKind.Hint)
             {
-                chainManager.CancelAll();
-                pathfinder.Stop();
-                activeChain = null;
-                ClearTravelPlan();
-                ResetApproachWatch();
+                farm.HintRevisionBaseline = travelHint.Revision;
+                if (TryNarrowByHint(farm, travelHint)
+                    && farm.Phase == PotChestFarmPhase.OpeningReveal)
+                {
+                    farm.Phase = PotChestFarmPhase.SearchingCandidates;
+                    farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
+                    farm.SettledAtUtc = DateTimeOffset.MinValue;
+                }
+
+                logger.Debug("Pot treasure: compass hint during travel — cancelling path to re-route");
+                interrupt = true;
             }
-            else
+
+            if (!interrupt)
             {
                 return;
             }
+
+            chainManager.CancelAll();
+            pathfinder.Stop();
+            activeChain = null;
+            ClearTravelPlan();
+            ResetApproachWatch();
         }
 
         activeChain = null;
@@ -1225,42 +1244,6 @@ public class FarmingPotChestsHandler
         return true;
     }
 
-    /// <summary>
-    ///     While a travel chain owns the handler, still consume a pending compass hint so we do not
-    ///     finish walking to the wrong pad and re-read the bearing from there.
-    /// </summary>
-    private bool TryInterruptTravelForPendingHint(PotChestFarmMemory farm)
-    {
-        if (farm.Mode != PotChestFarmMode.Smart
-            || farm.Phase is not (PotChestFarmPhase.SearchingCandidates or PotChestFarmPhase.ElixirAtCenter
-                or PotChestFarmPhase.OpeningReveal))
-        {
-            return false;
-        }
-
-        if (!hints.TryGetEventSince(farm.HintRevisionBaseline, out PotTreasureHintEvent evt)
-            || evt.Kind != PotTreasureHintKind.Hint)
-        {
-            return false;
-        }
-
-        farm.HintRevisionBaseline = evt.Revision;
-        if (!TryNarrowByHint(farm, evt))
-        {
-            return true;
-        }
-
-        if (farm.Phase == PotChestFarmPhase.OpeningReveal)
-        {
-            farm.Phase = PotChestFarmPhase.SearchingCandidates;
-            farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
-            farm.SettledAtUtc = DateTimeOffset.MinValue;
-        }
-
-        logger.Debug("Pot treasure: compass hint during travel — cancelling path to re-route");
-        return true;
-    }
-
     /// <summary>Second-chance chests use reroll pads, not the pot FATE spots (#188).</summary>
     private void SwitchToRerollPool(PotChestFarmMemory farm)
     {
@@ -1445,9 +1428,6 @@ public class FarmingPotChestsHandler
                 .Select(t => t.Position!.Value));
     }
 
-    private bool IsOnAuthoredSpot(Vector3 position) =>
-        PotTreasureFilter.IsOnAuthoredPotSpot(position, authoredSpots, foreignSpots);
-
     /// <summary>Rebuild <see cref="tickChests"/> once per tick for reveal matching.</summary>
     private void RefreshTickChests(PotChestFarmMemory farm)
     {
@@ -1478,7 +1458,7 @@ public class FarmingPotChestsHandler
 
             // Safety net for a reveal id we do not know yet: a coffer sitting on an authored pot
             // spot, and nearer that than any hunt coffer, is a reveal even if its BaseId is new.
-            if (IsOnAuthoredSpot(obj.Position))
+            if (PotTreasureFilter.IsOnAuthoredPotSpot(obj.Position, authoredSpots, foreignSpots))
             {
                 tickReveals.Add(obj);
                 if (EzThrottler.Throttle("PotChestFarm::UnknownRevealId", 5000))

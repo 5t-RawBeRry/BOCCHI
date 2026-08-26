@@ -155,8 +155,7 @@ public class PathCalculator
             if (geometry.TryResolveForAuthored(
                     ceGoalForRadius.id.Value,
                     authoredStaging,
-                    out string resolveDetail,
-                    out bool usedAlternate) is { Radius: > 0 } area)
+                    out string resolveDetail) is { Radius: > 0 } area)
             {
                 ceShape = NavigationConstants.ResolveCriticalEncounterShape(
                     zone,
@@ -181,13 +180,9 @@ public class PathCalculator
                     ceShape,
                     ceCombatRadius,
                     ceWaitCenter.Value,
-                    rejected
-                        ? usedAlternate
-                            ? $", alternate MapRange ({resolveDetail})"
-                            : $", bad MapRange ignored ({resolveDetail})"
-                        : usedAlternate
-                            ? $", alternate MapRange ({resolveDetail})"
-                            : "");
+                    rejected || resolveDetail.StartsWith("alternate", StringComparison.Ordinal)
+                        ? $", {resolveDetail}"
+                        : "");
             }
         }
 

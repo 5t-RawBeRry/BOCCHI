@@ -791,14 +791,21 @@ public sealed class CarrotHunterService
     {
         walkVias.Clear();
         walkViaIndex = 0;
-        if (!CarrotHuntPathOverrides.TryGetApproach(zones.GetZone().ZoneId, authored.Id, out IReadOnlyList<Vector3> vias))
+
+        // West Suspended Masonry tip (~2.4, 35.9): vnav has no walkable jump link, so it routes
+        // the long way around. Same on-mesh via as treasure 2061 (~3.4, 34.2).
+        if (zones.GetZone().ZoneId == ZoneId.NorthHorn && authored.Id == 25)
+        {
+            walkVias.Add(new(-904f, 157.8f, 636f));
+        }
+
+        if (walkVias.Count == 0)
         {
             return;
         }
 
-        walkVias.AddRange(vias);
         SkipPassedWalkVias(authored.Position);
-        if (walkVias.Count > 0 && walkViaIndex < walkVias.Count)
+        if (walkViaIndex < walkVias.Count)
         {
             log.Debug(
                 "Carrot hunt: {Count} approach via(s) for authored {Id}",

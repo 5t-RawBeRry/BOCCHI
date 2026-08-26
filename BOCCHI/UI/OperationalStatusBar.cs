@@ -6,7 +6,6 @@ using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.UI;
-using BOCCHI.MobFarmer.Data;
 using BOCCHI.MobFarmer.Services;
 using BOCCHI.Treasure;
 using BOCCHI.Treasure.Services;
@@ -126,7 +125,7 @@ public class OperationalStatusBar
             {
                 string detail = Farmer.Suspended
                     ? translator.T($".automation.mob_farmer.yield_reasons.{Farmer.YieldReason.ToString().ToSnakeCase()}")
-                    : FormatFarmerPhase(Farmer.Phase);
+                    : translator.T($".status.farmer_phases.{Farmer.Phase.ToString().ToSnakeCase()}");
                 if (!Farmer.Suspended && Farmer.CurrentSpotName is { } spot)
                 {
                     detail = $"{detail} · {spot}";
@@ -264,7 +263,4 @@ public class OperationalStatusBar
 
     private string FormatAutomatorState(AutomatorState state) =>
         translator.T($".status.automator_states.{state.ToString().ToSnakeCase()}");
-
-    private string FormatFarmerPhase(FarmerPhase phase) =>
-        translator.T($".status.farmer_phases.{phase.ToString().ToSnakeCase()}");
 }

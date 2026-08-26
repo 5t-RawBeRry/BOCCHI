@@ -27,7 +27,6 @@ public class CriticalEncounterFactory(IZoneProvider zones, CriticalEncounterGeom
         if (geometry.TryResolveForAuthored(
                 ev.DynamicEventId,
                 fallback,
-                out _,
                 out _) is { Radius: > 0 } area)
         {
             shape = NavigationConstants.ResolveCriticalEncounterShape(authored, area.IsSquare);

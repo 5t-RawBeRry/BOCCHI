@@ -327,9 +327,15 @@ public class Automator
                     TryStartPotChestFarm(fateGoal.id);
                 }
 
+                string goalLabel = goal.Goal.GoalType switch
+                {
+                    FateGoal(var id) => $"FATE {id.Value}",
+                    CriticalEncounterGoal(var id) => $"CE {id.Value}",
+                    _ => goal.Goal.Describe(),
+                };
                 logger.Debug(
                     "Goal no longer valid ({Goal}) — aborting pathfinding",
-                    DescribeGoal(goal.Goal));
+                    goalLabel);
                 memory.Forget<GoalMemory>();
                 IllegalModeActivityWork.ForgetTravelLatches(memory);
                 SoftStopPathfinding();
@@ -534,6 +540,7 @@ public class Automator
             .FirstOrDefault();
     }
 
+    /// <summary>
     /// Drop next-goal / Return travel so FarmingPotChests can open reveals.
     /// Otherwise Choosing during Pending + Pathfinding (High) preempts the farm.
     /// </summary>
@@ -545,12 +552,4 @@ public class Automator
         SoftStopPathfinding();
         memory.TryAdd(farm);
     }
-
-    private static string DescribeGoal(IGoal goal) =>
-        goal.GoalType switch
-        {
-            FateGoal(var id) => $"FATE {id.Value}",
-            CriticalEncounterGoal(var id) => $"CE {id.Value}",
-            var _ => goal.Describe()
-        };
 }

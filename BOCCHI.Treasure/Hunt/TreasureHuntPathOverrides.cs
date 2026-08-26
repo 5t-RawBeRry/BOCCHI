@@ -20,16 +20,8 @@ public static class TreasureHuntPathOverrides
         (ZoneId.NorthHorn, 2072u),
     ];
 
-    /// <summary>
-    ///     Visit on the authored route only — peel-off takes a shortcut that falls (#185).
-    /// </summary>
-    private static readonly HashSet<(ZoneId Zone, uint NodeId)> NoPeelNodes = [];
-
     /// <summary>True when this pad is knowingly unreachable and must be left out of the route.</summary>
     public static bool IsUnreachable(ZoneId zone, uint nodeId) => UnreachableNodes.Contains((zone, nodeId));
-
-    /// <summary>True when radar must not divert onto this pad; the authored walk still visits it.</summary>
-    public static bool ShouldNotPeel(ZoneId zone, uint nodeId) => NoPeelNodes.Contains((zone, nodeId));
 
     /// <summary>Reach before opening the coffer.</summary>
     private static readonly Dictionary<(ZoneId Zone, uint NodeId), Vector3[]> ApproachByNode = new()
