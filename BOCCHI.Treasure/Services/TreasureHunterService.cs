@@ -69,6 +69,12 @@ public class TreasureHunterService
     /// <summary>Start open attempts once this close to the coffer (yalms).</summary>
     private const float CofferOpenAttemptRadius = 75f;
 
+    /// <summary>
+    ///     After FATE/CE, if the paused resume pad is farther than this, replan from the player
+    ///     instead of walking back across the zone.
+    /// </summary>
+    private const float ResumeNearPlayerMinDistance = 150f;
+
     /// <summary>How long to wait for WideText after casting Treasure Sight.</summary>
     private static readonly TimeSpan SightCountWait = TimeSpan.FromSeconds(8);
 
@@ -122,6 +128,12 @@ public class TreasureHunterService
 
     /// <summary>Force this pad as TSP start on the next plan (Nearby divert / reclaim).</summary>
     private uint? pendingPreferStartNode;
+
+    /// <summary>
+    ///     Next plan ignores LastCheckedNodeId so the tour starts at the nearest remaining pad
+    ///     (Illegal Mode map hunt after a distant FATE/CE).
+    /// </summary>
+    private bool pendingRepathNearPlayer;
 
     /// <summary>South Horn session start: prepend Return before first walk (cleared after first plan).</summary>
     private bool pendingSessionCampReturn;
@@ -237,8 +249,15 @@ public class TreasureHunterService
             uint? entryNodeId = pendingEntryNodeId;
             pendingEntryNodeId = null;
 
-            // Peel-off: stay in the current segment; need rotation entry before filtering prefix.
-            string? currentSegment = TryGetCurrentSegment(validNodes, entryNodeId);
+            // After a distant FATE/CE: ignore authored continue-after + segment peel so we start
+            // at the nearest remaining pad to the player instead of walking back across the map.
+            bool repathNearPlayer = pendingRepathNearPlayer;
+            pendingRepathNearPlayer = false;
+            uint? continueAfter = repathNearPlayer ? null : LastCheckedNodeId;
+
+            string? currentSegment = repathNearPlayer
+                ? null
+                : TryGetCurrentSegment(validNodes, entryNodeId);
             if (currentSegment != null)
             {
                 nearbyPrefix = nearbyPrefix
@@ -249,7 +268,7 @@ public class TreasureHunterService
 
             steps.AddRange(
                 pathPlanner
-                    .FindPath(player.Position, validNodes, nearbyPrefix, LastCheckedNodeId, entryNodeId)
+                    .FindPath(player.Position, validNodes, nearbyPrefix, continueAfter, entryNodeId)
                     .GetAwaiter()
                     .GetResult());
 
@@ -512,6 +531,7 @@ public class TreasureHunterService
         locationsSinceLastSight = 0;
         ninjaHideRequired = false;
         pendingPreferStartNode = null;
+        pendingRepathNearPlayer = false;
         pendingSessionCampReturn = false;
         pendingEntryNodeId = null;
         authoredNodeSegments.Clear();
@@ -613,6 +633,43 @@ public class TreasureHunterService
         {
             stopwatch.Start();
         }
+    }
+
+    public void ResumeNearPlayer()
+    {
+        if (!Running || !Paused)
+        {
+            return;
+        }
+
+        Paused = false;
+        if (!stopwatch.IsRunning)
+        {
+            stopwatch.Start();
+        }
+
+        if (!TryGetResumeCoffer(out uint resumeId, out Vector3 resumePos))
+        {
+            return;
+        }
+
+        float dist = player.Position.Distance2D(resumePos);
+        if (dist <= ResumeNearPlayerMinDistance)
+        {
+            return;
+        }
+
+        pendingRepathNearPlayer = true;
+        if (!RecalculateRoute())
+        {
+            pendingRepathNearPlayer = false;
+            return;
+        }
+
+        log.Info(
+            "Treasure hunt: resume pad {NodeId} is {Dist:F0}y away — repathing from player",
+            resumeId,
+            dist);
     }
 
     public HuntPathfinderStep? GetCurrentStep()
@@ -2464,6 +2521,7 @@ public class TreasureHunterService
         locationsSinceLastSight = 0;
         ninjaHideRequired = false;
         pendingPreferStartNode = null;
+        pendingRepathNearPlayer = false;
         pendingSessionCampReturn = false;
         pendingEntryNodeId = null;
         authoredNodeSegments.Clear();

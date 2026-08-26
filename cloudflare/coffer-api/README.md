@@ -7,6 +7,15 @@ Unlike AOCC’s pot-reveal-only filter, this API accepts **any positive coffer `
 
 Also hosts **pot-cycle sync** (`/api/v1/pot-cycles`) so BOCCHI clients can share Magic Pot spawn anchors per instance, and **carrot location sync** (`/api/v1/carrot-locations`) for crowdsourced chewed-carrot pads used for mesh-baked Carrot Hunt paths.
 
+## Paid-plan behaviour
+
+- Cron every **5 minutes** (processors + pot-cycle prune).
+- Coffer/carrot clustering processes up to **500** pending rows per run.
+- Pot-cycle prune deletes up to **25k × 20 rounds** per cron (no free-tier write cap).
+- Unique index on `(instance_key, pot_fate_id, spawn_at_unix)` + `INSERT OR IGNORE`.
+- Public catalogs (`/api/v1/candidates`, `/api/v1/carrot-locations`) use edge Cache API + `Cache-Control: max-age=300`.
+- Separate IP rate limits: **60/min** observations & carrots, **120/min** pot-cycle GET/POST.
+
 ## Local setup
 
 ```powershell

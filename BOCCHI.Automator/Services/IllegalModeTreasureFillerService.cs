@@ -402,7 +402,17 @@ public class IllegalModeTreasureFillerService
 
         if (hunter.Paused)
         {
-            hunter.Resume();
+            // Map hunt (no Sight): after a distant FATE/CE, continue from nearby remaining pads
+            // instead of walking back to where the route was paused.
+            if (HasTreasureSight)
+            {
+                hunter.Resume();
+            }
+            else
+            {
+                hunter.ResumeNearPlayer();
+            }
+
             hadFillerHunt = true;
             logger.Debug("Illegal Mode: resumed automatic treasure hunt");
         }
