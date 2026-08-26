@@ -1,3 +1,4 @@
+using BOCCHI.Common.Data.CriticalEncounters;
 using BOCCHI.Common.Data.Zones.Graph;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
@@ -171,6 +172,111 @@ public sealed class CriticalEncounterGeometry(
             : $"id live={liveRangeId} excel={excelRangeId} not in {ranges.Count} MapRange(s)";
         logger.Warning("CE {Id}: {Detail}", dynamicEventId, detail);
         return null;
+    }
+
+    /// <summary>
+    ///     How far from authored staging to search for a replacement MapRange when the ID match is
+    ///     an elevated / oversized volume (Eternal Watch).
+    /// </summary>
+    private const float AlternateMapRangeSearchRadius = 80f;
+
+    /// <summary>
+    ///     Resolve the MapRange BOCCHI should wait in: prefer the event's LGB id, but when that
+    ///     volume fails sanitization (huge elevated Eternal Watch MapRange), pick a ground-sized
+    ///     MapRange near authored staging instead of the generic 40y fallback alone.
+    /// </summary>
+    public CriticalEncounterArea? TryResolveForAuthored(
+        ushort dynamicEventId,
+        Vector3 authoredStaging,
+        out string detail,
+        out bool usedAlternate)
+    {
+        usedAlternate = false;
+        CriticalEncounterArea? raw = TryGet(dynamicEventId, out string rawDetail);
+        if (raw is not { Radius: > 0 } area)
+        {
+            detail = rawDetail;
+            return null;
+        }
+
+        CriticalEncounter.SanitizeRegistration(
+            authoredStaging,
+            area.Center,
+            area.Radius,
+            out _,
+            out _,
+            out bool rejected);
+
+        if (!rejected || float.IsNaN(authoredStaging.X))
+        {
+            detail = rawDetail;
+            return area;
+        }
+
+        if (TryFindNearestValidMapRange(authoredStaging, out CriticalEncounterArea alt, out string altDetail))
+        {
+            usedAlternate = true;
+            detail = $"alternate {altDetail} (rejected {rawDetail})";
+            logger.Debug(
+                "CE {Id}: rejected MapRange ({Raw}); using ground alternate centre {Center:F0} radius {Radius:F1}y",
+                dynamicEventId,
+                rawDetail,
+                alt.Center,
+                alt.Radius);
+            return alt;
+        }
+
+        detail = $"rejected {rawDetail}; no ground alternate within {AlternateMapRangeSearchRadius:0}y";
+        return area;
+    }
+
+    private bool TryFindNearestValidMapRange(
+        Vector3 authoredStaging,
+        out CriticalEncounterArea best,
+        out string detail)
+    {
+        best = default;
+        detail = "";
+        float bestDist = float.MaxValue;
+        string bestPath = "";
+        uint bestId = 0;
+        bool found = false;
+
+        foreach ((string path, LayerCommon.InstanceObject instance, LayerCommon.MapRangeInstanceObject range) in LoadMapRanges())
+        {
+            CriticalEncounterArea candidate = Build(instance, range);
+            CriticalEncounter.SanitizeRegistration(
+                authoredStaging,
+                candidate.Center,
+                candidate.Radius,
+                out _,
+                out _,
+                out bool rejected);
+            if (rejected)
+            {
+                continue;
+            }
+
+            float dist = candidate.Center.Distance2D(authoredStaging);
+            if (dist >= bestDist || dist > AlternateMapRangeSearchRadius)
+            {
+                continue;
+            }
+
+            bestDist = dist;
+            best = candidate;
+            bestPath = path;
+            bestId = instance.InstanceId;
+            found = true;
+        }
+
+        if (!found)
+        {
+            return false;
+        }
+
+        detail = $"MapRange {bestId} at {bestDist:0.#}y in {bestPath}";
+        return true;
     }
 
     private List<(string Path, LayerCommon.InstanceObject Instance, LayerCommon.MapRangeInstanceObject Range)> LoadMapRanges()

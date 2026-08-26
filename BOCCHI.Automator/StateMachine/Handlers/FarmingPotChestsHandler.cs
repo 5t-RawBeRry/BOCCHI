@@ -184,7 +184,20 @@ public class FarmingPotChestsHandler
 
         if (activeChain is { IsCompleted: false })
         {
-            return;
+            // Travel chains block the handler for a long time — a compass hint that lands mid-walk
+            // would otherwise be applied from the arrival pad, not from where Magical Elixir was used.
+            if (TryInterruptTravelForPendingHint(farm))
+            {
+                chainManager.CancelAll();
+                pathfinder.Stop();
+                activeChain = null;
+                ClearTravelPlan();
+                ResetApproachWatch();
+            }
+            else
+            {
+                return;
+            }
         }
 
         activeChain = null;
@@ -446,6 +459,7 @@ public class FarmingPotChestsHandler
         farm.ElixirAttempts++;
         farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
         farm.HintRevisionBaseline = hints.Revision;
+        farm.ElixirHintOrigin = player.Position;
 
         // Start the "did anything happen" wait from the probe rather than from arrival. The elixir
         // has a ~5s recast, so a candidate reached shortly after the previous probe could time out
@@ -516,17 +530,30 @@ public class FarmingPotChestsHandler
         // Prefer a live coffer near the pad when the authored point is a bit off.
         IGameObject? live = FindUnopenedRevealNear(target) ?? FindUnopenedChestNear(target);
         Vector3 pathTarget = live?.Position ?? target;
-        float distance = player.Position.Distance2D(pathTarget);
+        // Arrive at the snapped mesh point, not the authored pad — a 6–12y snap used to leave us
+        // forever short of CandidateProbeRadius and re-path in place (#201).
+        if (!TryResolvePathable(pathTarget, skipIfOffMesh: live == null, out Vector3 pathable))
+        {
+            logger.Warning(
+                "Pot treasure: no navmesh at {Label} {Pos:F0} — skipping candidate ({Remaining} left)",
+                farm.Candidates.Peek().Label,
+                pathTarget,
+                farm.Candidates.Count - 1);
+            SkipCurrentCandidate(farm);
+            return;
+        }
+
+        float distance = player.Position.Distance2D(pathable);
 
         if (distance > CandidateProbeRadius)
         {
             farm.SettledAtUtc = DateTimeOffset.MinValue;
-            if (IsApproachStuck(pathTarget, distance))
+            if (IsApproachStuck(pathable, distance))
             {
                 logger.Warning(
                     "Pot treasure: stuck approaching {Label} at {Pos:F0} — skipping candidate ({Remaining} left)",
                     farm.Candidates.Peek().Label,
-                    pathTarget,
+                    pathable,
                     farm.Candidates.Count - 1);
                 SkipCurrentCandidate(farm);
                 return;
@@ -826,7 +853,13 @@ public class FarmingPotChestsHandler
         Vector3 chestPosition = farm.Chests.Peek();
         IGameObject? liveChest = FindChestNear(chestPosition);
         Vector3 pathTarget = liveChest?.Position ?? chestPosition;
-        float distance = player.Position.Distance2D(pathTarget);
+        if (!TryResolvePathable(pathTarget, skipIfOffMesh: liveChest == null, out Vector3 pathable))
+        {
+            SkipCurrentBlindChest(farm, pathTarget, "no navmesh at blind chest");
+            return;
+        }
+
+        float distance = player.Position.Distance2D(pathable);
 
         if (liveChest == null)
         {
@@ -837,7 +870,7 @@ public class FarmingPotChestsHandler
 
             if (distance > OpenTreasureCofferChain.InteractDistance)
             {
-                if (IsApproachStuck(chestPosition, distance))
+                if (IsApproachStuck(pathable, distance))
                 {
                     SkipCurrentBlindChest(farm, chestPosition, "stuck approaching blind chest");
                     return;
@@ -867,7 +900,7 @@ public class FarmingPotChestsHandler
 
         if (distance > OpenTreasureCofferChain.InteractDistance)
         {
-            if (IsApproachStuck(pathTarget, distance))
+            if (IsApproachStuck(pathable, distance))
             {
                 SkipCurrentBlindChest(farm, pathTarget, "stuck approaching live blind chest");
                 return;
@@ -1051,6 +1084,26 @@ public class FarmingPotChestsHandler
         return pathable;
     }
 
+    /// <summary>
+    ///     Mesh point we actually walk to. Authored pads with no same-floor polygon are skipped;
+    ///     live coffers still get a Y rewrite when the snap fails.
+    /// </summary>
+    private bool TryResolvePathable(Vector3 destination, bool skipIfOffMesh, out Vector3 pathable)
+    {
+        if (TreasurePathing.TrySnapToNavmesh(destination, player.Position.Y, vnav, out pathable))
+        {
+            return true;
+        }
+
+        if (skipIfOffMesh)
+        {
+            return false;
+        }
+
+        pathable = TreasurePathing.PathablePosition(destination, player.Position.Y);
+        return true;
+    }
+
     private bool TryAcquireReveal(PotChestFarmMemory farm, out IGameObject? reveal)
     {
         reveal = FindUnopenedRevealNear(player.Position);
@@ -1104,14 +1157,16 @@ public class FarmingPotChestsHandler
     }
 
     /// <summary>
-    ///     Apply one hint: keep the spots lying in that direction <b>from where we are standing</b>.
+    ///     Apply one hint: keep the spots lying in that direction <b>from where Magical Elixir was
+    ///     used</b> (or where the log landed, if we did not record a use). Mid-walk or next-pad
+    ///     positions must not re-interpret the bearing.
     ///     Narrows the survivors first so successive readings triangulate; if that leaves nothing the
     ///     reading disagrees with the ones before it, so re-acquire from the full set before giving up.
     /// </summary>
     /// <returns>False when the farm fell back to a blind sweep and the caller should stop.</returns>
     private bool TryNarrowByHint(PotChestFarmMemory farm, PotTreasureHintEvent evt)
     {
-        Vector3 from = player.Position;
+        Vector3 from = farm.ElixirHintOrigin ?? evt.Origin ?? player.Position;
         IEnumerable<PotTreasureCandidate> basis = farm.Candidates.Count > 0 ? farm.Candidates : farm.Pool;
 
         List<PotTreasureCandidate> survivors = PotTreasureFilter.Narrow(
@@ -1137,6 +1192,7 @@ public class FarmingPotChestsHandler
             // Everything we know says the chest is at one of these pads, so a reading that matches
             // none of them is the odd one out — not grounds to throw away every earlier reading and
             // sweep 50 positions. Keep what we have and ignore it; only sweep with nothing left.
+            farm.ElixirHintOrigin = null;
             if (farm.Candidates.Count > 0)
             {
                 logger.Warning(
@@ -1158,13 +1214,50 @@ public class FarmingPotChestsHandler
 
         farm.NarrowTo(survivors);
         logger.Debug(
-            "Pot treasure: hint {Hint} {Direction}/{Distance} — {Count} spot(s) {Source}, nearest {Label}",
+            "Pot treasure: hint {Hint} {Direction}/{Distance} from {From:F0} — {Count} spot(s) {Source}, nearest {Label}",
             farm.HintsApplied,
             evt.Direction,
             evt.Distance,
+            from,
             survivors.Count,
             source,
             survivors[0].Label);
+        return true;
+    }
+
+    /// <summary>
+    ///     While a travel chain owns the handler, still consume a pending compass hint so we do not
+    ///     finish walking to the wrong pad and re-read the bearing from there.
+    /// </summary>
+    private bool TryInterruptTravelForPendingHint(PotChestFarmMemory farm)
+    {
+        if (farm.Mode != PotChestFarmMode.Smart
+            || farm.Phase is not (PotChestFarmPhase.SearchingCandidates or PotChestFarmPhase.ElixirAtCenter
+                or PotChestFarmPhase.OpeningReveal))
+        {
+            return false;
+        }
+
+        if (!hints.TryGetEventSince(farm.HintRevisionBaseline, out PotTreasureHintEvent evt)
+            || evt.Kind != PotTreasureHintKind.Hint)
+        {
+            return false;
+        }
+
+        farm.HintRevisionBaseline = evt.Revision;
+        if (!TryNarrowByHint(farm, evt))
+        {
+            return true;
+        }
+
+        if (farm.Phase == PotChestFarmPhase.OpeningReveal)
+        {
+            farm.Phase = PotChestFarmPhase.SearchingCandidates;
+            farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
+            farm.SettledAtUtc = DateTimeOffset.MinValue;
+        }
+
+        logger.Debug("Pot treasure: compass hint during travel — cancelling path to re-route");
         return true;
     }
 

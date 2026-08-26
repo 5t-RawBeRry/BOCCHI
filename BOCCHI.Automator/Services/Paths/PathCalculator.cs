@@ -147,34 +147,48 @@ public class PathCalculator
         ActivityAreaShape ceShape = ActivityAreaShape.Circle;
         Vector3? ceWaitCenter = null;
         float ceStandRadius = 0f;
-        if (goal.GoalType is CriticalEncounterGoal ceGoalForRadius
-            && geometry.TryGet(ceGoalForRadius.id.Value) is { Radius: > 0 } area)
+        if (goal.GoalType is CriticalEncounterGoal ceGoalForRadius)
         {
-            ceShape = NavigationConstants.ResolveCriticalEncounterShape(
-                zone,
-                ceGoalForRadius.id.Value,
-                area.IsSquare);
             ActivityData? authoredCe = zone.GetCriticalEncounterData()
                 .FirstOrDefault(a => a.Id == ceGoalForRadius.id.Value);
-            ceStandRadius = authoredCe?.StandRadius ?? 0f;
-            CriticalEncounter.SanitizeRegistration(
-                goalNode.Position,
-                area.Center,
-                area.Radius,
-                out Vector3 sanitizedCenter,
-                out float sizeOk,
-                out bool rejected);
-            ceWaitCenter = sanitizedCenter;
-            ceCombatRadius = sizeOk;
-            zone.ApplyCriticalEncounterCombat(ceGoalForRadius.id.Value, ceCombatRadius, ceShape);
-            logger.Debug(
-                "CE {Id} path goal at authored {Pos:F0} ({Shape}, combat radius {Radius:F0}, wait centre {Center:F0}{Note})",
-                ceGoalForRadius.id.Value,
-                pathGoal.Position,
-                ceShape,
-                ceCombatRadius,
-                ceWaitCenter.Value,
-                rejected ? ", bad MapRange size/centre ignored" : "");
+            Vector3 authoredStaging = authoredCe?.Position ?? pathGoal.Position;
+            if (geometry.TryResolveForAuthored(
+                    ceGoalForRadius.id.Value,
+                    authoredStaging,
+                    out string resolveDetail,
+                    out bool usedAlternate) is { Radius: > 0 } area)
+            {
+                ceShape = NavigationConstants.ResolveCriticalEncounterShape(
+                    zone,
+                    ceGoalForRadius.id.Value,
+                    area.IsSquare);
+                ceStandRadius = authoredCe?.StandRadius ?? 0f;
+                CriticalEncounter.SanitizeRegistration(
+                    authoredStaging,
+                    area.Center,
+                    area.Radius,
+                    out Vector3 sanitizedCenter,
+                    out float sizeOk,
+                    out bool rejected,
+                    authoredCe?.CombatRadius);
+                ceWaitCenter = sanitizedCenter;
+                ceCombatRadius = sizeOk;
+                zone.ApplyCriticalEncounterCombat(ceGoalForRadius.id.Value, ceCombatRadius, ceShape);
+                logger.Debug(
+                    "CE {Id} path goal at authored {Pos:F0} ({Shape}, combat radius {Radius:F0}, wait centre {Center:F0}{Note})",
+                    ceGoalForRadius.id.Value,
+                    pathGoal.Position,
+                    ceShape,
+                    ceCombatRadius,
+                    ceWaitCenter.Value,
+                    rejected
+                        ? usedAlternate
+                            ? $", alternate MapRange ({resolveDetail})"
+                            : $", bad MapRange ignored ({resolveDetail})"
+                        : usedAlternate
+                            ? $", alternate MapRange ({resolveDetail})"
+                            : "");
+            }
         }
 
         Vector3 arrivalCheck = potPrepositionStandOff ?? pathGoal.Position;

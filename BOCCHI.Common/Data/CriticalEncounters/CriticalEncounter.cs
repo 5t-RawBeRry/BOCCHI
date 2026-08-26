@@ -145,13 +145,17 @@ public class CriticalEncounter(
     /// <summary>
     ///     Choose wait centre + unpadded radius from live LGB vs authored staging.
     /// </summary>
+    /// <param name="authoredCombatRadius">
+    ///     When LGB is rejected, prefer this size over <see cref="FallbackRegistrationRadius"/>.
+    /// </param>
     public static void SanitizeRegistration(
         Vector3 authoredStaging,
         Vector3 lgbCenter,
         float lgbRadius,
         out Vector3 center,
         out float radius,
-        out bool rejected)
+        out bool rejected,
+        float? authoredCombatRadius = null)
     {
         bool badCenter = !float.IsNaN(authoredStaging.X)
                          && (lgbCenter.Distance2D(authoredStaging) > MaxRegistrationCenterSkew
@@ -161,7 +165,10 @@ public class CriticalEncounter(
         if (rejected)
         {
             center = float.IsNaN(authoredStaging.X) ? lgbCenter : authoredStaging;
-            radius = FallbackRegistrationRadius;
+            float authored = authoredCombatRadius ?? 0f;
+            radius = authored > 0f && authored <= MaxRegistrationRadius
+                ? authored
+                : FallbackRegistrationRadius;
             return;
         }
 
@@ -170,22 +177,36 @@ public class CriticalEncounter(
     }
 
     /// <summary>Apply live LGB registration size and centre (unpadded combat radius).</summary>
-    public void ApplyCombatGeometry(float combatRadius, ActivityAreaShape shape, Vector3? center = null)
+    public void ApplyCombatGeometry(
+        float combatRadius,
+        ActivityAreaShape shape,
+        Vector3? center = null,
+        float? authoredCombatRadius = null)
     {
         AreaShape = shape;
 
         if (center is not { } lgb || float.IsNaN(lgb.X))
         {
             RegistrationCenter = Position;
+            float authored = authoredCombatRadius ?? 0f;
             float size = combatRadius > 0f && combatRadius <= MaxRegistrationRadius
                 ? combatRadius
-                : FallbackRegistrationRadius;
+                : authored > 0f && authored <= MaxRegistrationRadius
+                    ? authored
+                    : FallbackRegistrationRadius;
             UnpaddedCombatRadius = size;
             Radius = NavigationConstants.CriticalEncounterPaddedRadius(size, shape);
             return;
         }
 
-        SanitizeRegistration(fallbackPosition, lgb, combatRadius, out Vector3 waitAt, out float sizeOk, out _);
+        SanitizeRegistration(
+            fallbackPosition,
+            lgb,
+            combatRadius,
+            out Vector3 waitAt,
+            out float sizeOk,
+            out _,
+            authoredCombatRadius);
         UnpaddedCombatRadius = sizeOk;
         RegistrationCenter = waitAt;
         Radius = NavigationConstants.CriticalEncounterPaddedRadius(sizeOk, shape);

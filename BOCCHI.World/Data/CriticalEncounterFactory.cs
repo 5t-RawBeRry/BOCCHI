@@ -24,10 +24,14 @@ public class CriticalEncounterFactory(IZoneProvider zones, CriticalEncounterGeom
         ActivityAreaShape shape = authored?.AreaShape ?? ActivityAreaShape.Circle;
 
         CriticalEncounter created = new(id, ev, 0, fallback, shape);
-        if (geometry.TryGet(ev.DynamicEventId) is { Radius: > 0 } area)
+        if (geometry.TryResolveForAuthored(
+                ev.DynamicEventId,
+                fallback,
+                out _,
+                out _) is { Radius: > 0 } area)
         {
             shape = NavigationConstants.ResolveCriticalEncounterShape(authored, area.IsSquare);
-            created.ApplyCombatGeometry(area.Radius, shape, area.Center);
+            created.ApplyCombatGeometry(area.Radius, shape, area.Center, authored?.CombatRadius);
             zone.ApplyCriticalEncounterCombat(ev.DynamicEventId, created.UnpaddedCombatRadius, shape);
         }
 

@@ -7,11 +7,9 @@ namespace BOCCHI.Automator.Services.PotTreasure;
 
 /// <summary>
 ///     Narrows the authored pot chest spots using compass hints.
-///     A hint is read <b>from wherever the player is standing</b>, so it is a bearing constraint
-///     relative to the player — not a fixed property of the chest. The previous design binned spots
-///     by their direction from the pot FATE centre, which only agrees with the hint while you are
-///     standing at the centre; after the first move it sent the hunt to the octant on the wrong side
-///     of the map and it ping-ponged.
+///     A hint is a bearing relative to where Magical Elixir was used (or where the log landed),
+///     not wherever the player is when the farm finally reads it. Applying a mid-walk or next-pad
+///     position as the origin used to send the hunt to the wrong octant and ping-pong.
 /// </summary>
 public static class PotTreasureFilter
 {

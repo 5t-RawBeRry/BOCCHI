@@ -125,7 +125,11 @@ public unsafe class DebugCommand
         }
 
         Vector3 me = player.Position;
-        CriticalEncounterArea? lgbMaybe = geometry.TryGet((ushort)authored.Id, out string lgbDetail);
+        CriticalEncounterArea? lgbMaybe = geometry.TryResolveForAuthored(
+            (ushort)authored.Id,
+            authored.Position,
+            out string lgbDetail,
+            out bool usedAlternate);
         bool haveLgb = lgbMaybe is { Radius: > 0 };
         CriticalEncounterArea lgbArea = haveLgb ? lgbMaybe!.Value : default;
         ActivityAreaShape shape = haveLgb
@@ -138,7 +142,8 @@ public unsafe class DebugCommand
             haveLgb ? lgbArea.Radius : 0f,
             out Vector3 waitCenter,
             out float combatRadius,
-            out bool sanitized);
+            out bool sanitized,
+            authored.CombatRadius);
 
         float padded = combatRadius > 0f
             ? NavigationConstants.CriticalEncounterPaddedRadius(combatRadius, shape)
@@ -204,7 +209,13 @@ public unsafe class DebugCommand
                 waitCenter.Z,
                 red,
                 waitBoundary,
-                sanitized ? " (sanitized LGB)" : ""));
+                sanitized
+                    ? usedAlternate
+                        ? " (sanitized; ground alternate MapRange)"
+                        : " (sanitized LGB)"
+                    : usedAlternate
+                        ? " (ground alternate MapRange)"
+                        : ""));
         BocchiChat.Print(
             chat,
             uiConfig,

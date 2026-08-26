@@ -294,6 +294,11 @@ public class TreasureHunterService
 
             if (steps.Count == 0)
             {
+                if (TryQueueReturnAfterHunt("empty route after plan"))
+                {
+                    return;
+                }
+
                 log.Warning(
                     "Treasure hunt planned an empty route ({ValidCount} valid node(s) after filters) — ending session",
                     validNodes.Count);
@@ -320,9 +325,8 @@ public class TreasureHunterService
 
         if (steps.Count == 0 || StepIndex >= steps.Count)
         {
-            if (steps.Count > 0 && ShouldReturnAfterHunt())
+            if (TryQueueReturnAfterHunt("route finished"))
             {
-                steps.Add(HuntPathfinderStep.ReturnToBaseCamp());
                 return;
             }
 
@@ -694,6 +698,12 @@ public class TreasureHunterService
             return false;
         }
 
+        // Pathfind has not started moving yet — don't count compute time as a stuck walk.
+        if (vnav.IsPathfinding())
+        {
+            return false;
+        }
+
         DateTime now = DateTime.UtcNow;
         if (stuckWatchNodeId != step.NodeId)
         {
@@ -988,10 +998,15 @@ public class TreasureHunterService
             candidates.RemoveWhere(id =>
                 authoredNodeSegments.GetValueOrDefault(id) != segment);
 
-            // Divert only to the next authored pad in this segment.
+            // Stay on authored order, but reclaim a pad that was empty-skipped while the
+            // coffer was still loading — GetDivertCandidateNodes already re-adds those.
             if (TryGetAuthoredFrontier(remaining, segment) is uint frontier)
             {
-                candidates.RemoveWhere(id => id != frontier);
+                candidates.RemoveWhere(id =>
+                    id != frontier
+                    && !(checkedNodeIds.Contains(id)
+                         && !stuckSkippedNodeIds.Contains(id)
+                         && IsWalkGoalLiveNearby(id)));
             }
             else
             {
@@ -1441,8 +1456,19 @@ public class TreasureHunterService
 
         if (present == null)
         {
+            bool stillApproaching = IsStillApproachingPad(dist2d);
+
+            // Still walking in — coffers often stream only in the last stretch. Skipping
+            // here walks past a live chest, and divert used to refuse to turn back.
+            if (stillApproaching)
+            {
+                ClearEmptyPadCandidate();
+            }
+
             // Empty-skip first: a live coffer elsewhere on radar must not pin us to an empty pad (#168).
-            if (CanTrustEmptyPad(layoutDestination) && ConfirmEmptyPad(step.NodeId))
+            if (!stillApproaching
+                && CanTrustEmptyPad(layoutDestination)
+                && ConfirmEmptyPad(step.NodeId))
             {
                 log.Debug(
                     "Treasure hunt: no live coffer at layout {NodeId} at {Dist:F0}y — skipping "
@@ -1562,38 +1588,35 @@ public class TreasureHunterService
         IZone zone = zones.GetZone();
         bool inCombat = conditions[ConditionFlag.InCombat];
 
-        if (inCombat && !vnav.IsRunning())
+        // Return cannot cast in combat — walk toward camp until it drops, then cast.
+        if (inCombat)
         {
+            if (activeChain != null)
+            {
+                chainManager.CancelWhere(name => name.StartsWith("TreasureHunt::Return", StringComparison.Ordinal));
+                activeChain = null;
+            }
+
             SprintAssist.MaybeCast(movementConfig.SprintOnAetheryteApproach, zone.IsInBasecamp());
 
-            // Don't re-issue while vnav is still computing the path.
-            if (!vnav.IsPathfinding())
+            if (!vnav.IsRunning() && !vnav.IsPathfinding())
             {
                 Vector3 standOff = zone.GetMainAetheryte().GetCampStandOffPosition(player.Position);
+                log.Debug("Treasure hunt: in combat after last coffer — walking toward camp until Return is usable");
                 vnav.PathfindAndMoveCloseTo(standOff, false, AethernetNavigation.PathfindArrivalRadius);
             }
 
             return false;
         }
 
-        if (!inCombat && vnav.IsRunning())
+        if (vnav.IsRunning())
         {
             vnav.Stop();
-        }
-
-        if (inCombat)
-        {
-            return false;
         }
 
         if (conditions[ConditionFlag.Unconscious])
         {
             return false;
-        }
-
-        if (zone.IsInBasecamp())
-        {
-            return true;
         }
 
         if (activeChain != null)
@@ -1605,7 +1628,22 @@ public class TreasureHunterService
 
             bool returned = activeChain.IsCompletedSuccessfully && zone.IsInBasecamp();
             activeChain = null;
-            return returned;
+            if (!returned)
+            {
+                return false;
+            }
+        }
+
+        if (zone.IsInBasecamp())
+        {
+            // SimpleMove rejects a stacked move-to while Return's last pathfind is still
+            // queued. Wait until that slot is free so the first camp pad actually starts.
+            if (vnav.IsPathfinding())
+            {
+                return false;
+            }
+
+            return true;
         }
 
         activeChain = chainManager.Manage(
@@ -1815,6 +1853,13 @@ public class TreasureHunterService
 
     private bool IsLayoutPadEmpty(Vector3 layoutDestination, uint nodeId) =>
         FindTreasureForLayout(layoutDestination, nodeId) == null;
+
+    /// <summary>
+    /// True while nav is still computing or walking in — too early to trust an empty pad.
+    /// </summary>
+    private bool IsStillApproachingPad(float dist2d) =>
+        vnav.IsPathfinding()
+        || (vnav.IsRunning() && dist2d > OpenTreasureCofferChain.PreferredOpenDistance);
 
     /// <summary>True when the player is close enough to trust that this pad has no live coffer.</summary>
     private bool CanTrustEmptyPad(Vector3 layoutDestination)
@@ -2292,6 +2337,28 @@ public class TreasureHunterService
             return false;
         }
 
+        return true;
+    }
+
+    /// <summary>
+    ///     Queue Return before ending the session. The last coffer often replans to an empty route
+    ///     while still in combat — ending immediately skipped the walk-to-camp fallback and left
+    ///     Return uncastable.
+    /// </summary>
+    private bool TryQueueReturnAfterHunt(string reason)
+    {
+        if (!ShouldReturnAfterHunt())
+        {
+            return false;
+        }
+
+        steps.Add(HuntPathfinderStep.ReturnToBaseCamp());
+        if (StepIndex > steps.Count - 1)
+        {
+            StepIndex = steps.Count - 1;
+        }
+
+        log.Debug("Treasure hunt: Return to camp queued ({Reason})", reason);
         return true;
     }
 

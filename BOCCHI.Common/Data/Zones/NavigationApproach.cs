@@ -294,7 +294,11 @@ public static class NavigationApproach
                 continue;
             }
 
-            if (geometry?.TryGet((ushort)candidate.Id) is not { Radius: > 0 } area)
+            if (geometry?.TryResolveForAuthored(
+                    (ushort)candidate.Id,
+                    candidate.Position,
+                    out _,
+                    out _) is not { Radius: > 0 } area)
             {
                 continue;
             }
@@ -309,7 +313,8 @@ public static class NavigationApproach
                 area.Radius,
                 out Vector3 center,
                 out float radius,
-                out _);
+                out _,
+                candidate.CombatRadius);
 
             if (NavigationConstants.IsInsideCriticalEncounterWaitArea(
                     center, radius, shape, from))

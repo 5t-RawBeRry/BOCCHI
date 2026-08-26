@@ -91,6 +91,10 @@ public sealed class CarrotHunterService
 
     private Vector3 currentTargetPosition;
 
+    private readonly List<Vector3> walkVias = [];
+
+    private int walkViaIndex;
+
     private bool ninjaHideRequired;
 
     private DateTime waitingForBunnySince = DateTime.MinValue;
@@ -580,7 +584,13 @@ public sealed class CarrotHunterService
 
         MaybeBindLiveCarrot(authored);
 
+        if (currentLiveCarrotId == null)
+        {
+            SkipPassedWalkVias(authored.Position);
+        }
+
         if (currentLiveCarrotId == null
+            && walkViaIndex >= walkVias.Count
             && CanTrustEmptyCarrotPad(authored.Position)
             && ConfirmEmptyCarrotPad(authored.Id))
         {
@@ -615,6 +625,11 @@ public sealed class CarrotHunterService
             ResetFarStuckWatch();
             vnav.Stop();
             Phase = CarrotHuntPhase.UsingItem;
+            return;
+        }
+
+        if (currentLiveCarrotId == null && TryWalkVia(authored))
+        {
             return;
         }
 
@@ -763,12 +778,88 @@ public sealed class CarrotHunterService
             currentAuthored = next;
             currentLiveCarrotId = null;
             currentTargetPosition = next.Position;
+            LoadWalkVias(next);
             ResetApproachProgress();
             MaybeBindLiveCarrot(next);
             return true;
         }
 
         return false;
+    }
+
+    private void LoadWalkVias(CarrotData authored)
+    {
+        walkVias.Clear();
+        walkViaIndex = 0;
+        if (!CarrotHuntPathOverrides.TryGetApproach(zones.GetZone().ZoneId, authored.Id, out IReadOnlyList<Vector3> vias))
+        {
+            return;
+        }
+
+        walkVias.AddRange(vias);
+        SkipPassedWalkVias(authored.Position);
+        if (walkVias.Count > 0 && walkViaIndex < walkVias.Count)
+        {
+            log.Debug(
+                "Carrot hunt: {Count} approach via(s) for authored {Id}",
+                walkVias.Count,
+                authored.Id);
+        }
+    }
+
+    private void ClearWalkVias()
+    {
+        walkVias.Clear();
+        walkViaIndex = 0;
+    }
+
+    /// <summary>
+    ///     Walk authored approach vias before the pad. Skips vias we are already on, and skips
+    ///     the rest when already on the pad's floor closer to the carrot than to the via.
+    /// </summary>
+    private bool TryWalkVia(CarrotData authored)
+    {
+        SkipPassedWalkVias(authored.Position);
+        if (walkViaIndex >= walkVias.Count)
+        {
+            return false;
+        }
+
+        Vector3 via = walkVias[walkViaIndex];
+        const float viaArrival = 2.5f;
+        float viaDist = player.Position.Distance2D(via);
+        if (viaDist <= viaArrival)
+        {
+            walkViaIndex++;
+            vnav.Stop();
+            return walkViaIndex < walkVias.Count;
+        }
+
+        TryNavigateToward(via, viaArrival);
+        return true;
+    }
+
+    private void SkipPassedWalkVias(Vector3 destination)
+    {
+        while (walkViaIndex < walkVias.Count)
+        {
+            Vector3 via = walkVias[walkViaIndex];
+            if (player.Position.Distance2D(via) <= 3f)
+            {
+                walkViaIndex++;
+                continue;
+            }
+
+            // Already on the island and closer to the carrot than this via — don't backtrack.
+            if (MathF.Abs(player.Position.Y - destination.Y) <= HuntDistances.SameFloorVerticalTolerance
+                && player.Position.Distance2D(destination) <= player.Position.Distance2D(via))
+            {
+                walkViaIndex = walkVias.Count;
+                return;
+            }
+
+            return;
+        }
     }
 
     /// <summary>Re-solve nearest-neighbor tour on remaining pads, then begin the first hop.</summary>
@@ -781,6 +872,7 @@ public sealed class CarrotHunterService
         currentAuthored = null;
         currentLiveCarrotId = null;
         currentTargetPosition = Vector3.Zero;
+        ClearWalkVias();
         itemUseIssued = false;
         waitingForBunnySince = DateTime.MinValue;
         ClearEmptyPadCandidate();
@@ -1774,6 +1866,7 @@ public sealed class CarrotHunterService
         currentAuthored = null;
         currentLiveCarrotId = null;
         currentTargetPosition = Vector3.Zero;
+        ClearWalkVias();
         itemUseIssued = false;
         waitingForBunnySince = DateTime.MinValue;
         usedLiveCarrotIdsAtPad.Clear();

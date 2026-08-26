@@ -24,12 +24,17 @@ public enum ActivityAreaShape
 /// <param name="StandRadius">
 ///     Standable area when smaller than the registration rim. Null uses the live LGB size.
 /// </param>
+/// <param name="CombatRadius">
+///     Authored registration size when live LGB is missing or rejected (Eternal Watch's elevated
+///     MapRange is ~560y). Null uses the shared 40y fallback.
+/// </param>
 public record ActivityData(
     int Id,
     Vector3 Position,
     uint? PreferredAethernetId = null,
     ActivityAreaShape AreaShape = ActivityAreaShape.Circle,
-    float? StandRadius = null);
+    float? StandRadius = null,
+    float? CombatRadius = null);
 
 public record CarrotData(int Id, Vector3 Position, int Level);
 
