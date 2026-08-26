@@ -169,6 +169,7 @@
       "yield_reasons": {
         "none": "—",
         "pots": "マジックポット",
+        "treasure_sight": "トレジャーサイト",
         "treasure_hunt": "トレジャーハント",
         "crystal_buffs": "クリスタルバフ"
       },

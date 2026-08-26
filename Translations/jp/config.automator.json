@@ -117,7 +117,7 @@
       "tooltip_disabled": "自動トレジャーハントがオンのあいだは使えません。そちらは FATE / CE のあとでサイトを唱えます。キャンプのタイマーサイトを使うにはオフにしてください。"
     },
     "treasure_sight_recast_interval_seconds": {
-      "label": "トレジャーサイトの間隔（秒）"
+      "label": "間隔（秒）"
     },
     "max_remote_idle_time_seconds": {
       "label": "デジョンまでの最大待機（秒）",

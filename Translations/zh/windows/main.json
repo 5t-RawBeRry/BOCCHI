@@ -169,6 +169,7 @@
       "yield_reasons": {
         "none": "—",
         "pots": "魔法罐",
+        "treasure_sight": "魔寻宝",
         "treasure_hunt": "寻宝",
         "crystal_buffs": "水晶增益"
       },

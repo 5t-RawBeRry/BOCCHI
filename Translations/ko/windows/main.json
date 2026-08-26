@@ -169,6 +169,7 @@
       "yield_reasons": {
         "none": "—",
         "pots": "마법 항아리",
+        "treasure_sight": "마기 보물 탐색",
         "treasure_hunt": "보물 찾기",
         "crystal_buffs": "크리스탈 버프"
       },

@@ -117,7 +117,7 @@
       "tooltip_disabled": "已开启自动寻宝时不可用。自动寻宝会在危命/紧急遭遇结束后施放魔寻宝。若要用营地计时施放，请先关闭自动寻宝。"
     },
     "treasure_sight_recast_interval_seconds": {
-      "label": "魔寻宝间隔（秒）"
+      "label": "间隔（秒）"
     },
     "max_remote_idle_time_seconds": {
       "label": "返回前最长等待（秒）",

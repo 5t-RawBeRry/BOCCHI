@@ -24,7 +24,7 @@
     },
     "should_farm_reroll_pot_chests": {
       "label": "同时收取刷新的魔法罐宝箱",
-      "tooltip": "魔法罐危命宝箱收集后，在 Cache Me 仍生效时也前往共用刷新点。"
+      "tooltip": "开：魔法罐危命宝箱收集后，在 Cache Me 仍生效时也前往共用刷新点。\n关：跳过刷新点。"
     }
   }
 }

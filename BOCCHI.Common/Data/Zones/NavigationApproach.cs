@@ -223,8 +223,13 @@ public static class NavigationApproach
         Vector3 center,
         float combatRadius,
         ActivityAreaShape shape = ActivityAreaShape.Circle,
-        float standRadius = 0f)
+        float standRadius = 0f,
+        int? stableSeed = null)
     {
+        Random rng = stableSeed is int seed
+            ? new Random(HashCode.Combine(seed, 0xCE))
+            : Random.Shared;
+
         float red = MathF.Max(1f, standRadius > 0f ? standRadius : combatRadius);
         if (shape == ActivityAreaShape.Square)
         {
@@ -237,8 +242,8 @@ public static class NavigationApproach
                 maxFromCenter = 0.5f;
             }
 
-            float x = (Random.Shared.NextSingle() * 2f - 1f) * maxFromCenter;
-            float z = (Random.Shared.NextSingle() * 2f - 1f) * maxFromCenter;
+            float x = (rng.NextSingle() * 2f - 1f) * maxFromCenter;
+            float z = (rng.NextSingle() * 2f - 1f) * maxFromCenter;
             return center + new Vector3(x, 0f, z);
         }
 
@@ -250,8 +255,8 @@ public static class NavigationApproach
         }
 
         // Scatter on the disc. An inbound ray from the aethernet often lands on a ramp outside the ring.
-        float dist = min + Random.Shared.NextSingle() * (max - min);
-        float angle = Random.Shared.NextSingle() * MathF.PI * 2f;
+        float dist = min + rng.NextSingle() * (max - min);
+        float angle = rng.NextSingle() * MathF.PI * 2f;
         return center + new Vector3(MathF.Cos(angle) * dist, 0f, MathF.Sin(angle) * dist);
     }
 

@@ -40,12 +40,12 @@ public class TreasureConfig : IAutoConfig
     [Checkbox(Order = 7, Section = "carrot_hunt")]
     public bool LoopCarrotHunt { get; set; } = false;
 
-    /// <summary>Cast Treasure Sight at hunt start and every N locations checked; abort early when Sight reports none left.</summary>
+    /// <summary>Cast Treasure Sight at hunt start and on the interval below; abort early when Sight reports none left.</summary>
     [Checkbox(Order = 8, Section = "treasure_hunt")]
     public bool CastTreasureSightDuringHunt { get; set; } = true;
 
     /// <summary>Recast Treasure Sight every N hunt locations checked (opened or empty pads).</summary>
-    [IntRange(1, 50, Order = 9, Section = "treasure_hunt")]
+    [IntRange(1, 50, Order = 9, Indent = 1, Requires = nameof(CastTreasureSightDuringHunt), Section = "treasure_hunt")]
     public int TreasureSightEveryNLocations { get; set; } = 10;
 
     [IntRange(1, 50, Order = 10, Section = "treasure_hunt")]

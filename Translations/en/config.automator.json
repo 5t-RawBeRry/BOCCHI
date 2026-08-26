@@ -117,7 +117,7 @@
       "tooltip_disabled": "Unavailable while Auto treasure hunt is on. That option casts Sight after a FATE or CE instead. Turn it off to use camp Sight on a timer."
     },
     "treasure_sight_recast_interval_seconds": {
-      "label": "Treasure Sight every (seconds)"
+      "label": "Interval (seconds)"
     },
     "max_remote_idle_time_seconds": {
       "label": "Max wait before Return (seconds)",

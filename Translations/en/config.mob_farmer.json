@@ -120,22 +120,28 @@
     },
     "yield_to_pots": {
       "label": "Stop for Magic Pots",
-      "tooltip": "Pause for a live or soon-to-spawn Magic Pot (and pot chests if that General option is on). Timing under Pot timing. Resumes afterward."
+      "tooltip": "On: pause for a live or soon-to-spawn Magic Pot (and pot chests if that General option is on). Timing under Pot timing.\nOff: keep farming through pots.\nResumes after the pot."
+    },
+    "cast_treasure_sight_at_farm": {
+      "label": "Cast Treasure Sight at the farm spot",
+      "tooltip": "On: cast Sight at your farm spot on the interval below, then resume pulling — no Treasure Hunt run.\nUses the same bronze/silver fill % as Treasure Hunter. Needs Freelancer 10+.\nOff: only the full Treasure Hunt yield below can refresh counts."
+    },
+    "treasure_sight_interval_minutes": {
+      "label": "Interval (minutes)"
     },
     "yield_to_treasure_hunt": {
       "label": "Treasure Hunt on a timer",
-      "tooltip": "Every N minutes, pause and run Treasure Hunt if fill meets the bronze/silver % on Treasure Hunter. Needs a recent Treasure Sight reading."
+      "tooltip": "On: pause and run Treasure Hunt on the interval below if fill meets the bronze/silver % on Treasure Hunter.\nNeeds a recent Treasure Sight reading.\nOff: no timed Treasure Hunt from Mob Farmer."
     },
     "treasure_hunt_interval_minutes": {
-      "label": "Hunt every (minutes)"
+      "label": "Interval (minutes)"
     },
     "yield_to_crystal_buffs": {
       "label": "Refresh crystal buffs when low",
-      "tooltip": "Pause to reapply knowledge-crystal buffs at or below the reapply time on the Buffs page. Needs buff automation on."
+      "tooltip": "On: pause to reapply knowledge-crystal buffs at or below the reapply time on the Buffs page.\nOff: keep farming without buff pauses.\nNeeds Automate buffs on the Buffs page."
     },
     "mobs": {
       "label": "Enemy list",
-      "tooltip": "Which enemies the farmer will pull and count.",
       "search_hint": "Search name or ID...",
       "selected": "Selected",
       "zone_filter": "Zone",

@@ -42,11 +42,10 @@
     },
     "cast_treasure_sight_during_hunt": {
       "label": "Cast Treasure Sight during hunt",
-      "tooltip": "On: cast at the start, then every N locations. Stops early if Sight says nothing is left.\nOff: do not cast Sight during the hunt."
+      "tooltip": "On: cast at hunt start and on the interval below. Stops early if Sight says nothing is left.\nOff: do not cast Sight during the hunt."
     },
     "treasure_sight_every_n_locations": {
-      "label": "Treasure Sight every N locations",
-      "tooltip": "After the first cast, recast every this many locations checked (opened or empty)."
+      "label": "Locations between casts"
     },
     "hunt_max_level": {
       "label": "Max coffer level",
@@ -57,11 +56,11 @@
     },
     "hunt_min_bronze_percent": {
       "label": "Min bronze fill to auto-hunt (%)",
-      "tooltip": "With Treasure Sight: auto-hunts start when bronze fill is at least this % of 30 — or when silver meets its own %.\nWithout Sight: Illegal Mode uses the built-in map and ignores this."
+      "tooltip": "With Treasure Sight: start when bronze fill is at least this % of 30 — or when silver meets its %.\nUsed by General → Auto treasure hunt and Mob Farmer → Treasure Hunt on a timer.\nWithout Sight: Illegal Mode uses the built-in map and ignores this."
     },
     "hunt_min_silver_percent": {
       "label": "Min silver fill to auto-hunt (%)",
-      "tooltip": "With Treasure Sight: auto-hunts start when silver fill is at least this % of 8 — or when bronze meets its own %.\nWithout Sight: Illegal Mode uses the built-in map and ignores this."
+      "tooltip": "With Treasure Sight: start when silver fill is at least this % of 8 — or when bronze meets its %.\nUsed by General → Auto treasure hunt and Mob Farmer → Treasure Hunt on a timer.\nWithout Sight: Illegal Mode uses the built-in map and ignores this."
     },
     "empty_pad_trust_distance": {
       "label": "Empty pad check distance",

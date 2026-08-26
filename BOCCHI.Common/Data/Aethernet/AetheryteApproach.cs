@@ -88,8 +88,10 @@ public static class AetheryteApproach
                                 Vector3 retryTarget = nearest.GetCampStandOffPosition(p.Position);
                                 MaybeMountToward(zone, objects, conditions, movement, retryTarget);
 
-                                // Re-issue if vnav went idle short of magenta.
-                                if (pathfinder.GetState() == PathfindingState.Idle)
+                                // Re-issue only if idle and still meaningfully short — not every tick
+                                // when already parked on the stand-off tile (vnav Idle + same poly).
+                                if (pathfinder.GetState() == PathfindingState.Idle
+                                    && p.Position.Distance2D(retryTarget) > AethernetNavigation.PathfindArrivalRadius)
                                 {
                                     StartApproachPath(pathfinder, retryTarget);
                                 }

@@ -625,6 +625,8 @@ public sealed class CarrotHunterService
         {
             ResetFarStuckWatch();
             vnav.Stop();
+            ninjaHideRequired = false;
+            ninjaHide.EndStealthForInteract();
             Phase = CarrotHuntPhase.UsingItem;
             return;
         }
@@ -748,6 +750,9 @@ public sealed class CarrotHunterService
         {
             return;
         }
+
+        ninjaHideRequired = false;
+        ninjaHide.EndStealthForInteract();
 
         if (!EzThrottler.Throttle("CarrotHunt::InteractBunny", 400))
         {
@@ -1675,6 +1680,14 @@ public sealed class CarrotHunterService
                 ninjaHide.TryOccultSprintWhileHidden();
             }
 
+            return true;
+        }
+
+        if (treasureConfig.NinjaGearsetNumber <= 0 && !ninjaHide.IsNinja)
+        {
+            log.Warning(
+                "Ninja Hide is on but gearset is 0 and you are not on Ninja — skipping Hide for this threat");
+            ninjaHideRequired = false;
             return true;
         }
 

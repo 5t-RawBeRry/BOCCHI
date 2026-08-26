@@ -8,7 +8,7 @@
   "fields": {
     "should_automate_buffs": {
       "label": "Automate buffs",
-      "tooltip": "In Illegal Mode, refresh the buffs below at knowledge crystals."
+      "tooltip": "On: refresh selected buffs at knowledge crystals during Illegal Mode, and when Mob Farmer pauses for crystal buffs.\nOff: no automatic buff refresh."
     },
     "apply_romeos_ballad": {
       "label": "Romeo's Ballad"

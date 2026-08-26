@@ -1495,10 +1495,10 @@ public class TreasureHunterService
 
         if (present == null)
         {
-            bool stillApproaching = IsStillApproachingPad(dist2d);
+            bool stillApproaching = IsStillApproachingOutsideTrust(dist2d);
 
-            // Still walking in — coffers often stream only in the last stretch. Skipping
-            // here walks past a live chest, and divert used to refuse to turn back.
+            // Outside the trust slider — coffers often stream only in the last stretch.
+            // Inside it, empty-skip may run while still walking (divert can reclaim false skips).
             if (stillApproaching)
             {
                 ClearEmptyPadCandidate();
@@ -1598,6 +1598,8 @@ public class TreasureHunterService
         }
 
         ResetStuckWatch();
+        ninjaHideRequired = false;
+        ninjaHide.EndStealthForInteract();
         activeChain = chainManager.Manage(
             chains.Create($"TreasureHunt::Open({step.NodeId})")
                 .Then<OpenTreasureCofferChain, TreasureOpenTarget>(present.Position)
@@ -1840,6 +1842,14 @@ public class TreasureHunterService
             return true;
         }
 
+        if (config.NinjaGearsetNumber <= 0 && !ninjaHide.IsNinja)
+        {
+            log.Warning(
+                "Ninja Hide is on but gearset is 0 and you are not on Ninja — skipping Hide for this threat");
+            ninjaHideRequired = false;
+            return true;
+        }
+
         vnav.Stop();
         pathfinder.Stop();
         return false;
@@ -1889,9 +1899,13 @@ public class TreasureHunterService
         }
     }
 
-    private bool IsStillApproachingPad(float dist2d) =>
-        vnav.IsPathfinding()
-        || (vnav.IsRunning() && dist2d > OpenTreasureCofferChain.PreferredOpenDistance);
+    /// <summary>
+    ///     True while still walking in from outside <see cref="TreasureConfig.EmptyPadTrustDistance"/>.
+    ///     Inside that radius the empty-pad slider applies even if vnav is still running.
+    /// </summary>
+    private bool IsStillApproachingOutsideTrust(float dist2d) =>
+        dist2d > config.EmptyPadTrustDistance
+        && (vnav.IsPathfinding() || vnav.IsRunning());
 
     /// <summary>True when the player is close enough to trust that this pad has no live coffer.</summary>
     private bool CanTrustEmptyPad(Vector3 layoutDestination)

@@ -169,6 +169,7 @@
       "yield_reasons": {
         "none": "—",
         "pots": "Magic Pot",
+        "treasure_sight": "Treasure Sight",
         "treasure_hunt": "Treasure Hunt",
         "crystal_buffs": "Crystal buffs"
       },

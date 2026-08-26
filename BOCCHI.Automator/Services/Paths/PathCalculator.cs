@@ -9,9 +9,11 @@ using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Common.Data.Zones.Graph.Traversal;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.Services.Paths;
+using BOCCHI.Treasure.Services;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using Ocelot.Extensions;
+using Ocelot.Ipc.VNavmesh;
 using Ocelot.Services.Logger;
 using Ocelot.Services.Pathfinding;
 using System.Numerics;
@@ -27,6 +29,7 @@ public class PathCalculator
     IFateContext fateContext,
     AutomatorConfig config,
     CriticalEncounterGeometry geometry,
+    IVNavmeshIpc vnav,
     ILogger<PathCalculator> logger
 ) : IPathCalculator
 {
@@ -147,11 +150,15 @@ public class PathCalculator
         ActivityAreaShape ceShape = ActivityAreaShape.Circle;
         Vector3? ceWaitCenter = null;
         float ceStandRadius = 0f;
+        int ceId = 0;
+        Vector3 ceStaging = pathGoal.Position;
         if (goal.GoalType is CriticalEncounterGoal ceGoalForRadius)
         {
+            ceId = ceGoalForRadius.id.Value;
             ActivityData? authoredCe = zone.GetCriticalEncounterData()
-                .FirstOrDefault(a => a.Id == ceGoalForRadius.id.Value);
+                .FirstOrDefault(a => a.Id == ceId);
             Vector3 authoredStaging = authoredCe?.Position ?? pathGoal.Position;
+            ceStaging = authoredStaging;
             if (geometry.TryResolveForAuthored(
                     ceGoalForRadius.id.Value,
                     authoredStaging,
@@ -225,7 +232,19 @@ public class PathCalculator
                 NavigationConstants.CriticalEncounterPaddedRadius(ceCombatRadius, ceShape),
                 ceShape);
             Vector3 approach = NavigationApproach.GetCriticalEncounterApproachPosition(
-                waitAt, red, ceShape, ceStandRadius);
+                waitAt, red, ceShape, ceStandRadius, stableSeed: ceId);
+            approach = ResolveCriticalEncounterPathfindTarget(approach, waitAt, player.Position);
+
+            if (CriticalEncounterPathOverrides.TryGetApproachVias(
+                    zone.ZoneId,
+                    ceId,
+                    player.Position,
+                    ceStaging,
+                    out IReadOnlyList<Vector3> vias))
+            {
+                InsertPathfindBeforeLast(resolvedSteps, vias, NavigationConstants.EventArrivalRadius);
+            }
+
             RewriteLastPathfind(resolvedSteps, approach);
         }
 
@@ -341,6 +360,42 @@ public class PathCalculator
         return steps
             .Select(step => AethernetNavigation.ResolveAetherytePathStep(step, zone, from))
             .ToList();
+    }
+
+    private Vector3 ResolveCriticalEncounterPathfindTarget(Vector3 approach, Vector3 waitCenter, Vector3 player)
+    {
+        if (TreasurePathing.TrySnapToNavmesh(approach, player.Y, vnav, out Vector3 snapped))
+        {
+            return snapped;
+        }
+
+        if (TreasurePathing.TrySnapToNavmesh(waitCenter, player.Y, vnav, out snapped))
+        {
+            logger.Debug(
+                "CE approach off-mesh at {Approach:F0} — using snapped wait centre {Center:F0}",
+                approach,
+                snapped);
+            return snapped;
+        }
+
+        logger.Debug(
+            "CE approach off-mesh at {Approach:F0} — keeping unsnapped target (navmesh may still be loading)",
+            approach);
+        return approach;
+    }
+
+    private static void InsertPathfindBeforeLast(List<PathStep> steps, IReadOnlyList<Vector3> vias, float range)
+    {
+        int lastPathfind = steps.FindLastIndex(step => step.PathStepData is Pathfind);
+        if (lastPathfind < 0)
+        {
+            return;
+        }
+
+        foreach (Vector3 via in vias)
+        {
+            steps.Insert(lastPathfind, PathStep.Pathfind(via, range));
+        }
     }
 
     private static void RewriteLastPathfind(List<PathStep> steps, Vector3 destination)

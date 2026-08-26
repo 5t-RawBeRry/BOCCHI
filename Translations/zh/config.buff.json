@@ -8,7 +8,7 @@
   "fields": {
     "should_automate_buffs": {
       "label": "自动维持增益",
-      "tooltip": "违规模式中，在知识水晶处刷新下方增益。"
+      "tooltip": "开：违规模式中，以及刷怪为水晶增益暂停时，在知识水晶刷新所选增益。\n关：不自动刷新增益。"
     },
     "apply_romeos_ballad": {
       "label": "爱之歌"

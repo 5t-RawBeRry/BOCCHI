@@ -24,7 +24,7 @@
     },
     "should_farm_reroll_pot_chests": {
       "label": "리롤 항아리 상자도 수집",
-      "tooltip": "항아리 돌발 상자 수집 후, Cache Me가 남아 있는 동안 공유 리롤 지점도 돌아봄."
+      "tooltip": "켬: 항아리 돌발 상자 수집 후, Cache Me가 남아 있는 동안 공유 리롤 지점도 돌아봄.\n끔: 리롤 지점은 건너뜀."
     }
   }
 }
