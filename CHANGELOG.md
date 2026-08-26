@@ -2,6 +2,7 @@
 
 ### Fixes
 - **Illegal Mode:** starting a treasure hunt while idle at camp no longer pathfinds in place. After a FATE or CE, Return runs before the aethernet hop and walks into the Lifestream ring (edge stops were failing the hop).
+- **Illegal Mode + Rotation Solver:** after you die in a CE and get raised, Henched turns back on (it still turns off while you are dead).
 - **Dark Artistry** (North Horn): activity area is a square, so pathing and “in CE” checks match the real zone.
 - **Pot chests:** North Horn south pot no longer loops under the island (#201). Illegal Mode after a manual elixir uses that pot’s pads. Compass hints use where you drank Magical Elixir, not a later pad.
 - **Carrot Hunt (North Horn):** the west Suspended Masonry carrot (~2.4, 35.9) approaches across the island instead of the long way around a jump.
