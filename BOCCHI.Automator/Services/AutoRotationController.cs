@@ -53,6 +53,12 @@ public class AutoRotationController(
 
     public void TeardownForIllegalMode() => session.Teardown();
 
+    /// <summary>
+    ///     After raise: drop job apply latches so the next In CE / Sync Enable re-issues RSR Henched
+    ///     (RSR can ignore Henched while unconscious while we still cached success).
+    /// </summary>
+    public void OnRevived() => session.ClearJobAppliedCache();
+
     public void EnableForFate() => session.Enable(CombatActivity.Fate);
 
     public void EnableForCriticalEncounter() => session.Enable(CombatActivity.CriticalEncounter);
@@ -117,7 +123,9 @@ public class AutoRotationController(
             return;
         }
 
-        if (criticalEncounters.IsInCriticalEncounter())
+        // Committed CE survives death (EventId can lag after YesAlready raise) — still re-arm.
+        if (memory.TryRemember<CommittedCriticalEncounterMemory>(out CommittedCriticalEncounterMemory _)
+            || criticalEncounters.IsInCriticalEncounter())
         {
             session.Enable(CombatActivity.CriticalEncounter);
             return;

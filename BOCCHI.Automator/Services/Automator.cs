@@ -344,6 +344,7 @@ public class Automator
                      && !memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory _)
                      && !memory.TryRemember<WaitingForPotFateMemory>(out WaitingForPotFateMemory _)
                      && !memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _)
+                     && !memory.TryRemember<CommittedCriticalEncounterMemory>(out CommittedCriticalEncounterMemory _)
                      && !memory.TryRemember<ApplyingBuffsMemory>(out ApplyingBuffsMemory _))
             {
                 memory.TryAdd(new GoalPathStepMemory(goal.Goal, calculator, automatorConfig.StopAfterReturn));
