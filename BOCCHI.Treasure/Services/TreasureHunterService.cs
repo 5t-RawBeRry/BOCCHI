@@ -1273,7 +1273,7 @@ public class TreasureHunterService
             }
 
             // Trim only nearby same-floor empties after Sight.
-            if (!IsLayoutPadEmpty(spot.Position, nodeId)
+            if (FindTreasureForLayout(spot.Position, nodeId) != null
                 || player.Position.Distance2D(spot.Position) > config.EmptyPadTrustDistance
                 || !IsSameFloor(spot.Position))
             {
@@ -1529,7 +1529,6 @@ public class TreasureHunterService
             return false;
         }
 
-        // Same-floor 2D gate for open (basement vs surface).
         if (dist2d > OpenTreasureCofferChain.PreferredOpenDistance || !IsSameFloor(destination))
         {
             return false;
@@ -1833,12 +1832,6 @@ public class TreasureHunterService
         }
     }
 
-    private bool IsLayoutPadEmpty(Vector3 layoutDestination, uint nodeId) =>
-        FindTreasureForLayout(layoutDestination, nodeId) == null;
-
-    /// <summary>
-    /// True while nav is still computing or walking in — too early to trust an empty pad.
-    /// </summary>
     private bool IsStillApproachingPad(float dist2d) =>
         vnav.IsPathfinding()
         || (vnav.IsRunning() && dist2d > OpenTreasureCofferChain.PreferredOpenDistance);

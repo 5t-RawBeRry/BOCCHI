@@ -34,7 +34,6 @@ namespace BOCCHI.Treasure.Services;
 public sealed class CarrotHunterService
 (
     ICarrotTracker carrots,
-    FortuneCarrotAssist fortuneCarrot,
     TreasureConfig treasureConfig,
     UIConfig uiConfig,
     MovementConfig movementConfig,
@@ -56,6 +55,8 @@ public sealed class CarrotHunterService
     NinjaHideAssist ninjaHide
 ) : ICarrotHunter, IOnUpdate, IOnStop
 {
+    private const uint FortuneCarrotItemId = 48096;
+
     private const float BunnySearchRadius = 10f;
 
     private static readonly TimeSpan BunnySpawnTimeout = TimeSpan.FromSeconds(20);
@@ -139,7 +140,7 @@ public sealed class CarrotHunterService
 
     public TimeSpan Elapsed => stopwatch.Elapsed;
 
-    public int FortuneCarrotsRemaining => fortuneCarrot.Count();
+    public int FortuneCarrotsRemaining => InventoryItemAssist.Count(FortuneCarrotItemId);
 
     public bool IsVnavAvailable => vnav.IsAvailable();
 
@@ -164,7 +165,7 @@ public sealed class CarrotHunterService
             return;
         }
 
-        if (!fortuneCarrot.HasAny())
+        if (!InventoryItemAssist.Has(FortuneCarrotItemId))
         {
             BocchiChat.PrintError(chat, uiConfig, "No Fortune Carrots in inventory.");
             return;
@@ -193,13 +194,13 @@ public sealed class CarrotHunterService
 
     public bool UseFortuneCarrot()
     {
-        if (!fortuneCarrot.HasAny())
+        if (!InventoryItemAssist.Has(FortuneCarrotItemId))
         {
             BocchiChat.PrintError(chat, uiConfig, "No Fortune Carrots in inventory.");
             return false;
         }
 
-        if (!fortuneCarrot.TryUse(manual: true))
+        if (!TryUseFortuneCarrot(manual: true))
         {
             return false;
         }
@@ -304,7 +305,7 @@ public sealed class CarrotHunterService
             return false;
         }
 
-        if (!fortuneCarrot.HasAny())
+        if (!InventoryItemAssist.Has(FortuneCarrotItemId))
         {
             BocchiChat.PrintError(chat, uiConfig, OutOfCarrotsMessage);
             return false;
@@ -675,14 +676,14 @@ public sealed class CarrotHunterService
             return;
         }
 
-        if (!fortuneCarrot.HasAny())
+        if (!InventoryItemAssist.Has(FortuneCarrotItemId))
         {
             BocchiChat.PrintError(chat, uiConfig, OutOfCarrotsMessage);
             Teardown();
             return;
         }
 
-        if (!fortuneCarrot.TryUse())
+        if (!TryUseFortuneCarrot())
         {
             return;
         }
@@ -895,7 +896,7 @@ public sealed class CarrotHunterService
             return;
         }
 
-        if (!fortuneCarrot.HasAny())
+        if (!InventoryItemAssist.Has(FortuneCarrotItemId))
         {
             BocchiChat.PrintError(chat, uiConfig, OutOfCarrotsMessage);
             Teardown();
@@ -1884,6 +1885,18 @@ public sealed class CarrotHunterService
         activeReturnChain = null;
         returnThenStop = false;
         returnThenAethernet = false;
+    }
+
+    private bool TryUseFortuneCarrot(bool manual = false)
+    {
+        string throttleKey = manual ? "CarrotHunt::FortuneCarrotManual" : "CarrotHunt::FortuneCarrot";
+        int throttleMs = manual ? 500 : 1000;
+        return InventoryItemAssist.TryUse(
+            FortuneCarrotItemId,
+            throttleKey,
+            throttleMs,
+            log,
+            "Carrot hunt");
     }
 
     private void SoftStopWhileUnconscious()

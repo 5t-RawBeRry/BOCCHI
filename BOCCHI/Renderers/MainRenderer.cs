@@ -49,7 +49,6 @@ public class MainRenderer
                 continue;
             }
 
-            // Trackers: always visible, no collapsing header.
             if (section == MainWindowSection.Trackers)
             {
                 ui.Text(GetSectionTitle(section));

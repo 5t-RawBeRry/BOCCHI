@@ -65,7 +65,6 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         BootstrapConfiguration(services, plugin, logger);
 
         services.AddSingleton<TranslationLoader>();
-        services.AddSingleton<ReturnYesNoInitializer>();
         services.AddSingleton<OccultExcelInitializer>();
 
         services.AddSingleton<IMainRenderer, MainRenderer>();

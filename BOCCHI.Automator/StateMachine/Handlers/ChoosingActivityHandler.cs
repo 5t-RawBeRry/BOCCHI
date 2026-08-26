@@ -177,7 +177,7 @@ public class ChoosingActivityHandler
             }
             else
             {
-                TimeSpan cutoff = GetIllegalFateCutoff();
+                TimeSpan cutoff = TimeSpan.FromMinutes(Math.Max(0, potsConfig.FateFallbackCutoffMinutes));
                 PotFallbackStartDecision decision = PotFallbackWindow.Evaluate(
                     cycle,
                     now,
@@ -277,7 +277,7 @@ public class ChoosingActivityHandler
         if (!PotFallbackWindow.ShouldPreposition(
                 cycle,
                 DateTimeOffset.UtcNow,
-                GetPotPrepositionLead(),
+                potsConfig.PotSpawnLeadMinutes,
                 potFarmingEnabled: true))
         {
             TimeSpan untilSpawn = cycle.PredictedNextSpawnAt - DateTimeOffset.UtcNow;
@@ -285,7 +285,7 @@ public class ChoosingActivityHandler
                 untilSpawn <= TimeSpan.Zero
                     ? "pot prediction is stale (spawn never observed)"
                     : $"outside the leave-early window — next pot in {untilSpawn.TotalMinutes:0}m "
-                      + $"(lead {GetPotPrepositionLead()}m)");
+                      + $"(lead {potsConfig.PotSpawnLeadMinutes}m)");
         }
 
         lastPrepositionSkip = null;
@@ -304,11 +304,6 @@ public class ChoosingActivityHandler
 
         return false;
     }
-
-    private TimeSpan GetIllegalFateCutoff() =>
-        TimeSpan.FromMinutes(Math.Max(0, potsConfig.FateFallbackCutoffMinutes));
-
-    private int GetPotPrepositionLead() => potsConfig.PotSpawnLeadMinutes;
 
     private bool CompletionistBlocksFate(uint fateId) =>
         !PotsOnly

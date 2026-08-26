@@ -41,7 +41,7 @@ public class FarmingPotChestsHandler
     IPlayer player,
     IZoneProvider zones,
     PotTreasureHintTracker hints,
-    MagicalElixirAssist elixir,
+    IPluginLog pluginLog,
     AutoRotationController autoRotation,
     MovementConfig movement,
     PotsConfig potsConfig,
@@ -449,7 +449,7 @@ public class FarmingPotChestsHandler
             && (farm.ElixirAttempts == 0
                 || DateTimeOffset.UtcNow - farm.PhaseStartedUtc >= HintWaitTimeout))
         {
-            if (!elixir.HasElixir())
+            if (!InventoryItemAssist.Has(PotTreasureIds.MagicalElixirItemId, includeKeyItems: true))
             {
                 logger.Info("Pot treasure: no Magical Elixir — blind fallback");
                 FallBackToBlind(farm);
@@ -470,7 +470,14 @@ public class FarmingPotChestsHandler
     /// </summary>
     private bool TryUseElixir(PotChestFarmMemory farm)
     {
-        if (!elixir.TryUse())
+        // Game recast is ~5s — keep throttle slightly above so UseItem is not spammed on CD.
+        if (!InventoryItemAssist.TryUse(
+                PotTreasureIds.MagicalElixirItemId,
+                "PotTreasure::MagicalElixir",
+                5500,
+                pluginLog,
+                "Pot treasure",
+                tryKeyItems: true))
         {
             return false;
         }
@@ -626,7 +633,6 @@ public class FarmingPotChestsHandler
             return;
         }
 
-        // Give up on this candidate.
         SkipCurrentCandidate(farm);
     }
 
@@ -1021,7 +1027,6 @@ public class FarmingPotChestsHandler
             return false;
         }
 
-        // Target moved: the old plan goes somewhere we no longer want.
         if (travelPlanTarget is { } planned && planned.Distance2D(destination) > RepathDrift)
         {
             ClearTravelPlan();

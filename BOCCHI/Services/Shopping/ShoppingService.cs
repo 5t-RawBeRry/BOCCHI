@@ -193,7 +193,6 @@ public sealed class ShoppingService
             return true;
         }
 
-        // Nothing left affordable — close shop and cool down.
         if (EzThrottler.Throttle("Shopping::Close", 2000))
         {
             shop->FireCallbackInt(-1);
