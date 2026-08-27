@@ -1,10 +1,7 @@
 # 4.2.0.0
 
-### Enhancements
-- **Main UI:** status bar is the live summary (chips open their section; Running line; shopping pause; pot chip; path map only while building). Mode panels focus on controls — less duplicate On/goal/pot/path.
-- **Main / Config UI:** restyle with gold section headers, muted blurbs, card panels, and status chips across Main and Config (including shopping Keep/Buy/Sink). Progress counts sit beside bars for readable contrast.
-- **Shopping (South + North Horn):** Keep / Buy / Sink list with silver/gold thresholds. Pauses other automation (not mid FATE/CE or Mob Farmer pull/fight), shops at camp, then resumes. Multi-currency items get Pay with checkboxes. Pieces on South Horn, obols on North. Owned unlocks and armor are skipped.
-- **Shared maps:** Config → Treasure Hunter → Share maps with the community. Downloads shared carrot/coffer pads and pot timers; anonymously uploads what you see. Turn off for built-in maps and local pot timing only.
-  - **Carrot Hunt:** shared chewed-carrot pads merge into your route (built-in pads still work if download fails).
-  - **Treasure Hunt:** shared coffer pads merge with the built-in map so new community spots can be visited without a plugin update.
-  - **Pot timers:** same toggle — shared per instance when on.
+### What's new
+- **Main window:** status bar at the top shows what’s running — click a chip to jump to that section. Mode pages focus on controls, with less repeated status text.
+- **Look & feel:** gold section titles, card panels, and status chips in Main and Config. Progress numbers sit beside bars so they’re easier to read.
+- **Auto-shop:** new Shopping page. Add items to keep in stock, buy a set number of times, or spend leftover currency. When silver or gold hits your threshold, Bocchi pauses other automation, shops at camp, then continues. Won’t interrupt a FATE, CE, or an active Mob Farmer pull/fight. For items buyable with more than one currency, choose which to use. South Horn uses pieces; North Horn uses obols. Already-owned unlocks and armor are skipped.
+- **Shared maps:** Config → Treasure Hunter → Share maps with the community. Downloads community carrot and coffer spots plus pot timers, and anonymously uploads what you find. Turn off to use only built-in maps and local pot timing.
