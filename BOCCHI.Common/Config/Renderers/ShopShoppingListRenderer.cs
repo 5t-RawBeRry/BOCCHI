@@ -319,8 +319,9 @@ public class ShopShoppingListRenderer(
                 BocchiUi.MutedText($"{translator.T(Key(listKey, ".col_have"))}: {have}");
                 ImGui.Spacing();
 
-                bool lockInputs = owned == true;
-                using (ImRaii.Disabled(lockInputs))
+                bool blockPurchase = catalog is { } blocked
+                    && ShopOwnership.ShouldBlockPurchase(blocked, supportJobs, data, unlockState);
+                using (ImRaii.Disabled(blockPurchase))
                 {
                     changed |= DrawAmountField(
                         translator.T(Key(listKey, ".col_keep")),
@@ -617,8 +618,9 @@ public class ShopShoppingListRenderer(
                 }
 
                 bool owned = ShopOwnership.TryIsOwned(entry, supportJobs, data, unlockState) == true;
+                bool blockPurchase = ShopOwnership.ShouldBlockPurchase(entry, supportJobs, data, unlockState);
                 bool already = config.Shopping.ContainsKey(entry.ItemId);
-                bool locked = owned || already;
+                bool locked = already || blockPurchase;
                 string cost = FormatOfferCosts(entry.ItemId, zone, ShopCurrencyPreference.None);
                 string label = $"{entry.Name}  ({cost})##add_{entry.ItemId}";
 
@@ -641,11 +643,13 @@ public class ShopShoppingListRenderer(
 
                 if (rowHovered)
                 {
-                    string tip = owned
-                        ? ownedLabel
-                        : already
-                            ? translator.T(Key(listKey, ".already_listed"))
-                            : $"{entry.Name}\n{cost}";
+                    string tip = already
+                        ? translator.T(Key(listKey, ".already_listed"))
+                        : blockPurchase
+                            ? $"{entry.Name}\n{cost}\n{ownedLabel}"
+                            : owned
+                                ? $"{entry.Name}\n{cost}\n{ownedLabel}"
+                                : $"{entry.Name}\n{cost}";
                     ImGui.SetTooltip(tip);
                 }
             }

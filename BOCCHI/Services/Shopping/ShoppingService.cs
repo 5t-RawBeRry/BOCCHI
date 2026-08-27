@@ -111,9 +111,9 @@ public sealed class ShoppingService
         // Never pull the player out of a live FATE/CE for shopping.
         if (IsInFateOrCriticalEncounter())
         {
-            if (AddonHelpers.IsShopExchangeOpen() && HasPendingGoals(zoneId))
+            if (AddonHelpers.IsShopExchangeOpen() && (HasPendingGoals(zoneId) || phase == Phase.Buying))
             {
-                // Already at the antiquarian with the shop open — finish buys only.
+                // Already at the antiquarian with the shop open — finish buys or close.
                 ClaimPriority();
                 phase = Phase.Buying;
                 TryHandleOpenShop(zoneId);
@@ -129,7 +129,8 @@ public sealed class ShoppingService
             return;
         }
 
-        if (AddonHelpers.IsShopExchangeOpen() && HasPendingGoals(zoneId))
+        if (AddonHelpers.IsShopExchangeOpen()
+            && (HasPendingGoals(zoneId) || phase == Phase.Buying || priorityClaimed))
         {
             ClaimPriority();
             phase = Phase.Buying;
@@ -422,12 +423,14 @@ public sealed class ShoppingService
                 continue;
             }
 
-            if (!TryResolveEntry(itemId, zoneId, setting, out ShopCatalogEntry entry))
+            // Only affordable preferred offers count — otherwise we keep soft-suspending
+            // and retrying buys we already know will fail.
+            if (!TryResolveAffordable(itemId, zoneId, setting, out ShopCatalogEntry entry))
             {
                 continue;
             }
 
-            if (ShopOwnership.TryIsOwned(entry, supportJobs, data, unlockState) == true)
+            if (ShopOwnership.ShouldBlockPurchase(entry, supportJobs, data, unlockState))
             {
                 continue;
             }
@@ -476,7 +479,7 @@ public sealed class ShoppingService
                 continue;
             }
 
-            if (!TryResolveEntry(itemId, zoneId, setting, out ShopCatalogEntry entry))
+            if (!TryResolveAffordable(itemId, zoneId, setting, out ShopCatalogEntry entry))
             {
                 continue;
             }
@@ -486,12 +489,12 @@ public sealed class ShoppingService
                 continue;
             }
 
-            if (ShopOwnership.TryIsOwned(entry, supportJobs, data, unlockState) == true)
+            if (ShopOwnership.ShouldBlockPurchase(entry, supportJobs, data, unlockState))
             {
                 continue;
             }
 
-            if (!MatchesGoal(setting, itemId, goal) || !CanAfford(entry))
+            if (!MatchesGoal(setting, itemId, goal))
             {
                 continue;
             }
@@ -506,8 +509,15 @@ public sealed class ShoppingService
 
         if (preferLiveRow)
         {
+            // ItemId alone is not enough: the same item appears in silver and gold menus.
+            // Matching a gold offer while the silver shop is open spams failed buys.
             foreach (ShopCatalogEntry entry in candidates)
             {
+                if (openedMenuIndex is { } liveMenu && entry.MenuIndex != liveMenu)
+                {
+                    continue;
+                }
+
                 if (ShopExchangeAssist.TryFindRowIndex(entry.ItemId, out _))
                 {
                     return entry;
@@ -540,24 +550,14 @@ public sealed class ShoppingService
             _ => false,
         };
 
-    private bool TryResolveEntry(
+    private bool TryResolveAffordable(
         uint itemId,
         ZoneId zoneId,
         ShopListEntry setting,
         out ShopCatalogEntry entry)
     {
-        List<ShopCatalogEntry> offers = ShopCatalog
-            .PreferredOffers(itemId, zoneId, setting.PreferredCurrencies)
-            .ToList();
-
-        if (offers.Count == 0)
-        {
-            entry = default;
-            return false;
-        }
-
-        // Prefer an affordable offer; otherwise keep the first preferred for ownership/UI.
-        foreach (ShopCatalogEntry offer in offers)
+        foreach (ShopCatalogEntry offer in ShopCatalog.PreferredOffers(
+                     itemId, zoneId, setting.PreferredCurrencies))
         {
             if (CanAfford(offer))
             {
@@ -566,8 +566,8 @@ public sealed class ShoppingService
             }
         }
 
-        entry = offers[0];
-        return true;
+        entry = default;
+        return false;
     }
 
     private bool CanAfford(ShopCatalogEntry entry)

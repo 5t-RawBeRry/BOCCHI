@@ -6,7 +6,9 @@ using Lumina.Excel.Sheets;
 
 namespace BOCCHI.Common.Data.Shopping;
 
-/// <summary>Owned / unlocked checks for shop preferred-item UI and auto-buy skips.</summary>
+/// <summary>
+/// Owned / unlocked checks for shop badges, and purchase blocking for owned untradeables.
+/// </summary>
 public static unsafe class ShopOwnership
 {
     public static bool? TryIsOwned(
@@ -34,6 +36,35 @@ public static unsafe class ShopOwnership
                  ? true
                  : null,
         };
+    }
+
+    /// <summary>
+    /// Skip auto-buy / lock list inputs when owned and the item cannot be traded
+    /// (extra copies aren't useful). Owned tradeables stay buyable.
+    /// </summary>
+    public static bool ShouldBlockPurchase(
+        ShopCatalogEntry entry,
+        ISupportJobFactory supportJobs,
+        IDataManager data,
+        IUnlockState unlockState)
+    {
+        if (TryIsOwned(entry, supportJobs, data, unlockState) != true)
+        {
+            return false;
+        }
+
+        return IsUntradable(entry.ItemId, data);
+    }
+
+    public static bool IsUntradable(uint itemId, IDataManager data)
+    {
+        if (!data.GetExcelSheet<Item>().TryGetRow(itemId, out Item item))
+        {
+            // Unknown row — treat as untradeable when owned (safer).
+            return true;
+        }
+
+        return item.IsUntradable;
     }
 
     private static bool? TryItemUnlockOwned(uint itemId, IDataManager data, IUnlockState unlockState)
