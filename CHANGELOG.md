@@ -1,4 +1,4 @@
-# 4.1.0.12
+# 4.2.0.0
 
 ### Enhancements
 - **Main UI:** status bar is the live summary (chips open their section; Running line; shopping pause; pot chip; path map only while building). Mode panels focus on controls — less duplicate On/goal/pot/path.
