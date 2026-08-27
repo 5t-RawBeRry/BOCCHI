@@ -135,6 +135,12 @@ public sealed class CofferLocationSyncService
 
         if (!config.EnableSharedMaps)
         {
+            if (accepted.Count > 0)
+            {
+                accepted = [];
+                catalogTerritory = 0;
+            }
+
             return;
         }
 

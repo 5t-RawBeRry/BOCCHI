@@ -28,9 +28,6 @@ public static partial class ShopCatalog
 
     public static IReadOnlyList<ShopCatalogEntry> All => entries;
 
-    public static IEnumerable<ShopCatalogEntry> ForZone(ZoneId zone) =>
-        entries.Where(e => e.Zone == zone);
-
     public static bool TryGet(uint itemId, out ShopCatalogEntry entry) =>
         byItemId.TryGetValue(itemId, out entry);
 
@@ -102,8 +99,19 @@ public static partial class ShopCatalog
     public static IEnumerable<ShopCatalogEntry> PreferredOffers(
         uint itemId,
         ZoneId zone,
-        ShopCurrencyPreference preferred) =>
-        EntriesForItem(itemId, zone).Where(e => MatchesCurrencyPreference(e, preferred));
+        ShopCurrencyPreference preferred,
+        bool fallbackAnyZone = false)
+    {
+        List<ShopCatalogEntry> inZone = EntriesForItem(itemId, zone)
+            .Where(e => MatchesCurrencyPreference(e, preferred))
+            .ToList();
+        if (inZone.Count > 0 || !fallbackAnyZone)
+        {
+            return inZone;
+        }
+
+        return EntriesForItem(itemId).Where(e => MatchesCurrencyPreference(e, preferred));
+    }
 
     public static bool MatchesCurrencyPreference(
         ShopCatalogEntry entry,

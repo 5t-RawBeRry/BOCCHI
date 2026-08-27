@@ -97,6 +97,12 @@ public sealed class CarrotLocationSyncService
 
         if (!config.EnableSharedMaps)
         {
+            if (acceptedLocations.Count > 0)
+            {
+                acceptedLocations = [];
+                catalogTerritory = 0;
+            }
+
             return;
         }
 

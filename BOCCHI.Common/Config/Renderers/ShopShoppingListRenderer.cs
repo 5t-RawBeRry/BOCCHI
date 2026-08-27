@@ -250,7 +250,7 @@ public class ShopShoppingListRenderer(
             ShopCatalogEntry? catalog = ResolveCatalog(itemId, zone, setting);
             string name = catalog?.Name
                           ?? (data.GetExcelSheet<Item>().TryGetRow(itemId, out Item row) ? row.Name.ToString() : $"#{itemId}");
-            string costLabel = FormatCostLabel(itemId, zone, setting, listKey, translator);
+            string costLabel = FormatOfferCosts(itemId, zone, setting.PreferredCurrencies, listKey, translator);
             int have = InventoryItemAssist.Count(itemId);
             bool? owned = catalog is { } c
                 ? ShopOwnership.TryIsOwned(c, supportJobs, data, unlockState)
@@ -484,25 +484,16 @@ public class ShopShoppingListRenderer(
         return n;
     }
 
-    private static string FormatCostLabel(
+    private static string FormatOfferCosts(
         uint itemId,
         ZoneId zone,
-        ShopListEntry setting,
-        string listKey,
-        ITranslator translator)
+        ShopCurrencyPreference preferred,
+        string? listKey = null,
+        ITranslator? translator = null)
     {
-        // Prefer the zone you're in; outside Occult Crescent, show any-zone offers.
-        List<ShopCatalogEntry> offers = ShopCatalog
-            .PreferredOffers(itemId, zone, setting.PreferredCurrencies)
+        List<ShopCatalogEntry> offers = DistinctByCurrency(
+                ShopCatalog.PreferredOffers(itemId, zone, preferred, fallbackAnyZone: true))
             .ToList();
-        if (offers.Count == 0)
-        {
-            offers = DistinctByCurrency(
-                    ShopCatalog.EntriesForItem(itemId)
-                        .Where(e => ShopCatalog.MatchesCurrencyPreference(e, setting.PreferredCurrencies)))
-                .ToList();
-        }
-
         if (offers.Count == 0)
         {
             return "-";
@@ -513,15 +504,21 @@ public class ShopShoppingListRenderer(
             return $"{offers[0].Cost}";
         }
 
+        bool nameCurrencies = listKey != null && translator != null;
         return string.Join(
             " / ",
             offers.Select(o =>
             {
+                if (!nameCurrencies)
+                {
+                    return o.Cost.ToString();
+                }
+
                 string cur = ShopCatalog.CurrencyKindOf(o.CurrencyItemId) switch
                 {
-                    ShopCurrencyPreference.Silver => translator.T(Key(listKey, ".currency_silver")),
-                    ShopCurrencyPreference.Gold => translator.T(Key(listKey, ".currency_gold")),
-                    ShopCurrencyPreference.Amulet => translator.T(Key(listKey, ".currency_amulet")),
+                    ShopCurrencyPreference.Silver => translator!.T(Key(listKey!, ".currency_silver")),
+                    ShopCurrencyPreference.Gold => translator!.T(Key(listKey!, ".currency_gold")),
+                    ShopCurrencyPreference.Amulet => translator!.T(Key(listKey!, ".currency_amulet")),
                     _ => "?",
                 };
                 return $"{o.Cost} {cur}";
@@ -622,7 +619,7 @@ public class ShopShoppingListRenderer(
                 bool owned = ShopOwnership.TryIsOwned(entry, supportJobs, data, unlockState) == true;
                 bool already = config.Shopping.ContainsKey(entry.ItemId);
                 bool locked = owned || already;
-                string cost = FormatAddCost(entry.ItemId, zone);
+                string cost = FormatOfferCosts(entry.ItemId, zone, ShopCurrencyPreference.None);
                 string label = $"{entry.Name}  ({cost})##add_{entry.ItemId}";
 
                 using (ImRaii.Disabled(locked))
@@ -658,27 +655,6 @@ public class ShopShoppingListRenderer(
         return changed;
     }
 
-    private static string FormatAddCost(uint itemId, ZoneId zone)
-    {
-        List<ShopCatalogEntry> offers = ShopCatalog.EntriesForItem(itemId, zone).ToList();
-        if (offers.Count == 0)
-        {
-            offers = DistinctByCurrency(ShopCatalog.EntriesForItem(itemId)).ToList();
-        }
-
-        if (offers.Count == 0)
-        {
-            return "-";
-        }
-
-        if (offers.Count == 1)
-        {
-            return $"{offers[0].Cost}";
-        }
-
-        return string.Join(" / ", offers.Select(o => o.Cost.ToString()));
-    }
-
     private void DrawItemIcon(uint itemId)
     {
         if (!data.GetExcelSheet<Item>().TryGetRow(itemId, out Item item) || item.Icon == 0)
@@ -697,13 +673,7 @@ public class ShopShoppingListRenderer(
         ShopListEntry? setting = null)
     {
         ShopCurrencyPreference preferred = setting?.PreferredCurrencies ?? ShopCurrencyPreference.None;
-        foreach (ShopCatalogEntry e in ShopCatalog.PreferredOffers(itemId, zone, preferred))
-        {
-            return e;
-        }
-
-        foreach (ShopCatalogEntry e in ShopCatalog.EntriesForItem(itemId)
-                     .Where(x => ShopCatalog.MatchesCurrencyPreference(x, preferred)))
+        foreach (ShopCatalogEntry e in ShopCatalog.PreferredOffers(itemId, zone, preferred, fallbackAnyZone: true))
         {
             return e;
         }
