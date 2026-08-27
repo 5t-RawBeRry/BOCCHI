@@ -37,6 +37,66 @@ public static partial class ShopCatalog
     public static IEnumerable<ShopCatalogEntry> EntriesForItem(uint itemId, ZoneId zone) =>
         entries.Where(e => e.ItemId == itemId && e.Zone == zone);
 
+    public static IEnumerable<ShopCatalogEntry> EntriesForItem(uint itemId) =>
+        entries.Where(e => e.ItemId == itemId);
+
+    public static ShopCurrencyPreference CurrencyKindOf(uint currencyItemId)
+    {
+        if (OccultCurrencies.IsSilverCurrency(currencyItemId))
+        {
+            return ShopCurrencyPreference.Silver;
+        }
+
+        if (OccultCurrencies.IsGoldCurrency(currencyItemId))
+        {
+            return ShopCurrencyPreference.Gold;
+        }
+
+        if (OccultCurrencies.IsAmuletCurrency(currencyItemId)
+            || currencyItemId == ArcaneAmuletItemId)
+        {
+            return ShopCurrencyPreference.Amulet;
+        }
+
+        return ShopCurrencyPreference.None;
+    }
+
+    public static ShopCurrencyPreference AvailableCurrenciesFor(uint itemId, ZoneId zone)
+    {
+        ShopCurrencyPreference flags = ShopCurrencyPreference.None;
+        foreach (ShopCatalogEntry e in EntriesForItem(itemId, zone))
+        {
+            flags |= CurrencyKindOf(e.CurrencyItemId);
+        }
+
+        return flags;
+    }
+
+    /// <summary>Union of currencies across every zone that sells this item (for config UI).</summary>
+    public static ShopCurrencyPreference AvailableCurrenciesFor(uint itemId)
+    {
+        ShopCurrencyPreference flags = ShopCurrencyPreference.None;
+        foreach (ShopCatalogEntry e in EntriesForItem(itemId))
+        {
+            flags |= CurrencyKindOf(e.CurrencyItemId);
+        }
+
+        return flags;
+    }
+
+    public static bool MatchesCurrencyPreference(
+        ShopCatalogEntry entry,
+        ShopCurrencyPreference preferred)
+    {
+        if (preferred == ShopCurrencyPreference.None)
+        {
+            return true;
+        }
+
+        ShopCurrencyPreference kind = CurrencyKindOf(entry.CurrencyItemId);
+        return kind != ShopCurrencyPreference.None && preferred.HasFlag(kind);
+    }
+
     public static void Initialize(IDataManager data)
     {
         ArcaneAmuletItemId = OccultCurrencies.NorthHornCipherItemId != 0

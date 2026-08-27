@@ -46,23 +46,25 @@ public class CompletionistRenderer
 
         if (automator.IsCompletionist)
         {
-            ImGui.SameLine();
-            BocchiUi.DrawStatusChip(translator.T(".status.on"), BocchiUi.StatusChipKind.Ok);
+            AutomatorPathControls.Draw(automator, zones, translator, showRefresh: true);
+        }
+        else
+        {
+            AutomatorPathControls.Draw(automator, zones, translator, showRefresh: false);
         }
 
-        AutomatorPathControls.Draw(automator, zones, translator, showRefresh: automator.IsCompletionist);
-
         ImGui.Spacing();
-        BocchiUi.DrawIntro(translator.T(".completionist.description"));
-        ZoneGraphStatusUi.Draw(zones.GetZone(), translator);
-        BocchiUi.MutedText(translator.T(".completionist.legend"));
 
-        if (automator.IsCompletionist && memory.TryRemember<GoalMemory>(out GoalMemory goalMemory))
+        // About stays collapsed by default so the checklist is the first thing you see.
+        ImGui.PushStyleColor(ImGuiCol.Text, BocchiUi.Header);
+        bool aboutOpen = ImGui.CollapsingHeader(
+            translator.T(".completionist.about"),
+            ImGuiTreeNodeFlags.None);
+        ImGui.PopStyleColor();
+        if (aboutOpen)
         {
-            ImGui.Spacing();
-            BocchiUi.LabelledValue(
-                translator.T(".status.goal"),
-                GoalFormatHelper.Describe(goalMemory.Goal, translator));
+            BocchiUi.DrawIntro(translator.T(".completionist.description"));
+            BocchiUi.MutedText(translator.T(".completionist.legend"));
         }
 
         ImGui.Spacing();

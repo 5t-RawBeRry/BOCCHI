@@ -47,6 +47,12 @@ public class MainRenderer
             return;
         }
 
+        MainWindowSection? expandRequest = statusBar.ExpandSectionRequest;
+        if (expandRequest != null)
+        {
+            statusBar.ConsumeExpandRequest();
+        }
+
         foreach (MainWindowSection section in Enum.GetValues<MainWindowSection>())
         {
             List<IDynamicRenderer> sectionRenderers = OrderedRenderers.Where(r => r.Section == section).ToList();
@@ -89,7 +95,11 @@ public class MainRenderer
                 _ => false,
             };
 
-            if (forceOpen)
+            if (expandRequest == section)
+            {
+                ImGui.SetNextItemOpen(true);
+            }
+            else if (forceOpen)
             {
                 if (openedWhileActive.Add(section))
                 {
@@ -99,18 +109,13 @@ public class MainRenderer
             else
             {
                 openedWhileActive.Remove(section);
+                // World (and idle modes): start collapsed for new installs.
                 ImGui.SetNextItemOpen(false, ImGuiCond.FirstUseEver);
             }
 
             ImGui.PushStyleColor(ImGuiCol.Text, BocchiUi.Header);
             bool open = ImGui.CollapsingHeader(GetSectionTitle(section));
             ImGui.PopStyleColor();
-
-            if (forceOpen)
-            {
-                ImGui.SameLine();
-                BocchiUi.DrawStatusChip(translator.T(".status.on"), BocchiUi.StatusChipKind.Ok);
-            }
 
             if (!open)
             {

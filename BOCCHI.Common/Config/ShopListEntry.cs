@@ -1,3 +1,5 @@
+using BOCCHI.Common.Data.Shopping;
+
 namespace BOCCHI.Common.Config;
 
 /// <summary>
@@ -15,4 +17,10 @@ public class ShopListEntry
 
     /// <summary>After Keep/Buy are satisfied, keep spending on this item (only one list entry may be true).</summary>
     public bool KeepBuying { get; set; }
+
+    /// <summary>
+    /// When the item has multiple currency offers, which ones may be used.
+    /// <see cref="ShopCurrencyPreference.None"/> = any offer.
+    /// </summary>
+    public ShopCurrencyPreference PreferredCurrencies { get; set; } = ShopCurrencyPreference.None;
 }

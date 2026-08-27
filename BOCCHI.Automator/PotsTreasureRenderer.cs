@@ -9,7 +9,6 @@ using BOCCHI.Common.UI;
 using BOCCHI.Treasure;
 using BOCCHI.Treasure.Services;
 using Dalamud.Bindings.ImGui;
-using Dalamud.Plugin.Services;
 using Ocelot.Extensions;
 using Ocelot.Services.Translation;
 using Ocelot.Windows;
@@ -25,9 +24,7 @@ public class PotsTreasureRenderer
     EventDropIconRenderer eventDrops,
     IFateRepository fates,
     IActivityNavigation navigation,
-    IPotCycleTracker potCycle,
     IZoneProvider zones,
-    IDataManager data,
     ITranslator<MainWindow> translator
 ) : IDynamicRenderer
 {
@@ -50,13 +47,6 @@ public class PotsTreasureRenderer
         }
         else
         {
-            BocchiUi.DrawStatusChip(
-                PotsTreasure.Paused
-                    ? translator.T(".automation.pots_treasure.paused")
-                    : translator.T(".status.on"),
-                PotsTreasure.Paused ? BocchiUi.StatusChipKind.Warn : BocchiUi.StatusChipKind.Ok);
-            ImGui.SameLine();
-
             if (PotsTreasure.Paused)
             {
                 if (ImGui.Button(translator.T(".automation.pots_treasure.resume")))
@@ -90,9 +80,11 @@ public class PotsTreasureRenderer
         }
 
         ImGui.Spacing();
-        BocchiUi.DrawIntro(translator.T(".automation.pots_treasure.description"));
-
-        PotTimerUi.Draw(potCycle, zones, data, translator);
+        // Short blurb only when idle — status bar covers live phase while running.
+        if (!PotsTreasure.Running)
+        {
+            BocchiUi.DrawIntro(translator.T(".automation.pots_treasure.description"));
+        }
 
         DrawActivePotFates();
 

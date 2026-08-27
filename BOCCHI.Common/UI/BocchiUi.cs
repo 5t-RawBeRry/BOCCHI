@@ -147,7 +147,7 @@ public static class BocchiUi
         ImGui.Dummy(new Vector2(0, 8));
     }
 
-    public static void DrawStatusChip(string label, StatusChipKind kind)
+    public static bool DrawStatusChip(string label, StatusChipKind kind)
     {
         Vector4 bg = kind switch
         {
@@ -168,9 +168,10 @@ public static class BocchiUi
         ImGui.PushStyleColor(ImGuiCol.Text, fg);
         ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 11f);
         ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(10f, 3f));
-        ImGui.SmallButton(label);
+        bool clicked = ImGui.SmallButton(label);
         ImGui.PopStyleVar(2);
         ImGui.PopStyleColor(4);
+        return clicked;
     }
 
     public static void DrawPercentBar(float fraction, float width, string overlay)

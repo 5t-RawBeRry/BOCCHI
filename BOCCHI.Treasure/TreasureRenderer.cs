@@ -125,11 +125,6 @@ public class TreasureRenderer
             return;
         }
 
-        BocchiUi.DrawStatusChip(
-            hunter.Paused ? translator.T(".treasure.paused") : translator.T(".status.on"),
-            hunter.Paused ? BocchiUi.StatusChipKind.Warn : BocchiUi.StatusChipKind.Ok);
-        ImGui.SameLine();
-
         if (hunter.Paused)
         {
             if (ImGui.Button(translator.T(".treasure.resume_hunt")))
@@ -177,7 +172,10 @@ public class TreasureRenderer
 
         ImGui.Separator();
         BocchiUi.SectionTitle(translator.T(".treasure.carrot_hunt_title"));
-        BocchiUi.DrawIntro(translator.T(".treasure.carrot_hunt_description"));
+        if (!carrotHunter.Running)
+        {
+            BocchiUi.DrawIntro(translator.T(".treasure.carrot_hunt_description"));
+        }
 
         if (!carrotHunter.IsVnavAvailable)
         {
@@ -193,8 +191,6 @@ public class TreasureRenderer
 
         if (carrotHunter.Running)
         {
-            BocchiUi.DrawStatusChip(translator.T(".status.on"), BocchiUi.StatusChipKind.Ok);
-            ImGui.SameLine();
             if (ImGui.Button(translator.T(".treasure.stop_carrot_hunt")))
             {
                 carrotHunter.Toggle();
@@ -235,6 +231,12 @@ public class TreasureRenderer
 
     private void DrawNearbyTreasures()
     {
+        // Only while a hunt is active — idle nearby dump was noise for most sessions.
+        if (!hunter.Running && !carrotHunter.Running)
+        {
+            return;
+        }
+
         ImGui.Separator();
         BocchiUi.SectionTitle(translator.T(".treasure.nearby_title"));
 

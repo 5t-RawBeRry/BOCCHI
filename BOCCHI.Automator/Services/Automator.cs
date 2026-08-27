@@ -108,7 +108,10 @@ public class Automator
             return;
         }
 
-        IllegalModeActivityWork.ForgetTravelLatches(memory);
+        // Keep GoalMemory and FATE/CE commitment — only drop the active path steps so
+        // shopping owns vnav. Forgetting SuspendTravel / Committed* mid-CE used to make
+        // GoalValidator drop the encounter as "still pathing" on resume.
+        memory.Forget<GoalPathStepMemory>();
         SoftStopPathfinding();
         autoRotation.DisableAi();
     }

@@ -2,9 +2,11 @@ using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Data.OccultCrescent;
 using BOCCHI.Common.Data.Shopping;
+using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
+using BOCCHI.MobFarmer.Services;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
@@ -26,9 +28,9 @@ using System.Runtime.InteropServices;
 namespace BOCCHI.Services.Shopping;
 
 /// <summary>
-/// Approaches the Expedition Antiquarian when currency thresholds are hit and
-/// purchases preferred catalog items from ShopExchangeCurrency.
-/// Soft-suspends other automation while shopping owns pathing.
+/// When currency thresholds are hit, soft-suspend other automation, visit the Expedition
+/// Antiquarian, and buy from the shopping list. Never starts or continues travel during a
+/// live FATE/CE, or while Mob Farmer is mid-pull / stacking / fighting.
 /// </summary>
 public sealed class ShoppingService
 (
@@ -44,9 +46,14 @@ public sealed class ShoppingService
     ISupportJobFactory supportJobs,
     IDataManager data,
     IUnlockState unlockState,
+    IFateContext fates,
+    ICriticalEncounterContext criticalEncounters,
+    IAutomatorMemory memory,
+    Func<IMobFarmer> farmerFactory,
     ILogger<ShoppingService> logger
 ) : IOnUpdate
 {
+    private IMobFarmer Farmer => farmerFactory();
     private enum Phase
     {
         Idle,
@@ -100,7 +107,27 @@ public sealed class ShoppingService
         bool thresholdHit =
             (config.SilverThreshold > 0 && silver >= config.SilverThreshold)
             || (config.GoldThreshold > 0 && gold >= config.GoldThreshold);
-        bool shouldShop = thresholdHit && HasPendingGoals(zoneId);
+
+        // Never pull the player out of a live FATE/CE for shopping.
+        if (IsInFateOrCriticalEncounter())
+        {
+            if (AddonHelpers.IsShopExchangeOpen() && HasPendingGoals(zoneId))
+            {
+                // Already at the antiquarian with the shop open — finish buys only.
+                ClaimPriority();
+                phase = Phase.Buying;
+                TryHandleOpenShop(zoneId, silver, gold);
+                return;
+            }
+
+            if (phase != Phase.Idle || priorityClaimed)
+            {
+                AbortShopping(resumeAutomation: true);
+                logger.Info("[Shopping] aborted — in FATE/CE");
+            }
+
+            return;
+        }
 
         if (AddonHelpers.IsShopExchangeOpen() && HasPendingGoals(zoneId))
         {
@@ -109,6 +136,14 @@ public sealed class ShoppingService
             TryHandleOpenShop(zoneId, silver, gold);
             return;
         }
+
+        // Threshold + goals: may interrupt treasure hunt / idle mob-farm waits, but not FATE/CE
+        // or an active mob pull/fight.
+        bool shouldShop =
+            thresholdHit
+            && HasPendingGoals(zoneId)
+            && !IsTriageActive()
+            && !IsMobFarmerBusy();
 
         if (!shouldShop && phase == Phase.Idle)
         {
@@ -187,6 +222,9 @@ public sealed class ShoppingService
         }
     }
 
+    private bool IsInFateOrCriticalEncounter() =>
+        fates.IsInFate() || criticalEncounters.IsInCriticalEncounter();
+
     private void ClaimPriority()
     {
         if (priorityClaimed)
@@ -212,6 +250,8 @@ public sealed class ShoppingService
         openedMenuIndex = null;
         skippedMissingRows.Clear();
         teleportChain = null;
+        chainManager.CancelWhere(name => name.StartsWith("Shopping::", StringComparison.Ordinal));
+        vnav.Stop();
 
         if (priorityClaimed && resumeAutomation)
         {
@@ -223,6 +263,17 @@ public sealed class ShoppingService
             priorityClaimed = false;
         }
     }
+
+    private bool IsTriageActive() =>
+        memory.TryRemember<PendingTriageMemory>(out PendingTriageMemory _)
+        || memory.TryRemember<TriagingMemory>(out TriagingMemory _);
+
+    /// <summary>
+    /// Mob Farmer mid-pull / stack / fight — same window as other farmer yields.
+    /// Suspended farmer (e.g. treasure) is not busy; shopping may take over.
+    /// </summary>
+    private bool IsMobFarmerBusy() =>
+        Farmer.Running && !Farmer.Suspended && !Farmer.CanAcceptYield;
 
     private void TickTeleport()
     {
@@ -371,7 +422,7 @@ public sealed class ShoppingService
                 continue;
             }
 
-            if (!TryResolveEntry(itemId, zoneId, out ShopCatalogEntry entry))
+            if (!TryResolveEntry(itemId, zoneId, setting, out ShopCatalogEntry entry))
             {
                 continue;
             }
@@ -425,7 +476,7 @@ public sealed class ShoppingService
                 continue;
             }
 
-            if (!TryResolveEntry(itemId, zoneId, out ShopCatalogEntry entry))
+            if (!TryResolveEntry(itemId, zoneId, setting, out ShopCatalogEntry entry))
             {
                 continue;
             }
@@ -489,15 +540,34 @@ public sealed class ShoppingService
             _ => false,
         };
 
-    private static bool TryResolveEntry(uint itemId, ZoneId zoneId, out ShopCatalogEntry entry)
+    private bool TryResolveEntry(
+        uint itemId,
+        ZoneId zoneId,
+        ShopListEntry setting,
+        out ShopCatalogEntry entry)
     {
-        foreach (ShopCatalogEntry e in ShopCatalog.EntriesForItem(itemId, zoneId))
+        List<ShopCatalogEntry> offers = ShopCatalog.EntriesForItem(itemId, zoneId)
+            .Where(e => ShopCatalog.MatchesCurrencyPreference(e, setting.PreferredCurrencies))
+            .ToList();
+
+        if (offers.Count == 0)
         {
-            entry = e;
-            return true;
+            entry = default;
+            return false;
         }
 
-        return ShopCatalog.TryGet(itemId, out entry);
+        // Prefer an affordable offer; otherwise keep the first preferred for ownership/UI.
+        foreach (ShopCatalogEntry offer in offers)
+        {
+            if (CanAfford(offer))
+            {
+                entry = offer;
+                return true;
+            }
+        }
+
+        entry = offers[0];
+        return true;
     }
 
     private bool CanAfford(ShopCatalogEntry entry)

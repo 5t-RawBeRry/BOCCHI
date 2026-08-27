@@ -1,11 +1,13 @@
 using BOCCHI.Automator.Data;
 using BOCCHI.Automator.Services;
 using BOCCHI.Buff.Services;
+using BOCCHI.Common;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using BOCCHI.Common.UI;
+using BOCCHI.MobFarmer.Data;
 using BOCCHI.MobFarmer.Services;
 using BOCCHI.Treasure;
 using BOCCHI.Treasure.Services;
@@ -47,6 +49,11 @@ public class OperationalStatusBar
 
     private IMobFarmer Farmer => farmer ??= farmerFactory();
 
+    /// <summary>Set when a status chip is clicked; MainRenderer opens that section once.</summary>
+    public MainWindowSection? ExpandSectionRequest { get; private set; }
+
+    public void ConsumeExpandRequest() => ExpandSectionRequest = null;
+
     public bool IllegalModeActive => Automator.Enabled;
 
     public bool CompletionistActive => Automator.IsCompletionist;
@@ -63,8 +70,15 @@ public class OperationalStatusBar
 
     public void Render()
     {
+        bool shopping =
+            Automator.SuspendedForShopping
+            || (Farmer.Running && Farmer.Suspended && Farmer.YieldReason == FarmerYieldReason.Shopping);
+
         bool anyMode = IllegalModeActive || CompletionistActive || PotsTreasureActive || MobFarmerActive
-                       || StandaloneTreasureHuntActive || CarrotHuntActive;
+                       || StandaloneTreasureHuntActive || CarrotHuntActive || shopping;
+
+        List<string> runningParts = [];
+
         if (!anyMode)
         {
             BocchiUi.DrawStatusChip(translator.T(".status.idle"), BocchiUi.StatusChipKind.Muted);
@@ -72,7 +86,11 @@ public class OperationalStatusBar
         else
         {
             bool first = true;
-            void Chip(string label, string? detail, BocchiUi.StatusChipKind kind = BocchiUi.StatusChipKind.Ok)
+            void Chip(
+                string label,
+                string? detail,
+                MainWindowSection section,
+                BocchiUi.StatusChipKind kind = BocchiUi.StatusChipKind.Ok)
             {
                 if (!first)
                 {
@@ -81,21 +99,33 @@ public class OperationalStatusBar
 
                 first = false;
                 string text = string.IsNullOrEmpty(detail) ? label : $"{label}: {detail}";
-                BocchiUi.DrawStatusChip(text, kind);
+                if (BocchiUi.DrawStatusChip(text, kind))
+                {
+                    ExpandSectionRequest = section;
+                }
+
+                if (ImGui.IsItemHovered())
+                {
+                    ImGui.SetTooltip(translator.T(".status.click_section"));
+                }
+
+                runningParts.Add(string.IsNullOrEmpty(detail) ? label : $"{label} → {detail}");
             }
 
             if (IllegalModeActive)
             {
                 Chip(
                     translator.T(".status.automator"),
-                    Automator.CurrentState is { } state ? FormatAutomatorState(state) : translator.T(".status.on"));
+                    Automator.CurrentState is { } state ? FormatAutomatorState(state) : translator.T(".status.on"),
+                    MainWindowSection.Automation);
             }
 
             if (CompletionistActive)
             {
                 Chip(
                     translator.T(".status.completionist"),
-                    Automator.CurrentState is { } state ? FormatAutomatorState(state) : translator.T(".status.on"));
+                    Automator.CurrentState is { } state ? FormatAutomatorState(state) : translator.T(".status.on"),
+                    MainWindowSection.Completionist);
             }
 
             if (PotsTreasureActive)
@@ -116,6 +146,7 @@ public class OperationalStatusBar
                 Chip(
                     translator.T(".status.pots_treasure"),
                     detail,
+                    MainWindowSection.PotsTreasure,
                     PotsTreasure.Paused ? BocchiUi.StatusChipKind.Warn : BocchiUi.StatusChipKind.Ok);
             }
 
@@ -132,6 +163,7 @@ public class OperationalStatusBar
                 Chip(
                     translator.T(".status.mob_farmer"),
                     detail,
+                    MainWindowSection.MobFarmer,
                     Farmer.Suspended ? BocchiUi.StatusChipKind.Warn : BocchiUi.StatusChipKind.Ok);
             }
 
@@ -139,14 +171,28 @@ public class OperationalStatusBar
             {
                 Chip(
                     translator.T(".status.treasure_hunt"),
-                    TreasureHuntStatusUi.FormatProgress(hunter, translator));
+                    TreasureHuntStatusUi.FormatProgress(hunter, translator),
+                    MainWindowSection.Treasure);
             }
 
             if (CarrotHuntActive)
             {
                 Chip(
                     translator.T(".status.carrot_hunt"),
-                    translator.T($".treasure.carrot_hunt_phases.{carrotHunter.Phase.ToString().ToSnakeCase()}"));
+                    translator.T($".treasure.carrot_hunt_phases.{carrotHunter.Phase.ToString().ToSnakeCase()}"),
+                    MainWindowSection.Treasure);
+            }
+
+            if (shopping)
+            {
+                if (!first)
+                {
+                    ImGui.SameLine(0, 6);
+                }
+
+                first = false;
+                BocchiUi.DrawStatusChip(translator.T(".status.shopping_paused"), BocchiUi.StatusChipKind.Warn);
+                runningParts.Add(translator.T(".status.shopping_paused"));
             }
         }
 
@@ -157,6 +203,7 @@ public class OperationalStatusBar
             BocchiUi.DrawStatusChip(potChip, BocchiUi.StatusChipKind.Muted);
         }
 
+        // Ready path-map stays quiet — only show while loading/building.
         if (ZoneGraphStatusUi.TryFormat(
                 zones.GetZone(),
                 translator,
@@ -175,6 +222,12 @@ public class OperationalStatusBar
         {
             ImGui.SameLine(0f, 10f);
             DrawBuffAction();
+        }
+
+        if (runningParts.Count > 0)
+        {
+            ImGui.Spacing();
+            BocchiUi.MutedText($"{translator.T(".status.whats_running")}: {string.Join(" · ", runningParts)}");
         }
 
         bool showGoalRows = IllegalModeActive

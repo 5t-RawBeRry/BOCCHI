@@ -248,10 +248,10 @@ public class ShopShoppingListRenderer(
                 changed = true;
             }
 
-            ShopCatalogEntry? catalog = ResolveCatalog(itemId, zone);
+            ShopCatalogEntry? catalog = ResolveCatalog(itemId, zone, setting);
             string name = catalog?.Name
                           ?? (data.GetExcelSheet<Item>().TryGetRow(itemId, out Item row) ? row.Name.ToString() : $"#{itemId}");
-            int cost = (int)(catalog?.Cost ?? 0);
+            string costLabel = FormatCostLabel(itemId, zone, setting, listKey, translator);
             int have = InventoryItemAssist.Count(itemId);
             bool? owned = catalog is { } c
                 ? ShopOwnership.TryIsOwned(c, supportJobs, data, unlockState)
@@ -263,7 +263,7 @@ public class ShopShoppingListRenderer(
                 DrawItemIcon(catalog?.ItemId ?? itemId);
                 ImGui.TextUnformatted(name);
                 ImGui.SameLine();
-                BocchiUi.MutedText(cost > 0 ? $"{cost}" : "-");
+                BocchiUi.MutedText(costLabel);
                 ImGui.SameLine(0, 12);
                 BocchiUi.DrawStatusChip(
                     owned switch
@@ -323,26 +323,34 @@ public class ShopShoppingListRenderer(
                 bool lockInputs = owned == true;
                 using (ImRaii.Disabled(lockInputs))
                 {
-                    ImGui.SetNextItemWidth(70);
-                    int keep = setting.KeepAmount;
-                    if (ImGui.InputInt(translator.T(Key(listKey, ".col_keep")), ref keep, 0, 0))
-                    {
-                        setting.KeepAmount = Math.Max(0, keep);
-                        changed = true;
-                    }
+                    // Labels left of controls — ImGui's default InputInt puts the label on the
+                    // right, which made Keep/Buy/Sink attach to the wrong widget.
+                    changed |= DrawAmountField(
+                        translator.T(Key(listKey, ".col_keep")),
+                        translator.T(Key(listKey, ".col_keep_hint")),
+                        "##keep",
+                        setting.KeepAmount,
+                        v => setting.KeepAmount = v);
 
-                    ImGui.SameLine();
-                    ImGui.SetNextItemWidth(70);
-                    int buy = setting.BuyAmount;
-                    if (ImGui.InputInt(translator.T(Key(listKey, ".col_buy")), ref buy, 0, 0))
+                    ImGui.SameLine(0, 16);
+                    changed |= DrawAmountField(
+                        translator.T(Key(listKey, ".col_buy")),
+                        translator.T(Key(listKey, ".col_buy_hint")),
+                        "##buy",
+                        setting.BuyAmount,
+                        v => setting.BuyAmount = v);
+
+                    ImGui.SameLine(0, 16);
+                    ImGui.AlignTextToFramePadding();
+                    ImGui.TextUnformatted(translator.T(Key(listKey, ".col_keep_buying")));
+                    if (ImGui.IsItemHovered())
                     {
-                        setting.BuyAmount = Math.Max(0, buy);
-                        changed = true;
+                        ImGui.SetTooltip(translator.T(Key(listKey, ".col_keep_buying_hint")));
                     }
 
                     ImGui.SameLine();
                     bool keepBuying = setting.KeepBuying;
-                    if (ImGui.Checkbox(translator.T(Key(listKey, ".col_keep_buying")), ref keepBuying))
+                    if (ImGui.Checkbox("##sink", ref keepBuying))
                     {
                         if (keepBuying)
                         {
@@ -355,12 +363,216 @@ public class ShopShoppingListRenderer(
                         setting.KeepBuying = keepBuying;
                         changed = true;
                     }
+
+                    if (ImGui.IsItemHovered())
+                    {
+                        ImGui.SetTooltip(translator.T(Key(listKey, ".col_keep_buying_hint")));
+                    }
+                }
+
+                ShopCurrencyPreference available = ShopCatalog.AvailableCurrenciesFor(itemId);
+                if (CountFlags(available) > 1)
+                {
+                    ImGui.Spacing();
+                    BocchiUi.MutedText(translator.T(Key(listKey, ".currency_pick")));
+                    if (ImGui.IsItemHovered())
+                    {
+                        ImGui.SetTooltip(translator.T(Key(listKey, ".currency_pick_hint")));
+                    }
+
+                    changed |= DrawCurrencyChecks(setting, available, listKey, translator);
                 }
 
                 BocchiUi.EndPanel();
             }
 
             ImGui.PopID();
+        }
+
+        return changed;
+    }
+
+    private static bool DrawCurrencyChecks(
+        ShopListEntry setting,
+        ShopCurrencyPreference available,
+        string listKey,
+        ITranslator translator)
+    {
+        bool changed = false;
+        // None means "any" — edit a full copy of available flags until saved.
+        ShopCurrencyPreference working = setting.PreferredCurrencies == ShopCurrencyPreference.None
+            ? available
+            : setting.PreferredCurrencies & available;
+
+        changed |= DrawCurrencyCheck(
+            available,
+            ShopCurrencyPreference.Silver,
+            translator.T(Key(listKey, ".currency_silver")),
+            ref working);
+        ImGui.SameLine(0, 12);
+        changed |= DrawCurrencyCheck(
+            available,
+            ShopCurrencyPreference.Gold,
+            translator.T(Key(listKey, ".currency_gold")),
+            ref working);
+        ImGui.SameLine(0, 12);
+        changed |= DrawCurrencyCheck(
+            available,
+            ShopCurrencyPreference.Amulet,
+            translator.T(Key(listKey, ".currency_amulet")),
+            ref working);
+
+        if (changed)
+        {
+            setting.PreferredCurrencies = working == available
+                ? ShopCurrencyPreference.None
+                : working;
+        }
+
+        return changed;
+    }
+
+    private static bool DrawCurrencyCheck(
+        ShopCurrencyPreference available,
+        ShopCurrencyPreference flag,
+        string label,
+        ref ShopCurrencyPreference working)
+    {
+        if (!available.HasFlag(flag))
+        {
+            return false;
+        }
+
+        bool on = working.HasFlag(flag);
+        if (!ImGui.Checkbox(label, ref on))
+        {
+            return false;
+        }
+
+        if (on)
+        {
+            working |= flag;
+        }
+        else
+        {
+            working &= ~flag;
+            // Keep at least one currency selected among what's available.
+            if ((working & available) == ShopCurrencyPreference.None)
+            {
+                working |= flag;
+            }
+        }
+
+        return true;
+    }
+
+    private static int CountFlags(ShopCurrencyPreference flags)
+    {
+        int n = 0;
+        if (flags.HasFlag(ShopCurrencyPreference.Silver))
+        {
+            n++;
+        }
+
+        if (flags.HasFlag(ShopCurrencyPreference.Gold))
+        {
+            n++;
+        }
+
+        if (flags.HasFlag(ShopCurrencyPreference.Amulet))
+        {
+            n++;
+        }
+
+        return n;
+    }
+
+    private static string FormatCostLabel(
+        uint itemId,
+        ZoneId zone,
+        ShopListEntry setting,
+        string listKey,
+        ITranslator translator)
+    {
+        // Prefer the zone you're in; outside Occult Crescent, show any-zone offers so
+        // multi-currency items still display correctly in config.
+        List<ShopCatalogEntry> offers = ShopCatalog.EntriesForItem(itemId, zone)
+            .Where(e => ShopCatalog.MatchesCurrencyPreference(e, setting.PreferredCurrencies))
+            .ToList();
+        if (offers.Count == 0)
+        {
+            offers = DistinctByCurrency(
+                    ShopCatalog.EntriesForItem(itemId)
+                        .Where(e => ShopCatalog.MatchesCurrencyPreference(e, setting.PreferredCurrencies)))
+                .ToList();
+        }
+
+        if (offers.Count == 0)
+        {
+            return "-";
+        }
+
+        if (offers.Count == 1)
+        {
+            return $"{offers[0].Cost}";
+        }
+
+        return string.Join(
+            " / ",
+            offers.Select(o =>
+            {
+                string cur = ShopCatalog.CurrencyKindOf(o.CurrencyItemId) switch
+                {
+                    ShopCurrencyPreference.Silver => translator.T(Key(listKey, ".currency_silver")),
+                    ShopCurrencyPreference.Gold => translator.T(Key(listKey, ".currency_gold")),
+                    ShopCurrencyPreference.Amulet => translator.T(Key(listKey, ".currency_amulet")),
+                    _ => "?",
+                };
+                return $"{o.Cost} {cur}";
+            }));
+    }
+
+    private static IEnumerable<ShopCatalogEntry> DistinctByCurrency(IEnumerable<ShopCatalogEntry> offers)
+    {
+        HashSet<ShopCurrencyPreference> seen = [];
+        foreach (ShopCatalogEntry o in offers)
+        {
+            ShopCurrencyPreference kind = ShopCatalog.CurrencyKindOf(o.CurrencyItemId);
+            if (kind == ShopCurrencyPreference.None || !seen.Add(kind))
+            {
+                continue;
+            }
+
+            yield return o;
+        }
+    }
+
+    private static bool DrawAmountField(
+        string label,
+        string hint,
+        string id,
+        int value,
+        Action<int> set)
+    {
+        ImGui.AlignTextToFramePadding();
+        ImGui.TextUnformatted(label);
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(hint);
+        }
+
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(56);
+        int v = value;
+        bool changed = ImGui.InputInt(id, ref v, 0, 0);
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(hint);
+        }
+
+        if (changed)
+        {
+            set(Math.Max(0, v));
         }
 
         return changed;
@@ -457,11 +669,18 @@ public class ShopShoppingListRenderer(
         ImGui.SameLine();
     }
 
-    private static ShopCatalogEntry? ResolveCatalog(uint itemId, ZoneId zone)
+    private static ShopCatalogEntry? ResolveCatalog(
+        uint itemId,
+        ZoneId zone,
+        ShopListEntry? setting = null)
     {
+        ShopCurrencyPreference preferred = setting?.PreferredCurrencies ?? ShopCurrencyPreference.None;
         foreach (ShopCatalogEntry e in ShopCatalog.EntriesForItem(itemId, zone))
         {
-            return e;
+            if (ShopCatalog.MatchesCurrencyPreference(e, preferred))
+            {
+                return e;
+            }
         }
 
         return ShopCatalog.TryGet(itemId, out ShopCatalogEntry any) ? any : null;

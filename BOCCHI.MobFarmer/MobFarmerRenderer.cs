@@ -33,16 +33,6 @@ public class MobFarmerRenderer
             Farmer.Toggle();
         }
 
-        if (Farmer.Running)
-        {
-            ImGui.SameLine();
-            BocchiUi.DrawStatusChip(
-                Farmer.Suspended
-                    ? translator.T($".automation.mob_farmer.yield_reasons.{Farmer.YieldReason.ToString().ToSnakeCase()}")
-                    : translator.T(".status.on"),
-                Farmer.Suspended ? BocchiUi.StatusChipKind.Warn : BocchiUi.StatusChipKind.Ok);
-        }
-
         ImGui.Spacing();
         BocchiUi.LabelledValue(translator.T(".automation.mob_farmer.not_engaged"), scanner.NotInCombat.Count().ToString());
         BocchiUi.LabelledValue(translator.T(".automation.mob_farmer.engaged"), scanner.InCombat.Count().ToString());
@@ -50,13 +40,6 @@ public class MobFarmerRenderer
         if (Farmer.CurrentSpotName is { } spotName)
         {
             BocchiUi.LabelledValue(translator.T(".automation.mob_farmer.spot"), spotName);
-        }
-
-        if (Farmer.Suspended)
-        {
-            BocchiUi.LabelledValue(
-                translator.T(".automation.mob_farmer.yield"),
-                translator.T($".automation.mob_farmer.yield_reasons.{Farmer.YieldReason.ToString().ToSnakeCase()}"));
         }
 
         BocchiUi.MutedText(translator.T(".automation.mob_farmer.configure_mobs"));

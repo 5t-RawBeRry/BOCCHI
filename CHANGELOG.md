@@ -1,6 +1,7 @@
 # 4.1.0.12
 
 ### Enhancements
+- **Main UI:** status bar is the live summary (chips open their section; Running line; shopping pause; pot chip; path map only while building). Mode panels focus on controls — less duplicate On/goal/pot/path.
 - **Main / Config UI:** restyle with gold section headers, muted blurbs, card panels, and status chips across Main and Config (including shopping Keep/Buy/Sink).
 - **Shopping (South + North Horn):** turn on Shopping, build a list (Keep stock / Buy N times / Sink leftover currency), set a silver/gold threshold — Bocchi pauses other automation, shops at camp, then resumes. Pieces on South Horn, obols on North. Owned unlocks and armor are skipped.
 - **Shared maps (always on):** while in Occult Crescent, Bocchi downloads shared lists and anonymously uploads what you see — same idea as pot timer sharing.
