@@ -17,11 +17,17 @@ public interface IAutomator
     /// <summary>Treasure hunt owns vnav (Illegal/Completionist soft-pause or Pots &amp; Treasure filler).</summary>
     bool SuspendedForTreasure { get; }
 
+    /// <summary>Shopping owns vnav (Illegal/Completionist / Pots &amp; Treasure soft-pause).</summary>
+    bool SuspendedForShopping { get; }
+
     /// <summary>Illegal Mode is on (including while suspended for treasure).</summary>
     bool IsIllegalMode { get; }
 
     /// <summary>Suspend or resume the automator pipeline so treasure hunt can own vnav.</summary>
     void SetSuspendedForTreasure(bool suspended);
+
+    /// <summary>Suspend or resume the automator pipeline so shopping can own vnav.</summary>
+    void SetSuspendedForShopping(bool suspended);
 
     /// <summary>Stop current pathfinding without clearing goals or run mode (soft pause).</summary>
     void SoftStopPathfinding();

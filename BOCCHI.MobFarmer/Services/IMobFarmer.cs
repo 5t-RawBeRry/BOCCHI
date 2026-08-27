@@ -20,6 +20,7 @@ namespace BOCCHI.MobFarmer.Data
         TreasureSight,
         TreasureHunt,
         CrystalBuffs,
+        Shopping,
     }
 }
 

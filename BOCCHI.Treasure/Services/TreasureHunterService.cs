@@ -63,7 +63,8 @@ public class TreasureHunterService
     UIConfig uiConfig,
     ITranslator<MainWindow> translator,
     IConfigSaver configSaver,
-    PandoraAutoOpenHold pandoraAutoOpen
+    PandoraAutoOpenHold pandoraAutoOpen,
+    CofferLocationSyncService cofferLocations
 ) : ITreasureHunter, IOnUpdate, IOnStop
 {
     /// <summary>Start open attempts once this close to the coffer (yalms).</summary>
@@ -1165,6 +1166,9 @@ public class TreasureHunterService
 
         int maxLevel = maxLevelOverrideForNextRun ?? config.HuntMaxLevel;
         List<TreasureData> authored = zones.GetZone().GetTreasureData();
+        IReadOnlyList<CrowdsourcedCofferCandidate> liveSpots = cofferLocations.GetAcceptedForCurrentZone();
+        bool hasAuthoredPositions = authored.Exists(d => d.Position.HasValue);
+        bool hasCrowdsourced = liveSpots.Count > 0;
         foreach (TreasureLayoutDatum layout in layoutTreasure)
         {
             if (ids.Contains(layout.Id))
@@ -1179,8 +1183,14 @@ public class TreasureHunterService
                 continue;
             }
 
-            if (authored.Count > 0
-                && !authored.Any(d => d.Level <= maxLevel && d.Matches(layout.Id, layout.Position)))
+            if ((hasAuthoredPositions || hasCrowdsourced)
+                && !IsHuntPadAllowed(
+                    layout,
+                    authored,
+                    liveSpots,
+                    maxLevel,
+                    hasAuthoredPositions,
+                    hasCrowdsourced))
             {
                 continue;
             }
@@ -2061,12 +2071,16 @@ public class TreasureHunterService
     {
         IZone zone = zones.GetZone();
         List<TreasureData> treasureData = zone.GetTreasureData();
-        if (treasureData.Exists(d => d.Position.HasValue))
+        IReadOnlyList<CrowdsourcedCofferCandidate> liveSpots = cofferLocations.GetAcceptedForCurrentZone();
+        bool hasAuthoredPositions = treasureData.Exists(d => d.Position.HasValue);
+        bool hasCrowdsourced = liveSpots.Count > 0;
+
+        if (hasAuthoredPositions || hasCrowdsourced)
         {
             return layoutTreasure
                 .Where(t => MatchesHuntCofferFilter(t.ModelId))
                 .Where(t => !TreasureHuntPathOverrides.IsUnreachable(zone.ZoneId, t.Id))
-                .Where(t => treasureData.Any(d => d.Level <= maxLevel && d.Matches(t.Id, t.Position)))
+                .Where(t => IsHuntPadAllowed(t, treasureData, liveSpots, maxLevel, hasAuthoredPositions, hasCrowdsourced))
                 .Select(t => t.Id)
                 .ToList();
         }
@@ -2081,6 +2095,27 @@ public class TreasureHunterService
                        && MatchesHuntCofferFilter(layout.ModelId);
             })
             .ToList();
+    }
+
+    /// <summary>Authored (level-gated) or crowdsourced pad — union so both catalogs help the hunt.</summary>
+    private static bool IsHuntPadAllowed(
+        TreasureLayoutDatum layout,
+        List<TreasureData> treasureData,
+        IReadOnlyList<CrowdsourcedCofferCandidate> liveSpots,
+        int maxLevel,
+        bool hasAuthoredPositions,
+        bool hasCrowdsourced)
+    {
+        if (hasAuthoredPositions
+            && treasureData.Any(d => d.Level <= maxLevel && d.Matches(layout.Id, layout.Position)))
+        {
+            return true;
+        }
+
+        return hasCrowdsourced
+               && liveSpots.Any(c =>
+                   Vector3.DistanceSquared(c.Position, layout.Position)
+                   <= CofferLocationSyncService.MatchRadiusSq);
     }
 
     private bool MatchesHuntCofferFilter(uint sgbId) =>
@@ -2122,6 +2157,8 @@ public class TreasureHunterService
 
     private TreasureHuntPathfinder? CreatePathPlanner()
     {
+        cofferLocations.EnsureFreshForHunt();
+
         layoutTreasure.Clear();
         layoutById.Clear();
 
@@ -2142,12 +2179,14 @@ public class TreasureHunterService
 
             List<TreasureData> treasureData = zones.GetZone().GetTreasureData();
             bool hasPositionData = treasureData.Exists(d => d.Position.HasValue);
+            IReadOnlyList<CrowdsourcedCofferCandidate> liveSpots = cofferLocations.GetAcceptedForCurrentZone();
+            bool hasCrowdsourced = liveSpots.Count > 0;
 
             foreach(ILayoutInstance* instance in mapPtr.Value->Values)
             {
                 Transform* transform = instance->GetTransformImpl();
                 Vector3 position = transform->Translation;
-                if (position.Y <= -10f && !hasPositionData)
+                if (position.Y <= -10f && !hasPositionData && !hasCrowdsourced)
                 {
                     continue;
                 }
@@ -2159,7 +2198,13 @@ public class TreasureHunterService
                     continue;
                 }
 
-                if (hasPositionData && !treasureData.Any(d => d.Matches(treasureRowId, position)))
+                bool matchAuthored = hasPositionData && treasureData.Any(d => d.Matches(treasureRowId, position));
+                bool matchCrowd = hasCrowdsourced
+                    && liveSpots.Any(c =>
+                        Vector3.DistanceSquared(c.Position, position) <= CofferLocationSyncService.MatchRadiusSq);
+
+                // Union: baked map and/or shared catalog. Neither → take every bronze/silver layout pad.
+                if ((hasPositionData || hasCrowdsourced) && !matchAuthored && !matchCrowd)
                 {
                     continue;
                 }
@@ -2169,6 +2214,7 @@ public class TreasureHunterService
         }
 
         MergeBakedTreasurePads(zones.GetZone().GetTreasureData());
+        MergeCrowdsourcedTreasurePads(cofferLocations.GetAcceptedForCurrentZone());
 
         if (layoutTreasure.Count == 0)
         {
@@ -2223,6 +2269,38 @@ public class TreasureHunterService
         if (added > 0)
         {
             log.Debug("Treasure hunt: merged {Count} baked pad(s) not in active layout", added);
+        }
+    }
+
+    /// <summary>Fill shared-catalog pads missing from the layout snapshot (by position).</summary>
+    private void MergeCrowdsourcedTreasurePads(IReadOnlyList<CrowdsourcedCofferCandidate> liveSpots)
+    {
+        if (liveSpots.Count == 0)
+        {
+            return;
+        }
+
+        int added = 0;
+        foreach (CrowdsourcedCofferCandidate spot in liveSpots)
+        {
+            if (layoutTreasure.Any(t =>
+                    Vector3.DistanceSquared(t.Position, spot.Position) <= CofferLocationSyncService.MatchRadiusSq))
+            {
+                continue;
+            }
+
+            if (layoutTreasure.Any(t => t.Id == spot.DataId))
+            {
+                continue;
+            }
+
+            layoutTreasure.Add(new(spot.DataId, spot.Position, TreasureCoffer.BronzeSgbId));
+            added++;
+        }
+
+        if (added > 0)
+        {
+            log.Info("Treasure hunt: merged {Count} shared pad(s) not in active layout", added);
         }
     }
 

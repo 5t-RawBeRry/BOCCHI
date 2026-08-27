@@ -52,7 +52,8 @@ public sealed class CarrotHunterService
     IPluginLog log,
     ITranslator<MainWindow> translator,
     PandoraAutoOpenHold pandoraAutoOpen,
-    NinjaHideAssist ninjaHide
+    NinjaHideAssist ninjaHide,
+    CarrotLocationSyncService carrotLocations
 ) : ICarrotHunter, IOnUpdate, IOnStop
 {
     private const uint FortuneCarrotItemId = 48096;
@@ -172,7 +173,7 @@ public sealed class CarrotHunterService
         }
 
         IZone zone = zones.GetZone();
-        if (!zone.IsOccultCrescentZone() || zone.GetCarrotData().Count == 0)
+        if (!zone.IsOccultCrescentZone() || carrotLocations.GetHuntPads(zone).Count == 0)
         {
             BocchiChat.PrintError(chat, uiConfig, "No authored carrot map for this zone.");
             return;
@@ -952,7 +953,7 @@ public sealed class CarrotHunterService
         int? bestId = null;
         float bestDist = float.MaxValue;
 
-        foreach (CarrotData pad in zones.GetZone().GetCarrotData())
+        foreach (CarrotData pad in carrotLocations.GetHuntPads(zones.GetZone()))
         {
             if (finishedAuthoredIds.Contains(pad.Id))
             {
@@ -1030,7 +1031,7 @@ public sealed class CarrotHunterService
     private void RebuildTour(int? preferStartId = null)
     {
         IZone zone = zones.GetZone();
-        List<CarrotData> remaining = zone.GetCarrotData()
+        List<CarrotData> remaining = carrotLocations.GetHuntPads(zone)
             .Where(c => !finishedAuthoredIds.Contains(c.Id))
             .ToList();
 
@@ -1418,7 +1419,7 @@ public sealed class CarrotHunterService
     {
         NorthHornCarrotRegion? active = null;
         int activeOrder = int.MaxValue;
-        foreach (CarrotData remaining in zones.GetZone().GetCarrotData())
+        foreach (CarrotData remaining in carrotLocations.GetHuntPads(zones.GetZone()))
         {
             if (finishedAuthoredIds.Contains(remaining.Id))
             {
@@ -1442,7 +1443,7 @@ public sealed class CarrotHunterService
     {
         Vector3 pos = live.GetPosition();
         float matchSq = HuntDistances.MatchRadiusSq;
-        return zones.GetZone().GetCarrotData()
+        return carrotLocations.GetHuntPads(zones.GetZone())
             .Where(c => !finishedAuthoredIds.Contains(c.Id))
             .OrderBy(c => Vector3.DistanceSquared(c.Position, pos))
             .FirstOrDefault(c => Vector3.DistanceSquared(c.Position, pos) <= matchSq);

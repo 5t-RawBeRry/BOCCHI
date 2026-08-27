@@ -7,7 +7,6 @@ using Dalamud.Bindings.ImGui;
 using Ocelot.Extensions;
 using Ocelot.Services.PlayerState;
 using Ocelot.Services.Translation;
-using Ocelot.Services.UI;
 using Ocelot.Windows;
 using System.Numerics;
 
@@ -22,8 +21,6 @@ public class TreasureRenderer
     TreasureConfig config,
     UIConfig uiConfig,
     IPlayer player,
-    IBrandingService branding,
-    IUIService ui,
     ITranslator<MainWindow> translator
 ) : IDynamicRenderer
 {
@@ -45,56 +42,56 @@ public class TreasureRenderer
 
         if (!hunter.IsVnavAvailable)
         {
-            ImGui.TextUnformatted(translator.T(".treasure.requires_vnav"));
+            BocchiUi.DrawStatusChip(translator.T(".treasure.requires_vnav"), BocchiUi.StatusChipKind.Warn);
             return;
         }
 
         if (!hunter.IsVnavReady)
         {
-            ImGui.TextUnformatted(translator.T(".treasure.waiting_navmesh"));
+            BocchiUi.DrawStatusChip(translator.T(".treasure.waiting_navmesh"), BocchiUi.StatusChipKind.Warn);
             return;
         }
 
         if (hunter.ManagedByPotsTreasure)
         {
-            ImGui.TextWrapped(translator.T(".treasure.managed_by_pots"));
+            BocchiUi.MutedWrapped(translator.T(".treasure.managed_by_pots"));
             if (hunter.Elapsed > TimeSpan.Zero)
             {
-                ui.LabelledValue(translator.T(".treasure.elapsed"), $"{hunter.Elapsed:mm\\:ss}");
+                BocchiUi.LabelledValue(translator.T(".treasure.elapsed"), $"{hunter.Elapsed:mm\\:ss}");
             }
 
-            TreasureHuntStatusUi.DrawProgress(hunter, ui, translator, config);
+            TreasureHuntStatusUi.DrawProgress(hunter, translator, config);
             return;
         }
 
         if (hunter.ManagedByIllegalModeFiller)
         {
-            ImGui.TextWrapped(translator.T(".treasure.managed_by_illegal_mode"));
+            BocchiUi.MutedWrapped(translator.T(".treasure.managed_by_illegal_mode"));
             if (hunter.Elapsed > TimeSpan.Zero)
             {
-                ui.LabelledValue(translator.T(".treasure.elapsed"), $"{hunter.Elapsed:mm\\:ss}");
+                BocchiUi.LabelledValue(translator.T(".treasure.elapsed"), $"{hunter.Elapsed:mm\\:ss}");
             }
 
-            TreasureHuntStatusUi.DrawProgress(hunter, ui, translator, config);
+            TreasureHuntStatusUi.DrawProgress(hunter, translator, config);
             return;
         }
 
         if (hunter.ManagedByMobFarmer)
         {
-            ImGui.TextWrapped(translator.T(".treasure.managed_by_mob_farmer"));
+            BocchiUi.MutedWrapped(translator.T(".treasure.managed_by_mob_farmer"));
             if (hunter.Elapsed > TimeSpan.Zero)
             {
-                ui.LabelledValue(translator.T(".treasure.elapsed"), $"{hunter.Elapsed:mm\\:ss}");
+                BocchiUi.LabelledValue(translator.T(".treasure.elapsed"), $"{hunter.Elapsed:mm\\:ss}");
             }
 
-            TreasureHuntStatusUi.DrawProgress(hunter, ui, translator, config);
+            TreasureHuntStatusUi.DrawProgress(hunter, translator, config);
             return;
         }
 
         // Carrot Hunt owns the section — don't offer Start Hunt beside an active carrot run.
         if (carrotHunter.Running)
         {
-            ImGui.TextWrapped(translator.T(".treasure.managed_by_carrot"));
+            BocchiUi.MutedWrapped(translator.T(".treasure.managed_by_carrot"));
             return;
         }
 
@@ -128,6 +125,11 @@ public class TreasureRenderer
             return;
         }
 
+        BocchiUi.DrawStatusChip(
+            hunter.Paused ? translator.T(".treasure.paused") : translator.T(".status.on"),
+            hunter.Paused ? BocchiUi.StatusChipKind.Warn : BocchiUi.StatusChipKind.Ok);
+        ImGui.SameLine();
+
         if (hunter.Paused)
         {
             if (ImGui.Button(translator.T(".treasure.resume_hunt")))
@@ -146,8 +148,8 @@ public class TreasureRenderer
             hunter.Toggle();
         }
 
-        ui.LabelledValue(translator.T(".treasure.elapsed"), $"{hunter.Elapsed:mm\\:ss}");
-        TreasureHuntStatusUi.DrawProgress(hunter, ui, translator, config);
+        BocchiUi.LabelledValue(translator.T(".treasure.elapsed"), $"{hunter.Elapsed:mm\\:ss}");
+        TreasureHuntStatusUi.DrawProgress(hunter, translator, config);
     }
 
     private void DrawCarrotHuntPanel()
@@ -174,23 +176,25 @@ public class TreasureRenderer
         }
 
         ImGui.Separator();
-        ui.Text(translator.T(".treasure.carrot_hunt_title"));
-        ImGui.TextWrapped(translator.T(".treasure.carrot_hunt_description"));
+        BocchiUi.SectionTitle(translator.T(".treasure.carrot_hunt_title"));
+        BocchiUi.DrawIntro(translator.T(".treasure.carrot_hunt_description"));
 
         if (!carrotHunter.IsVnavAvailable)
         {
-            ImGui.TextUnformatted(translator.T(".treasure.requires_vnav"));
+            BocchiUi.DrawStatusChip(translator.T(".treasure.requires_vnav"), BocchiUi.StatusChipKind.Warn);
             return;
         }
 
         if (!carrotHunter.IsVnavReady)
         {
-            ImGui.TextUnformatted(translator.T(".treasure.waiting_navmesh"));
+            BocchiUi.DrawStatusChip(translator.T(".treasure.waiting_navmesh"), BocchiUi.StatusChipKind.Warn);
             return;
         }
 
         if (carrotHunter.Running)
         {
+            BocchiUi.DrawStatusChip(translator.T(".status.on"), BocchiUi.StatusChipKind.Ok);
+            ImGui.SameLine();
             if (ImGui.Button(translator.T(".treasure.stop_carrot_hunt")))
             {
                 carrotHunter.Toggle();
@@ -204,11 +208,11 @@ public class TreasureRenderer
 
         if (showCarrotStatus)
         {
-            ui.LabelledValue(translator.T(".treasure.elapsed"), $"{carrotHunter.Elapsed:mm\\:ss}");
-            ui.LabelledValue(
+            BocchiUi.LabelledValue(translator.T(".treasure.elapsed"), $"{carrotHunter.Elapsed:mm\\:ss}");
+            BocchiUi.LabelledValue(
                 translator.T(".treasure.carrot_hunt_phase"),
                 translator.T($".treasure.carrot_hunt_phases.{carrotHunter.Phase.ToString().ToSnakeCase()}"));
-            ui.LabelledValue(
+            BocchiUi.LabelledValue(
                 translator.T(".treasure.fortune_carrots"),
                 carrotHunter.FortuneCarrotsRemaining.ToString());
         }
@@ -232,11 +236,11 @@ public class TreasureRenderer
     private void DrawNearbyTreasures()
     {
         ImGui.Separator();
-        ui.Text(translator.T(".treasure.nearby_title"));
+        BocchiUi.SectionTitle(translator.T(".treasure.nearby_title"));
 
         if (tracker.Treasures.Count <= 0)
         {
-            ImGui.TextUnformatted(translator.T(".treasure.none_nearby"));
+            BocchiUi.MutedText(translator.T(".treasure.none_nearby"));
             return;
         }
 
@@ -253,7 +257,7 @@ public class TreasureRenderer
             return;
         }
 
-        foreach(TreasureCoffer treasure in treasures)
+        foreach (TreasureCoffer treasure in treasures)
         {
             Vector3 pos = treasure.GetPosition();
             string name = treasure.GetName();
@@ -261,10 +265,7 @@ public class TreasureRenderer
                 $"{string.Format(translator.T(".treasure.distance"), player.Position.Distance(pos))} · {pos:f0}";
 
             ActivitySnapshotRenderer.RenderCompactWithActions(
-                ui,
                 navigation,
-                branding.DalamudYellow,
-                branding.DalamudGrey,
                 name,
                 details,
                 pos,
@@ -280,20 +281,18 @@ public class TreasureRenderer
             return;
         }
 
-        ui.LabelledValue(translator.T(".treasure.active_bronze"), $"{tracker.BronzeChests}/30");
-        if (config.ShowPercentageActiveTreasureCount)
-        {
-            float percentage = tracker.BronzeChests / 30f * 100f;
-            ImGui.SameLine();
-            ImGui.TextUnformatted($"({percentage:F2}%)");
-        }
+        BocchiUi.SectionTitle(translator.T(".treasure.active_bronze"));
+        float bronzeFraction = tracker.BronzeChests / 30f;
+        string bronzeOverlay = config.ShowPercentageActiveTreasureCount
+            ? $"{tracker.BronzeChests}/30 ({bronzeFraction * 100f:F2}%)"
+            : $"{tracker.BronzeChests}/30";
+        BocchiUi.DrawPercentBar(bronzeFraction, Math.Min(220f, ImGui.GetContentRegionAvail().X), bronzeOverlay);
 
-        ui.LabelledValue(translator.T(".treasure.active_silver"), $"{tracker.SilverChests}/8");
-        if (config.ShowPercentageActiveTreasureCount)
-        {
-            float percentage = tracker.SilverChests / 8f * 100f;
-            ImGui.SameLine();
-            ImGui.TextUnformatted($"({percentage:F2}%)");
-        }
+        BocchiUi.SectionTitle(translator.T(".treasure.active_silver"));
+        float silverFraction = tracker.SilverChests / 8f;
+        string silverOverlay = config.ShowPercentageActiveTreasureCount
+            ? $"{tracker.SilverChests}/8 ({silverFraction * 100f:F2}%)"
+            : $"{tracker.SilverChests}/8";
+        BocchiUi.DrawPercentBar(silverFraction, Math.Min(220f, ImGui.GetContentRegionAvail().X), silverOverlay);
     }
 }

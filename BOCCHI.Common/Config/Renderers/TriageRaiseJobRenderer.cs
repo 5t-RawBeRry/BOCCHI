@@ -1,4 +1,5 @@
 using BOCCHI.Common.Config.Fields;
+using BOCCHI.Common.UI;
 using Dalamud.Bindings.ImGui;
 using Ocelot.Config.Renderers;
 using Ocelot.Extensions;
@@ -25,22 +26,30 @@ public sealed class TriageRaiseJobRenderer : IFieldRenderer<TriageRaiseJobAttrib
         var value = (TriageRaiseJobPreference)(prop.GetValue(target) ?? TriageRaiseJobPreference.PhantomChemist);
         bool changed = false;
 
-        if (ImGui.RadioButton(translator.T(ChemistKey), value == TriageRaiseJobPreference.PhantomChemist))
+        BocchiUi.PushFieldStyle();
+        try
         {
-            value = TriageRaiseJobPreference.PhantomChemist;
-            changed = true;
+            if (ImGui.RadioButton(translator.T(ChemistKey), value == TriageRaiseJobPreference.PhantomChemist))
+            {
+                value = TriageRaiseJobPreference.PhantomChemist;
+                changed = true;
+            }
+
+            prop.Tooltip(owner, translator);
+
+            ImGui.SameLine();
+            if (ImGui.RadioButton(translator.T(WhiteMageKey), value == TriageRaiseJobPreference.PhantomWhiteMage))
+            {
+                value = TriageRaiseJobPreference.PhantomWhiteMage;
+                changed = true;
+            }
+
+            prop.Tooltip(owner, translator);
         }
-
-        prop.Tooltip(owner, translator);
-
-        ImGui.SameLine();
-        if (ImGui.RadioButton(translator.T(WhiteMageKey), value == TriageRaiseJobPreference.PhantomWhiteMage))
+        finally
         {
-            value = TriageRaiseJobPreference.PhantomWhiteMage;
-            changed = true;
+            BocchiUi.PopFieldStyle();
         }
-
-        prop.Tooltip(owner, translator);
 
         if (changed)
         {

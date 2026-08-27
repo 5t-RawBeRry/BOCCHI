@@ -188,6 +188,10 @@ public sealed class MobFarmerYieldService
                 }
 
                 break;
+
+            case FarmerYieldReason.Shopping:
+                // ShoppingService resumes via NotifyShoppingEnded.
+                break;
         }
     }
 

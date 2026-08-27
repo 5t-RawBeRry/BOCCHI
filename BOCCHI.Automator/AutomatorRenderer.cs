@@ -9,7 +9,6 @@ using BOCCHI.Common.UI;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Plugin.Services;
 using Ocelot.Services.Translation;
-using Ocelot.Services.UI;
 using Ocelot.Windows;
 
 namespace BOCCHI.Automator;
@@ -22,8 +21,6 @@ public class AutomatorRenderer
     IPotCycleTracker potCycle,
     IZoneProvider zones,
     IDataManager data,
-    IUIService ui,
-    IBrandingService branding,
     ITranslator<MainWindow> translator
 ) : IDynamicRenderer
 {
@@ -42,39 +39,13 @@ public class AutomatorRenderer
             Automator.Toggle();
         }
 
-        bool inOccult = zones.GetZone().IsOccultCrescentZone();
-        if (Automator.Enabled)
-        {
-            ImGui.SameLine();
-            if (ImGui.Button(translator.T(".automation.automator.refresh_pathfinding")))
-            {
-                Automator.RefreshPathfinding();
-            }
-
-            if (ImGui.IsItemHovered())
-            {
-                ImGui.SetTooltip(translator.T(".automation.automator.refresh_pathfinding_tooltip"));
-            }
-        }
-
-        if (inOccult)
-        {
-            ImGui.SameLine();
-            if (ImGui.Button(translator.T(".automation.automator.rebuild_path_map")))
-            {
-                Automator.RebuildPathMap();
-            }
-
-            if (ImGui.IsItemHovered())
-            {
-                ImGui.SetTooltip(translator.T(".automation.automator.rebuild_path_map_tooltip"));
-            }
-        }
+        AutomatorPathControls.Draw(Automator, zones, translator, showRefresh: Automator.Enabled);
 
         ImGui.Spacing();
-        PotTimerUi.Draw(potCycle, zones, data, ui, translator, branding);
-        ZoneGraphStatusUi.Draw(zones.GetZone(), ui, translator, branding);
+        PotTimerUi.Draw(potCycle, zones, data, translator);
+        ZoneGraphStatusUi.Draw(zones.GetZone(), translator);
 
+        bool inOccult = zones.GetZone().IsOccultCrescentZone();
         if (!Automator.Enabled && !HasDetails() && !inOccult)
         {
             return;
@@ -82,9 +53,13 @@ public class AutomatorRenderer
 
         ImGui.Spacing();
 
-        if (ImGui.CollapsingHeader(
+        ImGui.PushStyleColor(ImGuiCol.Text, BocchiUi.Header);
+        bool detailsOpen = ImGui.CollapsingHeader(
             translator.T(".automation.automator.details"),
-            HasDetails() ? ImGuiTreeNodeFlags.DefaultOpen : ImGuiTreeNodeFlags.None))
+            HasDetails() ? ImGuiTreeNodeFlags.DefaultOpen : ImGuiTreeNodeFlags.None);
+        ImGui.PopStyleColor();
+
+        if (detailsOpen)
         {
             ImGui.Indent();
 
@@ -95,23 +70,37 @@ public class AutomatorRenderer
 
             if (memory.TryRemember<GoalMemory>(out GoalMemory goalMemory))
             {
-                ui.LabelledValue(translator.T(".status.goal"), GoalFormatHelper.Describe(goalMemory.Goal, translator));
+                BocchiUi.LabelledValue(
+                    translator.T(".status.goal"),
+                    GoalFormatHelper.Describe(goalMemory.Goal, translator));
             }
 
             if (memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory potFarm))
             {
-                ui.LabelledValue(translator.T(".automation.automator.pot_chest_farm"), $"Fate {potFarm.FateId.Value}");
-                ui.LabelledValue(
+                BocchiUi.LabelledValue(
+                    translator.T(".automation.automator.pot_chest_farm"),
+                    $"Fate {potFarm.FateId.Value}");
+                BocchiUi.LabelledValue(
                     translator.T(".automation.automator.chests_remaining"),
                     $"{potFarm.RemainingChests}/{potFarm.TotalChests}");
+                if (potFarm.TotalChests > 0)
+                {
+                    float cleared = 1f - (potFarm.RemainingChests / (float)potFarm.TotalChests);
+                    BocchiUi.DrawPercentBar(
+                        cleared,
+                        Math.Min(220f, ImGui.GetContentRegionAvail().X),
+                        $"{potFarm.RemainingChests}/{potFarm.TotalChests}");
+                }
             }
 
             if (memory.TryRemember<GoalPathStepMemory>(out GoalPathStepMemory goalPathStepMemory))
             {
                 int stepIndex = 1;
-                foreach(IPathStep step in goalPathStepMemory.PathSteps)
+                foreach (IPathStep step in goalPathStepMemory.PathSteps)
                 {
-                    ui.LabelledValue($"{translator.T(".status.current_step")} {stepIndex++}", step.Describe());
+                    BocchiUi.LabelledValue(
+                        $"{translator.T(".status.current_step")} {stepIndex++}",
+                        step.Describe());
                 }
             }
 

@@ -14,9 +14,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Ocelot.Extensions;
-using Ocelot.Graphics;
 using Ocelot.Services.Translation;
-using Ocelot.Services.UI;
 using Ocelot.Windows;
 
 namespace BOCCHI.UI;
@@ -34,8 +32,6 @@ public class OperationalStatusBar
     IPotCycleTracker potCycle,
     IZoneProvider zones,
     IDataManager data,
-    IBrandingService branding,
-    IUIService ui,
     ITranslator<MainWindow> translator
 )
 {
@@ -67,40 +63,39 @@ public class OperationalStatusBar
 
     public void Render()
     {
-        ImGui.Separator();
-
         bool anyMode = IllegalModeActive || CompletionistActive || PotsTreasureActive || MobFarmerActive
                        || StandaloneTreasureHuntActive || CarrotHuntActive;
         if (!anyMode)
         {
-            ui.Text(translator.T(".status.idle"), branding.DalamudGrey);
+            BocchiUi.DrawStatusChip(translator.T(".status.idle"), BocchiUi.StatusChipKind.Muted);
         }
         else
         {
             bool first = true;
-            void Chip(string label, string? detail)
+            void Chip(string label, string? detail, BocchiUi.StatusChipKind kind = BocchiUi.StatusChipKind.Ok)
             {
                 if (!first)
                 {
-                    ImGui.SameLine();
+                    ImGui.SameLine(0, 6);
                 }
 
                 first = false;
-                DrawActiveChip(label, detail);
+                string text = string.IsNullOrEmpty(detail) ? label : $"{label}: {detail}";
+                BocchiUi.DrawStatusChip(text, kind);
             }
 
             if (IllegalModeActive)
             {
                 Chip(
                     translator.T(".status.automator"),
-                    Automator.CurrentState is { } state ? FormatAutomatorState(state) : null);
+                    Automator.CurrentState is { } state ? FormatAutomatorState(state) : translator.T(".status.on"));
             }
 
             if (CompletionistActive)
             {
                 Chip(
                     translator.T(".status.completionist"),
-                    Automator.CurrentState is { } state ? FormatAutomatorState(state) : null);
+                    Automator.CurrentState is { } state ? FormatAutomatorState(state) : translator.T(".status.on"));
             }
 
             if (PotsTreasureActive)
@@ -118,7 +113,10 @@ public class OperationalStatusBar
                     detail = $"{phase} · {TreasureHuntStatusUi.FormatProgress(hunter, translator)}";
                 }
 
-                Chip(translator.T(".status.pots_treasure"), detail);
+                Chip(
+                    translator.T(".status.pots_treasure"),
+                    detail,
+                    PotsTreasure.Paused ? BocchiUi.StatusChipKind.Warn : BocchiUi.StatusChipKind.Ok);
             }
 
             if (MobFarmerActive)
@@ -131,7 +129,10 @@ public class OperationalStatusBar
                     detail = $"{detail} · {spot}";
                 }
 
-                Chip(translator.T(".status.mob_farmer"), detail);
+                Chip(
+                    translator.T(".status.mob_farmer"),
+                    detail,
+                    Farmer.Suspended ? BocchiUi.StatusChipKind.Warn : BocchiUi.StatusChipKind.Ok);
             }
 
             if (StandaloneTreasureHuntActive)
@@ -152,8 +153,8 @@ public class OperationalStatusBar
         string? potChip = PotTimerUi.FormatCompact(potCycle, data, translator);
         if (potChip != null)
         {
-            ImGui.SameLine(0f, 16f);
-            ui.Text(potChip, branding.DalamudGrey);
+            ImGui.SameLine(0f, 10f);
+            BocchiUi.DrawStatusChip(potChip, BocchiUi.StatusChipKind.Muted);
         }
 
         if (ZoneGraphStatusUi.TryFormat(
@@ -164,36 +165,35 @@ public class OperationalStatusBar
                 out bool pathMapBusy)
             && pathMapBusy)
         {
-            ImGui.SameLine(0f, 16f);
-            ui.Text($"{translator.T(".automation.automator.path_map")}: {pathMapValue}", branding.DalamudYellow);
+            ImGui.SameLine(0f, 10f);
+            BocchiUi.DrawStatusChip(
+                $"{translator.T(".automation.automator.path_map")}: {pathMapValue}",
+                BocchiUi.StatusChipKind.Warn);
         }
 
-        // Own row — not a mode chip; knowledge-crystal buff apply/stop.
         if (uiConfig.ShowBuffSection)
         {
+            ImGui.SameLine(0f, 10f);
             DrawBuffAction();
         }
 
-        // Goal / pot chests while Illegal Mode, Completionist, or Pots phase drives the automator.
         bool showGoalRows = IllegalModeActive
                             || CompletionistActive
                             || (PotsTreasureActive && PotsTreasure.Phase == PotsTreasurePhase.DoingPots);
         if (showGoalRows)
         {
+            ImGui.Spacing();
             if (memory.TryRemember<GoalMemory>(out GoalMemory goalMemory))
             {
-                ui.LabelledValue(translator.T(".status.goal"), GoalFormatHelper.Describe(goalMemory.Goal, translator));
+                BocchiUi.MutedText($"{translator.T(".status.goal")}: {GoalFormatHelper.Describe(goalMemory.Goal, translator)}");
             }
 
             if (memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory potFarm))
             {
-                ui.LabelledValue(
-                    translator.T(".status.chests"),
-                    $"{potFarm.RemainingChests}/{potFarm.TotalChests} (Fate {potFarm.FateId.Value})");
+                BocchiUi.MutedText(
+                    $"{translator.T(".status.chests")}: {potFarm.RemainingChests}/{potFarm.TotalChests} (Fate {potFarm.FateId.Value})");
             }
         }
-
-        ImGui.Separator();
     }
 
     private void DrawBuffAction()
@@ -206,7 +206,6 @@ public class OperationalStatusBar
 
         using (ImRaii.Disabled(!canStart && !running))
         {
-            // Flask reads as buffs/potions; Magic looked like a random pill next to status chips.
             using (ImRaii.PushFont(UiBuilder.IconFont))
             {
                 ImGui.AlignTextToFramePadding();
@@ -246,18 +245,7 @@ public class OperationalStatusBar
         if (running)
         {
             ImGui.SameLine(0f, 8f);
-            ui.Text(translator.T(".buffs.applying"), branding.DalamudGrey);
-        }
-    }
-
-    private void DrawActiveChip(string label, string? detail)
-    {
-        ui.Text($"{label}: {translator.T(".status.on")}", Color.Green);
-
-        if (!string.IsNullOrEmpty(detail))
-        {
-            ImGui.SameLine();
-            ImGui.TextUnformatted($"({detail})");
+            BocchiUi.DrawStatusChip(translator.T(".buffs.applying"), BocchiUi.StatusChipKind.Warn);
         }
     }
 

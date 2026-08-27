@@ -12,7 +12,6 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Plugin.Services;
 using Ocelot.Extensions;
 using Ocelot.Services.Translation;
-using Ocelot.Services.UI;
 using Ocelot.Windows;
 
 namespace BOCCHI.Automator;
@@ -29,8 +28,6 @@ public class PotsTreasureRenderer
     IPotCycleTracker potCycle,
     IZoneProvider zones,
     IDataManager data,
-    IUIService ui,
-    IBrandingService branding,
     ITranslator<MainWindow> translator
 ) : IDynamicRenderer
 {
@@ -53,6 +50,13 @@ public class PotsTreasureRenderer
         }
         else
         {
+            BocchiUi.DrawStatusChip(
+                PotsTreasure.Paused
+                    ? translator.T(".automation.pots_treasure.paused")
+                    : translator.T(".status.on"),
+                PotsTreasure.Paused ? BocchiUi.StatusChipKind.Warn : BocchiUi.StatusChipKind.Ok);
+            ImGui.SameLine();
+
             if (PotsTreasure.Paused)
             {
                 if (ImGui.Button(translator.T(".automation.pots_treasure.resume")))
@@ -86,10 +90,9 @@ public class PotsTreasureRenderer
         }
 
         ImGui.Spacing();
-        ImGui.TextWrapped(translator.T(".automation.pots_treasure.description"));
+        BocchiUi.DrawIntro(translator.T(".automation.pots_treasure.description"));
 
-        ImGui.Spacing();
-        PotTimerUi.Draw(potCycle, zones, data, ui, translator, branding);
+        PotTimerUi.Draw(potCycle, zones, data, translator);
 
         DrawActivePotFates();
 
@@ -99,12 +102,7 @@ public class PotsTreasureRenderer
         }
 
         ImGui.Spacing();
-        if (PotsTreasure.Paused)
-        {
-            ui.Text(translator.T(".automation.pots_treasure.paused"), branding.DalamudYellow);
-        }
-
-        ui.LabelledValue(
+        BocchiUi.LabelledValue(
             translator.T(".automation.pots_treasure.phase"),
             translator.T($".automation.pots_treasure.phases.{PotsTreasure.Phase.ToString().ToSnakeCase()}"));
 
@@ -127,10 +125,10 @@ public class PotsTreasureRenderer
             ImGui.Spacing();
             if (hunter.Elapsed > TimeSpan.Zero)
             {
-                ui.LabelledValue(translator.T(".treasure.elapsed"), $"{hunter.Elapsed:mm\\:ss}");
+                BocchiUi.LabelledValue(translator.T(".treasure.elapsed"), $"{hunter.Elapsed:mm\\:ss}");
             }
 
-            TreasureHuntStatusUi.DrawProgress(hunter, ui, translator, treasureConfig);
+            TreasureHuntStatusUi.DrawProgress(hunter, translator, treasureConfig);
         }
     }
 
@@ -147,11 +145,11 @@ public class PotsTreasureRenderer
             .ToList();
 
         ImGui.Spacing();
-        ui.Text(translator.T(".automation.pots_treasure.active_fates"), branding.DalamudYellow);
+        BocchiUi.SectionTitle(translator.T(".automation.pots_treasure.active_fates"));
 
         if (potFates.Count == 0)
         {
-            ui.Text(translator.T(".automation.pots_treasure.no_active_fate"), branding.DalamudGrey);
+            BocchiUi.MutedText(translator.T(".automation.pots_treasure.no_active_fate"));
             return;
         }
 
@@ -176,10 +174,7 @@ public class PotsTreasureRenderer
             }
 
             ActivitySnapshotRenderer.RenderCompactWithActions(
-                ui,
                 navigation,
-                branding.DalamudYellow,
-                branding.DalamudGrey,
                 fate.Name,
                 details,
                 fate.Position,

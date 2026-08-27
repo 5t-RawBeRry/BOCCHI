@@ -1,5 +1,8 @@
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.Aethernet;
+using BOCCHI.Common.Data.OccultCrescent;
 using BOCCHI.Common.Data.Shopping;
+using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using Dalamud.Game.ClientState.Objects.Enums;
@@ -11,6 +14,7 @@ using ECommons.UIHelpers.AddonMasterImplementations;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using Ocelot.Chain;
 using Ocelot.Extensions;
 using Ocelot.Ipc.VNavmesh;
 using Ocelot.Lifecycle;
@@ -24,6 +28,7 @@ namespace BOCCHI.Services.Shopping;
 /// <summary>
 /// Approaches the Expedition Antiquarian when currency thresholds are hit and
 /// purchases preferred catalog items from ShopExchangeCurrency.
+/// Soft-suspends other automation while shopping owns pathing.
 /// </summary>
 public sealed class ShoppingService
 (
@@ -33,12 +38,19 @@ public sealed class ShoppingService
     IPlayer player,
     IGameGui gui,
     IVNavmeshIpc vnav,
+    IChainManager chainManager,
+    IChainFactory chains,
+    IAutomationModeGuard modeGuard,
+    ISupportJobFactory supportJobs,
+    IDataManager data,
+    IUnlockState unlockState,
     ILogger<ShoppingService> logger
 ) : IOnUpdate
 {
     private enum Phase
     {
         Idle,
+        Traveling,
         Approaching,
         OpeningMenu,
         Buying
@@ -46,6 +58,11 @@ public sealed class ShoppingService
 
     private Phase phase = Phase.Idle;
     private DateTimeOffset buyCooldownUntil = DateTimeOffset.MinValue;
+    private bool priorityClaimed;
+    private int desiredMenuIndex;
+    private int? openedMenuIndex;
+    private Task<ChainResult>? teleportChain;
+    private readonly HashSet<uint> skippedMissingRows = [];
 
     public UpdateLimit UpdateLimit =>
         new()
@@ -58,28 +75,38 @@ public sealed class ShoppingService
     {
         if (!config.EnableAutoShop)
         {
-            phase = Phase.Idle;
+            if (priorityClaimed || phase != Phase.Idle)
+            {
+                AbortShopping(resumeAutomation: true);
+            }
+
             return;
         }
 
         IZone zone = zones.GetZone();
         if (!zone.IsOccultCrescentZone() || zone.GetShoppingVendor() is not { } vendor)
         {
-            phase = Phase.Idle;
+            if (priorityClaimed || phase != Phase.Idle)
+            {
+                AbortShopping(resumeAutomation: true);
+            }
+
             return;
         }
 
-        int silver = OccultCrescentHelper.GetSilverPieces();
-        int gold = OccultCrescentHelper.GetGoldPieces();
-        bool shouldShop =
-            config.PreferredItemIds.Count > 0
-            && ((config.SilverThreshold > 0 && silver >= config.SilverThreshold)
-                || (config.GoldThreshold > 0 && gold >= config.GoldThreshold));
+        ZoneId zoneId = zone.ZoneId;
+        int silver = OccultCrescentHelper.GetActiveSilver(zoneId);
+        int gold = OccultCrescentHelper.GetActiveGold(zoneId);
+        bool thresholdHit =
+            (config.SilverThreshold > 0 && silver >= config.SilverThreshold)
+            || (config.GoldThreshold > 0 && gold >= config.GoldThreshold);
+        bool shouldShop = thresholdHit && HasPendingGoals(zoneId);
 
-        // Still process an already-open shop even when below threshold (finish buys).
-        if (AddonHelpers.IsShopExchangeOpen() && config.PreferredItemIds.Count > 0)
+        if (AddonHelpers.IsShopExchangeOpen() && HasPendingGoals(zoneId))
         {
-            TryHandleOpenShop(silver, gold);
+            ClaimPriority();
+            phase = Phase.Buying;
+            TryHandleOpenShop(zoneId, silver, gold);
             return;
         }
 
@@ -88,25 +115,42 @@ public sealed class ShoppingService
             return;
         }
 
+        if (!shouldShop && phase != Phase.Idle && !AddonHelpers.IsShopExchangeOpen())
+        {
+            // Threshold cleared mid-trip with nothing left to finish — resume.
+            FinishShopping();
+            return;
+        }
+
         if (DateTimeOffset.UtcNow < buyCooldownUntil)
         {
             return;
         }
 
-        IGameObject? npc = objects
-            .Where(o => o is { ObjectKind: ObjectKind.EventNpc, IsTargetable: true } && o.BaseId == vendor.DataId)
-            .OrderBy(o => o.Position.Distance2D(player.Position))
-            .FirstOrDefault();
-
-        if (npc == null)
+        ShopCatalogEntry? next = PickNextPurchase(zoneId, preferLiveRow: false);
+        if (next == null)
         {
-            // Vendor only at basecamp — wait until player is near camp.
-            if (player.Position.Distance2D(zone.GetAetherytePosition()) > 80f)
+            if (phase != Phase.Idle)
             {
-                phase = Phase.Idle;
-                return;
+                FinishShopping();
             }
 
+            return;
+        }
+
+        desiredMenuIndex = next.Value.MenuIndex;
+        ClaimPriority();
+
+        if (teleportChain != null)
+        {
+            TickTeleport();
+            return;
+        }
+
+        IGameObject? npc = FindVendor(vendor.DataId);
+        if (npc == null)
+        {
+            TryTravelToCamp(zone, vendor.PreferredAethernetId);
             return;
         }
 
@@ -129,18 +173,107 @@ public sealed class ShoppingService
         {
             if (gui.GetAddonByName("SelectIconString", 1).Address != nint.Zero)
             {
-                TrySelectShopMenu(0);
+                TrySelectShopMenu(desiredMenuIndex);
                 return;
             }
 
             if (EzThrottler.Throttle("Shopping::Interact", 1000))
             {
-                TargetSystem.Instance()->InteractWithObject((FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)npc.Address, false);
+                openedMenuIndex = null;
+                TargetSystem.Instance()->InteractWithObject(
+                    (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)npc.Address,
+                    false);
             }
         }
     }
 
-    private unsafe bool TryHandleOpenShop(int silver, int gold)
+    private void ClaimPriority()
+    {
+        if (priorityClaimed)
+        {
+            return;
+        }
+
+        priorityClaimed = true;
+        modeGuard.EnsureExclusive(AutomationMode.Shopping);
+        logger.Info("[Shopping] soft-suspended other automation");
+    }
+
+    private void FinishShopping()
+    {
+        AbortShopping(resumeAutomation: true);
+        buyCooldownUntil = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(30);
+        logger.Info("[Shopping] finished — nothing affordable left or trip complete");
+    }
+
+    private void AbortShopping(bool resumeAutomation)
+    {
+        phase = Phase.Idle;
+        openedMenuIndex = null;
+        skippedMissingRows.Clear();
+        teleportChain = null;
+
+        if (priorityClaimed && resumeAutomation)
+        {
+            priorityClaimed = false;
+            modeGuard.NotifyShoppingEnded();
+        }
+        else if (!resumeAutomation)
+        {
+            priorityClaimed = false;
+        }
+    }
+
+    private void TickTeleport()
+    {
+        phase = Phase.Traveling;
+        if (teleportChain is not { IsCompleted: true })
+        {
+            return;
+        }
+
+        bool ok = teleportChain.IsCompletedSuccessfully && (teleportChain.Result?.IsSuccess ?? false);
+        teleportChain = null;
+        if (!ok)
+        {
+            logger.Warn("[Shopping] aethernet to camp failed — will path if vendor is in range");
+        }
+    }
+
+    private void TryTravelToCamp(IZone zone, uint preferredAethernetId)
+    {
+        phase = Phase.Traveling;
+
+        if (AetheryteApproach.IsAtPlaceName(zone, preferredAethernetId, player.Position)
+            || zone.IsInBasecamp())
+        {
+            // At camp but vendor object not spawned yet — wait.
+            return;
+        }
+
+        if (teleportChain != null)
+        {
+            return;
+        }
+
+        if (!EzThrottler.Throttle("Shopping::Teleport", 2000))
+        {
+            return;
+        }
+
+        vnav.Stop();
+        teleportChain = chainManager.Manage(
+            chains.Create($"Shopping::Teleport({preferredAethernetId})")
+                .Then<AethernetTeleportChain, uint>(preferredAethernetId));
+    }
+
+    private IGameObject? FindVendor(uint dataId) =>
+        objects
+            .Where(o => o is { ObjectKind: ObjectKind.EventNpc, IsTargetable: true } && o.BaseId == dataId)
+            .OrderBy(o => o.Position.Distance2D(player.Position))
+            .FirstOrDefault();
+
+    private unsafe bool TryHandleOpenShop(ZoneId zoneId, int silver, int gold)
     {
         if (!GenericHelpers.TryGetAddonByName("ShopExchangeCurrency", out AtkUnitBase* shop)
             || !GenericHelpers.IsAddonReady(shop))
@@ -148,37 +281,12 @@ public sealed class ShoppingService
             return false;
         }
 
-        phase = Phase.Buying;
-        if (config.PreferredItemIds.Count == 0)
+        openedMenuIndex ??= desiredMenuIndex;
+
+        // Confirm Yesno from a previous buy tick first.
+        if (AddonHelpers.TryGetSelectYesno(out AddonSelectYesno* yesno))
         {
-            return true;
-        }
-
-        foreach (uint itemId in config.PreferredItemIds)
-        {
-            if (!ShopCatalog.TryGet(itemId, out ShopCatalogEntry entry))
-            {
-                continue;
-            }
-
-            int spendable = entry.CurrencyItemId == ShopCatalog.SilverPieceItemId
-                ? silver - config.ReserveSilver
-                : gold - config.ReserveGold;
-            if (spendable < entry.Cost)
-            {
-                continue;
-            }
-
-            if (!EzThrottler.Throttle("Shopping::Buy", 750))
-            {
-                return true;
-            }
-
-            logger.Info($"[Shopping] buy item={entry.Name} ({entry.ItemId}) row={entry.RowIndex} cost={entry.Cost}");
-            FirePurchaseCallback(shop, entry.RowIndex, 1);
-            buyCooldownUntil = DateTimeOffset.UtcNow + TimeSpan.FromMilliseconds(500);
-
-            if (AddonHelpers.TryGetSelectYesno(out AddonSelectYesno* yesno))
+            if (EzThrottler.Throttle("Shopping::Yesno", 500))
             {
                 try
                 {
@@ -186,22 +294,226 @@ public sealed class ShoppingService
                 }
                 catch
                 {
-                    // ignore — next tick retries
+                    // next tick retries
                 }
             }
 
             return true;
         }
 
-        if (EzThrottler.Throttle("Shopping::Close", 2000))
+        ShopCatalogEntry? next = PickNextPurchase(zoneId, preferLiveRow: true);
+        if (next == null)
         {
-            shop->FireCallbackInt(-1);
-            phase = Phase.Idle;
-            buyCooldownUntil = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(30);
-            logger.Info("[Shopping] finished — no affordable preferred items");
+            // Maybe need another menu for remaining preferred items.
+            ShopCatalogEntry? otherMenu = PickNextPurchase(zoneId, preferLiveRow: false);
+            if (otherMenu is { } switchTo && switchTo.MenuIndex != openedMenuIndex)
+            {
+                if (EzThrottler.Throttle("Shopping::CloseForMenu", 1000))
+                {
+                    shop->FireCallbackInt(-1);
+                    desiredMenuIndex = switchTo.MenuIndex;
+                    openedMenuIndex = null;
+                    phase = Phase.OpeningMenu;
+                    logger.Info($"[Shopping] switching to menu {desiredMenuIndex}");
+                }
+
+                return true;
+            }
+
+            if (EzThrottler.Throttle("Shopping::Close", 2000))
+            {
+                shop->FireCallbackInt(-1);
+                FinishShopping();
+            }
+
+            return true;
         }
 
+        ShopCatalogEntry entry = next.Value;
+        if (!ShopExchangeAssist.TryFindRowIndex(entry.ItemId, out uint rowIndex))
+        {
+            skippedMissingRows.Add(entry.ItemId);
+            logger.Debug($"[Shopping] item {entry.Name} ({entry.ItemId}) not in open shop — skip");
+            return true;
+        }
+
+        if (!EzThrottler.Throttle("Shopping::Buy", 750))
+        {
+            return true;
+        }
+
+        logger.Info($"[Shopping] buy item={entry.Name} ({entry.ItemId}) row={rowIndex} cost={entry.Cost}");
+        FirePurchaseCallback(shop, rowIndex, 1);
+        NotePurchase(entry.ItemId);
+        buyCooldownUntil = DateTimeOffset.UtcNow + TimeSpan.FromMilliseconds(500);
         return true;
+    }
+
+    private void NotePurchase(uint itemId)
+    {
+        if (!config.Shopping.TryGetValue(itemId, out ShopListEntry? setting) || setting == null)
+        {
+            return;
+        }
+
+        if (setting.BuyAmount > 0)
+        {
+            setting.BuyAmount--;
+        }
+    }
+
+    private bool HasPendingGoals(ZoneId zoneId)
+    {
+        foreach (uint itemId in config.ShoppingOrder)
+        {
+            if (!config.Shopping.TryGetValue(itemId, out ShopListEntry? setting) || setting == null)
+            {
+                continue;
+            }
+
+            if (!TryResolveEntry(itemId, zoneId, out ShopCatalogEntry entry))
+            {
+                continue;
+            }
+
+            if (ShopOwnership.TryIsOwned(entry, supportJobs, data, unlockState) == true)
+            {
+                continue;
+            }
+
+            if (setting.BuyAmount > 0)
+            {
+                return true;
+            }
+
+            if (setting.KeepAmount > InventoryItemAssist.Count(itemId))
+            {
+                return true;
+            }
+
+            if (setting.KeepBuying)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private ShopCatalogEntry? PickNextPurchase(ZoneId zoneId, bool preferLiveRow)
+    {
+        // ICE priority: Buy amounts first, then Keep stock-ups, then Keep Buying sink.
+        return PickByGoal(zoneId, preferLiveRow, ShopGoal.Buy)
+               ?? PickByGoal(zoneId, preferLiveRow, ShopGoal.Keep)
+               ?? PickByGoal(zoneId, preferLiveRow, ShopGoal.KeepBuying);
+    }
+
+    private enum ShopGoal
+    {
+        Buy,
+        Keep,
+        KeepBuying,
+    }
+
+    private ShopCatalogEntry? PickByGoal(ZoneId zoneId, bool preferLiveRow, ShopGoal goal)
+    {
+        List<ShopCatalogEntry> candidates = [];
+        foreach (uint itemId in config.ShoppingOrder)
+        {
+            if (!config.Shopping.TryGetValue(itemId, out ShopListEntry? setting) || setting == null)
+            {
+                continue;
+            }
+
+            if (!TryResolveEntry(itemId, zoneId, out ShopCatalogEntry entry))
+            {
+                continue;
+            }
+
+            if (entry.ItemId == 0 || skippedMissingRows.Contains(entry.ItemId))
+            {
+                continue;
+            }
+
+            if (ShopOwnership.TryIsOwned(entry, supportJobs, data, unlockState) == true)
+            {
+                continue;
+            }
+
+            if (!MatchesGoal(setting, itemId, goal) || !CanAfford(entry))
+            {
+                continue;
+            }
+
+            candidates.Add(entry);
+        }
+
+        if (candidates.Count == 0)
+        {
+            return null;
+        }
+
+        if (preferLiveRow)
+        {
+            foreach (ShopCatalogEntry entry in candidates)
+            {
+                if (ShopExchangeAssist.TryFindRowIndex(entry.ItemId, out _))
+                {
+                    return entry;
+                }
+            }
+
+            return null;
+        }
+
+        if (openedMenuIndex is { } open)
+        {
+            foreach (ShopCatalogEntry entry in candidates)
+            {
+                if (entry.MenuIndex == open)
+                {
+                    return entry;
+                }
+            }
+        }
+
+        return candidates[0];
+    }
+
+    private static bool MatchesGoal(ShopListEntry setting, uint itemId, ShopGoal goal) =>
+        goal switch
+        {
+            ShopGoal.Buy => setting.BuyAmount > 0,
+            ShopGoal.Keep => setting.KeepAmount > InventoryItemAssist.Count(itemId),
+            ShopGoal.KeepBuying => setting.KeepBuying,
+            _ => false,
+        };
+
+    private static bool TryResolveEntry(uint itemId, ZoneId zoneId, out ShopCatalogEntry entry)
+    {
+        foreach (ShopCatalogEntry e in ShopCatalog.EntriesForItem(itemId, zoneId))
+        {
+            entry = e;
+            return true;
+        }
+
+        return ShopCatalog.TryGet(itemId, out entry);
+    }
+
+    private bool CanAfford(ShopCatalogEntry entry)
+    {
+        int have = OccultCrescentHelper.GetCurrencyCount(entry.CurrencyItemId);
+        int reserve = 0;
+        if (OccultCurrencies.IsSilverCurrency(entry.CurrencyItemId))
+        {
+            reserve = config.ReserveSilver;
+        }
+        else if (OccultCurrencies.IsGoldCurrency(entry.CurrencyItemId))
+        {
+            reserve = config.ReserveGold;
+        }
+
+        return have - reserve >= entry.Cost;
     }
 
     private unsafe void TrySelectShopMenu(int menuIndex)
@@ -219,7 +531,16 @@ public sealed class ShoppingService
                 return;
             }
 
-            new AddonMaster.SelectIconString(addon).Entries[menuIndex].Select();
+            AddonMaster.SelectIconString master = new(addon);
+            if (menuIndex < 0 || menuIndex >= master.Entries.Length)
+            {
+                logger.Warn($"[Shopping] menu index {menuIndex} out of range ({master.Entries.Length})");
+                return;
+            }
+
+            master.Entries[menuIndex].Select();
+            openedMenuIndex = menuIndex;
+            skippedMissingRows.Clear();
         }
         catch (Exception ex)
         {

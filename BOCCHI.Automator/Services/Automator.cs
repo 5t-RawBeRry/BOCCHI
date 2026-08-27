@@ -69,8 +69,10 @@ public class Automator
 
     public bool SuspendedForTreasure { get; private set; }
 
+    public bool SuspendedForShopping { get; private set; }
+
     public AutomatorState? CurrentState =>
-        IsActive && !SuspendedForTreasure ? StateMachine.State : null;
+        IsActive && !SuspendedForTreasure && !SuspendedForShopping ? StateMachine.State : null;
 
     public void OnStop() => StopAutomation();
 
@@ -88,6 +90,24 @@ public class Automator
         }
 
         // Keep GoalMemory; Treasure Hunt owns vnav while suspended.
+        IllegalModeActivityWork.ForgetTravelLatches(memory);
+        SoftStopPathfinding();
+        autoRotation.DisableAi();
+    }
+
+    public void SetSuspendedForShopping(bool suspended)
+    {
+        if (SuspendedForShopping == suspended)
+        {
+            return;
+        }
+
+        SuspendedForShopping = suspended;
+        if (!suspended)
+        {
+            return;
+        }
+
         IllegalModeActivityWork.ForgetTravelLatches(memory);
         SoftStopPathfinding();
         autoRotation.DisableAi();
@@ -165,12 +185,14 @@ public class Automator
         if (!turningOn)
         {
             SuspendedForTreasure = false;
+            SuspendedForShopping = false;
             StopAutomation();
             return;
         }
 
         ITreasureHunter hunter = hunterFactory();
         SuspendedForTreasure = hunter.Running && hunter.ManagedByIllegalModeFiller;
+        SuspendedForShopping = false;
 
         memory.Forget<NavigationInterruptedMemory>();
         autoRotation.PrepareForIllegalMode();
@@ -215,7 +237,7 @@ public class Automator
 
     public void RefreshPathfinding()
     {
-        if (!IsActive || SuspendedForTreasure)
+        if (!IsActive || SuspendedForTreasure || SuspendedForShopping)
         {
             return;
         }
@@ -279,7 +301,7 @@ public class Automator
 
     public void Render()
     {
-        if (!IsActive || SuspendedForTreasure)
+        if (!IsActive || SuspendedForTreasure || SuspendedForShopping)
         {
             return;
         }
@@ -301,7 +323,7 @@ public class Automator
             return;
         }
 
-        if (SuspendedForTreasure)
+        if (SuspendedForTreasure || SuspendedForShopping)
         {
             return;
         }
@@ -373,6 +395,7 @@ public class Automator
     private void StopAutomation()
     {
         SuspendedForTreasure = false;
+        SuspendedForShopping = false;
         memory.Wipe();
         manager.CancelAll();
         AethernetTeleport.AbortIfBusy(lifestream);

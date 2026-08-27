@@ -47,6 +47,11 @@ public class IllegalModeTreasureFillerService
             return;
         }
 
+        if (automator.SuspendedForShopping)
+        {
+            return;
+        }
+
         if (!automatorConfig.EnableAutomaticTreasureHuntDuringIllegalMode)
         {
             ResetSession();
