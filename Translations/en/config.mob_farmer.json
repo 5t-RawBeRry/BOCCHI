@@ -124,7 +124,7 @@
     },
     "cast_treasure_sight_at_farm": {
       "label": "Cast Treasure Sight at the farm spot",
-      "tooltip": "On: cast Sight at your farm spot on the interval below, then resume pulling — no Treasure Hunt run.\nUses the same bronze/silver fill % as Treasure Hunter. Needs Freelancer 10+.\nOff: only the full Treasure Hunt yield below can refresh counts."
+      "tooltip": "On: cast Sight at your farm spot on the interval below, then resume pulling — no Treasure Hunt run.\nNeeds Freelancer 10+. Works with no Spots list (Start uses where you are standing).\nOff: only the full Treasure Hunt yield below can refresh counts."
     },
     "treasure_sight_interval_minutes": {
       "label": "Interval (minutes)"

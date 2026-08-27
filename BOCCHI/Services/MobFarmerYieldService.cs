@@ -250,16 +250,9 @@ public sealed class MobFarmerYieldService
             return false;
         }
 
-        if (!tracker.CountInitialised)
-        {
-            return false;
-        }
-
-        if (!TreasureHuntFillGate.MeetsMinimumFill(tracker, treasureConfig))
-        {
-            return false;
-        }
-
+        // Do not gate on fill % or an existing Sight reading — this yield is how Mob Farmer
+        // refreshes counts (and the first cast of a session). Timed Treasure Hunt still uses
+        // TreasureHuntFillGate.
         sightChain = chainManager.Manage(
             chains.Create("MobFarmer::TreasureSight")
                 .Then<HuntTreasureSightChain>());

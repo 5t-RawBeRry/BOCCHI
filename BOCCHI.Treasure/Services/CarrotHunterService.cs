@@ -337,9 +337,12 @@ public sealed class CarrotHunterService
 
         Vector3 destination = currentTargetPosition;
         float localDist = player.Position.Distance2D(destination);
-        // Keep Return for pad↔pad tour hops only — never when the target is already nearby.
+        bool wrongFloor = MathF.Abs(player.Position.Y - destination.Y)
+            > HuntDistances.SameFloorVerticalTolerance;
+        // Keep Return for pad↔pad tour hops — and when 2D looks close but we are on the
+        // wrong shelf (cliff / ridge). Direct then climbs into mesh ("underground").
         bool allowReturn = currentLiveCarrotId == null
-            && localDist > HuntDistances.NearbyLiveDivertRange;
+            && (localDist > HuntDistances.NearbyLiveDivertRange || wrongFloor);
 
         HopMode mode = ChooseHopMode(
             player.Position,
@@ -1227,7 +1230,13 @@ public sealed class CarrotHunterService
     {
         departure = null;
         arrival = null;
-        bestCost = from.Distance2D(to);
+
+        float directCost = from.Distance2D(to);
+        bool directCrossesFloors = MathF.Abs(from.Y - to.Y)
+            > HuntDistances.SameFloorVerticalTolerance;
+        // 2D distance ignores cliffs — do not prefer Direct when the pad is on another shelf
+        // until aethernet/Return have had a chance to win.
+        bestCost = directCrossesFloors ? float.PositiveInfinity : directCost;
         HopMode bestMode = HopMode.Direct;
 
         float teleportCost = NavigationConstants.AethernetHopCost;
@@ -1259,6 +1268,11 @@ public sealed class CarrotHunterService
 
         if (!allowReturn)
         {
+            if (float.IsPositiveInfinity(bestCost))
+            {
+                bestCost = directCost;
+            }
+
             return bestMode;
         }
 
@@ -1286,6 +1300,11 @@ public sealed class CarrotHunterService
                 departure = main;
                 arrival = shard;
             }
+        }
+
+        if (float.IsPositiveInfinity(bestCost))
+        {
+            bestCost = directCost;
         }
 
         return bestMode;
@@ -1788,11 +1807,25 @@ public sealed class CarrotHunterService
                 return true;
             }
 
+            stuckWatchStartedUtc = now;
+            stuckNudgeIssued = false;
+
+            // Wrong shelf: repathing Direct climbs the same cliff. Re-pick Return/aethernet.
+            if (MathF.Abs(player.Position.Y - currentTargetPosition.Y)
+                > HuntDistances.SameFloorVerticalTolerance)
+            {
+                log.Debug(
+                    "Carrot hunt: still stuck on authored {Id} (wrong floor) — re-routing via camp/aethernet",
+                    authoredId);
+                pathfinder.Stop();
+                vnav.Stop();
+                BeginRouteToCurrentAuthored();
+                return true;
+            }
+
             log.Debug(
                 "Carrot hunt: still stuck on authored {Id} after nudge — repathing",
                 authoredId);
-            stuckWatchStartedUtc = now;
-            stuckNudgeIssued = false;
             pathfinder.Stop();
             vnav.Stop();
             vnav.PathfindAndMoveCloseTo(currentTargetPosition, false, OpenTreasureCofferChain.PathArrivalRange);
