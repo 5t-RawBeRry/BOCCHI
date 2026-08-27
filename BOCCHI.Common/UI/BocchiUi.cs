@@ -13,17 +13,28 @@ public static class BocchiUi
         Muted,
     }
 
-    public static readonly Vector4 Header = new(0.85f, 0.72f, 0.35f, 1f);
-    public static readonly Vector4 Muted = new(0.65f, 0.65f, 0.65f, 1f);
-    public static readonly Vector4 Warn = new(0.95f, 0.75f, 0.35f, 1f);
-    public static readonly Vector4 Good = new(0.45f, 0.9f, 0.55f, 1f);
-    public static readonly Vector4 Bad = new(0.95f, 0.45f, 0.45f, 1f);
+    // Text / accents on dark panel backgrounds (keep high luminance).
+    public static readonly Vector4 Header = new(0.90f, 0.78f, 0.42f, 1f);
+    public static readonly Vector4 Muted = new(0.72f, 0.72f, 0.74f, 1f);
+    public static readonly Vector4 Warn = new(0.98f, 0.82f, 0.42f, 1f);
+    public static readonly Vector4 Good = new(0.55f, 0.92f, 0.62f, 1f);
+    public static readonly Vector4 Bad = new(0.98f, 0.52f, 0.52f, 1f);
 
     private static readonly Vector4 PanelBg = new(0.10f, 0.10f, 0.12f, 0.55f);
     private static readonly Vector4 PanelBorder = new(0.40f, 0.40f, 0.45f, 0.55f);
-    private static readonly Vector4 ChipOkBg = new(0.18f, 0.38f, 0.24f, 0.95f);
-    private static readonly Vector4 ChipWarnBg = new(0.42f, 0.32f, 0.10f, 0.95f);
-    private static readonly Vector4 ChipMutedBg = new(0.22f, 0.22f, 0.25f, 0.95f);
+
+    // Chip fills stay dark; text stays light (never bright-on-bright).
+    private static readonly Vector4 ChipOkBg = new(0.14f, 0.32f, 0.20f, 0.95f);
+    private static readonly Vector4 ChipWarnBg = new(0.38f, 0.28f, 0.08f, 0.95f);
+    private static readonly Vector4 ChipMutedBg = new(0.20f, 0.20f, 0.23f, 0.95f);
+    private static readonly Vector4 ChipOkFg = new(0.78f, 0.96f, 0.82f, 1f);
+    private static readonly Vector4 ChipWarnFg = new(1.00f, 0.92f, 0.68f, 1f);
+    private static readonly Vector4 ChipMutedFg = new(0.88f, 0.88f, 0.90f, 1f);
+
+    // Progress fills are darker; labels sit beside the bar, never on the fill.
+    private static readonly Vector4 BarGood = new(0.22f, 0.58f, 0.34f, 1f);
+    private static readonly Vector4 BarWarn = new(0.58f, 0.44f, 0.14f, 1f);
+    private static readonly Vector4 BarEmpty = new(0.22f, 0.22f, 0.25f, 1f);
 
     public const float PanelPadX = 12f;
     public const float PanelPadY = 10f;
@@ -157,9 +168,9 @@ public static class BocchiUi
         };
         Vector4 fg = kind switch
         {
-            StatusChipKind.Ok => Good,
-            StatusChipKind.Warn => Warn,
-            _ => Muted,
+            StatusChipKind.Ok => ChipOkFg,
+            StatusChipKind.Warn => ChipWarnFg,
+            _ => ChipMutedFg,
         };
 
         ImGui.PushStyleColor(ImGuiCol.Button, bg);
@@ -174,12 +185,28 @@ public static class BocchiUi
         return clicked;
     }
 
+    /// <summary>
+    /// Progress fill with label beside the bar (never overlay text on the fill).
+    /// </summary>
     public static void DrawPercentBar(float fraction, float width, string overlay)
     {
-        Vector4 color = fraction >= 1f ? Good : fraction > 0f ? Warn : Muted;
-        ImGui.PushStyleColor(ImGuiCol.PlotHistogram, color);
-        ImGui.ProgressBar(Math.Clamp(fraction, 0f, 1f), new Vector2(width, ImGui.GetFrameHeight()), overlay);
+        float clamped = Math.Clamp(fraction, 0f, 1f);
+        Vector4 fill = clamped >= 1f ? BarGood : clamped > 0f ? BarWarn : BarEmpty;
+
+        float gap = 8f;
+        float labelW = string.IsNullOrEmpty(overlay) ? 0f : ImGui.CalcTextSize(overlay).X + gap;
+        float barW = Math.Max(48f, width - labelW);
+
+        ImGui.PushStyleColor(ImGuiCol.PlotHistogram, fill);
+        ImGui.ProgressBar(clamped, new Vector2(barW, ImGui.GetFrameHeight()), string.Empty);
         ImGui.PopStyleColor();
+
+        if (!string.IsNullOrEmpty(overlay))
+        {
+            ImGui.SameLine(0f, gap);
+            ImGui.AlignTextToFramePadding();
+            MutedText(overlay);
+        }
     }
 
     /// <summary>Slightly rounder frames for config field widgets.</summary>

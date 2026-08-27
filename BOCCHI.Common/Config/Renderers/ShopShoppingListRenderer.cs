@@ -217,8 +217,7 @@ public class ShopShoppingListRenderer(
             BocchiUi.EndPanel();
         }
 
-        // Popup must not open while a panel ChannelsSplit is active — that clips/shrinks the
-        // window and can leave stray draw-list widgets (e.g. status chips) floating in the list.
+        // Open popup after panels so ChannelsSplit clipping doesn't shrink it.
         if (openAdd)
         {
             ImGui.OpenPopup(AddPopupId);
@@ -323,8 +322,6 @@ public class ShopShoppingListRenderer(
                 bool lockInputs = owned == true;
                 using (ImRaii.Disabled(lockInputs))
                 {
-                    // Labels left of controls — ImGui's default InputInt puts the label on the
-                    // right, which made Keep/Buy/Sink attach to the wrong widget.
                     changed |= DrawAmountField(
                         translator.T(Key(listKey, ".col_keep")),
                         translator.T(Key(listKey, ".col_keep_hint")),
@@ -370,7 +367,7 @@ public class ShopShoppingListRenderer(
                     }
                 }
 
-                ShopCurrencyPreference available = ShopCatalog.AvailableCurrenciesFor(itemId);
+                ShopCurrencyPreference available = ShopCatalog.AvailableCurrenciesForUi(itemId, zone);
                 if (CountFlags(available) > 1)
                 {
                     ImGui.Spacing();
@@ -494,10 +491,9 @@ public class ShopShoppingListRenderer(
         string listKey,
         ITranslator translator)
     {
-        // Prefer the zone you're in; outside Occult Crescent, show any-zone offers so
-        // multi-currency items still display correctly in config.
-        List<ShopCatalogEntry> offers = ShopCatalog.EntriesForItem(itemId, zone)
-            .Where(e => ShopCatalog.MatchesCurrencyPreference(e, setting.PreferredCurrencies))
+        // Prefer the zone you're in; outside Occult Crescent, show any-zone offers.
+        List<ShopCatalogEntry> offers = ShopCatalog
+            .PreferredOffers(itemId, zone, setting.PreferredCurrencies)
             .ToList();
         if (offers.Count == 0)
         {
@@ -581,8 +577,6 @@ public class ShopShoppingListRenderer(
     private bool DrawAddPopup(ShoppingConfig config, string listKey, ITranslator translator)
     {
         bool changed = false;
-        // Wide enough for long armor names + cost; Always so the first open frame cannot
-        // collapse to the Add-button width (Appearing alone still looked shrunk).
         ImGui.SetNextWindowSize(new Vector2(560, 420), ImGuiCond.Always);
         ImGui.SetNextWindowSizeConstraints(new Vector2(520, 360), new Vector2(720, 560));
         if (!ImGui.BeginPopup(AddPopupId))
@@ -599,7 +593,7 @@ public class ShopShoppingListRenderer(
 
         ZoneId zone = zones.GetZone().ZoneId;
         string ownedLabel = translator.T(Key(listKey, ".owned"));
-        IEnumerable<ShopCatalogEntry> rows = ShopCatalog.All
+        IEnumerable<ShopCatalogEntry> catalogRows = ShopCatalog.All
             .Where(e => zone is ZoneId.SouthHorn or ZoneId.NorthHorn ? e.Zone == zone : true)
             .Where(e => e.ItemId != 0)
             .Where(e => string.IsNullOrWhiteSpace(catalogSearch)
@@ -610,8 +604,14 @@ public class ShopShoppingListRenderer(
         using (ImRaii.Child("##shop_catalog_add", new Vector2(-1, listHeight), true))
         {
             string? lastSection = null;
-            foreach (ShopCatalogEntry entry in rows)
+            HashSet<uint> listed = [];
+            foreach (ShopCatalogEntry entry in catalogRows)
             {
+                if (!listed.Add(entry.ItemId))
+                {
+                    continue;
+                }
+
                 if (!string.Equals(lastSection, entry.Section, StringComparison.Ordinal))
                 {
                     lastSection = entry.Section;
@@ -622,7 +622,8 @@ public class ShopShoppingListRenderer(
                 bool owned = ShopOwnership.TryIsOwned(entry, supportJobs, data, unlockState) == true;
                 bool already = config.Shopping.ContainsKey(entry.ItemId);
                 bool locked = owned || already;
-                string label = $"{entry.Name}  ({entry.Cost})##add_{entry.ItemId}_{entry.CurrencyItemId}_{entry.MenuIndex}";
+                string cost = FormatAddCost(entry.ItemId, zone);
+                string label = $"{entry.Name}  ({cost})##add_{entry.ItemId}";
 
                 using (ImRaii.Disabled(locked))
                 {
@@ -647,7 +648,7 @@ public class ShopShoppingListRenderer(
                         ? ownedLabel
                         : already
                             ? translator.T(Key(listKey, ".already_listed"))
-                            : $"{entry.Name}\n{entry.Cost}";
+                            : $"{entry.Name}\n{cost}";
                     ImGui.SetTooltip(tip);
                 }
             }
@@ -655,6 +656,27 @@ public class ShopShoppingListRenderer(
 
         ImGui.EndPopup();
         return changed;
+    }
+
+    private static string FormatAddCost(uint itemId, ZoneId zone)
+    {
+        List<ShopCatalogEntry> offers = ShopCatalog.EntriesForItem(itemId, zone).ToList();
+        if (offers.Count == 0)
+        {
+            offers = DistinctByCurrency(ShopCatalog.EntriesForItem(itemId)).ToList();
+        }
+
+        if (offers.Count == 0)
+        {
+            return "-";
+        }
+
+        if (offers.Count == 1)
+        {
+            return $"{offers[0].Cost}";
+        }
+
+        return string.Join(" / ", offers.Select(o => o.Cost.ToString()));
     }
 
     private void DrawItemIcon(uint itemId)
@@ -675,12 +697,15 @@ public class ShopShoppingListRenderer(
         ShopListEntry? setting = null)
     {
         ShopCurrencyPreference preferred = setting?.PreferredCurrencies ?? ShopCurrencyPreference.None;
-        foreach (ShopCatalogEntry e in ShopCatalog.EntriesForItem(itemId, zone))
+        foreach (ShopCatalogEntry e in ShopCatalog.PreferredOffers(itemId, zone, preferred))
         {
-            if (ShopCatalog.MatchesCurrencyPreference(e, preferred))
-            {
-                return e;
-            }
+            return e;
+        }
+
+        foreach (ShopCatalogEntry e in ShopCatalog.EntriesForItem(itemId)
+                     .Where(x => ShopCatalog.MatchesCurrencyPreference(x, preferred)))
+        {
+            return e;
         }
 
         return ShopCatalog.TryGet(itemId, out ShopCatalogEntry any) ? any : null;

@@ -2,6 +2,7 @@
   "label": "Treasure Hunter",
   "tooltip": "Coffer and carrot lines, Treasure Hunt, and Carrot Hunt.",
   "sections": {
+    "shared_maps": "Shared maps",
     "radar": "Radar",
     "completion": "When hunt ends",
     "carrot_hunt": "Carrot Hunt",
@@ -9,6 +10,10 @@
     "ninja_hide": "Ninja Hide"
   },
   "fields": {
+    "enable_shared_maps": {
+      "label": "Share maps with the community",
+      "tooltip": "On: while in Occult Crescent, download shared carrot/coffer pads and pot timers, and anonymously upload what you see. Built-in pads still work if download fails.\nOff: no download or upload — built-in maps and local pot timing only."
+    },
     "draw_line_to_bronze_chests": {
       "label": "Lines to bronze coffers",
       "tooltip": "On: while out of combat, draw a brown line to nearby bronze coffers.\nOff: no line."

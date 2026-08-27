@@ -85,10 +85,11 @@ public static class TreasureHuntStatusUi
                 ImGui.SameLine(0f, 8f);
             }
 
+            // Count only on the bar — Paused is the chip (avoids white-on-green clutter).
             BocchiUi.DrawPercentBar(
                 fraction,
                 Math.Min(220f, ImGui.GetContentRegionAvail().X),
-                progress);
+                $"{current}/{total}");
         }
         else if (!string.IsNullOrEmpty(progress))
         {

@@ -98,13 +98,11 @@ public class AutomationModeGuard
                 StopIllegalOrCompletionist();
             }
 
-            if (mode != AutomationMode.PotsAndTreasure && PotsTreasure.Running)
+            if (mode != AutomationMode.PotsAndTreasure
+                && mode != AutomationMode.Shopping
+                && PotsTreasure.Running)
             {
-                if (mode == AutomationMode.Shopping)
-                {
-                    // Soft-suspend via Automator.SetSuspendedForShopping already covers Pots & Treasure.
-                }
-                else if (PotsTreasure.ManagedByMobFarmer)
+                if (PotsTreasure.ManagedByMobFarmer)
                 {
                     PotsTreasure.StopManagedFromFarmer();
                 }

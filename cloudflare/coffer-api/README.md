@@ -4,7 +4,7 @@ Payload shape for coffers matches AOCC (`POST /api/v1/observations`) so the plug
 
 Unlike AOCC’s pot-reveal-only filter, this API accepts **any positive coffer `dataId`** in Occult Crescent territories (**1252** South Horn, **1346** North Horn).
 
-**End-user use in BOCCHI (always on, no settings):**
+**End-user use in BOCCHI (Config → Treasure Hunter → Share maps with the community):**
 - **Pot cycles** (`/api/v1/pot-cycles`) — share Magic Pot spawn anchors per instance.
 - **Carrot locations** (`/api/v1/carrot-locations`) — Carrot Hunt downloads accepted pads and merges with baked list; clients upload sightings.
 - **Coffer candidates** (`/api/v1/candidates` + observation POST) — Treasure Hunt downloads accepted spots and unions them with the baked map; clients upload bronze/silver opens.

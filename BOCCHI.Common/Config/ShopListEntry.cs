@@ -3,8 +3,8 @@ using BOCCHI.Common.Data.Shopping;
 namespace BOCCHI.Common.Config;
 
 /// <summary>
-/// Per-item shopping goals, matching ICE cosmocredit shopping:
-/// Keep = stock target, Buy = one-shot remaining, KeepBuying = currency sink (one item only).
+/// Per-item shopping goals: Keep = stock target, Buy = remaining purchases,
+/// KeepBuying = currency sink (only one list entry may be true).
 /// </summary>
 [Serializable]
 public class ShopListEntry
@@ -15,7 +15,7 @@ public class ShopListEntry
     /// <summary>Buy this many more times, then stop (decrements after each purchase).</summary>
     public int BuyAmount { get; set; }
 
-    /// <summary>After Keep/Buy are satisfied, keep spending on this item (only one list entry may be true).</summary>
+    /// <summary>After Keep/Buy are satisfied, keep spending on this item.</summary>
     public bool KeepBuying { get; set; }
 
     /// <summary>

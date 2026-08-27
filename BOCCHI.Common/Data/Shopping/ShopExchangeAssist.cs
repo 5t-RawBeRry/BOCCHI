@@ -1,5 +1,4 @@
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace BOCCHI.Common.Data.Shopping;
 
@@ -29,26 +28,4 @@ public static unsafe class ShopExchangeAssist
 
         return false;
     }
-
-    public static bool TryGetSelectedItemId(out uint itemId)
-    {
-        itemId = 0;
-        AgentShop* agent = AgentShop.Instance();
-        if (agent == null || !agent->IsAgentActive() || agent->ItemReceive == null)
-        {
-            return false;
-        }
-
-        int index = agent->SelectedItemIndex;
-        if (index < 0 || index >= agent->ItemReceiveCount)
-        {
-            return false;
-        }
-
-        itemId = agent->ItemReceiveSpan[index].ItemId;
-        return itemId != 0;
-    }
-
-    public static bool IsShopReady(AtkUnitBase* shop) =>
-        shop != null && shop->IsReady && shop->IsVisible;
 }

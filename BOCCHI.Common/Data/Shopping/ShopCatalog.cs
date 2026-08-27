@@ -72,7 +72,7 @@ public static partial class ShopCatalog
         return flags;
     }
 
-    /// <summary>Union of currencies across every zone that sells this item (for config UI).</summary>
+    /// <summary>Union of currencies across every zone that sells this item.</summary>
     public static ShopCurrencyPreference AvailableCurrenciesFor(uint itemId)
     {
         ShopCurrencyPreference flags = ShopCurrencyPreference.None;
@@ -83,6 +83,27 @@ public static partial class ShopCatalog
 
         return flags;
     }
+
+    /// <summary>
+    /// Currencies for config UI: prefer the zone you're in when it sells the item,
+    /// otherwise fall back to any-zone (so multi-currency prefs work outside OC).
+    /// </summary>
+    public static ShopCurrencyPreference AvailableCurrenciesForUi(uint itemId, ZoneId zone)
+    {
+        ShopCurrencyPreference inZone = AvailableCurrenciesFor(itemId, zone);
+        if (inZone != ShopCurrencyPreference.None)
+        {
+            return inZone;
+        }
+
+        return AvailableCurrenciesFor(itemId);
+    }
+
+    public static IEnumerable<ShopCatalogEntry> PreferredOffers(
+        uint itemId,
+        ZoneId zone,
+        ShopCurrencyPreference preferred) =>
+        EntriesForItem(itemId, zone).Where(e => MatchesCurrencyPreference(e, preferred));
 
     public static bool MatchesCurrencyPreference(
         ShopCatalogEntry entry,

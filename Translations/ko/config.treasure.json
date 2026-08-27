@@ -2,6 +2,7 @@
   "label": "보물 찾기",
   "tooltip": "상자·당근 선, 보물 찾기, 재물당근 찾기.",
   "sections": {
+    "shared_maps": "공유 맵",
     "radar": "레이더",
     "completion": "종료 시",
     "carrot_hunt": "재물당근 찾기",
@@ -9,6 +10,10 @@
     "ninja_hide": "닌자 은신"
   },
   "fields": {
+    "enable_shared_maps": {
+      "label": "커뮤니티와 맵 공유",
+      "tooltip": "켜기: 오컬트 크레센트에서 공유 당근/상자 지점과 팟 타이머를 받고, 본 것을 익명으로 올립니다. 다운로드가 실패해도 내장 지점은 사용합니다.\n끄기: 주고받기 없음 — 내장 맵과 로컬 팟 타이밍만."
+    },
     "draw_line_to_bronze_chests": {
       "label": "청동 보물상자 연결선",
       "tooltip": "켜짐: 비전투 중 근처 청동 상자로 갈색 선.\n꺼짐: 선 없음."

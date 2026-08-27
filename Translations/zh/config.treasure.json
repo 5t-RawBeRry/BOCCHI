@@ -2,6 +2,7 @@
   "label": "寻宝",
   "tooltip": "宝箱与胡萝卜连线、寻宝、胡萝卜狩猎。",
   "sections": {
+    "shared_maps": "共享地图",
     "radar": "雷达",
     "completion": "结束时",
     "carrot_hunt": "胡萝卜狩猎",
@@ -9,6 +10,10 @@
     "ninja_hide": "忍者隐遁"
   },
   "fields": {
+    "enable_shared_maps": {
+      "label": "与社区共享地图",
+      "tooltip": "开：在神秘新月中下载共享胡萝卜/宝箱点与魔锅计时，并匿名上传你看到的内容。下载失败时仍用内置点位。\n关：不下载也不上传 — 仅用内置地图和本地魔锅计时。"
+    },
     "draw_line_to_bronze_chests": {
       "label": "连线到青铜宝箱",
       "tooltip": "开启：脱离战斗时，向附近青铜宝箱画棕色线。\n关闭：无线。"

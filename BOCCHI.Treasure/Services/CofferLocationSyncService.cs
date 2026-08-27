@@ -1,3 +1,4 @@
+using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Services;
 using Dalamud.Plugin;
@@ -20,10 +21,11 @@ public readonly record struct CrowdsourcedCofferCandidate(
 
 /// <summary>
 ///     Fetches accepted coffer candidates for Treasure Hunt and anonymously uploads opens
-///     (always on, like pot-cycle and carrot sync). HTTP runs off the framework thread.
+///     when shared maps are enabled. HTTP runs off the framework thread.
 /// </summary>
 public sealed class CofferLocationSyncService
 (
+    TreasureConfig config,
     IZoneProvider zones,
     IDalamudPluginInterface plugin,
     ILogger<CofferLocationSyncService> logger
@@ -82,6 +84,11 @@ public sealed class CofferLocationSyncService
 
     public IReadOnlyList<CrowdsourcedCofferCandidate> GetAcceptedForCurrentZone()
     {
+        if (!config.EnableSharedMaps)
+        {
+            return [];
+        }
+
         ushort territory = zones.GetZone().TerritoryType;
         return catalogTerritory == territory ? accepted : [];
     }
@@ -95,7 +102,7 @@ public sealed class CofferLocationSyncService
     /// <summary>Kick a refresh before planning a hunt (non-blocking if already recent).</summary>
     public void EnsureFreshForHunt()
     {
-        if (!zones.GetZone().IsOccultCrescentZone())
+        if (!config.EnableSharedMaps || !zones.GetZone().IsOccultCrescentZone())
         {
             return;
         }
@@ -105,7 +112,7 @@ public sealed class CofferLocationSyncService
 
     public void Submit(uint dataId, float x, float y, float z, string cofferType)
     {
-        if (!zones.GetZone().IsOccultCrescentZone())
+        if (!config.EnableSharedMaps || !zones.GetZone().IsOccultCrescentZone())
         {
             return;
         }
@@ -125,6 +132,11 @@ public sealed class CofferLocationSyncService
     public void Update()
     {
         ApplyCompletedWork();
+
+        if (!config.EnableSharedMaps)
+        {
+            return;
+        }
 
         IZone zone = zones.GetZone();
         if (!zone.IsOccultCrescentZone())

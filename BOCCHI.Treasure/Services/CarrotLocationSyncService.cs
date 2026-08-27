@@ -1,3 +1,4 @@
+using BOCCHI.Common.Config;
 using BOCCHI.Common.Data;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph;
@@ -17,10 +18,11 @@ namespace BOCCHI.Treasure.Services;
 
 /// <summary>
 ///     Fetches the accepted chewed-carrot catalog for Carrot Hunt and anonymously uploads
-///     sightings (always on, like pot-cycle sync). HTTP runs off the framework thread.
+///     sightings when shared maps are enabled. HTTP runs off the framework thread.
 /// </summary>
 public sealed class CarrotLocationSyncService
 (
+    TreasureConfig config,
     IZoneProvider zones,
     ICarrotTracker carrots,
     IDalamudPluginInterface plugin,
@@ -74,11 +76,12 @@ public sealed class CarrotLocationSyncService
             Limit = 1000
         };
 
-    /// <summary>Baked pads plus any worker-accepted pads not already nearby. Offline → baked only.</summary>
+    /// <summary>Baked pads plus any worker-accepted pads not already nearby. Offline / share off → baked only.</summary>
     public IReadOnlyList<CarrotData> GetHuntPads(IZone zone)
     {
         List<CarrotData> baked = zone.GetCarrotData();
-        if (baked.Count == 0
+        if (!config.EnableSharedMaps
+            || baked.Count == 0
             || catalogTerritory != zone.TerritoryType
             || acceptedLocations.Count == 0)
         {
@@ -91,6 +94,11 @@ public sealed class CarrotLocationSyncService
     public void Update()
     {
         ApplyCompletedWork();
+
+        if (!config.EnableSharedMaps)
+        {
+            return;
+        }
 
         IZone zone = zones.GetZone();
         if (!zone.IsOccultCrescentZone())

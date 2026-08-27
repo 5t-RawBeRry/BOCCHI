@@ -116,14 +116,14 @@ public sealed class ShoppingService
                 // Already at the antiquarian with the shop open — finish buys only.
                 ClaimPriority();
                 phase = Phase.Buying;
-                TryHandleOpenShop(zoneId, silver, gold);
+                TryHandleOpenShop(zoneId);
                 return;
             }
 
             if (phase != Phase.Idle || priorityClaimed)
             {
                 AbortShopping(resumeAutomation: true);
-                logger.Info("[Shopping] aborted — in FATE/CE");
+                logger.Debug("[Shopping] aborted — in FATE/CE");
             }
 
             return;
@@ -133,7 +133,7 @@ public sealed class ShoppingService
         {
             ClaimPriority();
             phase = Phase.Buying;
-            TryHandleOpenShop(zoneId, silver, gold);
+            TryHandleOpenShop(zoneId);
             return;
         }
 
@@ -234,14 +234,14 @@ public sealed class ShoppingService
 
         priorityClaimed = true;
         modeGuard.EnsureExclusive(AutomationMode.Shopping);
-        logger.Info("[Shopping] soft-suspended other automation");
+        logger.Debug("[Shopping] soft-suspended other automation");
     }
 
     private void FinishShopping()
     {
         AbortShopping(resumeAutomation: true);
         buyCooldownUntil = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(30);
-        logger.Info("[Shopping] finished — nothing affordable left or trip complete");
+        logger.Debug("[Shopping] finished — nothing affordable left or trip complete");
     }
 
     private void AbortShopping(bool resumeAutomation)
@@ -324,7 +324,7 @@ public sealed class ShoppingService
             .OrderBy(o => o.Position.Distance2D(player.Position))
             .FirstOrDefault();
 
-    private unsafe bool TryHandleOpenShop(ZoneId zoneId, int silver, int gold)
+    private unsafe bool TryHandleOpenShop(ZoneId zoneId)
     {
         if (!GenericHelpers.TryGetAddonByName("ShopExchangeCurrency", out AtkUnitBase* shop)
             || !GenericHelpers.IsAddonReady(shop))
@@ -365,7 +365,7 @@ public sealed class ShoppingService
                     desiredMenuIndex = switchTo.MenuIndex;
                     openedMenuIndex = null;
                     phase = Phase.OpeningMenu;
-                    logger.Info($"[Shopping] switching to menu {desiredMenuIndex}");
+                    logger.Debug($"[Shopping] switching to menu {desiredMenuIndex}");
                 }
 
                 return true;
@@ -393,7 +393,7 @@ public sealed class ShoppingService
             return true;
         }
 
-        logger.Info($"[Shopping] buy item={entry.Name} ({entry.ItemId}) row={rowIndex} cost={entry.Cost}");
+        logger.Debug($"[Shopping] buy item={entry.Name} ({entry.ItemId}) row={rowIndex} cost={entry.Cost}");
         FirePurchaseCallback(shop, rowIndex, 1);
         NotePurchase(entry.ItemId);
         buyCooldownUntil = DateTimeOffset.UtcNow + TimeSpan.FromMilliseconds(500);
@@ -453,7 +453,7 @@ public sealed class ShoppingService
 
     private ShopCatalogEntry? PickNextPurchase(ZoneId zoneId, bool preferLiveRow)
     {
-        // ICE priority: Buy amounts first, then Keep stock-ups, then Keep Buying sink.
+        // Buy amounts first, then Keep stock-ups, then Keep Buying sink.
         return PickByGoal(zoneId, preferLiveRow, ShopGoal.Buy)
                ?? PickByGoal(zoneId, preferLiveRow, ShopGoal.Keep)
                ?? PickByGoal(zoneId, preferLiveRow, ShopGoal.KeepBuying);
@@ -546,8 +546,8 @@ public sealed class ShoppingService
         ShopListEntry setting,
         out ShopCatalogEntry entry)
     {
-        List<ShopCatalogEntry> offers = ShopCatalog.EntriesForItem(itemId, zoneId)
-            .Where(e => ShopCatalog.MatchesCurrencyPreference(e, setting.PreferredCurrencies))
+        List<ShopCatalogEntry> offers = ShopCatalog
+            .PreferredOffers(itemId, zoneId, setting.PreferredCurrencies)
             .ToList();
 
         if (offers.Count == 0)
