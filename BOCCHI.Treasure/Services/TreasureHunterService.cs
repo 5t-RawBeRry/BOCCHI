@@ -1272,8 +1272,11 @@ public class TreasureHunterService
             return false;
         }
 
-        // Defer while fighting — Sight dismounts + swaps PJ; remount fails in combat.
-        if (conditions[ConditionFlag.InCombat])
+        // Defer while fighting or job-swap gates are closed — starting the chain early
+        // only burns a 15s WaitUntil step (Dismount / ToFreelancer / RestoreJob).
+        if (conditions[ConditionFlag.InCombat]
+            || DismountAssist.TryDismount(conditions)
+            || PhantomJobChangeGate.IsBlocked(conditions))
         {
             return false;
         }
@@ -1533,10 +1536,10 @@ public class TreasureHunterService
 
         if (present == null)
         {
-            bool stillApproaching = IsStillApproachingOutsideTrust(dist2d);
-
-            // Outside the trust slider — coffers often stream only in the last stretch.
-            // Inside it, empty-skip may run while still walking (divert can reclaim false skips).
+            // Outside the trust slider — keep walking. Inside it (or when a neighbour coffer
+            // proves the region streamed), empty-skip may run (#168).
+            bool stillApproaching = IsStillApproachingOutsideTrust(dist2d)
+                                    && !RegionProvesStream(layoutDestination);
             if (stillApproaching)
             {
                 ClearEmptyPadCandidate();
@@ -1801,7 +1804,12 @@ public class TreasureHunterService
 
     private void MaybeMount(Vector3 destination)
     {
-        if (ninjaHideRequired || ninjaHide.IsStealthed)
+        if (ninjaHideRequired)
+        {
+            return;
+        }
+
+        if (!ninjaHide.TryEndStealthForTravel())
         {
             return;
         }
@@ -1849,22 +1857,33 @@ public class TreasureHunterService
             return true;
         }
 
-        // Different floor (basement under you): keep pathing even when 2D looks "arrived".
-        bool needPath = !IsSameFloor(pathTarget)
-                        || player.Position.Distance2D(pathTarget) > startPathBeyond;
+        // Navmesh snap can land several yalms from the layout point — finish the walk-in mounted when auto-mount is on.
+        // Do not re-snap here: TryResolvePathable would return the same short landing forever.
+        const float SnapArrivalSlack = 2f;
+        bool snapOffset = destination.Distance2D(pathTarget) > SnapArrivalSlack;
+        Vector3 moveTarget = pathTarget;
+        if (snapOffset && player.Position.Distance2D(pathTarget) <= startPathBeyond + arrivalRadius)
+        {
+            // Same XZ as the pad, player altitude — closes the gap without diving into the floor.
+            moveTarget = destination with { Y = player.Position.Y };
+        }
+
+        Vector3 arrivalPoint = snapOffset ? destination : moveTarget;
+        bool needPath = !IsSameFloor(destination)
+                        || player.Position.Distance2D(arrivalPoint) > startPathBeyond;
 
         const float RepathDrift = 1.5f;
         bool drifted = lastNavigateTarget is not { } last
-                       || last.Distance2D(pathTarget) > RepathDrift;
+                       || last.Distance2D(moveTarget) > RepathDrift;
 
         if (needPath
             && ((!vnav.IsRunning() && !vnav.IsPathfinding()) || drifted))
         {
-            lastNavigateTarget = pathTarget;
-            vnav.PathfindAndMoveCloseTo(pathTarget, false, arrivalRadius);
+            lastNavigateTarget = moveTarget;
+            vnav.PathfindAndMoveCloseTo(moveTarget, false, arrivalRadius);
         }
 
-        MaybeMount(pathTarget);
+        MaybeMount(moveTarget);
         return true;
     }
 
@@ -1872,7 +1891,7 @@ public class TreasureHunterService
         HuntDistances.IsSameFloor(player.Position, destination);
 
     /// <summary>
-    ///     When enabled and a knowledge threat is in range: gearset → dismount → Hide before continuing on foot.
+    ///     When enabled and a knowledge threat is in range: gearset → dismount → Hide; remount once the threat is clear.
     ///     Returns false while still preparing (caller should wait).
     /// </summary>
     private bool ApplyNinjaHideGate()
@@ -1970,8 +1989,12 @@ public class TreasureHunterService
     ///     Inside that radius the empty-pad slider applies even if vnav is still running.
     /// </summary>
     private bool IsStillApproachingOutsideTrust(float dist2d) =>
-        dist2d > config.EmptyPadTrustDistance
-        && (vnav.IsPathfinding() || vnav.IsRunning());
+        dist2d > config.EmptyPadTrustDistance;
+
+    /// <summary>Another coffer streamed nearby — region is loaded enough for early empty-skip.</summary>
+    private bool RegionProvesStream(Vector3 layoutDestination) =>
+        player.Position.Distance2D(layoutDestination) <= HuntDistances.EmptyPadEarlySkipRadius
+        && CountTreasuresNear(layoutDestination, HuntDistances.EmptyPadEarlySkipRadius) > 0;
 
     /// <summary>True when the player is close enough to trust that this pad has no live coffer.</summary>
     private bool CanTrustEmptyPad(Vector3 layoutDestination)

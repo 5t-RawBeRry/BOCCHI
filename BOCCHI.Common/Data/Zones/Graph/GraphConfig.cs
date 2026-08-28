@@ -26,7 +26,7 @@ public enum ActivityAreaShape
 /// </param>
 /// <param name="CombatRadius">
 ///     Authored registration size when live LGB is missing or rejected (Eternal Watch's elevated
-///     MapRange is ~560y). Null uses the shared 40y fallback.
+///     MapRange is ~560y; authored stand is the walkable platform). Null uses the shared 40y fallback.
 /// </param>
 public record ActivityData(
     int Id,

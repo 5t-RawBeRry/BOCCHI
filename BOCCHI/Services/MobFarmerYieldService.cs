@@ -10,6 +10,8 @@ using BOCCHI.MobFarmer.Services;
 using BOCCHI.Treasure.ChainRecipes;
 using BOCCHI.Treasure.Hunt;
 using BOCCHI.Treasure.Services;
+using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Plugin.Services;
 using Ocelot.Chain;
 using Ocelot.Lifecycle;
 
@@ -32,6 +34,7 @@ public sealed class MobFarmerYieldService
     IChainManager chainManager,
     IChainFactory chains,
     ISupportJobFactory supportJobs,
+    ICondition conditions,
     MobFarmerConfig farmerConfig,
     PotsConfig potsConfig,
     BuffConfig buffConfig,
@@ -138,7 +141,6 @@ public sealed class MobFarmerYieldService
         {
             farmer.SetSuspended(true, FarmerYieldReason.TreasureSight);
             startedSight = true;
-            nextSightAt = DateTimeOffset.UtcNow + SightIntervalMinutes;
         }
     }
 
@@ -156,10 +158,13 @@ public sealed class MobFarmerYieldService
                 break;
 
             case FarmerYieldReason.TreasureSight:
-                if (startedSight && sightChain is { IsCompleted: true })
+                if (startedSight && sightChain is { IsCompleted: true } task)
                 {
                     startedSight = false;
+                    bool success = task.Result.IsSuccess;
                     sightChain = null;
+                    nextSightAt = DateTimeOffset.UtcNow
+                                    + (success ? SightIntervalMinutes : TimeSpan.FromMinutes(1));
                     if (farmer.Suspended)
                     {
                         farmer.SetSuspended(false);
@@ -190,7 +195,17 @@ public sealed class MobFarmerYieldService
                 break;
 
             case FarmerYieldReason.Shopping:
-                // ShoppingService resumes via NotifyShoppingEnded.
+                // Shopping may have interrupted a crystal-buff yield — clear the latch so we
+                // do not think buffs are still in progress after NotifyShoppingEnded (#203).
+                if (startedBuffs)
+                {
+                    startedBuffs = false;
+                    if (buffRunner.IsRunning)
+                    {
+                        buffRunner.Stop();
+                    }
+                }
+
                 break;
         }
     }
@@ -246,6 +261,14 @@ public sealed class MobFarmerYieldService
         }
 
         if (!SupportJobTreasureSight.CanCast(supportJobs))
+        {
+            return false;
+        }
+
+        // Do not start the chain until dismount + job-swap gates pass — otherwise a step
+        // spins for 15s (Dismount / ToFreelancer / RestoreJob) and the farm sits idle.
+        if (DismountAssist.TryDismount(conditions)
+            || PhantomJobChangeGate.IsBlocked(conditions))
         {
             return false;
         }

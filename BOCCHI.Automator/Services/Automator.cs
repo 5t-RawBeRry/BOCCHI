@@ -108,6 +108,12 @@ public class Automator
             return;
         }
 
+        // Drop in-flight buff approach — crystal pathing at camp fought the antiquarian (#203).
+        memory.Forget<ApplyingBuffsMemory>();
+        memory.Forget<ManualBuffRunMemory>();
+        memory.Forget<InquiringMindAttemptedMemory>();
+        memory.Forget<BuffSupportJobMemory>();
+
         // Keep GoalMemory and FATE/CE commitment — only drop the active path steps so
         // shopping owns vnav. Forgetting SuspendTravel / Committed* mid-CE used to make
         // GoalValidator drop the encounter as "still pathing" on resume.

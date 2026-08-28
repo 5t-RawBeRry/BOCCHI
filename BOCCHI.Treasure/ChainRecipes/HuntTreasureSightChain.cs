@@ -1,4 +1,5 @@
 using BOCCHI.Common.Data.SupportJobs;
+using BOCCHI.Common.Data.Zones;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
@@ -47,7 +48,7 @@ public class HuntTreasureSightChain
                 "HuntTreasureSight::FreelancerTooLow"
             )
             .WaitUntil(
-                _ => ValueTask.FromResult(TryDismount()),
+                _ => ValueTask.FromResult(IsOnFoot()),
                 TimeSpan.FromSeconds(15),
                 TimeSpan.FromMilliseconds(250),
                 "HuntTreasureSight::Dismount"
@@ -72,22 +73,8 @@ public class HuntTreasureSightChain
             );
     }
 
-    private bool TryDismount()
-    {
-        if (!conditions[ConditionFlag.Mounted] && !conditions[ConditionFlag.Mounting])
-        {
-            return true;
-        }
-
-        if (!conditions[ConditionFlag.Mounting]
-            && EzThrottler.Throttle("HuntTreasureSight::Dismount", 500)
-            && Actions.Dismount.CanCast())
-        {
-            Actions.Dismount.Cast();
-        }
-
-        return false;
-    }
+    /// <summary>Ready when on foot and not in the dismount landing beat.</summary>
+    private bool IsOnFoot() => !DismountAssist.TryDismount(conditions);
 
     private bool TryBecomeJob(SupportJobId id, uint statusId)
     {
@@ -99,6 +86,11 @@ public class HuntTreasureSightChain
         if (supportJobs.TryGetCurrent(out SupportJob current) && current.Id == id)
         {
             return true;
+        }
+
+        if (PhantomJobChangeGate.IsBlocked(conditions))
+        {
+            return false;
         }
 
         if (!EzThrottler.Throttle($"HuntTreasureSight::Change::{id}", 750))

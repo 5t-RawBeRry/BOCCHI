@@ -135,8 +135,9 @@ public static partial class ShopCatalog
         List<ShopCatalogEntry> built = [];
         built.AddRange(BuildSouthHorn());
         built.AddRange(BuildNorthHorn());
-        ResolveItemIdsByName(data, built);
-        AttachUpgradeChains(data, built);
+        Dictionary<string, uint> byName = BuildEnglishItemNameMap(data);
+        ResolveItemIdsByName(built, byName);
+        AttachUpgradeChains(built, byName);
 
         entries = built.ToArray();
         byItemId = entries
@@ -145,9 +146,8 @@ public static partial class ShopCatalog
             .ToDictionary(g => g.Key, g => g.First());
     }
 
-    private static void ResolveItemIdsByName(IDataManager data, List<ShopCatalogEntry> list)
+    private static void ResolveItemIdsByName(List<ShopCatalogEntry> list, Dictionary<string, uint> byName)
     {
-        Dictionary<string, uint> byName = BuildEnglishItemNameMap(data);
         for (int i = 0; i < list.Count; i++)
         {
             ShopCatalogEntry e = list[i];
@@ -180,10 +180,8 @@ public static partial class ShopCatalog
         return byName;
     }
 
-    private static void AttachUpgradeChains(IDataManager data, List<ShopCatalogEntry> list)
+    private static void AttachUpgradeChains(List<ShopCatalogEntry> list, Dictionary<string, uint> byName)
     {
-        Dictionary<string, uint> byName = BuildEnglishItemNameMap(data);
-
         for (int i = 0; i < list.Count; i++)
         {
             ShopCatalogEntry e = list[i];
