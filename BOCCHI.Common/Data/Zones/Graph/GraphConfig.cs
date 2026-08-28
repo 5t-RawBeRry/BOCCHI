@@ -45,6 +45,53 @@ public record TreasureData(int Id, int Level, Vector3? Position = null)
     public bool Matches(uint treasureRowId, Vector3 worldPosition) =>
         Id == treasureRowId
         || Position is { } position && Vector3.DistanceSquared(position, worldPosition) <= PositionMatchDistanceSquared;
+
+    /// <summary>
+    ///     Resolve enemy level for a layout pad (id first, then nearest authored position).
+    /// </summary>
+    public static bool TryResolveLevel(
+        uint layoutId,
+        Vector3 layoutPosition,
+        IReadOnlyList<TreasureData> treasureData,
+        out int level)
+    {
+        foreach (TreasureData entry in treasureData)
+        {
+            if (entry.Id == layoutId)
+            {
+                level = entry.Level;
+                return true;
+            }
+        }
+
+        TreasureData? nearest = null;
+        float nearestSq = float.MaxValue;
+        foreach (TreasureData entry in treasureData)
+        {
+            if (entry.Position is not { } position)
+            {
+                continue;
+            }
+
+            float distSq = Vector3.DistanceSquared(position, layoutPosition);
+            if (distSq > PositionMatchDistanceSquared || distSq >= nearestSq)
+            {
+                continue;
+            }
+
+            nearestSq = distSq;
+            nearest = entry;
+        }
+
+        if (nearest != null)
+        {
+            level = nearest.Level;
+            return true;
+        }
+
+        level = 0;
+        return false;
+    }
 }
 
 public record PotChestData(Vector3 Position, int Level);

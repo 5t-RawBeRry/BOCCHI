@@ -9,6 +9,7 @@ using BOCCHI.Common.Targeting;
 using BOCCHI.Treasure.ChainRecipes;
 using BOCCHI.Treasure.Data;
 using BOCCHI.Treasure.Hunt;
+using BOCCHI.Treasure.Services;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin;
@@ -160,6 +161,9 @@ public class TreasureHunterService
     private float viaStuckBestDistance = float.MaxValue;
     private DateTime viaStuckStartedUtc = DateTime.MinValue;
 
+    /// <summary>Last snapped target issued to vnav (repath when it drifts).</summary>
+    private Vector3? lastNavigateTarget;
+
     public void OnStop() => Teardown();
 
     public void Update()
@@ -220,11 +224,22 @@ public class TreasureHunterService
             List<uint> validNodes = GetValidNodesForNextPlan();
             if (pendingPreferStartNode is uint preferLatch
                 && !validNodes.Contains(preferLatch)
-                && layoutById.ContainsKey(preferLatch))
+                && layoutById.TryGetValue(preferLatch, out TreasureLayoutDatum preferLayout))
             {
-                // Divert latch — pad may have been checked empty while still live.
-                checkedNodeIds.Remove(preferLatch);
-                validNodes.Insert(0, preferLatch);
+                List<TreasureData> authored = zones.GetZone().GetTreasureData();
+                IReadOnlyList<CrowdsourcedCofferCandidate> liveSpots = cofferLocations.GetAcceptedForCurrentZone();
+                if (IsHuntPadAllowed(
+                        preferLayout,
+                        authored,
+                        liveSpots,
+                        maxLevelOverrideForNextRun ?? config.HuntMaxLevel,
+                        authored.Exists(d => d.Position.HasValue),
+                        liveSpots.Count > 0))
+                {
+                    // Divert latch — pad may have been checked empty while still live.
+                    checkedNodeIds.Remove(preferLatch);
+                    validNodes.Insert(0, preferLatch);
+                }
             }
 
             steps.Clear();
@@ -398,6 +413,7 @@ public class TreasureHunterService
         walkVias.Clear();
         walkViaIndex = 0;
         StepDistance = 0f;
+        lastNavigateTarget = null;
 
         if (NextStepIsTravelHop())
         {
@@ -738,6 +754,7 @@ public class TreasureHunterService
         pathfinder.Stop();
         vnav.Stop();
         activeChain = null;
+        lastNavigateTarget = null;
         ResetStuckWatch();
     }
 
@@ -801,11 +818,22 @@ public class TreasureHunterService
         Vector3 dest = TryGetLayout(step.NodeId, out TreasureLayoutDatum layout)
             ? layout.Position
             : player.Position;
+
+        if (TreasurePathing.TrySnapToNavmesh(dest, player.Position.Y, vnav, out Vector3 pathableDest))
+        {
+            dest = pathableDest;
+        }
+
         Vector3 nudge = PathfindingNudge.LateralFrom(player.Position, dest);
+        if (TreasurePathing.TrySnapToNavmesh(nudge, player.Position.Y, vnav, out Vector3 pathableNudge))
+        {
+            nudge = pathableNudge;
+        }
 
         log.Debug("Treasure hunt stuck near {NodeId} — nudging sideways around geometry (#156)", step.NodeId);
         pathfinder.Stop();
         vnav.Stop();
+        lastNavigateTarget = null;
         vnav.PathfindAndMoveCloseTo(nudge, false, 1.5f);
     }
 
@@ -1796,16 +1824,57 @@ public class TreasureHunterService
             return false;
         }
 
-        // Different floor (basement under you): keep pathing even when 2D looks "arrived".
-        bool needPath = !IsSameFloor(destination)
-                        || player.Position.Distance2D(destination) > startPathBeyond;
-
-        if (needPath && !vnav.IsRunning() && !vnav.IsPathfinding())
+        if (!TryResolvePathable(destination, out Vector3 pathTarget))
         {
-            vnav.PathfindAndMoveCloseTo(destination, false, arrivalRadius);
+            if (vnav.IsRunning() || vnav.IsPathfinding())
+            {
+                vnav.Stop();
+            }
+
+            lastNavigateTarget = null;
+            MaybeMount(destination);
+            return true;
         }
 
-        MaybeMount(destination);
+        // Different floor (basement under you): keep pathing even when 2D looks "arrived".
+        bool needPath = !IsSameFloor(pathTarget)
+                        || player.Position.Distance2D(pathTarget) > startPathBeyond;
+
+        const float RepathDrift = 1.5f;
+        bool drifted = lastNavigateTarget is not { } last
+                       || last.Distance2D(pathTarget) > RepathDrift;
+
+        if (needPath
+            && ((!vnav.IsRunning() && !vnav.IsPathfinding()) || drifted))
+        {
+            lastNavigateTarget = pathTarget;
+            vnav.PathfindAndMoveCloseTo(pathTarget, false, arrivalRadius);
+        }
+
+        MaybeMount(pathTarget);
+        return true;
+    }
+
+    /// <summary>
+    ///     Mesh point we walk to. Layout pads with no same-floor polygon are not pathable;
+    ///     live coffers still get a Y rewrite when the snap fails.
+    /// </summary>
+    private bool TryResolvePathable(Vector3 destination, out Vector3 pathable)
+    {
+        if (TreasurePathing.TrySnapToNavmesh(destination, player.Position.Y, vnav, out pathable))
+        {
+            return true;
+        }
+
+        if (vnav.IsAvailable() && vnav.IsNavmeshReady())
+        {
+            log.Debug(
+                "Treasure hunt: no navmesh near {Pos} — holding path until stuck recovery",
+                destination);
+            return false;
+        }
+
+        pathable = TreasurePathing.PathablePosition(destination, player.Position.Y);
         return true;
     }
 
@@ -2106,16 +2175,27 @@ public class TreasureHunterService
         bool hasAuthoredPositions,
         bool hasCrowdsourced)
     {
-        if (hasAuthoredPositions
-            && treasureData.Any(d => d.Level <= maxLevel && d.Matches(layout.Id, layout.Position)))
+        if (hasAuthoredPositions || hasCrowdsourced)
         {
-            return true;
+            bool onAuthored = hasAuthoredPositions
+                              && treasureData.Any(d => d.Matches(layout.Id, layout.Position));
+            bool onCrowd = hasCrowdsourced
+                           && liveSpots.Any(c =>
+                               Vector3.DistanceSquared(c.Position, layout.Position)
+                               <= CofferLocationSyncService.MatchRadiusSq);
+            if (!onAuthored && !onCrowd)
+            {
+                return false;
+            }
         }
 
-        return hasCrowdsourced
-               && liveSpots.Any(c =>
-                   Vector3.DistanceSquared(c.Position, layout.Position)
-                   <= CofferLocationSyncService.MatchRadiusSq);
+        if (!TreasureData.TryResolveLevel(layout.Id, layout.Position, treasureData, out int padLevel))
+        {
+            // Shared-only pad with no baked level — only when user left the cap at 50 (no limit).
+            return maxLevel >= 50;
+        }
+
+        return padLevel <= maxLevel;
     }
 
     private bool MatchesHuntCofferFilter(uint sgbId) =>
@@ -2198,7 +2278,10 @@ public class TreasureHunterService
                     continue;
                 }
 
-                bool matchAuthored = hasPositionData && treasureData.Any(d => d.Matches(treasureRowId, position));
+                TreasureData? authored = hasPositionData
+                    ? treasureData.FirstOrDefault(d => d.Matches(treasureRowId, position))
+                    : null;
+                bool matchAuthored = authored != null;
                 bool matchCrowd = hasCrowdsourced
                     && liveSpots.Any(c =>
                         Vector3.DistanceSquared(c.Position, position) <= CofferLocationSyncService.MatchRadiusSq);
@@ -2207,6 +2290,12 @@ public class TreasureHunterService
                 if ((hasPositionData || hasCrowdsourced) && !matchAuthored && !matchCrowd)
                 {
                     continue;
+                }
+
+                // Layout transform Y is often bogus (reveal altitude / inside floor). Prefer baked coords.
+                if (authored?.Position is { } bakedPosition)
+                {
+                    position = bakedPosition;
                 }
 
                 layoutTreasure.Add(new(treasureRowId, position, sgbId));
