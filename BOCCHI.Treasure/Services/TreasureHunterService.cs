@@ -1609,7 +1609,8 @@ public class TreasureHunterService
         if (!TryNavigateToward(
                 destination,
                 OpenTreasureCofferChain.PreferredOpenDistance,
-                OpenTreasureCofferChain.PathArrivalRange))
+                OpenTreasureCofferChain.PathArrivalRange,
+                skipIfOffMesh: false))
         {
             return false;
         }
@@ -1758,7 +1759,7 @@ public class TreasureHunterService
         }
 
         float arrival = AethernetNavigation.PathfindArrivalRadius;
-        if (!TryNavigateToward(destination, arrival + 0.35f, arrival))
+        if (!TryNavigateToward(destination, arrival + 0.35f, arrival, skipIfOffMesh: false))
         {
             return false;
         }
@@ -1817,20 +1818,32 @@ public class TreasureHunterService
 
     /// <summary>Path/mount only after Hide is ready when required.</summary>
     /// <returns>False while still preparing Hide (caller should wait).</returns>
-    private bool TryNavigateToward(Vector3 destination, float startPathBeyond, float arrivalRadius)
+    private bool TryNavigateToward(
+        Vector3 destination,
+        float startPathBeyond,
+        float arrivalRadius,
+        bool skipIfOffMesh = true)
     {
         if (!ApplyNinjaHideGate())
         {
             return false;
         }
 
-        if (!TryResolvePathable(destination, out Vector3 pathTarget))
+        if (!TreasurePathing.TryResolvePathable(
+                destination,
+                player.Position.Y,
+                vnav,
+                skipIfOffMesh,
+                out Vector3 pathTarget))
         {
             if (vnav.IsRunning() || vnav.IsPathfinding())
             {
                 vnav.Stop();
             }
 
+            log.Debug(
+                "Treasure hunt: no navmesh near {Pos} — holding path until stuck recovery",
+                destination);
             lastNavigateTarget = null;
             MaybeMount(destination);
             return true;
@@ -1855,34 +1868,8 @@ public class TreasureHunterService
         return true;
     }
 
-    /// <summary>
-    ///     Mesh point we walk to. Layout pads with no same-floor polygon are not pathable;
-    ///     live coffers still get a Y rewrite when the snap fails.
-    /// </summary>
-    private bool TryResolvePathable(Vector3 destination, out Vector3 pathable)
-    {
-        if (TreasurePathing.TrySnapToNavmesh(destination, player.Position.Y, vnav, out pathable))
-        {
-            return true;
-        }
-
-        if (vnav.IsAvailable() && vnav.IsNavmeshReady())
-        {
-            log.Debug(
-                "Treasure hunt: no navmesh near {Pos} — holding path until stuck recovery",
-                destination);
-            return false;
-        }
-
-        pathable = TreasurePathing.PathablePosition(destination, player.Position.Y);
-        return true;
-    }
-
-    private static bool IsSameFloor(Vector3 a, Vector3 b) =>
-        MathF.Abs(a.Y - b.Y) <= HuntDistances.SameFloorVerticalTolerance;
-
     private bool IsSameFloor(Vector3 destination) =>
-        IsSameFloor(player.Position, destination);
+        HuntDistances.IsSameFloor(player.Position, destination);
 
     /// <summary>
     ///     When enabled and a knowledge threat is in range: gearset → dismount → Hide before continuing on foot.

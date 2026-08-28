@@ -55,13 +55,11 @@ public record TreasureData(int Id, int Level, Vector3? Position = null)
         IReadOnlyList<TreasureData> treasureData,
         out int level)
     {
-        foreach (TreasureData entry in treasureData)
+        TreasureData? byId = treasureData.FirstOrDefault(entry => entry.Id == layoutId);
+        if (byId != null)
         {
-            if (entry.Id == layoutId)
-            {
-                level = entry.Level;
-                return true;
-            }
+            level = byId.Level;
+            return true;
         }
 
         TreasureData? nearest = null;
