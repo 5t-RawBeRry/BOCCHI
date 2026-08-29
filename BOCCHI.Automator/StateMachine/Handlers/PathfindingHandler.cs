@@ -58,10 +58,13 @@ public class PathfindingHandler
     {
         base.Exit(next);
 
-        // Don't cancel pathing on a same-frame return handoff (restart loop).
+        // Don't cancel full pathing on a same-frame return handoff (restart loop).
+        // Cancel leftover PathStep chains + stop the pathfinder; ReturningHandler.Enter
+        // also stops vnav so a lingering move-to cannot cancel the Return cast.
         if (next == AutomatorState.Returning)
         {
             currentPathTask = null;
+            PathStepSoftStop.Cancel(manager);
             pathfinder.Stop();
             return;
         }

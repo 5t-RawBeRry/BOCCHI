@@ -46,6 +46,14 @@ public class OpenTreasureCofferChain
     /// <summary>Pandora AutoOpenChests: only Interact when Distance ≤ 2.</summary>
     public const float PreferredOpenDistance = 2.0f;
 
+    /// <summary>
+    ///     Mesh / prop collision often parks just outside 2y. Interact from here instead of
+    ///     walking into the chest or to a navmesh snap that sits a few yalms off the live object.
+    /// </summary>
+    public const float OpenAttemptSlack = 1.5f;
+
+    public static float MaxOpenAttemptDistance => PreferredOpenDistance + OpenAttemptSlack;
+
     /// <summary>Alias used by callers / pot farm approach.</summary>
     public const float InteractDistance = PreferredOpenDistance;
 
@@ -94,12 +102,14 @@ public class OpenTreasureCofferChain
 
                 // Pot reveals often report Y ≈ -500 — use 2D so we still walk up and open (#170).
                 float dist2d = player.Position.Distance2D(nearby.Position);
-                if (dist2d > PreferredOpenDistance)
+                if (dist2d > MaxOpenAttemptDistance)
                 {
-                    EnsurePathing(PathableTreasurePosition(nearby.Position), pathState);
+                    EnsurePathing(nearby.Position, pathState);
                     return false;
                 }
 
+                // 2.0–3.5y: do not path to a mesh snap beside the chest — that parks you
+                // at the snap (WaitUntil) while Distance to coffer stays ~2.4y (2057 sit).
                 StopNav();
 
                 // Stay mounted when possible (forced dismount in high-knowledge areas got people killed, #175).
@@ -144,7 +154,7 @@ public class OpenTreasureCofferChain
             return true;
         }
 
-        EnsurePathing(PathableTreasurePosition(target.Position), pathState);
+        EnsurePathing(target.Position, pathState);
         return false;
     }
 
@@ -158,9 +168,11 @@ public class OpenTreasureCofferChain
 
     private void EnsurePathing(Vector3 destination, PathState pathState)
     {
-        // Stop at interact range — walking into the coffer hits prop collision while the mesh
-        // still draws a green line through it.
-        if (player.Position.Distance2D(destination) <= PreferredOpenDistance)
+        Vector3 moveTarget = PathableWhenFar(destination);
+
+        // Stop against the live coffer, not the snap — snap can be 3–5y off while you
+        // are already in interact range of the object.
+        if (player.Position.Distance2D(destination) <= MaxOpenAttemptDistance)
         {
             StopNav();
             return;
@@ -168,17 +180,36 @@ public class OpenTreasureCofferChain
 
         const float RepathDrift = 1.5f;
         bool drifted = pathState.LastTarget is not { } last
-                       || last.Distance2D(destination) > RepathDrift;
+                       || last.Distance2D(moveTarget) > RepathDrift;
+
+        bool cooling = !drifted
+                       && pathState.LastIssuedUtc != DateTime.MinValue
+                       && DateTime.UtcNow - pathState.LastIssuedUtc < TimeSpan.FromSeconds(2.5);
+
+        if (cooling)
+        {
+            return;
+        }
 
         if ((!vnav.IsRunning() && !vnav.IsPathfinding()) || drifted)
         {
-            pathState.LastTarget = destination;
-            vnav.PathfindAndMoveCloseTo(destination, false, PreferredOpenDistance);
+            pathState.LastTarget = moveTarget;
+            pathState.LastIssuedUtc = DateTime.UtcNow;
+            vnav.PathfindAndMoveCloseTo(moveTarget, false, PreferredOpenDistance);
         }
     }
 
-    private Vector3 PathableTreasurePosition(Vector3 position)
+    /// <summary>
+    ///     Snap only when still walking in. Near the chest the snap is often beside it
+    ///     and pathing there walks away from an already-interactable coffer.
+    /// </summary>
+    private Vector3 PathableWhenFar(Vector3 position)
     {
+        if (player.Position.Distance2D(position) <= MaxOpenAttemptDistance + 4f)
+        {
+            return TreasurePathing.PathablePosition(position, player.Position.Y);
+        }
+
         _ = TreasurePathing.TrySnapToNavmesh(position, player.Position.Y, vnav, out Vector3 pathable);
         return pathable;
     }
@@ -290,6 +321,8 @@ public class OpenTreasureCofferChain
     private sealed class PathState
     {
         public Vector3? LastTarget;
+
+        public DateTime LastIssuedUtc;
 
         public bool SawChest;
 

@@ -1,5 +1,6 @@
 using BOCCHI.Automator.Data;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Data.Zones;
@@ -38,6 +39,17 @@ public class IllegalModeTreasureFillerService
     private bool loggedSightUnavailable;
 
     private bool HasTreasureSight => SupportJobTreasureSight.CanCast(supportJobs);
+
+    /// <summary>Map hunt always yields to FATEs; Sight hunt only when the FATE option is on.</summary>
+    private bool YieldsHuntToFate =>
+        !HasTreasureSight || automatorConfig.PauseAutoTreasureHuntForFate;
+
+    /// <summary>Map hunt always yields to CEs; Sight hunt only when the CE option is on.</summary>
+    private bool YieldsHuntToCriticalEncounter =>
+        !HasTreasureSight || automatorConfig.PauseAutoTreasureHuntForCriticalEncounter;
+
+    /// <summary>True when the hunt can pause for at least one activity type.</summary>
+    private bool YieldsHuntToAnyActivity => YieldsHuntToFate || YieldsHuntToCriticalEncounter;
 
     public void Update()
     {
@@ -119,46 +131,126 @@ public class IllegalModeTreasureFillerService
     }
 
     /// <summary>
-    ///     Sight hunts stay exclusive. Map hunts (no Sight) pause when a FATE/CE is available so
-    ///     Illegal Mode can take it, then resume the same route afterward.
+    ///     When yielding is enabled (map hunt, or Sight hunt with FATE/CE pause options), pause for
+    ///     a matching active or startable activity so Illegal Mode can take it, then resume afterward.
     /// </summary>
     private void UpdateRunningFillerHunt(bool activityNow)
     {
-        if (HasTreasureSight)
+        if (!YieldsHuntToAnyActivity)
         {
             return;
         }
 
         if (activityNow)
         {
-            if (!hunter.Paused)
+            if (ShouldPauseForCurrentActivity())
             {
-                hunter.Pause();
-                logger.Debug("Illegal Mode: paused map treasure hunt for CE/FATE activity");
+                PauseHuntForYield("activity");
+            }
+            else if (hunter.Paused)
+            {
+                // Triage / buffs / Sight after a yielded FATE/CE — stay paused and unsuspended.
+                automator.SetSuspendedForTreasure(false);
             }
 
-            automator.SetSuspendedForTreasure(false);
             return;
         }
 
-        bool startable = startableActivities.HasStartableFateOrCriticalEncounter();
-        if (!hunter.Paused && startable)
+        bool startableMatch = HasStartableYieldTarget(out string kind);
+        if (!hunter.Paused && startableMatch)
         {
-            hunter.Pause();
-            automator.SetSuspendedForTreasure(false);
+            PauseHuntForYield(kind);
             if (EzThrottler.Throttle("IllegalModeMapHuntYield", 5000))
             {
-                logger.Info("Illegal Mode: pausing map treasure hunt — FATE/CE available");
+                logger.Info("Illegal Mode: pausing treasure hunt — {Kind} available", kind);
             }
 
             return;
         }
 
-        if (hunter.Paused && !startable)
+        if (hunter.Paused && !startableMatch)
         {
-            // Activity cancelled / nothing to do — keep filling the map.
+            // Activity cancelled / nothing matching left — keep filling the map.
             EnterHuntPhase(fromSurvey: false);
         }
+    }
+
+    private void PauseHuntForYield(string reason)
+    {
+        if (!hunter.Paused)
+        {
+            hunter.Pause();
+            logger.Debug("Illegal Mode: paused treasure hunt for {Reason}", reason);
+        }
+
+        automator.SetSuspendedForTreasure(false);
+    }
+
+    private bool HasStartableYieldTarget(out string kind)
+    {
+        if (YieldsHuntToCriticalEncounter && startableActivities.HasStartableCriticalEncounter())
+        {
+            kind = "CE";
+            return true;
+        }
+
+        if (YieldsHuntToFate && startableActivities.HasStartableFate())
+        {
+            kind = "FATE";
+            return true;
+        }
+
+        kind = "";
+        return false;
+    }
+
+    /// <summary>
+    ///     Map hunt pauses for any filler-blocking work. Sight hunt only pauses for FATE/CE that
+    ///     match the enabled options (plus follow-on triage/buffs while already paused).
+    /// </summary>
+    private bool ShouldPauseForCurrentActivity()
+    {
+        if (!HasTreasureSight)
+        {
+            return true;
+        }
+
+        if (YieldsHuntToCriticalEncounter && IsCriticalEncounterActivity())
+        {
+            return true;
+        }
+
+        if (YieldsHuntToFate && IsFateActivity())
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool IsCriticalEncounterActivity()
+    {
+        if (memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory _)
+            || memory.TryRemember<CommittedCriticalEncounterMemory>(out CommittedCriticalEncounterMemory _))
+        {
+            return true;
+        }
+
+        return memory.TryRemember<GoalMemory>(out GoalMemory goal)
+               && goal.Goal.GoalType is CriticalEncounterGoal;
+    }
+
+    private bool IsFateActivity()
+    {
+        if (memory.TryRemember<WaitingForPotFateMemory>(out WaitingForPotFateMemory _)
+            || memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _)
+            || memory.TryRemember<PendingPotChestFarmMemory>(out PendingPotChestFarmMemory _))
+        {
+            return true;
+        }
+
+        return memory.TryRemember<GoalMemory>(out GoalMemory goal)
+               && goal.Goal.GoalType is FateGoal;
     }
 
     private void EnsureSurveyMemory(out AutomaticTreasureSurveyMemory survey)
@@ -359,16 +451,16 @@ public class IllegalModeTreasureFillerService
 
     private void EnterHuntPhase(bool fromSurvey)
     {
-        // Sight surveys: suspend Illegal Mode for the short revealed route.
-        // Map hunts (no Sight): keep Automator awake so a spawned FATE/CE can interrupt.
-        if (HasTreasureSight)
-        {
-            automator.SetSuspendedForTreasure(true);
-        }
-        else
+        // Map hunts keep Automator awake so a spawned FATE/CE can interrupt.
+        // Sight hunts stay suspended until a matching pause option fires (then unsuspend).
+        if (!HasTreasureSight)
         {
             automator.SetSuspendedForTreasure(false);
             memory.Forget<ReturningStateMemory>();
+        }
+        else
+        {
+            automator.SetSuspendedForTreasure(true);
         }
 
         if (!hunter.IsVnavReady)
@@ -407,15 +499,15 @@ public class IllegalModeTreasureFillerService
 
         if (hunter.Paused)
         {
-            // Map hunt (no Sight): after a distant FATE/CE, continue from nearby remaining pads
-            // instead of walking back to where the route was paused.
-            if (HasTreasureSight)
+            // After a distant FATE/CE, continue from nearby remaining pads instead of walking
+            // back to where the route was paused (exclusive Sight resumes in place).
+            if (YieldsHuntToAnyActivity)
             {
-                hunter.Resume();
+                hunter.ResumeNearPlayer();
             }
             else
             {
-                hunter.ResumeNearPlayer();
+                hunter.Resume();
             }
 
             hadFillerHunt = true;

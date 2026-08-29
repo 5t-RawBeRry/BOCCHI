@@ -65,7 +65,9 @@ public class IdleHandler(
             memory.Forget<IdleStateMemory>();
         }
 
-        if (!IsNavigationInterrupted())
+        // Map-hunt filler keeps Automator Idle so FATE/CE can interrupt. Leaving Idle
+        // (Returning / Pathfinding flicker) must not Path.Stop the hunt's walk.
+        if (!IsNavigationInterrupted() && !IsIllegalModeMapHuntFillerActive())
         {
             StopMovement();
         }

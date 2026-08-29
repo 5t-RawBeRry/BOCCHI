@@ -102,10 +102,32 @@ public class AutomatorConfig : IAutoConfig
     public bool EnableAutomaticTreasureHuntDuringIllegalMode { get; set; } = false;
 
     /// <summary>
-    ///     Periodic camp Sight when auto-hunt is off. Auto-hunt casts Sight after FATE/CE instead.
+    ///     With Treasure Sight, pause Illegal Mode auto-hunt when a FATE is available (map hunt
+    ///     without Sight always pauses for FATEs). Off keeps Sight hunts from yielding to FATEs.
     /// </summary>
     [Checkbox(
         Order = 14,
+        Indent = 1,
+        Requires = nameof(EnableAutomaticTreasureHuntDuringIllegalMode),
+        Section = "treasure")]
+    public bool PauseAutoTreasureHuntForFate { get; set; } = false;
+
+    /// <summary>
+    ///     With Treasure Sight, pause Illegal Mode auto-hunt when a CE is available (map hunt
+    ///     without Sight always pauses for CEs). Off keeps Sight hunts from yielding to CEs.
+    /// </summary>
+    [Checkbox(
+        Order = 15,
+        Indent = 1,
+        Requires = nameof(EnableAutomaticTreasureHuntDuringIllegalMode),
+        Section = "treasure")]
+    public bool PauseAutoTreasureHuntForCriticalEncounter { get; set; } = false;
+
+    /// <summary>
+    ///     Periodic camp Sight when auto-hunt is off. Auto-hunt casts Sight after FATE/CE instead.
+    /// </summary>
+    [Checkbox(
+        Order = 16,
         Indent = 1,
         DisabledWhen = nameof(EnableAutomaticTreasureHuntDuringIllegalMode),
         Section = "treasure")]
@@ -114,7 +136,7 @@ public class AutomatorConfig : IAutoConfig
     [IntRange(
         60,
         600,
-        Order = 15,
+        Order = 17,
         Indent = 2,
         Requires = nameof(ShouldCastTreasureSight),
         DisabledWhen = nameof(EnableAutomaticTreasureHuntDuringIllegalMode),
@@ -122,23 +144,23 @@ public class AutomatorConfig : IAutoConfig
     public int TreasureSightRecastIntervalSeconds { get; set; } = 120;
 
     /// <summary>Max random idle before Return; 0 delay when Treasure Sight is latched.</summary>
-    [IntRange(2, 60, Order = 16, Section = "delays")]
+    [IntRange(2, 60, Order = 18, Section = "delays")]
     public int MaxRemoteIdleTimeSeconds { get; set; } = 10;
 
     /// <summary>
     ///     Upper bound (seconds) for a random 0..max idle at camp before teleporting to a FATE/CE.
     ///     0 = leave immediately.
     /// </summary>
-    [IntRange(0, 60, Order = 17, Section = "delays")]
+    [IntRange(0, 60, Order = 19, Section = "delays")]
     public int MaxBaseTeleportDelaySeconds { get; set; } = 0;
 
     /// <summary>
     ///     Repair equipped gear when any piece falls to or below this condition (%).
     /// </summary>
-    [IntRange(1, 99, Order = 18, Section = "repair")]
+    [IntRange(1, 99, Order = 20, Section = "repair")]
     public int AutoRepairThreshold { get; set; } = 30;
 
     /// <summary>Self-repair vs nearby mender at base camp.</summary>
-    [EnumSelectDisplay<AutoRepairMethod, AutoRepairMethodDisplay>(Order = 19, Section = "repair")]
+    [EnumSelectDisplay<AutoRepairMethod, AutoRepairMethodDisplay>(Order = 21, Section = "repair")]
     public AutoRepairMethod AutoRepairMethod { get; set; } = AutoRepairMethod.SelfRepair;
 }

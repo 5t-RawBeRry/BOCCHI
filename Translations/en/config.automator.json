@@ -136,7 +136,15 @@
     },
     "enable_automatic_treasure_hunt_during_illegal_mode": {
       "label": "Auto treasure hunt in Illegal Mode",
-      "tooltip": "On: after a FATE or CE, return to camp and run Treasure Sight if known. Starts a hunt when bronze/silver fill meets the % on Treasure Hunter.\nWithout Sight: uses the built-in map (those % ignored), pauses for FATE/CE, then resumes.\nOff: do not start treasure hunts from Illegal Mode."
+      "tooltip": "On: after a FATE or CE, return to camp and run Treasure Sight if known. Starts a hunt when bronze/silver fill meets the % on Treasure Hunter.\nWithout Sight: uses the built-in map (those % ignored), always pauses for FATE/CE, then resumes.\nOff: do not start treasure hunts from Illegal Mode."
+    },
+    "pause_auto_treasure_hunt_for_fate": {
+      "label": "Pause auto treasure hunt for FATEs",
+      "tooltip": "On: while Auto treasure hunt is running, pause when a FATE is available (or already in one), then resume nearby afterward.\nOff: with Treasure Sight, keep hunting through FATEs (map hunt without Sight always pauses).\nNeeds Auto treasure hunt in Illegal Mode."
+    },
+    "pause_auto_treasure_hunt_for_critical_encounter": {
+      "label": "Pause auto treasure hunt for CEs",
+      "tooltip": "On: while Auto treasure hunt is running, pause when a Critical Encounter is available (or already in one), then resume nearby afterward.\nOff: with Treasure Sight, keep hunting through CEs (map hunt without Sight always pauses).\nNeeds Auto treasure hunt in Illegal Mode."
     }
   }
 }

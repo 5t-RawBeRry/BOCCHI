@@ -95,6 +95,18 @@ public class TreasureHunterService
     /// <summary>Below this distance, walk-stuck recovery does not run (open / empty-skip owns it).</summary>
     private const float StuckDetectionMinDistance = OpenTreasureCofferChain.PreferredOpenDistance;
 
+    /// <summary>
+    ///     After a stuck nudge, skip an empty pad this close instead of pathing back into the
+    ///     same wall (1805 loop: neighbour coffer on radar blocked the normal empty-skip).
+    /// </summary>
+    private const float StuckEmptySkipRadius = 15f;
+
+    /// <summary>
+    ///     Do not re-issue the same vnav dest until this elapses. Covers both the
+    ///     pathfind-done / follow-not-started gap and follow dying against geometry.
+    /// </summary>
+    private static readonly TimeSpan SameDestRepathCooldown = TimeSpan.FromSeconds(2.5);
+
     private readonly List<TreasureLayoutDatum> layoutTreasure = [];
 
     /// <summary>Id index over <see cref="layoutTreasure"/>; rebuilt in <see cref="RebuildLayoutIndex"/>.</summary>
@@ -163,6 +175,12 @@ public class TreasureHunterService
 
     /// <summary>Last snapped target issued to vnav (repath when it drifts).</summary>
     private Vector3? lastNavigateTarget;
+
+    /// <summary>When that target was issued — do not re-queue the same dest until the cooldown elapses.</summary>
+    private DateTime lastNavigateIssuedUtc = DateTime.MinValue;
+
+    /// <summary>Skip coffer repath until this time (stuck nudge must be allowed to start).</summary>
+    private DateTime holdNavigateUntilUtc = DateTime.MinValue;
 
     /// <summary>
     ///     Live coffer XZ for the current WalkToNode. Sticky so a one-tick miss in the object
@@ -435,7 +453,7 @@ public class TreasureHunterService
         walkVias.Clear();
         walkViaIndex = 0;
         StepDistance = 0f;
-        lastNavigateTarget = null;
+        ClearNavigateIssue();
         ClearWalkLiveBind();
         ClearNavigateClosingLatch();
 
@@ -782,7 +800,7 @@ public class TreasureHunterService
         pathfinder.Stop();
         vnav.Stop();
         activeChain = null;
-        lastNavigateTarget = null;
+        ClearNavigateIssue();
         ClearNavigateClosingLatch();
         ResetStuckWatch();
     }
@@ -864,9 +882,37 @@ public class TreasureHunterService
         log.Debug("Treasure hunt stuck near {NodeId} — nudging sideways around geometry (#156)", step.NodeId);
         pathfinder.Stop();
         vnav.Stop();
-        lastNavigateTarget = null;
         ClearNavigateClosingLatch();
+        lastNavigateTarget = nudge;
+        lastNavigateIssuedUtc = DateTime.UtcNow;
+        // TryNavigateToward would overwrite this on the next tick if we don't hold.
+        holdNavigateUntilUtc = DateTime.UtcNow + TimeSpan.FromSeconds(3);
         vnav.PathfindAndMoveCloseTo(nudge, false, 1.5f);
+    }
+
+    /// <summary>
+    ///     Stuck on a pad with no live coffer — skip it. Neighbour chests on radar used to
+    ///     pin us here: empty-skip required a streamed neighbour near <em>this</em> pad,
+    ///     divert required one in layout range, and neither fired so we re-queued forever.
+    /// </summary>
+    private bool TrySkipEmptyAfterStuckNudge(HuntPathfinderStep step, Vector3 layoutDestination, float dist2d)
+    {
+        if (!stuckNudgeIssued || !IsSameFloor(layoutDestination) || dist2d > StuckEmptySkipRadius)
+        {
+            return false;
+        }
+
+        log.Debug(
+            "Treasure hunt: still no live coffer at {NodeId} after stuck nudge ({Dist:F0}y) — skipping",
+            step.NodeId,
+            dist2d);
+        checkedNodeIds.Add(step.NodeId);
+        stuckSkippedNodeIds.Add(step.NodeId);
+        LastCheckedNodeId = step.NodeId;
+        ClearEmptyPadCandidate();
+        ResetStuckWatch();
+        FinishCurrentPad();
+        return true;
     }
 
     private void StartStuckWatch(uint nodeId, float distance, DateTime now)
@@ -1306,11 +1352,17 @@ public class TreasureHunterService
 
         // Defer while fighting or job-swap gates are closed — starting the chain early
         // only burns a 15s WaitUntil step (Dismount / ToFreelancer / RestoreJob).
-        if (conditions[ConditionFlag.InCombat]
-            || DismountAssist.TryDismount(conditions)
-            || PhantomJobChangeGate.IsBlocked(conditions))
+        if (conditions[ConditionFlag.InCombat] || PhantomJobChangeGate.IsBlocked(conditions))
         {
             return false;
+        }
+
+        // Sight is due: stop pathing and get on foot before starting the chain.
+        // Returning false here used to fall through to MaybeMount — dismount + remount every tick.
+        if (DismountAssist.TryDismount(conditions))
+        {
+            SoftStopMovement();
+            return true;
         }
 
         SoftStopMovement();
@@ -1608,6 +1660,11 @@ public class TreasureHunterService
                 return false;
             }
 
+            if (TrySkipEmptyAfterStuckNudge(step, layoutDestination, dist2d))
+            {
+                return false;
+            }
+
             // Still see a hunt coffer on radar — peel to it when it matches this layout area.
             if (HasUnopenedLiveHuntCofferNearPlayer(HuntDistances.NearbyLiveDivertRange))
             {
@@ -1628,6 +1685,7 @@ public class TreasureHunterService
                         destination,
                         OpenTreasureCofferChain.PreferredOpenDistance,
                         OpenTreasureCofferChain.PathArrivalRange);
+                    TryRecoverFromStuckWalk(step, StepDistance);
                     return false;
                 }
             }
@@ -1638,16 +1696,24 @@ public class TreasureHunterService
                     destination,
                     OpenTreasureCofferChain.PreferredOpenDistance,
                     OpenTreasureCofferChain.PathArrivalRange);
+                TryRecoverFromStuckWalk(step, StepDistance);
                 return false;
             }
         }
         else if (present == null)
         {
             // Bound a live coffer earlier this pad — keep walking to it through brief radar gaps.
+            // After a nudge with still no radar, the bind is stale: skip like an empty pad.
+            if (TrySkipEmptyAfterStuckNudge(step, layoutDestination, dist2d))
+            {
+                return false;
+            }
+
             TryNavigateToward(
                 destination,
                 OpenTreasureCofferChain.PreferredOpenDistance,
                 OpenTreasureCofferChain.PathArrivalRange);
+            TryRecoverFromStuckWalk(step, StepDistance);
             return false;
         }
 
@@ -1680,9 +1746,13 @@ public class TreasureHunterService
             return false;
         }
 
-        // Small slack: mesh often leaves you a hair outside PreferredOpenDistance (2.05y spam).
-        const float OpenAttemptSlack = 0.5f;
-        if (dist2d > OpenTreasureCofferChain.PreferredOpenDistance + OpenAttemptSlack
+        // Match the open chain: mesh often parks just outside 2y. After a stuck nudge,
+        // chest / prop collision can leave you 3–5y out — still interactable.
+        const float StuckOpenSlack = 3.5f;
+        float openSlack = stuckNudgeIssued
+            ? StuckOpenSlack
+            : OpenTreasureCofferChain.OpenAttemptSlack;
+        if (dist2d > OpenTreasureCofferChain.PreferredOpenDistance + openSlack
             || !IsSameFloor(destination))
         {
             return false;
@@ -1859,6 +1929,12 @@ public class TreasureHunterService
 
     private void MaybeMount(Vector3 destination)
     {
+        // Sight prep / WideText wait — remounting here fights DismountAssist every tick.
+        if (waitingForSightCounts)
+        {
+            return;
+        }
+
         if (ninjaHideRequired)
         {
             return;
@@ -1892,6 +1968,12 @@ public class TreasureHunterService
             return false;
         }
 
+        if (DateTime.UtcNow < holdNavigateUntilUtc)
+        {
+            // Remount here cancels the stuck nudge before it can start.
+            return true;
+        }
+
         if (!TreasurePathing.TryResolvePathable(
                 destination,
                 player.Position.Y,
@@ -1907,7 +1989,7 @@ public class TreasureHunterService
             log.Debug(
                 "Treasure hunt: no navmesh near {Pos} — holding path until stuck recovery",
                 destination);
-            lastNavigateTarget = null;
+            ClearNavigateIssue();
             ClearNavigateClosingLatch();
             MaybeMount(destination);
             return true;
@@ -1964,10 +2046,19 @@ public class TreasureHunterService
             needPath = false;
         }
 
+        // Same dest: do not re-issue until the cooldown elapses. The old "grace only
+        // before first follow" check re-queued every tick once vnav had moved and then
+        // stopped against chest / prop collision (1805 loop).
+        bool sameDestCooling = !drifted
+                               && lastNavigateTarget is not null
+                               && DateTime.UtcNow - lastNavigateIssuedUtc < SameDestRepathCooldown;
+
         if (needPath
-            && ((!vnav.IsRunning() && !vnav.IsPathfinding()) || drifted))
+            && !sameDestCooling
+            && (drifted || (!vnav.IsRunning() && !vnav.IsPathfinding())))
         {
             lastNavigateTarget = moveTarget;
+            lastNavigateIssuedUtc = DateTime.UtcNow;
             vnav.PathfindAndMoveCloseTo(moveTarget, false, moveArrival);
         }
 
@@ -2149,6 +2240,13 @@ public class TreasureHunterService
     {
         navigateClosingOnDestination = false;
         navigateClosingForDestination = null;
+    }
+
+    private void ClearNavigateIssue()
+    {
+        lastNavigateTarget = null;
+        lastNavigateIssuedUtc = DateTime.MinValue;
+        holdNavigateUntilUtc = DateTime.MinValue;
     }
 
     /// <summary>Rebuild <see cref="tickTreasures"/> once per tick for pad matching.</summary>

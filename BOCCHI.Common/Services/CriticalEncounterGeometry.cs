@@ -36,6 +36,8 @@ public sealed class CriticalEncounterGeometry(
 
     private readonly Dictionary<uint, CriticalEncounterArea> cache = [];
 
+    private readonly Dictionary<uint, (CriticalEncounterArea? Area, string Detail)> authoredResolveCache = [];
+
     private ushort cachedTerritory;
 
     /// <param name="detail">Why lookup succeeded or failed — for <c>/bocchi debug ce</c>.</param>
@@ -44,6 +46,7 @@ public sealed class CriticalEncounterGeometry(
         if (cachedTerritory != (ushort)clientState.TerritoryType)
         {
             cache.Clear();
+            authoredResolveCache.Clear();
             cachedTerritory = (ushort)clientState.TerritoryType;
         }
 
@@ -171,10 +174,24 @@ public sealed class CriticalEncounterGeometry(
         Vector3 authoredStaging,
         out string detail)
     {
+        if (cachedTerritory != (ushort)clientState.TerritoryType)
+        {
+            cache.Clear();
+            authoredResolveCache.Clear();
+            cachedTerritory = (ushort)clientState.TerritoryType;
+        }
+
+        if (authoredResolveCache.TryGetValue(dynamicEventId, out (CriticalEncounterArea? Area, string Detail) hit))
+        {
+            detail = hit.Detail;
+            return hit.Area;
+        }
+
         CriticalEncounterArea? raw = TryGet(dynamicEventId, out string rawDetail);
         if (raw is not { Radius: > 0 } area)
         {
             detail = rawDetail;
+            authoredResolveCache[dynamicEventId] = (null, detail);
             return null;
         }
 
@@ -189,6 +206,7 @@ public sealed class CriticalEncounterGeometry(
         if (!rejected || float.IsNaN(authoredStaging.X))
         {
             detail = rawDetail;
+            authoredResolveCache[dynamicEventId] = (area, detail);
             return area;
         }
 
@@ -230,10 +248,12 @@ public sealed class CriticalEncounterGeometry(
                 rawDetail,
                 alt.Center,
                 alt.Radius);
+            authoredResolveCache[dynamicEventId] = (alt, detail);
             return alt;
         }
 
         detail = $"rejected {rawDetail}; no ground alternate within {AlternateMapRangeSearchRadius:0}y";
+        authoredResolveCache[dynamicEventId] = (area, detail);
         return area;
     }
 

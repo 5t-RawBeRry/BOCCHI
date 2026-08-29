@@ -13,6 +13,10 @@ namespace BOCCHI.Automator.Services;
 public interface IIllegalModeStartableActivityProbe
 {
     bool HasStartableFateOrCriticalEncounter();
+
+    bool HasStartableCriticalEncounter();
+
+    bool HasStartableFate();
 }
 
 public sealed class IllegalModeStartableActivityProbe(
@@ -28,16 +32,14 @@ public sealed class IllegalModeStartableActivityProbe(
     PotsConfig potsConfig
 ) : IIllegalModeStartableActivityProbe
 {
-    public bool HasStartableFateOrCriticalEncounter()
-    {
-        if (!automatorContext.IsPotsAndTreasure
-            && startableCriticalEncounters.FindStartable() != null)
-        {
-            return true;
-        }
+    public bool HasStartableFateOrCriticalEncounter() =>
+        HasStartableCriticalEncounter() || HasStartableFate();
 
-        return FindStartableFate() != null;
-    }
+    public bool HasStartableCriticalEncounter() =>
+        !automatorContext.IsPotsAndTreasure
+        && startableCriticalEncounters.FindStartable() != null;
+
+    public bool HasStartableFate() => FindStartableFate() != null;
 
     /// <summary>Mirrors ChoosingActivityHandler live-FATE selection (no preposition).</summary>
     private Fate? FindStartableFate()

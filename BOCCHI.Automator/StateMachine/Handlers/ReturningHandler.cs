@@ -12,11 +12,16 @@ using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
+using ECommons.Throttlers;
+using ECommonsPlayer = ECommons.GameHelpers.Player;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Ocelot.Actions;
 using Ocelot.Extensions;
+using Ocelot.Ipc.VNavmesh;
 using Ocelot.Services.Gate;
+using Ocelot.Services.Logger;
+using Ocelot.Services.Pathfinding;
 using Ocelot.Services.PlayerState;
 using Ocelot.States.Score;
 
@@ -34,9 +39,19 @@ public class ReturningHandler
     IPlayer player,
     IGateService gate,
     AutoRotationController autoRotation,
-    ITreasureHunter hunter
+    ITreasureHunter hunter,
+    IPathfinder pathfinder,
+    IVNavmeshIpc vnav,
+    ILogger<ReturningHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.Returning)
 {
+    /// <summary>
+    ///     CastDelay can roll up to 60s; give dismount / combat drop / Yesno time after that.
+    ///     Past this, drop the latch so Pathfinding can Teleport+Walk from the field instead of
+    ///     standing on "Returning to camp" forever (Vertigo / #178-class hangs).
+    /// </summary>
+    private static readonly TimeSpan CastAttemptBudget = TimeSpan.FromSeconds(45);
+
     public override StatePriority GetScore()
     {
         if (!automator.Enabled || !zones.GetZone().IsOccultCrescentZone())
@@ -117,6 +132,9 @@ public class ReturningHandler
     {
         base.Enter();
         autoRotation.DisableAi();
+        // Movement cancels Return mid-cast — same stop the shared ReturnToBaseCamp chain uses.
+        pathfinder.Stop();
+        vnav.Stop();
         addons.RegisterListener(AddonEvent.PostSetup, "SelectYesno", SelectYesNoListener);
     }
 
@@ -170,22 +188,73 @@ public class ReturningHandler
         // Survey latch skips the humanize delay — get to camp for Sight ASAP.
         bool surveyLatch = memory.TryRemember<AutomaticTreasureSurveyMemory>(out AutomaticTreasureSurveyMemory latch)
                            && latch.PendingSurvey;
-        if (memory.TryRemember<ReturningStateMemory>(out ReturningStateMemory returning)
-            && !returning.IsReadyToCast()
-            && !surveyLatch)
+        if (memory.TryRemember<ReturningStateMemory>(out ReturningStateMemory returning))
+        {
+            if (!returning.IsReadyToCast() && !surveyLatch)
+            {
+                return;
+            }
+
+            // Latch spent too long without landing at camp — free Pathfinding to Teleport+Walk.
+            TimeSpan budget = returning.CastDelay + CastAttemptBudget;
+            if (returning.GetTimeQueued() >= budget)
+            {
+                if (EzThrottler.Throttle("ReturningHandler::Timeout", 5000))
+                {
+                    logger.Warning(
+                        "Return to camp timed out after {Seconds:F0}s (combat/mount/cast blocked?) — continuing without Return",
+                        returning.GetTimeQueued().TotalSeconds);
+                }
+
+                memory.Forget<ReturningStateMemory>();
+                return;
+            }
+        }
+
+        // Return is blocked in combat; holding VeryHigh forever left status on "Returning to camp"
+        // while standing still (issue #178). Wait for combat to drop, then cast.
+        if (conditions[ConditionFlag.InCombat])
+        {
+            if (EzThrottler.Throttle("ReturningHandler::Combat", 5000))
+            {
+                logger.Debug("Waiting for combat to end before Return");
+            }
+
+            return;
+        }
+
+        if (DismountAssist.TryDismount(conditions))
+        {
+            return;
+        }
+
+        if (ECommonsPlayer.IsJumping)
         {
             return;
         }
 
         if (Actions.Return.CanCast())
         {
-            memory.TryAdd(new ReturningStateMemory(TimeSpan.Zero));
+            // Ensure timeout tracking even for opportunistic Sight Return (no prior handoff latch).
+            if (!memory.TryRemember<ReturningStateMemory>(out _))
+            {
+                memory.TryAdd(new ReturningStateMemory(TimeSpan.Zero));
+            }
+
+            pathfinder.Stop();
+            vnav.Stop();
             Actions.Return.Cast();
             return;
         }
 
-        // Fallback: some clients block Return on mount.
-        DismountAssist.TryDismount(conditions);
+        if (EzThrottler.Throttle("ReturningHandler::CanCast", 5000))
+        {
+            logger.Debug(
+                "Return not ready (mounted={Mounted}, combat={Combat}, jumping={Jumping})",
+                DismountAssist.IsMounted(conditions),
+                conditions[ConditionFlag.InCombat],
+                ECommonsPlayer.IsJumping);
+        }
     }
 
     public override void Exit(AutomatorState next)
