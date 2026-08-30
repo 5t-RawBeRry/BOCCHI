@@ -20,6 +20,8 @@ public class CastingTreasureSightHandler
     ISupportJobFactory supportJobs,
     ISupportJobChanger changer,
     IAutomatorMemory memory,
+    IAutomator automator,
+    ITreasureHunter hunter,
     AutomatorConfig automatorConfig,
     ITreasureTracker tracker
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.CastingTreasureSight)
@@ -58,15 +60,13 @@ public class CastingTreasureSightHandler
             return StatePriority.Always;
         }
 
-        // Periodic basecamp Sight only when auto-hunt is off (latch replaces it otherwise).
-        if (!automatorConfig.EnableAutomaticTreasureHuntDuringIllegalMode
-            && automatorConfig.ShouldCastTreasureSight
-            && GetLastCastDeltaSeconds() >= automatorConfig.TreasureSightRecastIntervalSeconds)
+        if (!CanCastIdleCampSight())
         {
-            return StatePriority.Always;
+            return StatePriority.Never;
         }
 
-        return StatePriority.Never;
+        // Below ChoosingActivity (Low) so a startable CE/FATE still wins; above Idle (Lowest).
+        return StatePriority.VeryLow;
     }
 
     public override void Enter()
@@ -114,8 +114,15 @@ public class CastingTreasureSightHandler
                 lastCast = DateTime.Now;
                 memory.Forget<CastingTreasureSightMemory>();
 
-                if (memory.TryRemember<AutomaticTreasureSurveyMemory>(out AutomaticTreasureSurveyMemory survey)
-                    && survey.PendingSurvey)
+                if (!memory.TryRemember<AutomaticTreasureSurveyMemory>(out AutomaticTreasureSurveyMemory survey))
+                {
+                    survey = new AutomaticTreasureSurveyMemory();
+                    memory.TryAdd(survey);
+                }
+
+                // Post-activity latch or idle camp Sight while auto-hunt waits for CE/FATE.
+                if (survey.PendingSurvey
+                    || automatorConfig.EnableAutomaticTreasureHuntDuringIllegalMode)
                 {
                     survey.PendingSurvey = false;
                     survey.WaitingForSurveyResult = true;
@@ -126,6 +133,47 @@ public class CastingTreasureSightHandler
                 // Job restore is ReturningToJobHandler (must beat Pathfinding priority).
             }
         }
+    }
+
+    /// <summary>
+    ///     Idle camp Sight on the configured interval — auto-hunt while waiting, or the camp
+    ///     Sight toggle when auto-hunt is off.
+    /// </summary>
+    private bool CanCastIdleCampSight()
+    {
+        bool autoHunt = automatorConfig.EnableAutomaticTreasureHuntDuringIllegalMode;
+        if (!autoHunt && !automatorConfig.ShouldCastTreasureSight)
+        {
+            return false;
+        }
+
+        if (GetLastCastDeltaSeconds() < automatorConfig.TreasureSightRecastIntervalSeconds)
+        {
+            return false;
+        }
+
+        if (autoHunt)
+        {
+            if (automator.SuspendedForTreasure
+                || automator.SuspendedForShopping
+                || (hunter.ManagedByIllegalModeFiller && hunter.Running))
+            {
+                return false;
+            }
+
+            if (memory.TryRemember<AutomaticTreasureSurveyMemory>(out AutomaticTreasureSurveyMemory survey)
+                && (survey.IsBusy || survey.PendingMapHunt))
+            {
+                return false;
+            }
+
+            if (IllegalModeActivityWork.HasFillerBlockingActivity(memory))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private int GetLastCastDeltaSeconds()

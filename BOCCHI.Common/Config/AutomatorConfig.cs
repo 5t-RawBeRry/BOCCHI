@@ -135,7 +135,8 @@ public class AutomatorConfig : IAutoConfig
     public bool PauseAutoTreasureHuntForCriticalEncounter { get; set; } = false;
 
     /// <summary>
-    ///     Periodic camp Sight when auto-hunt is off. Auto-hunt casts Sight after FATE/CE instead.
+    ///     Periodic camp Sight when auto-hunt is off. With auto-hunt on, idle camp Sight uses the
+    ///     interval below instead (this toggle stays off / disabled).
     /// </summary>
     [Checkbox(
         Order = 17,
@@ -144,15 +145,22 @@ public class AutomatorConfig : IAutoConfig
         Section = "treasure")]
     public bool ShouldCastTreasureSight { get; set; } = false;
 
+    /// <summary>
+    ///     Seconds between idle camp Treasure Sight casts (auto-hunt while waiting, or the camp
+    ///     Sight toggle when auto-hunt is off).
+    /// </summary>
     [IntRange(
         60,
         600,
         Order = 18,
         Indent = 2,
-        Requires = nameof(ShouldCastTreasureSight),
-        DisabledWhen = nameof(EnableAutomaticTreasureHuntDuringIllegalMode),
+        Requires = nameof(UsesTreasureSightInterval),
         Section = "treasure")]
     public int TreasureSightRecastIntervalSeconds { get; set; } = 120;
+
+    /// <summary>Interval slider: auto-hunt idle Sight, or camp Sight when auto-hunt is off.</summary>
+    public bool UsesTreasureSightInterval =>
+        EnableAutomaticTreasureHuntDuringIllegalMode || ShouldCastTreasureSight;
 
     /// <summary>Max random idle before Return; 0 delay when Treasure Sight is latched.</summary>
     [IntRange(2, 60, Order = 19, Section = "delays")]

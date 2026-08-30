@@ -9,3 +9,4 @@
 - With Triage Mode, no longer sit on "Returning to camp" while raises are still pending (including when combat has not cleared) — triage first, then Return
 - After Triage or Treasure Sight, switch back to the previous phantom job before casting Return
 - New option under Auto treasure hunt: pause for pots (uses Pot timing leave-early), then resume nearby
+- Auto treasure hunt now casts Treasure Sight at camp while waiting (Interval), then starts a hunt if fill is high enough — no longer AFK between CEs until you cast Sight by hand
