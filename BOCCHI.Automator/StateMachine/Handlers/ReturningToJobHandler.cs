@@ -17,7 +17,7 @@ public class ReturningToJobHandler
     ICondition conditions
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.ReturningToJob)
 {
-    // Must beat Pathfinding (High) / InFate / InCombat so job restore is not skipped.
+    // Must beat Pathfinding (High) and Returning's VeryHigh Return latch so job restore is not skipped.
     public override StatePriority GetScore()
     {
         // Only TriagingMemory (active Chemist session) — Pending alone must not block restore
@@ -28,7 +28,9 @@ public class ReturningToJobHandler
             return StatePriority.Never;
         }
 
-        return TryGetJobToRestore(out _) ? StatePriority.VeryHigh : StatePriority.Never;
+        // Critical beats Returning's VeryHigh latch so we restore Chemist/WHM (or Sight) before
+        // casting Return — equal VeryHigh ties were registration-order dependent.
+        return TryGetJobToRestore(out _) ? StatePriority.Critical : StatePriority.Never;
     }
 
     public override void Handle()

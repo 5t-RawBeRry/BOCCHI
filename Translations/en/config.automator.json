@@ -142,6 +142,10 @@
       "label": "Pause auto treasure hunt for FATEs",
       "tooltip": "On: while Auto treasure hunt is running, pause when a FATE is available (or already in one), then resume nearby afterward.\nOff: with Treasure Sight, keep hunting through FATEs (map hunt without Sight always pauses).\nNeeds Auto treasure hunt in Illegal Mode."
     },
+    "pause_auto_treasure_hunt_for_pots": {
+      "label": "Pause auto treasure hunt for pots",
+      "tooltip": "On: pause the hunt when Pot timing says leave for the next pot (or a pot is already up), then resume nearby afterward. Uses “Leave for pots this many minutes early” on Pot timing.\nOff: keep hunting through pot leave-early (live pots still pause if Pause for FATEs is on, or always on map hunt without Sight).\nNeeds Auto treasure hunt in Illegal Mode, and farm pots or wait near pots."
+    },
     "pause_auto_treasure_hunt_for_critical_encounter": {
       "label": "Pause auto treasure hunt for CEs",
       "tooltip": "On: while Auto treasure hunt is running, pause when a Critical Encounter is available (or already in one), then resume nearby afterward.\nOff: with Treasure Sight, keep hunting through CEs (map hunt without Sight always pauses).\nNeeds Auto treasure hunt in Illegal Mode."

@@ -23,8 +23,11 @@ public class IllegalModeTreasureFillerService
     ITreasureTracker tracker,
     ISupportJobFactory supportJobs,
     IZoneProvider zones,
+    IPotCycleTracker potCycle,
     IIllegalModeStartableActivityProbe startableActivities,
     AutomatorConfig automatorConfig,
+    FatesConfig fatesConfig,
+    PotsConfig potsConfig,
     TreasureConfig treasureConfig,
     ILogger<IllegalModeTreasureFillerService> logger
 ) : IOnUpdate
@@ -133,11 +136,32 @@ public class IllegalModeTreasureFillerService
     /// <summary>
     ///     When yielding is enabled (map hunt, or Sight hunt with FATE/CE pause options), pause for
     ///     a matching active or startable activity so Illegal Mode can take it, then resume afterward.
+    ///     Pot leave-early (#204) yields when "Pause auto treasure hunt for pots" is on — even if
+    ///     Pause-for-FATE is off — so the hunt does not ignore predicted pot spawns.
     /// </summary>
     private void UpdateRunningFillerHunt(bool activityNow)
     {
+        if (ShouldYieldHuntForImminentPot())
+        {
+            PauseHuntForYield("pot");
+            if (EzThrottler.Throttle("IllegalModeMapHuntYieldPot", 5000))
+            {
+                logger.Info(
+                    "Illegal Mode: pausing treasure hunt — pot within {Minutes}m leave-early window",
+                    potsConfig.PotSpawnLeadMinutes);
+            }
+
+            return;
+        }
+
         if (!YieldsHuntToAnyActivity)
         {
+            // Sight hunt with both pause options off — still resume after a pot leave-early pause.
+            if (hunter.Paused)
+            {
+                EnterHuntPhase(fromSurvey: false);
+            }
+
             return;
         }
 
@@ -173,6 +197,44 @@ public class IllegalModeTreasureFillerService
             // Activity cancelled / nothing matching left — keep filling the map.
             EnterHuntPhase(fromSurvey: false);
         }
+    }
+
+    /// <summary>
+    ///     True when Pot timing says leave for the next (or live) pot — same window as
+    ///     "Leave for pots this many minutes early" / wait-near-pots.
+    /// </summary>
+    private bool ShouldYieldHuntForImminentPot()
+    {
+        if (!automatorConfig.PauseAutoTreasureHuntForPots)
+        {
+            return false;
+        }
+
+        PotCycleSnapshot cycle = potCycle.Snapshot;
+        uint potId = cycle.CurrentActivePotFateId != 0
+            ? (uint)cycle.CurrentActivePotFateId
+            : (uint)cycle.PredictedNextPotFateId;
+
+        if (!fatesConfig.IsPotFallbackGatingEnabled(
+                potId,
+                automatorConfig.ShouldDoFates,
+                automatorConfig.PreferPotFates,
+                automatorConfig.ShouldFarmPotChests,
+                automatorConfig.ShouldPrepositionToPots))
+        {
+            return false;
+        }
+
+        if (cycle.CurrentActivePotFateId != 0)
+        {
+            return true;
+        }
+
+        return PotFallbackWindow.ShouldPreposition(
+            cycle,
+            DateTimeOffset.UtcNow,
+            potsConfig.PotSpawnLeadMinutes,
+            potFarmingEnabled: true);
     }
 
     private void PauseHuntForYield(string reason)
@@ -357,6 +419,11 @@ public class IllegalModeTreasureFillerService
             return;
         }
 
+        if (ShouldYieldHuntForImminentPot())
+        {
+            return;
+        }
+
         if (automator.CurrentState is not (AutomatorState.Idle or null))
         {
             return;
@@ -406,6 +473,16 @@ public class IllegalModeTreasureFillerService
             return;
         }
 
+        if (ShouldYieldHuntForImminentPot())
+        {
+            survey.PendingMapHunt = true;
+            logger.Info(
+                "Illegal Mode: survey found {Silver} silver, {Bronze} bronze — deferring hunt until after pot leave-early",
+                silver,
+                bronze);
+            return;
+        }
+
         logger.Info(
             "Illegal Mode: survey found {Silver} silver, {Bronze} bronze — starting hunt",
             silver,
@@ -427,6 +504,11 @@ public class IllegalModeTreasureFillerService
     private bool ShouldStartHunt(AutomaticTreasureSurveyMemory survey)
     {
         if (!hunter.IsVnavAvailable || survey.IsBusy)
+        {
+            return false;
+        }
+
+        if (ShouldYieldHuntForImminentPot())
         {
             return false;
         }
@@ -499,17 +581,9 @@ public class IllegalModeTreasureFillerService
 
         if (hunter.Paused)
         {
-            // After a distant FATE/CE, continue from nearby remaining pads instead of walking
-            // back to where the route was paused (exclusive Sight resumes in place).
-            if (YieldsHuntToAnyActivity)
-            {
-                hunter.ResumeNearPlayer();
-            }
-            else
-            {
-                hunter.Resume();
-            }
-
+            // After a distant FATE/CE/pot, continue from nearby remaining pads instead of walking
+            // back to where the route was paused (includes pot leave-early with Sight pause-FATE off).
+            hunter.ResumeNearPlayer();
             hadFillerHunt = true;
             logger.Debug("Illegal Mode: resumed automatic treasure hunt");
         }

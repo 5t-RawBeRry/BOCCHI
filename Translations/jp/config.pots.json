@@ -12,7 +12,7 @@
     },
     "pot_spawn_lead_minutes": {
       "label": "マジックポットの何分前に出るか",
-      "tooltip": "次のポット出現の何分前に他の作業をやめて向かうか。下の FATE/CE 制限とは別。"
+      "tooltip": "次のポット出現の何分前に他の作業をやめて向かうか。不正モードの「自動トレジャーハントをポットで一時停止」でも使う。下の FATE/CE 制限とは別。"
     },
     "fate_fallback_cutoff_minutes": {
       "label": "マジックポットの（分）以内はFATEを始めない",

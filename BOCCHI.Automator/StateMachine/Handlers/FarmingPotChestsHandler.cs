@@ -87,6 +87,13 @@ public class FarmingPotChestsHandler
     /// <summary>Destination move that forces a fresh path even if one is already running.</summary>
     private const float RepathDrift = 2f;
 
+    /// <summary>
+    ///     Do not re-issue the same PathfindAndMoveTo while vnav is idle near the last pad
+    ///     (TreasureHunterService SameDestRepathCooldown). Without this, Idle + 750ms throttle
+    ///     spam-queues move-to on an already-reached pad and never opens.
+    /// </summary>
+    private static readonly TimeSpan SameDestRepathCooldown = TimeSpan.FromSeconds(2.5);
+
     /// <summary>Hard cap on the whole tail after Cache Me drops, including walking to the coffer.</summary>
     private static readonly TimeSpan PostBuffGrace = TimeSpan.FromSeconds(30);
 
@@ -115,6 +122,15 @@ public class FarmingPotChestsHandler
 
     /// <summary>Last destination handed to the pathfinder, for drift detection.</summary>
     private Vector3? lastPathDestination;
+
+    /// <summary>When <see cref="lastPathDestination"/> was last issued (UTC).</summary>
+    private DateTimeOffset lastPathIssueAt = DateTimeOffset.MinValue;
+
+    /// <summary>
+    ///     After a mid-route PathStep cancel, prefer plain PathfindAndMoveTo until we arrive or
+    ///     the destination drifts — avoids PathStep cancel ↔ recalculate thrash (~265ms loops).
+    /// </summary>
+    private bool preferDirectApproach;
 
     /// <summary>In-flight aethernet route plan for the current long hop.</summary>
     private Task<PathCalculationResult>? travelPlanTask;
@@ -158,6 +174,10 @@ public class FarmingPotChestsHandler
         chainManager.CancelAll();
         pathfinder.Stop();
         activeChain = null;
+        ClearTravelPlan();
+        preferDirectApproach = false;
+        lastPathIssueAt = DateTimeOffset.MinValue;
+        lastPathDestination = null;
         pandoraAutoOpen.Hold();
     }
 
@@ -168,6 +188,10 @@ public class FarmingPotChestsHandler
         chainManager.CancelAll();
         pathfinder.Stop();
         activeChain = null;
+        ClearTravelPlan();
+        preferDirectApproach = false;
+        lastPathIssueAt = DateTimeOffset.MinValue;
+        lastPathDestination = null;
         tickChests.Clear();
         tickReveals.Clear();
         defendingInCombat = false;
@@ -216,7 +240,36 @@ public class FarmingPotChestsHandler
             pathfinder.Stop();
             activeChain = null;
             ClearTravelPlan();
+            preferDirectApproach = false;
+            lastPathIssueAt = DateTimeOffset.MinValue;
+            lastPathDestination = null;
             ResetApproachWatch();
+        }
+
+        // PathStep hops often complete as canceled when vnav stops short of the issued point
+        // (PathfindToChain). Re-issuing a fresh aethernet plan every tick thrashes — finish on foot.
+        if (activeChain is { IsCompleted: true } finishedChain)
+        {
+            ChainResult? finished = null;
+            try
+            {
+                if (finishedChain.IsCompletedSuccessfully)
+                {
+                    finished = finishedChain.Result;
+                }
+            }
+            catch
+            {
+                // Ignore faulted tasks — treat as a normal completion clear below.
+            }
+
+            if (finished is { IsCanceled: true })
+            {
+                ClearTravelPlan();
+                preferDirectApproach = true;
+                lastPathIssueAt = DateTimeOffset.MinValue;
+                lastPathDestination = null;
+            }
         }
 
         activeChain = null;
@@ -226,6 +279,9 @@ public class FarmingPotChestsHandler
         {
             pathfinder.Stop();
             ClearTravelPlan();
+            preferDirectApproach = false;
+            lastPathIssueAt = DateTimeOffset.MinValue;
+            lastPathDestination = null;
 
             if (!defendingInCombat)
             {
@@ -360,7 +416,9 @@ public class FarmingPotChestsHandler
         }
 
         float distance = player.Position.Distance2D(reveal.Position);
-        if (distance > OpenTreasureCofferChain.InteractDistance)
+        // MaxOpenAttemptDistance (not InteractDistance): vnav often parks in the 2–3.5y band
+        // and never reaches the tighter interact gate — open chain can still succeed there.
+        if (distance > OpenTreasureCofferChain.MaxOpenAttemptDistance)
         {
             if (!EnsurePathing(reveal.Position, allowRemount: false))
             {
@@ -373,6 +431,7 @@ public class FarmingPotChestsHandler
             return true;
         }
 
+        preferDirectApproach = false;
         pathfinder.Stop();
         TryOpenChest(reveal);
         return true;
@@ -721,7 +780,7 @@ public class FarmingPotChestsHandler
             }
 
             // Get on foot before closing the last stretch. Travel and the elixir are fine mounted,
-            // but the open needs to be within 2y of the coffer and that is not reliable from a
+            // but the open needs to be within a few y of the coffer and that is not reliable from a
             // mount — least of all in the air, where Dismount cannot land us on the spot.
             if (DismountAssist.TryDismount(conditions, ReportDismount))
             {
@@ -729,8 +788,10 @@ public class FarmingPotChestsHandler
             }
 
             // 2D — reveal Y ≈ -500 made 3D distance ~500y and blocked open forever (#170).
+            // Match OpenTreasureCofferChain's open-attempt range so we do not keep pathing in the
+            // 2–3.5y band where vnav often parks and never starts PotChestFarm::Open.
             float distance = player.Position.Distance2D(reveal.Position);
-            if (distance > OpenTreasureCofferChain.InteractDistance)
+            if (distance > OpenTreasureCofferChain.MaxOpenAttemptDistance)
             {
                 if (IsApproachStuck(reveal.Position, distance))
                 {
@@ -751,6 +812,8 @@ public class FarmingPotChestsHandler
                 }
                 return;
             }
+
+            preferDirectApproach = false;
 
             ResetApproachWatch();
             pathfinder.Stop();
@@ -893,7 +956,7 @@ public class FarmingPotChestsHandler
                 farm.WaitingForSpawnSince = DateTimeOffset.UtcNow;
             }
 
-            if (distance > OpenTreasureCofferChain.InteractDistance)
+            if (distance > OpenTreasureCofferChain.MaxOpenAttemptDistance)
             {
                 if (IsApproachStuck(pathable, distance))
                 {
@@ -909,6 +972,7 @@ public class FarmingPotChestsHandler
                 return;
             }
 
+            preferDirectApproach = false;
             ResetApproachWatch();
             pathfinder.Stop();
 
@@ -923,7 +987,7 @@ public class FarmingPotChestsHandler
 
         farm.WaitingForSpawnSince = DateTimeOffset.MinValue;
 
-        if (distance > OpenTreasureCofferChain.InteractDistance)
+        if (distance > OpenTreasureCofferChain.MaxOpenAttemptDistance)
         {
             if (IsApproachStuck(pathable, distance))
             {
@@ -938,6 +1002,7 @@ public class FarmingPotChestsHandler
             return;
         }
 
+        preferDirectApproach = false;
         ResetApproachWatch();
         pathfinder.Stop();
         TryOpenChest(liveChest);
@@ -976,7 +1041,24 @@ public class FarmingPotChestsHandler
             return false;
         }
 
+        float distance = player.Position.Distance2D(pathable);
+
+        // OpenTreasureCofferChain can already interact inside MaxOpenAttemptDistance. Keep issuing
+        // PathfindAndMoveTo here and vnav often parks just outside InteractDistance — no Open chain,
+        // endless "Queueing move-to" (#nyanoha pot chest).
+        if (distance <= OpenTreasureCofferChain.MaxOpenAttemptDistance)
+        {
+            if (!pathfinder.IsIdle())
+            {
+                pathfinder.Stop();
+            }
+
+            lastPathIssueAt = DateTimeOffset.MinValue;
+            return true;
+        }
+
         // Long hops use the FATE/CE aethernet planner; short ones stay on vnav.
+        // After a canceled PathStep hop, preferDirectApproach skips re-planning until we arrive.
         if (TryTravelByPlan(pathable))
         {
             return true;
@@ -984,17 +1066,35 @@ public class FarmingPotChestsHandler
 
         // Re-path when the destination moves, not only when vnav is idle.
         bool drifted = lastPathDestination is not { } last || last.Distance2D(pathable) > RepathDrift;
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        bool sameDestCooldown = !drifted
+            && lastPathIssueAt != DateTimeOffset.MinValue
+            && now - lastPathIssueAt < SameDestRepathCooldown;
+
+        // Idle + still short of dest: PathfindToChain treats that as cancel; re-issuing every
+        // throttle tick thrashes. TreasureHunterService uses the same "parked" skip.
+        bool parkedOnIssuedPoint = !drifted
+            && pathfinder.IsIdle()
+            && lastPathDestination is { } issued
+            && player.Position.Distance2D(issued) <= OpenTreasureCofferChain.MaxOpenAttemptDistance + 1.5f;
+
+        if (sameDestCooldown || parkedOnIssuedPoint)
+        {
+            return true;
+        }
+
         string throttleKey = $"PotChestFarm::Path::{MathF.Round(pathable.X)}::{MathF.Round(pathable.Z)}";
         if ((pathfinder.IsIdle() || drifted) && EzThrottler.Throttle(throttleKey, 750))
         {
             lastPathDestination = pathable;
+            lastPathIssueAt = now;
             // Already snapped in TreasurePathing. A second 40y floor snap pulled east Daylight
             // Pottery pads ~30y onto unreachable mesh (#194).
             pathfinder.PathfindAndMoveTo(new(pathable));
         }
 
         // Remount only for longer walks — not while already on top of a reveal.
-        if (allowRemount && player.Position.Distance2D(pathable) > 15f)
+        if (allowRemount && distance > 15f)
         {
             IZone zone = zones.GetZone();
             MountWait.TryCastIfNeeded(
@@ -1016,8 +1116,14 @@ public class FarmingPotChestsHandler
     /// </summary>
     private bool TryTravelByPlan(Vector3 destination)
     {
-        if (player.Position.Distance2D(destination) <= NavigationConstants.MaxDirectWalkDistance)
+        if (preferDirectApproach
+            || player.Position.Distance2D(destination) <= NavigationConstants.MaxDirectWalkDistance)
         {
+            if (player.Position.Distance2D(destination) <= NavigationConstants.MaxDirectWalkDistance)
+            {
+                preferDirectApproach = false;
+            }
+
             ClearTravelPlan();
             return false;
         }
@@ -1025,6 +1131,7 @@ public class FarmingPotChestsHandler
         if (travelPlanTarget is { } planned && planned.Distance2D(destination) > RepathDrift)
         {
             ClearTravelPlan();
+            preferDirectApproach = false;
         }
 
         if (travelPlanTask is { IsCompleted: true } finished)
@@ -1039,6 +1146,7 @@ public class FarmingPotChestsHandler
             {
                 travelPlanTarget = null;
                 travelSteps = null;
+                preferDirectApproach = true;
                 return false;
             }
 
@@ -1057,14 +1165,18 @@ public class FarmingPotChestsHandler
 
         if (travelSteps is { Count: > 0 })
         {
+            lastPathDestination = destination;
+            lastPathIssueAt = DateTimeOffset.UtcNow;
             activeChain = pathStepExecutor.Execute(travelSteps.Dequeue());
             return true;
         }
 
         if (travelSteps != null)
         {
-            // Plan spent — the last leg lands us close enough for plain vnav to finish.
+            // Plan spent — PathStep may have canceled short of the pad. Prefer direct vnav rather
+            // than calculating a fresh multi-hop plan every tick.
             ClearTravelPlan();
+            preferDirectApproach = true;
             return false;
         }
 

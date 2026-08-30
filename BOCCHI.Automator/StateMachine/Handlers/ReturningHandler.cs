@@ -71,6 +71,13 @@ public class ReturningHandler
             return StatePriority.Never;
         }
 
+        // Raise nearby players before leaving the FATE/CE site — keep the Return latch, but do
+        // not score while triage is pending/active (otherwise VeryHigh hides triage + combat wait).
+        if (TriageSession.IsActive(memory))
+        {
+            return StatePriority.Never;
+        }
+
         // Pathfinding already dequeued Return — this latch must win even if a map hunt was
         // just latched, or Teleport starts from the field and Lifestream fires short of camp.
         if (memory.TryRemember<ReturningStateMemory>(out ReturningStateMemory _))
@@ -118,12 +125,6 @@ public class ReturningHandler
             return StatePriority.Never;
         }
 
-        // Raise nearby players before leaving the FATE/CE site.
-        if (TriageSession.IsActive(memory))
-        {
-            return StatePriority.Never;
-        }
-
         // Opportunistic Return while idle (OC has no Return CD). Keep below ChoosingActivity.
         return idle.IsReadyToReturn() ? StatePriority.VeryLow : StatePriority.Never;
     }
@@ -136,6 +137,23 @@ public class ReturningHandler
         pathfinder.Stop();
         vnav.Stop();
         addons.RegisterListener(AddonEvent.PostSetup, "SelectYesno", SelectYesNoListener);
+
+        // Triage (or anything else) can hold us off Returning for a long time while the latch's
+        // QueuedAt keeps ticking — without a refresh the CastAttemptBudget expires the moment we
+        // resume and we skip Return for Teleport. Keep remaining humanize delay; reset the budget.
+        if (memory.TryRemember<ReturningStateMemory>(out ReturningStateMemory prior))
+        {
+            TimeSpan delay = prior.IsReadyToCast()
+                ? TimeSpan.Zero
+                : prior.CastDelay - prior.GetTimeQueued();
+            if (delay < TimeSpan.Zero)
+            {
+                delay = TimeSpan.Zero;
+            }
+
+            memory.Forget<ReturningStateMemory>();
+            memory.TryAdd(new ReturningStateMemory(delay));
+        }
     }
 
     public override void Handle()

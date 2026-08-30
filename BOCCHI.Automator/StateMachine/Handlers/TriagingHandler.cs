@@ -57,14 +57,16 @@ public class TriagingHandler
             return StatePriority.Never;
         }
 
-        if (memory.TryRemember<TriagingMemory>(out TriagingMemory _))
-        {
-            return conditions[ConditionFlag.Unconscious] ? StatePriority.Never : StatePriority.Critical;
-        }
-
-        if (conditions[ConditionFlag.Unconscious] || conditions[ConditionFlag.InCombat])
+        if (conditions[ConditionFlag.Unconscious])
         {
             return StatePriority.Never;
+        }
+
+        if (memory.TryRemember<TriagingMemory>(out TriagingMemory _))
+        {
+            // Stay Critical through combat so Returning's VeryHigh latch cannot steal the session
+            // mid-raise (Vertigo: status "Returning to camp" while standing still after a FATE).
+            return StatePriority.Critical;
         }
 
         if (!memory.TryRemember<PendingTriageMemory>(out PendingTriageMemory _))
@@ -78,6 +80,8 @@ public class TriagingHandler
             return StatePriority.Never;
         }
 
+        // Pending + InCombat used to score Never, so ReturningStateMemory (VeryHigh) owned the
+        // UI and blocked Pathfinding Teleport until the Return timeout — triage never started.
         return StatePriority.Always;
     }
 

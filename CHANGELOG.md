@@ -1,12 +1,11 @@
-# 4.2.0.5
+# 4.2.0.6
 
-### Treasure Hunt
-- Mid-route Treasure Sight no longer mount/dismount thrash: holds the route until you are on foot, then casts (auto-mount stays off until Sight finishes)
-- Standing in front of a coffer no longer re-queues the same walk every tick (that cancelled movement and left you stuck)
-- Sitting just over 2y from a chest now opens it instead of walking to a mesh point beside it and waiting
-- Stuck sideways step is given time to start; auto-mount stays off so remount does not cancel it. If the pad is still empty after that, it is skipped. If a chest is still blocked, interact is allowed from a bit farther away
+### Pot treasure
+- Interrupted walks to a pad no longer cancel and re-plan every tick — finish on foot instead
+- When already close enough to open a coffer, open it instead of re-queuing the same walk (often parked just outside the old tight range)
+- Standing next to a pad no longer repaths to that same spot every tick
 
 ### Illegal Mode
-- "Returning to camp" no longer stands forever after a FATE/CE: stops movement, waits for combat/dismount, then casts Return; if Return stays blocked it times out and continues with teleport/walk instead
-- Leaving Idle during a map treasure hunt no longer stops the hunt's walk (that re-queued the same camp-to-coffer path every tick)
-- New options under Auto treasure hunt: pause for FATEs and/or CEs even when Treasure Sight is available (map hunt without Sight already pauses for both). Off keeps Sight hunts from yielding to that activity type
+- With Triage Mode, no longer sit on "Returning to camp" while raises are still pending (including when combat has not cleared) — triage first, then Return
+- After Triage or Treasure Sight, switch back to the previous phantom job before casting Return
+- New option under Auto treasure hunt: pause for pots (uses Pot timing leave-early), then resume nearby

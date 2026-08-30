@@ -12,7 +12,7 @@
     },
     "pot_spawn_lead_minutes": {
       "label": "Leave for pots this many minutes early",
-      "tooltip": "Minutes before the next pot spawn to stop other work and head there. Independent of the FATE/CE cutoffs below."
+      "tooltip": "Minutes before the next pot spawn to stop other work and head there. Also used by Illegal Mode “Pause auto treasure hunt for pots”. Independent of the FATE/CE cutoffs below."
     },
     "fate_fallback_cutoff_minutes": {
       "label": "Do not start FATEs within (minutes of pots)",
