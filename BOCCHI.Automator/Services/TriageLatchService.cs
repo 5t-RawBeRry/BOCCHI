@@ -65,8 +65,7 @@ public sealed class TriageLatchService
             return;
         }
 
-        // Treasure hunt owns the Automator while SuspendedForTreasure — triage cannot run and
-        // PendingTriage would block Pause-for-CE/FATE yield checks until the hunt ends.
+        // Treasure hunt owns travel — triage cannot run until the hunt pauses or ends.
         if (automator.SuspendedForTreasure)
         {
             return;

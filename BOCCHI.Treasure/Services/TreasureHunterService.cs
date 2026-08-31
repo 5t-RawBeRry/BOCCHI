@@ -167,7 +167,7 @@ public class TreasureHunterService
     /// <summary>Node → authored order index (peel-off must not jump ahead of the route).</summary>
     private readonly Dictionary<uint, int> authoredNodeOrder = [];
 
-    /// <summary>Hysteresis + debounce: Hide required until pack threats stay clear.</summary>
+    /// <summary>Hide required until pack threats stay clear (debounced).</summary>
     private bool ninjaHideRequired;
 
     private readonly NinjaHideRouteGate ninjaHideRouteGate = new();

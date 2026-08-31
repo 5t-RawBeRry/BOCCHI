@@ -32,7 +32,7 @@ public class IllegalModeTreasureFillerService
     ILogger<IllegalModeTreasureFillerService> logger
 ) : IOnUpdate
 {
-    // Default Order (0). TriageLatchService is Order 10 so PendingTriage is set before Sight latches.
+    // TriageLatchService Order 10 runs before this (Order 0) on the update pass.
     public int Order => 0;
 
     private bool hadPrimaryActivity;
@@ -174,8 +174,7 @@ public class IllegalModeTreasureFillerService
                 return;
             }
 
-            // Pending triage / buffs / camp Sight block the Automator SM while the hunt owns
-            // travel — still honour Pause-for-CE/FATE when a matching activity is startable.
+            // Triage / buffs / camp Sight block the Automator SM — still check startable CE/FATE.
             if (TryPauseForStartableYield())
             {
                 return;

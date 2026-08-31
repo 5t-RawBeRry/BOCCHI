@@ -10,6 +10,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Ocelot.Actions;
 using Ocelot.Extensions;
 using Ocelot.Services.PlayerState;
+using System.Numerics;
 using ActionType = FFXIVClientStructs.FFXIV.Client.Game.ActionType;
 using ECommonsPlayer = ECommons.GameHelpers.Player;
 
@@ -354,4 +355,103 @@ public sealed class NinjaHideAssist(
         // Equip is async — caller polls active gearset / job.
         return false;
     }
+}
+
+/// <summary>
+///     Enter/exit Hide requirement with clear-debounce so pack threats do not burn Hide cooldown
+///     between nearby high-Knowledge mobs.
+/// </summary>
+public sealed class NinjaHideRouteGate
+{
+    public static readonly TimeSpan ClearDebounce = TimeSpan.FromSeconds(2.5);
+
+    public const float RemountClearMinYalms = 35f;
+
+    private DateTime? clearCandidateSinceUtc;
+
+    public bool UpdateRequired(
+        IObjectTable objects,
+        Vector3 playerPosition,
+        bool currentlyRequired,
+        bool isMounted,
+        int knowledgeHideOffset,
+        float enterDistance,
+        float exitDistance)
+    {
+        if (KnowledgeThreat.TryFindIsleblazer(
+                objects,
+                playerPosition,
+                KnowledgeThreat.IsleblazerUnhideDistance,
+                out _))
+        {
+            ResetClearCandidate();
+            return false;
+        }
+
+        if (KnowledgeThreat.TryGetPlayerForayLevel(objects) is not int foray)
+        {
+            ResetClearCandidate();
+            return false;
+        }
+
+        int hideAt = KnowledgeThreat.HideAtOrAbove(foray, knowledgeHideOffset);
+        float enter = enterDistance;
+        if (isMounted)
+        {
+            enter += KnowledgeThreat.MountedThreatEnterBonus;
+        }
+
+        float exit = Math.Max(exitDistance, enter);
+
+        if (currentlyRequired)
+        {
+            if (KnowledgeThreat.TryFindThreat(objects, playerPosition, hideAt, exit, out _, out _))
+            {
+                ResetClearCandidate();
+                return true;
+            }
+
+            DateTime now = DateTime.UtcNow;
+            clearCandidateSinceUtc ??= now;
+            if (now - clearCandidateSinceUtc.Value < ClearDebounce)
+            {
+                return true;
+            }
+
+            ResetClearCandidate();
+            return false;
+        }
+
+        ResetClearCandidate();
+        return KnowledgeThreat.TryFindThreat(objects, playerPosition, hideAt, enter, out _, out _);
+    }
+
+    public bool ShouldKeepStealthForThreats(
+        IObjectTable objects,
+        Vector3 playerPosition,
+        int knowledgeHideOffset,
+        float exitDistance)
+    {
+        if (KnowledgeThreat.TryFindIsleblazer(
+                objects,
+                playerPosition,
+                KnowledgeThreat.IsleblazerUnhideDistance,
+                out _))
+        {
+            return false;
+        }
+
+        if (KnowledgeThreat.TryGetPlayerForayLevel(objects) is not int foray)
+        {
+            return false;
+        }
+
+        int hideAt = KnowledgeThreat.HideAtOrAbove(foray, knowledgeHideOffset);
+        float remountClear = Math.Max(exitDistance, RemountClearMinYalms);
+        return KnowledgeThreat.TryFindThreat(objects, playerPosition, hideAt, remountClear, out _, out _);
+    }
+
+    public void Reset() => ResetClearCandidate();
+
+    private void ResetClearCandidate() => clearCandidateSinceUtc = null;
 }
