@@ -5,6 +5,7 @@ using BOCCHI.Common.Data.SupportJobs;
 using BOCCHI.Common.Services;
 using Dalamud.Plugin.Services;
 using ECommons.Throttlers;
+using Ocelot.Services.Logger;
 using Ocelot.States.Score;
 
 namespace BOCCHI.Automator.StateMachine.Handlers;
@@ -14,79 +15,128 @@ public class ReturningToJobHandler
     IAutomatorMemory memory,
     ISupportJobFactory jobs,
     ISupportJobChanger changer,
-    ICondition conditions
+    ICondition conditions,
+    ILogger<ReturningToJobHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.ReturningToJob)
 {
-    // Must beat Pathfinding (High) and Returning's VeryHigh Return latch so job restore is not skipped.
+    private const int RestoreTimeoutSeconds = 20;
+
+    private DateTime restorePendingSince = DateTime.MinValue;
+
     public override StatePriority GetScore()
     {
-        // Only TriagingMemory (active Chemist session) — Pending alone must not block restore
-        // after triage clears without entering, and Sight uses CastingTreasureSightMemory.
+        // Yield while Sight / triage / buffs own the phantom job.
         if (memory.TryRemember<CastingTreasureSightMemory>(out CastingTreasureSightMemory _)
-            || memory.TryRemember<TriagingMemory>(out TriagingMemory _))
+            || memory.TryRemember<TriagingMemory>(out TriagingMemory _)
+            || memory.TryRemember<ApplyingBuffsMemory>(out ApplyingBuffsMemory _))
         {
             return StatePriority.Never;
         }
 
-        // Critical beats Returning's VeryHigh latch so we restore Chemist/WHM (or Sight) before
-        // casting Return — equal VeryHigh ties were registration-order dependent.
-        return TryGetJobToRestore(out _) ? StatePriority.Critical : StatePriority.Never;
+        // Critical beats Pathfinding / Returning so restore finishes before travel.
+        return IllegalModeActivityWork.HasPendingJobRestore(memory)
+            ? StatePriority.Critical
+            : StatePriority.Never;
+    }
+
+    public override void Enter()
+    {
+        base.Enter();
+        restorePendingSince = DateTime.UtcNow;
+    }
+
+    public override void Exit(AutomatorState next)
+    {
+        base.Exit(next);
+        restorePendingSince = DateTime.MinValue;
     }
 
     public override void Handle()
     {
-        if (!EzThrottler.Throttle("ReturningToJobHandler::Gate"))
+        if (!IllegalModeActivityWork.HasPendingJobRestore(memory))
         {
             return;
         }
 
-        if (!TryGetJobToRestore(out SupportJobId jobId))
+        if (!EzThrottler.Throttle("ReturningToJobHandler::Gate", 250))
         {
             return;
         }
 
-        if (jobs.TryGetCurrent(out SupportJob current) && current.Id == jobId)
-        {
-            ForgetSavedJobs();
-            return;
-        }
-
-        if (changer.IsBusy() || PhantomJobChangeGate.IsBlocked(conditions))
+        if (TryClearOrTimeoutRestore())
         {
             return;
         }
 
+        if (!IllegalModeActivityWork.TryGetPendingJobRestore(memory, out SupportJobId jobId))
+        {
+            return;
+        }
+
+        jobs.TryGetCurrent(out SupportJob current);
+        if (changer.IsBusy())
+        {
+            LogPending(current?.Id, jobId, "job changer busy");
+            return;
+        }
+
+        if (PhantomJobChangeGate.IsBlocked(conditions))
+        {
+            LogPending(current?.Id, jobId, "job swap gated (combat, casting, occupied, …)");
+            return;
+        }
+
+        logger.Debug(
+            "Restoring phantom job {From} → {To}",
+            current?.Id.ToString() ?? "?",
+            jobId);
         changer.Change(jobId);
     }
 
-    private bool TryGetJobToRestore(out SupportJobId jobId)
+    private bool TryClearOrTimeoutRestore()
     {
-        if (memory.TryRemember<BuffSupportJobMemory>(out BuffSupportJobMemory buffJob))
+        if (IllegalModeActivityWork.TryClearCompletedJobRestore(memory, jobs))
         {
-            jobId = buffJob.Job;
+            if (EzThrottler.Throttle("ReturningToJobHandler::Cleared", 2000))
+            {
+                logger.Debug("Job restore complete — cleared saved job latch");
+            }
+
             return true;
         }
 
-        if (memory.TryRemember<TreasureSightSupportJobMemory>(out TreasureSightSupportJobMemory treasureSightJob))
+        if (restorePendingSince == DateTime.MinValue)
         {
-            jobId = treasureSightJob.Job;
-            return true;
+            restorePendingSince = DateTime.UtcNow;
         }
 
-        if (memory.TryRemember<TriageSupportJobMemory>(out TriageSupportJobMemory triageJob))
+        if (DateTime.UtcNow - restorePendingSince < TimeSpan.FromSeconds(RestoreTimeoutSeconds))
         {
-            jobId = triageJob.Job;
-            return true;
+            return false;
         }
 
-        jobId = default;
-        return false;
+        jobs.TryGetCurrent(out SupportJob current);
+        IllegalModeActivityWork.TryGetPendingJobRestore(memory, out SupportJobId target);
+        logger.Warning(
+            "Job restore timed out after {Seconds}s (current={Current}, target={Target}) — clearing latch",
+            RestoreTimeoutSeconds,
+            current?.Id.ToString() ?? "?",
+            target);
+        IllegalModeActivityWork.ForgetJobRestoreMemories(memory);
+        return true;
     }
 
-    private void ForgetSavedJobs()
+    private void LogPending(SupportJobId? current, SupportJobId target, string reason)
     {
-        memory.Forget<BuffSupportJobMemory>();
-        memory.Forget<TreasureSightSupportJobMemory>();
-        memory.Forget<TriageSupportJobMemory>();
+        if (!EzThrottler.Throttle("ReturningToJobHandler::Pending", 5000))
+        {
+            return;
+        }
+
+        logger.Debug(
+            "Job restore waiting: {Reason} (current={Current}, target={Target})",
+            reason,
+            current?.ToString() ?? "?",
+            target);
     }
 }

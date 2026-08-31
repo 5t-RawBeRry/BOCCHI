@@ -1,12 +1,8 @@
-# 4.2.0.6
+# 4.2.0.7
 
-### Pot treasure
-- Interrupted walks to a pad no longer cancel and re-plan every tick — finish on foot instead
-- When already close enough to open a coffer, open it instead of re-queuing the same walk (often parked just outside the old tight range)
-- Standing next to a pad no longer repaths to that same spot every tick
-
-### Illegal Mode
-- With Triage Mode, no longer sit on "Returning to camp" while raises are still pending (including when combat has not cleared) — triage first, then Return
-- After Triage or Treasure Sight, switch back to the previous phantom job before casting Return
-- New option under Auto treasure hunt: pause for pots (uses Pot timing leave-early), then resume nearby
-- Auto treasure hunt now casts Treasure Sight at camp while waiting (Interval), then starts a hunt if fill is high enough — no longer AFK between CEs until you cast Sight by hand
+### Fixes
+- Illegal Mode no longer gets stuck on "Switching back to job" at the knowledge crystal after auto buffs
+- Auto buff and Treasure Sight no longer fight at camp — buffs finish, your combat job comes back, then Sight can run
+- Treasure Sight no longer resurveys after every buff or Sight cast — only after a FATE or CE
+- "Do not start FATEs within X minutes of pots" no longer drops a FATE you are already fighting
+- After a pot FATE, pot chests are farmed before resuming the normal treasure route

@@ -53,6 +53,9 @@ public class Automator
     ILogger<Automator> logger
 ) : IAutomator, IOnUpdate, IOnStop
 {
+    // Before IllegalModeTreasureFillerService (0) so pot-chest farm latches first.
+    public int Order => 5;
+
     private IStateMachine<AutomatorState>? stateMachine;
 
     private IStateMachine<AutomatorState> StateMachine => stateMachine ??= stateMachineFactory();
@@ -204,6 +207,7 @@ public class Automator
         SuspendedForShopping = false;
 
         memory.Forget<NavigationInterruptedMemory>();
+        IllegalModeActivityWork.ForgetJobRestoreMemories(memory);
         autoRotation.PrepareForIllegalMode();
         EnsurePotChestFarmForBuff();
     }

@@ -1,4 +1,5 @@
 using BOCCHI.Automator.Data;
+using BOCCHI.Automator.Services;
 using BOCCHI.Buff.Data;
 using BOCCHI.Buff.Services;
 using BOCCHI.Common.Config;
@@ -34,6 +35,13 @@ public class ApplyingBuffsHandler
             return StatePriority.VeryHigh;
         }
 
+        if (IllegalModeActivityWork.HasPendingJobRestore(memory)
+            || memory.TryRemember<AutomaticTreasureSurveyMemory>(out AutomaticTreasureSurveyMemory survey)
+               && survey.IsBusy)
+        {
+            return StatePriority.Never;
+        }
+
         if (!config.ShouldAutomateBuffs || !buffs.ShouldRefreshAny())
         {
             return StatePriority.Never;
@@ -50,6 +58,11 @@ public class ApplyingBuffsHandler
             return StatePriority.Never;
         }
 
+        if (jobs.TryGetCurrent(out SupportJob current) && current.Id == SupportJobId.PhantomFreelancer)
+        {
+            return StatePriority.Never;
+        }
+
         return StatePriority.MediumHigh;
     }
 
@@ -59,9 +72,12 @@ public class ApplyingBuffsHandler
 
         memory.TryAdd<ApplyingBuffsMemory>();
         memory.Forget<InquiringMindAttemptedMemory>();
-        if (jobs.TryGetCurrent(out SupportJob job))
+        if (!IllegalModeActivityWork.TryRememberPreBuffJob(memory, jobs)
+            && jobs.TryGetCurrent(out SupportJob job))
         {
-            memory.TryAdd(new BuffSupportJobMemory(job.Id));
+            logger.Debug(
+                "Illegal Mode buff: kept existing restore latch (current job {Job})",
+                job.Id);
         }
     }
 

@@ -232,6 +232,12 @@ public class GoalValidator
             return false;
         }
 
+        // Pot cutoff only blocks starting a FATE — keep one you are already in.
+        if (IsEngagedWithFate(id))
+        {
+            return true;
+        }
+
         PotCycleSnapshot cycle = potCycle.Snapshot;
         bool potFarming = fatesConfig.IsPotFallbackGatingEnabled(
             (uint)cycle.PredictedNextPotFateId,
@@ -279,7 +285,11 @@ public class GoalValidator
     /// </summary>
     private bool IsEngagedWithFate(FateId id) =>
         fateContext.GetFateId() == id
-        || (conditions[ConditionFlag.InCombat] && fateContext.IsInCombatWith(id));
+        || (conditions[ConditionFlag.InCombat] && fateContext.IsInCombatWith(id))
+        || (memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _)
+            && memory.TryRemember<GoalMemory>(out GoalMemory goal)
+            && goal.Goal.GoalType is FateGoal(var goalId)
+            && goalId == id);
 
     private bool IsCommittedToCriticalEncounter(CriticalEncounterId id)
     {

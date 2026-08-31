@@ -35,7 +35,7 @@ public class IllegalModeTreasureFillerService
     // Default Order (0). TriageLatchService is Order 10 so PendingTriage is set before Sight latches.
     public int Order => 0;
 
-    private bool hadActivity;
+    private bool hadPrimaryActivity;
 
     private bool hadFillerHunt;
 
@@ -82,18 +82,19 @@ public class IllegalModeTreasureFillerService
         EnsureSurveyMemory(out AutomaticTreasureSurveyMemory survey);
         ClearSurveyLatchIfSightUnavailable(survey);
 
-        bool activityNow = IllegalModeActivityWork.HasFillerBlockingActivity(memory);
-        if (hadActivity && !activityNow)
+        bool fillerBusy = IllegalModeActivityWork.HasFillerBlockingActivity(memory);
+        bool primaryActivityNow = IllegalModeActivityWork.HasPrimaryActivity(memory);
+        if (hadPrimaryActivity && !primaryActivityNow)
         {
             OnActivityCompleted(survey);
         }
 
-        hadActivity = activityNow;
+        hadPrimaryActivity = primaryActivityNow;
 
         if (hunter.ManagedByIllegalModeFiller && hunter.Running)
         {
             hadFillerHunt = true;
-            UpdateRunningFillerHunt(activityNow);
+            UpdateRunningFillerHunt(fillerBusy);
             return;
         }
 
@@ -103,7 +104,7 @@ public class IllegalModeTreasureFillerService
             hadFillerHunt = false;
         }
 
-        if (activityNow)
+        if (fillerBusy)
         {
             PauseFillerHuntForActivity();
             return;
@@ -339,6 +340,11 @@ public class IllegalModeTreasureFillerService
             return;
         }
 
+        if (ShouldDeferToPotChestFarm())
+        {
+            return;
+        }
+
         // Same map-hunt session was paused for this FATE/CE — continue remaining pads.
         if (hunter.ManagedByIllegalModeFiller && hunter.Running && hunter.Paused)
         {
@@ -348,6 +354,17 @@ public class IllegalModeTreasureFillerService
         }
 
         LatchPostActivityHunt(survey, "activity completed");
+    }
+
+    private bool ShouldDeferToPotChestFarm()
+    {
+        if (!automatorConfig.ShouldFarmPotChests && !context.IsPotsAndTreasure)
+        {
+            return false;
+        }
+
+        return memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _)
+               || memory.TryRemember<PendingPotChestFarmMemory>(out PendingPotChestFarmMemory _);
     }
 
     private void LatchPostActivityHunt(AutomaticTreasureSurveyMemory survey, string reason)
@@ -607,7 +624,7 @@ public class IllegalModeTreasureFillerService
 
     private void ResetSession()
     {
-        hadActivity = false;
+        hadPrimaryActivity = false;
         hadFillerHunt = false;
         loggedSightUnavailable = false;
         memory.Forget<AutomaticTreasureSurveyMemory>();

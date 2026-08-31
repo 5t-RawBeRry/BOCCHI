@@ -30,13 +30,14 @@ public class CastingTreasureSightHandler
 
     public override StatePriority GetScore()
     {
-        // Sticky Critical so ReturningToJob cannot preempt mid-cast Freelancer swap.
+        // Sticky while swapping to Freelancer / casting Sight.
         if (memory.TryRemember<CastingTreasureSightMemory>(out CastingTreasureSightMemory _))
         {
             return StatePriority.Critical;
         }
 
-        if (memory.TryRemember<ApplyingBuffsMemory>(out ApplyingBuffsMemory _))
+        if (memory.TryRemember<ApplyingBuffsMemory>(out ApplyingBuffsMemory _)
+            || IllegalModeActivityWork.HasPendingJobRestore(memory))
         {
             return StatePriority.Never;
         }
