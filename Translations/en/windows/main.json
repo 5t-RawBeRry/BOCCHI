@@ -250,6 +250,7 @@
     "none_nearby": "No treasures nearby.",
     "active_bronze": "Active bronze",
     "active_silver": "Active silver",
+    "active_counts_idle": "Cast Treasure Sight to update bronze and silver counts.",
     "distance": "Distance: {0:F1}y",
     "position": "({0:F1}, {1:F1}, {2:F1})",
     "carrot_hunt_title": "Carrot Hunt",

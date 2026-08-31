@@ -34,7 +34,7 @@ namespace BOCCHI.Treasure.Services
 
         public const uint SilverSgbId = 1597;
 
-        private TreasureFlags lastFlags = TreasureFlags.None;
+        private TreasureFlags lastFlags = ReadFlags(obj);
 
         /// <summary>Treasure sheet row (shared by every bronze/silver of that type).</summary>
         public uint Id => obj.BaseId;
@@ -46,15 +46,7 @@ namespace BOCCHI.Treasure.Services
 
         public unsafe bool CheckOpened()
         {
-            GameObject* gameObject = (GameObject*)(void*)obj.Address;
-            if (gameObject == null)
-            {
-                return false;
-            }
-
-            FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure* instance = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)gameObject;
-            TreasureFlags currentFlags = instance->Flags;
-
+            TreasureFlags currentFlags = ReadFlags(obj);
             if (currentFlags == lastFlags)
             {
                 return false;
@@ -65,6 +57,17 @@ namespace BOCCHI.Treasure.Services
             lastFlags = currentFlags;
 
             return wasNotOpened && isNowOpened;
+        }
+
+        private static unsafe TreasureFlags ReadFlags(IGameObject gameObject)
+        {
+            GameObject* native = (GameObject*)(void*)gameObject.Address;
+            if (native == null)
+            {
+                return TreasureFlags.None;
+            }
+
+            return ((FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)native)->Flags;
         }
 
         // Don't require IsTargetable — often false until inside interact range.

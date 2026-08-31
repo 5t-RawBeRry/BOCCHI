@@ -250,6 +250,7 @@
     "none_nearby": "주변에 보물상자가 없습니다.",
     "active_bronze": "활성 청동",
     "active_silver": "활성 백은",
+    "active_counts_idle": "Treasure Sight를 시전하면 청동·은 상자 수가 갱신됩니다.",
     "distance": "거리: {0:F1}y",
     "position": "({0:F1}, {1:F1}, {2:F1})",
     "carrot_hunt_title": "재물당근 찾기",

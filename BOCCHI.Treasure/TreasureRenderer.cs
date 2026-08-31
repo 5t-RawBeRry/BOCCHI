@@ -276,25 +276,6 @@ public class TreasureRenderer
         }
     }
 
-    private void DrawActiveChests()
-    {
-        if (!tracker.CountInitialised)
-        {
-            return;
-        }
-
-        BocchiUi.SectionTitle(translator.T(".treasure.active_bronze"));
-        float bronzeFraction = tracker.BronzeChests / 30f;
-        string bronzeOverlay = config.ShowPercentageActiveTreasureCount
-            ? $"{tracker.BronzeChests}/30 ({bronzeFraction * 100f:F2}%)"
-            : $"{tracker.BronzeChests}/30";
-        BocchiUi.DrawPercentBar(bronzeFraction, Math.Min(220f, ImGui.GetContentRegionAvail().X), bronzeOverlay);
-
-        BocchiUi.SectionTitle(translator.T(".treasure.active_silver"));
-        float silverFraction = tracker.SilverChests / 8f;
-        string silverOverlay = config.ShowPercentageActiveTreasureCount
-            ? $"{tracker.SilverChests}/8 ({silverFraction * 100f:F2}%)"
-            : $"{tracker.SilverChests}/8";
-        BocchiUi.DrawPercentBar(silverFraction, Math.Min(220f, ImGui.GetContentRegionAvail().X), silverOverlay);
-    }
+    private void DrawActiveChests() =>
+        ActiveTreasureCountUi.Draw(tracker, config, translator);
 }

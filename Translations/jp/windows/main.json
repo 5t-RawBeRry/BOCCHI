@@ -250,6 +250,7 @@
     "none_nearby": "近くに宝箱はありません。",
     "active_bronze": "アクティブな銅箱",
     "active_silver": "アクティブな銀箱",
+    "active_counts_idle": "Treasure Sight を詠唱すると銅箱・銀箱の数が更新されます。",
     "distance": "距離: {0:F1}y",
     "position": "({0:F1}, {1:F1}, {2:F1})",
     "carrot_hunt_title": "キャロットハント",

@@ -59,39 +59,42 @@ public class UIConfig : IAutoConfig
     [Checkbox(Order = 5, Section = "trackers")]
     public bool ShowCurrencyTrackerGraph { get; set; } = false;
 
-    [Checkbox(Order = 6, Section = "events")]
-    public bool ShowDemiatmaDrops { get; set; } = true;
+    [Checkbox(Order = 6, Section = "trackers")]
+    public bool ShowActiveTreasureTracker { get; set; } = true;
 
     [Checkbox(Order = 7, Section = "events")]
-    public bool ShowNoteDrops { get; set; } = true;
+    public bool ShowDemiatmaDrops { get; set; } = true;
 
     [Checkbox(Order = 8, Section = "events")]
+    public bool ShowNoteDrops { get; set; } = true;
+
+    [Checkbox(Order = 9, Section = "events")]
     public bool ShowSoulShardDrops { get; set; } = true;
 
     /// <summary>Show FATEs &amp; CEs list — a panel toggle, so it belongs with the others.</summary>
-    [Checkbox(Order = 9, Section = "panels")]
+    [Checkbox(Order = 10, Section = "panels")]
     public bool ShowWorldSection { get; set; } = true;
 
-    [Checkbox(Order = 10, Section = "panels")]
+    [Checkbox(Order = 11, Section = "panels")]
     public bool ShowBuffSection { get; set; } = true;
 
-    [Checkbox(Order = 11, Section = "panels")]
+    [Checkbox(Order = 12, Section = "panels")]
     public bool ShowAutomationSection { get; set; } = true;
 
-    [Checkbox(Order = 12, Section = "panels")]
+    [Checkbox(Order = 13, Section = "panels")]
     public bool ShowCompletionistSection { get; set; } = true;
 
-    [Checkbox(Order = 13, Section = "panels")]
+    [Checkbox(Order = 14, Section = "panels")]
     public bool ShowMobFarmerSection { get; set; } = true;
 
-    [Checkbox(Order = 14, Section = "panels")]
+    [Checkbox(Order = 15, Section = "panels")]
     public bool ShowPotsTreasureSection { get; set; } = true;
 
-    [Checkbox(Order = 15, Section = "panels")]
+    [Checkbox(Order = 16, Section = "panels")]
     public bool ShowTreasureSection { get; set; } = true;
 
     /// <summary>Print plugin chat notifications (always with [BOCCHI] when enabled).</summary>
-    [Checkbox(Order = 16, Section = "chat")]
+    [Checkbox(Order = 17, Section = "chat")]
     public bool ShowBocchiChatPrefix { get; set; } = true;
 
     public bool AnyEventDropsEnabled => ShowDemiatmaDrops || ShowNoteDrops || ShowSoulShardDrops;

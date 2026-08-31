@@ -19,6 +19,7 @@ public static class IServiceCollectionExtensions
         services.AddSingleton<Func<ITreasureHunter>>(sp => () => sp.GetRequiredService<ITreasureHunter>());
         services.AddSingleton<Func<ICarrotHunter>>(sp => () => sp.GetRequiredService<ICarrotHunter>());
         services.AddSingleton<IDynamicRenderer, TreasureRenderer>();
+        services.AddSingleton<IDynamicRenderer, ActiveTreasureTrackerRenderer>();
         services.AddSingleton<TreasureRadarDrawer>();
         services.AddSingleton<OpenTreasureCofferChain>();
         services.AddSingleton<HuntTreasureSightChain>();

@@ -111,6 +111,40 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
             .GroupBy(o => o.GameObjectId)
             .ToDictionary(g => g.Key, g => g.First());
 
+        // Open transition first — IsValid() is false once opened, so dropping those before
+        // CheckOpened left Active bronze/silver stuck after Sight.
+        foreach (TreasureCoffer treasure in treasures)
+        {
+            if (!treasure.CheckOpened())
+            {
+                continue;
+            }
+
+            CofferType cofferType = treasure.GetCofferType();
+            if (cofferType is CofferType.Bronze or CofferType.Silver)
+            {
+                Vector3 position = treasure.GetPosition();
+                cofferLocations.Submit(
+                    treasure.Id,
+                    position.X,
+                    position.Y,
+                    position.Z,
+                    cofferType.ToString());
+            }
+
+            if (CountInitialised)
+            {
+                if (cofferType == CofferType.Bronze)
+                {
+                    BronzeChests = Math.Max(0, BronzeChests - 1);
+                }
+                else if (cofferType == CofferType.Silver)
+                {
+                    SilverChests = Math.Max(0, SilverChests - 1);
+                }
+            }
+        }
+
         HashSet<ulong> knownIds = treasures.Select(t => t.GameObjectId).ToHashSet();
 
         for (int i = treasures.Count - 1; i >= 0; i--)
@@ -137,35 +171,6 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
         }
 
         treasures = treasures.OrderBy(t => player.Position.Distance(t.GetPosition())).ToList();
-
-        foreach (TreasureCoffer treasure in treasures)
-        {
-            if (!treasure.CheckOpened())
-            {
-                continue;
-            }
-
-            CofferType cofferType = treasure.GetCofferType();
-            if (cofferType is CofferType.Bronze or CofferType.Silver)
-            {
-                Vector3 position = treasure.GetPosition();
-                cofferLocations.Submit(
-                    treasure.Id,
-                    position.X,
-                    position.Y,
-                    position.Z,
-                    cofferType.ToString());
-            }
-
-            if (cofferType == CofferType.Bronze)
-            {
-                BronzeChests = Math.Max(0, BronzeChests - 1);
-            }
-            else if (cofferType == CofferType.Silver)
-            {
-                SilverChests = Math.Max(0, SilverChests - 1);
-            }
-        }
     }
 
     public IReadOnlyList<TreasureCoffer> Treasures => treasures;

@@ -37,7 +37,9 @@ public class FatesRenderer
 
         ZoneId zoneId = zones.GetZone().ZoneId;
         bool showDrops = zones.GetZone().IsOccultCrescentZone() && uiConfig.AnyEventDropsEnabled;
-        float dropExtra = EventDropIconRenderer.ListRowExtra(showDrops);
+        // Row already counts title + action buttons; add space for the mid-FATE % bar and drop icons.
+        float progressExtra = ImGui.GetFrameHeightWithSpacing();
+        float dropExtra = EventDropIconRenderer.ListRowExtra(showDrops) + progressExtra;
         float maxHeight = EventDropIconRenderer.ListMaxHeight(showDrops);
 
         using ImGuiSectionHelper.BoundedListScope list =

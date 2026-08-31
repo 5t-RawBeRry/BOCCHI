@@ -27,6 +27,10 @@
     "show_currency_tracker_graph": {
       "label": "화폐 그래프 표시"
     },
+    "show_active_treasure_tracker": {
+      "label": "활성 청동 / 은 표시",
+      "tooltip": "켜기: Treasure Sight 채움(활성 청동 / 은)을 추적기에 표시합니다.\n끄기: Treasure Hunter 아래에만 표시합니다.\n수치는 Treasure Sight를 시전하면 갱신됩니다."
+    },
     "show_world_section": {
       "label": "돌발·비상 조우 목록 표시"
     },

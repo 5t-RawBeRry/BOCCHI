@@ -250,6 +250,7 @@
     "none_nearby": "附近没有宝箱。",
     "active_bronze": "可采青铜",
     "active_silver": "可采白银",
+    "active_counts_idle": "施放 Treasure Sight 后更新青铜与白银数量。",
     "distance": "距离：{0:F1}y",
     "position": "({0:F1}, {1:F1}, {2:F1})",
     "carrot_hunt_title": "胡萝卜狩猎",
