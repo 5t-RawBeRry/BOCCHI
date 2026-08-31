@@ -16,6 +16,7 @@ namespace BOCCHI.Automator.Services;
 /// </summary>
 public sealed class TriageLatchService
 (
+    IAutomator automator,
     IAutomatorContext context,
     IAutomatorMemory memory,
     ISupportJobFactory supportJobs,
@@ -60,6 +61,13 @@ public sealed class TriageLatchService
     private void TryLatch()
     {
         if (TriageSession.IsActive(memory))
+        {
+            return;
+        }
+
+        // Treasure hunt owns the Automator while SuspendedForTreasure — triage cannot run and
+        // PendingTriage would block Pause-for-CE/FATE yield checks until the hunt ends.
+        if (automator.SuspendedForTreasure)
         {
             return;
         }

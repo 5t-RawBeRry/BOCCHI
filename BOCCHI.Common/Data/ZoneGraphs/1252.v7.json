@@ -345,7 +345,7 @@
         "Id": 34,
         "PreferredAethernetId": 4930,
         "CombatRadius": 0,
-        "AreaShape": 0
+        "AreaShape": 1
       }
     },
     "821db228-6845-4d5f-867d-a5535d29d915": {

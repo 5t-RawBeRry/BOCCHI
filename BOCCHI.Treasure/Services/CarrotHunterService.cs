@@ -99,6 +99,8 @@ public sealed class CarrotHunterService
 
     private bool ninjaHideRequired;
 
+    private readonly NinjaHideRouteGate ninjaHideRouteGate = new();
+
     private DateTime waitingForBunnySince = DateTime.MinValue;
 
     private bool itemUseIssued;
@@ -628,7 +630,7 @@ public sealed class CarrotHunterService
         {
             ResetFarStuckWatch();
             vnav.Stop();
-            ninjaHideRequired = false;
+            ClearNinjaHideRequirement();
             ninjaHide.EndStealthForInteract();
             Phase = CarrotHuntPhase.UsingItem;
             return;
@@ -754,7 +756,7 @@ public sealed class CarrotHunterService
             return;
         }
 
-        ninjaHideRequired = false;
+        ClearNinjaHideRequirement();
         ninjaHide.EndStealthForInteract();
 
         if (!EzThrottler.Throttle("CarrotHunt::InteractBunny", 400))
@@ -1636,7 +1638,13 @@ public sealed class CarrotHunterService
 
     private void MaybeMount(Vector3 destination)
     {
-        if (ninjaHideRequired || ninjaHide.IsStealthed)
+        if (ninjaHideRequired)
+        {
+            return;
+        }
+
+        if (ninjaHide.IsStealthed
+            && !ninjaHide.TryEndStealthForTravel(StillThreatenedForRemount))
         {
             return;
         }
@@ -1674,7 +1682,7 @@ public sealed class CarrotHunterService
     {
         if (!treasureConfig.UseNinjaHideOnDangerousRoutes)
         {
-            ninjaHideRequired = false;
+            ClearNinjaHideRequirement();
             return true;
         }
 
@@ -1705,7 +1713,7 @@ public sealed class CarrotHunterService
         {
             log.Warning(
                 "Ninja Hide is on but gearset is 0 and you are not on Ninja — skipping Hide for this threat");
-            ninjaHideRequired = false;
+            ClearNinjaHideRequirement();
             return true;
         }
 
@@ -1716,45 +1724,27 @@ public sealed class CarrotHunterService
 
     private void UpdateNinjaHideRequired()
     {
-        if (KnowledgeThreat.TryFindIsleblazer(
-                objects,
-                player.Position,
-                KnowledgeThreat.IsleblazerUnhideDistance,
-                out _))
-        {
-            ninjaHideRequired = false;
-            return;
-        }
+        ninjaHideRequired = ninjaHideRouteGate.UpdateRequired(
+            objects,
+            player.Position,
+            ninjaHideRequired,
+            ninjaHide.IsMounted,
+            treasureConfig.KnowledgeHideOffset,
+            treasureConfig.KnowledgeThreatEnterDistance,
+            treasureConfig.KnowledgeThreatExitDistance);
+    }
 
-        if (KnowledgeThreat.TryGetPlayerForayLevel(objects) is not int foray)
-        {
-            ninjaHideRequired = false;
-            return;
-        }
+    private bool StillThreatenedForRemount() =>
+        ninjaHideRouteGate.ShouldKeepStealthForThreats(
+            objects,
+            player.Position,
+            treasureConfig.KnowledgeHideOffset,
+            treasureConfig.KnowledgeThreatExitDistance);
 
-        int hideAt = KnowledgeThreat.HideAtOrAbove(foray, treasureConfig.KnowledgeHideOffset);
-        float enter = treasureConfig.KnowledgeThreatEnterDistance;
-        if (ninjaHide.IsMounted)
-        {
-            enter += KnowledgeThreat.MountedThreatEnterBonus;
-        }
-
-        float exit = Math.Max(treasureConfig.KnowledgeThreatExitDistance, enter);
-
-        if (ninjaHideRequired)
-        {
-            if (!KnowledgeThreat.TryFindThreat(objects, player.Position, hideAt, exit, out _, out _))
-            {
-                ninjaHideRequired = false;
-            }
-
-            return;
-        }
-
-        if (KnowledgeThreat.TryFindThreat(objects, player.Position, hideAt, enter, out _, out _))
-        {
-            ninjaHideRequired = true;
-        }
+    private void ClearNinjaHideRequirement()
+    {
+        ninjaHideRequired = false;
+        ninjaHideRouteGate.Reset();
     }
 
     private bool TryRecoverFromStuckWalk(int authoredId, float distance)
@@ -1971,7 +1961,7 @@ public sealed class CarrotHunterService
         finishedAuthoredIds.Clear();
         tour.Clear();
         tourIndex = 0;
-        ninjaHideRequired = false;
+        ClearNinjaHideRequirement();
         ClearCurrent();
         stopwatch.Reset();
         vnav.Stop();

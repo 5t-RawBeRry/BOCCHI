@@ -83,7 +83,7 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
 
     public void Update()
     {
-        // Occult Crescent only.
+        // Occult Crescent only — drop live coffers and Sight fill when you leave.
         if (!zones.GetZone().IsOccultCrescentZone())
         {
             if (treasures.Count > 0)
@@ -91,6 +91,7 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
                 treasures.Clear();
             }
 
+            ClearSightCounts();
             return;
         }
 
@@ -289,6 +290,19 @@ public class TreasureTracker : ITreasureTracker, IOnUpdate, IDisposable
         CountInitialised = true;
         LastCountUpdateUtc = DateTime.UtcNow;
         SurveyRevision++;
+    }
+
+    private void ClearSightCounts()
+    {
+        if (!CountInitialised && BronzeChests == 0 && SilverChests == 0)
+        {
+            return;
+        }
+
+        BronzeChests = 0;
+        SilverChests = 0;
+        CountInitialised = false;
+        LastCountUpdateUtc = DateTime.MinValue;
     }
 
     private bool NeedsLiveCofferScan() =>

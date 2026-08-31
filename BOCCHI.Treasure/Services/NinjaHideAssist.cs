@@ -214,11 +214,19 @@ public sealed class NinjaHideAssist(
     ///     Drops Hide when travel no longer needs stealth (Hide toggles off).
     ///     Returns true when not stealthed and safe to mount.
     /// </summary>
-    public bool TryEndStealthForTravel()
+    /// <param name="stillThreatened">
+    ///     When true, keep Hide up (pack nearby) — do not burn Hide cooldown to remount.
+    /// </param>
+    public bool TryEndStealthForTravel(Func<bool>? stillThreatened = null)
     {
         if (!IsStealthed)
         {
             return true;
+        }
+
+        if (stillThreatened?.Invoke() == true)
+        {
+            return false;
         }
 
         if (conditions[ConditionFlag.InCombat] || ECommonsPlayer.IsJumping || IsMounted)

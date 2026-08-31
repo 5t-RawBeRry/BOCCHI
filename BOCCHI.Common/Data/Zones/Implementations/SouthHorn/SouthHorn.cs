@@ -121,7 +121,8 @@ public class SouthHorn
     public override List<ActivityData> GetCriticalEncounterData() =>
     [
         new(33, new(300.109f, 70f, 730.029f), PreferredAethernetId: Eldergrowth.Id), // "Scourge of the Mind"
-        new(34, new(449.613f, 65f, 356.86f), PreferredAethernetId: Eldergrowth.Id), // "The Black Regiment"
+        new(34, new(449.613f, 65f, 356.86f), PreferredAethernetId: Eldergrowth.Id,
+            AreaShape: ActivityAreaShape.Square), // "The Black Regiment"
         new(35, new(619.864f, 79f, 799.882f), PreferredAethernetId: Eldergrowth.Id), // "The Unbridled"
         new(36, new(680.95f, 74f, 533.939f), PreferredAethernetId: Eldergrowth.Id), // "Crawling Death"
         new(37, new(-340.067f, 75f, 800.32f), PreferredAethernetId: Stonemarsh.Id), // "Calamity Bound"

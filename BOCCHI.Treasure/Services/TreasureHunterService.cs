@@ -131,6 +131,12 @@ public class TreasureHunterService
     private bool sessionStartSightArmed;
     private DateTime sightCastUtc = DateTime.MinValue;
     private int locationsSinceLastSight;
+
+    /// <summary>
+    ///     Skip session-start Sight when Illegal Mode (or idle camp) just surveyed — a second
+    ///     cast back-to-back usually hits cooldown and adds nothing.
+    /// </summary>
+    private static readonly TimeSpan FreshSightReuseWindow = TimeSpan.FromSeconds(45);
     private HashSet<uint> excludedNodeIdsForNextRun = [];
     private int? maxLevelOverrideForNextRun;
     private uint? stuckWatchNodeId;
@@ -161,8 +167,10 @@ public class TreasureHunterService
     /// <summary>Node → authored order index (peel-off must not jump ahead of the route).</summary>
     private readonly Dictionary<uint, int> authoredNodeOrder = [];
 
-    /// <summary>Hysteresis: Hide required until threats leave exit distance.</summary>
+    /// <summary>Hysteresis + debounce: Hide required until pack threats stay clear.</summary>
     private bool ninjaHideRequired;
+
+    private readonly NinjaHideRouteGate ninjaHideRouteGate = new();
 
     /// <summary>Via-points for the current WalkToNode (departure of previous + approach of current).</summary>
     private readonly List<Vector3> walkVias = [];
@@ -348,15 +356,18 @@ public class TreasureHunterService
 
             pathPlanner = null;
             StepIndex = 0;
-            // Arm session-start Sight once, after Return/TP is planned.
+            // Arm session-start Sight once, after Return/TP is planned — skip if survey is still fresh.
             if (!sessionStartSightArmed)
             {
-                pendingStartSight = config.CastTreasureSightDuringHunt
-                                    && SupportJobTreasureSight.CanCast(supportJobs);
+                bool canSight = config.CastTreasureSightDuringHunt
+                                && SupportJobTreasureSight.CanCast(supportJobs);
+                bool reuseFreshSurvey = tracker.CountInitialised
+                                        && DateTime.UtcNow - tracker.LastCountUpdateUtc < FreshSightReuseWindow;
+                pendingStartSight = canSight && !reuseFreshSurvey;
                 sessionStartSightArmed = true;
                 log.Info(
                     "Treasure hunt: session start Sight {Armed} ({StepCount} step(s))",
-                    pendingStartSight ? "armed" : "skipped",
+                    pendingStartSight ? "armed" : reuseFreshSurvey ? "skipped (fresh survey)" : "skipped",
                     steps.Count);
             }
 
@@ -588,7 +599,7 @@ public class TreasureHunterService
         sessionStartSightArmed = false;
         sightCastUtc = DateTime.MinValue;
         locationsSinceLastSight = 0;
-        ninjaHideRequired = false;
+        ClearNinjaHideRequirement();
         pendingPreferStartNode = null;
         pendingRepathNearPlayer = false;
         pendingSessionCampReturn = false;
@@ -1765,7 +1776,7 @@ public class TreasureHunterService
         }
 
         ResetStuckWatch();
-        ninjaHideRequired = false;
+        ClearNinjaHideRequirement();
         ninjaHide.EndStealthForInteract();
         activeChain = chainManager.Manage(
             chains.Create($"TreasureHunt::Open({step.NodeId})")
@@ -1940,7 +1951,8 @@ public class TreasureHunterService
             return;
         }
 
-        if (!ninjaHide.TryEndStealthForTravel())
+        if (ninjaHide.IsStealthed
+            && !ninjaHide.TryEndStealthForTravel(StillThreatenedForRemount))
         {
             return;
         }
@@ -2077,7 +2089,7 @@ public class TreasureHunterService
     {
         if (!config.UseNinjaHideOnDangerousRoutes)
         {
-            ninjaHideRequired = false;
+            ClearNinjaHideRequirement();
             return true;
         }
 
@@ -2110,7 +2122,7 @@ public class TreasureHunterService
         {
             log.Warning(
                 "Ninja Hide is on but gearset is 0 and you are not on Ninja — skipping Hide for this threat");
-            ninjaHideRequired = false;
+            ClearNinjaHideRequirement();
             return true;
         }
 
@@ -2121,46 +2133,27 @@ public class TreasureHunterService
 
     private void UpdateNinjaHideRequired()
     {
-        if (KnowledgeThreat.TryFindIsleblazer(
-                objects,
-                player.Position,
-                KnowledgeThreat.IsleblazerUnhideDistance,
-                out _))
-        {
-            ninjaHideRequired = false;
-            return;
-        }
+        ninjaHideRequired = ninjaHideRouteGate.UpdateRequired(
+            objects,
+            player.Position,
+            ninjaHideRequired,
+            ninjaHide.IsMounted,
+            config.KnowledgeHideOffset,
+            config.KnowledgeThreatEnterDistance,
+            config.KnowledgeThreatExitDistance);
+    }
 
-        if (KnowledgeThreat.TryGetPlayerForayLevel(objects) is not int foray)
-        {
-            ninjaHideRequired = false;
-            return;
-        }
+    private bool StillThreatenedForRemount() =>
+        ninjaHideRouteGate.ShouldKeepStealthForThreats(
+            objects,
+            player.Position,
+            config.KnowledgeHideOffset,
+            config.KnowledgeThreatExitDistance);
 
-        int hideAt = KnowledgeThreat.HideAtOrAbove(foray, config.KnowledgeHideOffset);
-        float enter = config.KnowledgeThreatEnterDistance;
-        // Mounted: start earlier so we dismount before the foot enter range is already behind us.
-        if (ninjaHide.IsMounted)
-        {
-            enter += KnowledgeThreat.MountedThreatEnterBonus;
-        }
-
-        float exit = Math.Max(config.KnowledgeThreatExitDistance, enter);
-
-        if (ninjaHideRequired)
-        {
-            if (!KnowledgeThreat.TryFindThreat(objects, player.Position, hideAt, exit, out _, out _))
-            {
-                ninjaHideRequired = false;
-            }
-
-            return;
-        }
-
-        if (KnowledgeThreat.TryFindThreat(objects, player.Position, hideAt, enter, out _, out _))
-        {
-            ninjaHideRequired = true;
-        }
+    private void ClearNinjaHideRequirement()
+    {
+        ninjaHideRequired = false;
+        ninjaHideRouteGate.Reset();
     }
 
     /// <summary>
@@ -2908,7 +2901,7 @@ public class TreasureHunterService
         sessionStartSightArmed = false;
         sightCastUtc = DateTime.MinValue;
         locationsSinceLastSight = 0;
-        ninjaHideRequired = false;
+        ClearNinjaHideRequirement();
         pendingPreferStartNode = null;
         pendingRepathNearPlayer = false;
         pendingSessionCampReturn = false;

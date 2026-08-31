@@ -171,8 +171,17 @@ public class IllegalModeTreasureFillerService
             if (ShouldPauseForCurrentActivity())
             {
                 PauseHuntForYield("activity");
+                return;
             }
-            else if (hunter.Paused)
+
+            // Pending triage / buffs / camp Sight block the Automator SM while the hunt owns
+            // travel — still honour Pause-for-CE/FATE when a matching activity is startable.
+            if (TryPauseForStartableYield())
+            {
+                return;
+            }
+
+            if (hunter.Paused)
             {
                 // Triage / buffs / Sight after a yielded FATE/CE — stay paused and unsuspended.
                 automator.SetSuspendedForTreasure(false);
@@ -181,18 +190,12 @@ public class IllegalModeTreasureFillerService
             return;
         }
 
-        bool startableMatch = HasStartableYieldTarget(out string kind);
-        if (!hunter.Paused && startableMatch)
+        if (TryPauseForStartableYield())
         {
-            PauseHuntForYield(kind);
-            if (EzThrottler.Throttle("IllegalModeMapHuntYield", 5000))
-            {
-                logger.Info("Illegal Mode: pausing treasure hunt — {Kind} available", kind);
-            }
-
             return;
         }
 
+        bool startableMatch = HasStartableYieldTarget(out string kind);
         if (hunter.Paused && !startableMatch)
         {
             // Activity cancelled / nothing matching left — keep filling the map.
@@ -236,6 +239,22 @@ public class IllegalModeTreasureFillerService
             DateTimeOffset.UtcNow,
             potsConfig.PotSpawnLeadMinutes,
             potFarmingEnabled: true);
+    }
+
+    private bool TryPauseForStartableYield()
+    {
+        if (hunter.Paused || !HasStartableYieldTarget(out string kind))
+        {
+            return false;
+        }
+
+        PauseHuntForYield(kind);
+        if (EzThrottler.Throttle("IllegalModeMapHuntYield", 5000))
+        {
+            logger.Info("Illegal Mode: pausing treasure hunt — {Kind} available", kind);
+        }
+
+        return true;
     }
 
     private void PauseHuntForYield(string reason)

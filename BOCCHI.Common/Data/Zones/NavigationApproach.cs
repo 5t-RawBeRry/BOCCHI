@@ -90,7 +90,7 @@ public static class NavigationConstants
     ///     Registration size/centre still come from LGB. Shape prefers the zone CE table when we
     ///     have a row — LGB <c>TriggerBoxShape</c> can disagree with the blue ring (e.g. Lost on
     ///     the Wind is a circle). Authored squares (A Beast Unleashed, Cursed Resurgence, Dark
-    ///     Artistry) stay square.
+    ///     Artistry, The Black Regiment) stay square.
     /// </summary>
     public static ActivityAreaShape ResolveCriticalEncounterShape(ActivityData? authored, bool lgbIsSquare) =>
         authored is not null
