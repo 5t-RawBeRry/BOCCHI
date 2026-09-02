@@ -86,7 +86,7 @@ public class TreasureConfig : IAutoConfig
     [Checkbox(Order = 16, Section = "treasure_hunt")]
     public bool SkipUnsafeTreasureWindows { get; set; } = true;
 
-    /// <summary>Use real Ninja Hide near high-knowledge hostiles while hunting coffers or carrots.</summary>
+    /// <summary>Use real Ninja Hide near high-knowledge hostiles while hunting coffers, carrots, or pot chests.</summary>
     [Checkbox(Order = 17, Section = "ninja_hide")]
     public bool UseNinjaHideOnDangerousRoutes { get; set; } = false;
 

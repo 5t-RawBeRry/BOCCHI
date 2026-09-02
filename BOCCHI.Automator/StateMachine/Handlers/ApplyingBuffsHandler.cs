@@ -72,12 +72,26 @@ public class ApplyingBuffsHandler
 
         memory.TryAdd<ApplyingBuffsMemory>();
         memory.Forget<InquiringMindAttemptedMemory>();
-        if (!IllegalModeActivityWork.TryRememberPreBuffJob(memory, jobs)
-            && jobs.TryGetCurrent(out SupportJob job))
+        if (IllegalModeActivityWork.TryRememberPreBuffJob(memory, jobs))
+        {
+            if (jobs.TryGetCurrent(out SupportJob latched))
+            {
+                logger.Debug("Illegal Mode buff: latched restore job {Job}", latched.Id);
+            }
+        }
+        else if (IllegalModeActivityWork.TryGetPendingJobRestore(memory, out SupportJobId existing))
         {
             logger.Debug(
-                "Illegal Mode buff: kept existing restore latch (current job {Job})",
-                job.Id);
+                "Illegal Mode buff: kept existing restore latch {Job} (current {Current})",
+                existing,
+                jobs.TryGetCurrent(out SupportJob cur) ? cur.Id.ToString() : "?");
+        }
+        else if (jobs.TryGetCurrent(out SupportJob current)
+                 && IllegalModeActivityWork.IsBuffSwapJob(current.Id))
+        {
+            logger.Debug(
+                "Illegal Mode buff: no restore latch (already on temporary job {Job})",
+                current.Id);
         }
     }
 

@@ -44,6 +44,9 @@ public class AutomationModeGuard
 
     private bool stopping;
 
+    /// <summary>Treasure hunt was running when shopping took vnav — resume it after, not a hunt that was already paused for FATE/pots.</summary>
+    private bool treasurePausedForShopping;
+
     public void EnsureExclusive(AutomationMode mode)
     {
         if (stopping)
@@ -121,12 +124,13 @@ public class AutomationModeGuard
             }
 
             // Pots & Treasure / Illegal / Completionist / Mob Farmer filler may own the hunter — leave it running.
-            // Shopping needs exclusive pathing — stop any treasure/carrot hunt.
+            // Shopping needs exclusive pathing: pause treasure (resume after) and stop carrot hunt.
             if (mode == AutomationMode.Shopping)
             {
-                if (Hunter.Running)
+                if (Hunter.Running && !Hunter.Paused)
                 {
-                    Hunter.Toggle();
+                    Hunter.Pause();
+                    treasurePausedForShopping = true;
                 }
 
                 if (CarrotHunter.Running)
@@ -188,6 +192,13 @@ public class AutomationModeGuard
             Automator.SetSuspendedForShopping(false);
         }
 
+        if (treasurePausedForShopping && Hunter.Running && Hunter.Paused)
+        {
+            Hunter.Resume();
+        }
+
+        treasurePausedForShopping = false;
+
         if (Farmer.Running && Farmer.Suspended && Farmer.YieldReason == FarmerYieldReason.Shopping)
         {
             Farmer.SetSuspended(false);
@@ -204,6 +215,7 @@ public class AutomationModeGuard
         stopping = true;
         try
         {
+            treasurePausedForShopping = false;
             StopIllegalOrCompletionist();
 
             if (PotsTreasure.Running)

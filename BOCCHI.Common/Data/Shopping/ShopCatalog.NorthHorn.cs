@@ -6,9 +6,11 @@ namespace BOCCHI.Common.Data.Shopping;
 public static partial class ShopCatalog
 {
     // SelectIconString menu indices for Expedition Antiquarian (North Horn).
-    private const int NhMenuSilver = 0;
-    private const int NhMenuGold = 1;
-    private const int NhMenuAmulet = 2;
+    // 0 = Silver (IL 780) / 1 = Silver (Other) / 2 = Gold / 3 = Arcane Amulet
+    private const int NhMenuSilverIl780 = 0;
+    private const int NhMenuSilverOther = 1;
+    private const int NhMenuGold = 2;
+    private const int NhMenuAmulet = 3;
 
     private static IEnumerable<ShopCatalogEntry> BuildNorthHorn()
     {
@@ -17,9 +19,9 @@ public static partial class ShopCatalog
         uint gold = GoldObolItemId;
         uint amulet = ArcaneAmuletItemId;
 
-        // Phantom Vision — one role block each (same order as South Horn / in-game).
+        // Phantom Vision — Silver (IL 780) shop. In-shop tabs: Weapons / Armor / Accessories / Others.
         foreach (ShopCatalogEntry e in ArmorSet(
-                     z, silver, NhMenuSilver, "Silver · Fending",
+                     z, silver, NhMenuSilverIl780, "Silver · Fending",
                      52000,
                      "Phantom Vision Mask of Fending",
                      "Phantom Vision Corselet of Fending",
@@ -31,7 +33,7 @@ public static partial class ShopCatalog
         }
 
         foreach (ShopCatalogEntry e in ArmorSet(
-                     z, silver, NhMenuSilver, "Silver · Maiming",
+                     z, silver, NhMenuSilverIl780, "Silver · Maiming",
                      52005,
                      "Phantom Vision Mask of Maiming",
                      "Phantom Vision Corselet of Maiming",
@@ -43,7 +45,7 @@ public static partial class ShopCatalog
         }
 
         foreach (ShopCatalogEntry e in ArmorSet(
-                     z, silver, NhMenuSilver, "Silver · Striking",
+                     z, silver, NhMenuSilverIl780, "Silver · Striking",
                      52010,
                      "Phantom Vision Turban of Striking",
                      "Phantom Vision Robe of Striking",
@@ -55,7 +57,7 @@ public static partial class ShopCatalog
         }
 
         foreach (ShopCatalogEntry e in ArmorSet(
-                     z, silver, NhMenuSilver, "Silver · Aiming",
+                     z, silver, NhMenuSilverIl780, "Silver · Aiming",
                      52020,
                      "Phantom Vision Turban of Aiming",
                      "Phantom Vision Robe of Aiming",
@@ -67,7 +69,7 @@ public static partial class ShopCatalog
         }
 
         foreach (ShopCatalogEntry e in ArmorSet(
-                     z, silver, NhMenuSilver, "Silver · Scouting",
+                     z, silver, NhMenuSilverIl780, "Silver · Scouting",
                      52015,
                      "Phantom Vision Turban of Scouting",
                      "Phantom Vision Robe of Scouting",
@@ -79,7 +81,7 @@ public static partial class ShopCatalog
         }
 
         foreach (ShopCatalogEntry e in ArmorSet(
-                     z, silver, NhMenuSilver, "Silver · Healing",
+                     z, silver, NhMenuSilverIl780, "Silver · Healing",
                      52030,
                      "Phantom Vision Nightcap of Healing",
                      "Phantom Vision Acton of Healing",
@@ -91,7 +93,7 @@ public static partial class ShopCatalog
         }
 
         foreach (ShopCatalogEntry e in ArmorSet(
-                     z, silver, NhMenuSilver, "Silver · Casting",
+                     z, silver, NhMenuSilverIl780, "Silver · Casting",
                      52025,
                      "Phantom Vision Nightcap of Casting",
                      "Phantom Vision Acton of Casting",
@@ -102,17 +104,18 @@ public static partial class ShopCatalog
             yield return e;
         }
 
-        yield return E(51980, "Ninja's Soul Shard", 1000, silver, NhMenuSilver, z, ShopOwnershipKind.PhantomJob, "Silver · Other", SupportJobId.PhantomNinja);
-        yield return E(51981, "Black Mage's Soul Shard", 1000, silver, NhMenuSilver, z, ShopOwnershipKind.PhantomJob, "Silver · Other", SupportJobId.PhantomBlackMage);
-        yield return E(51982, "White Mage's Soul Shard", 1000, silver, NhMenuSilver, z, ShopOwnershipKind.PhantomJob, "Silver · Other", SupportJobId.PhantomWhiteMage);
-        yield return E(51983, "Red Mage's Soul Shard", 1000, silver, NhMenuSilver, z, ShopOwnershipKind.PhantomJob, "Silver · Other", SupportJobId.PhantomRedMage);
-        yield return E(51966, "North Horn Riding Map", 3000, silver, NhMenuSilver, z, ShopOwnershipKind.KeyItem, "Silver · Other");
-        yield return E(51985, "Final Final Fixative", 1200, silver, NhMenuSilver, z, ShopOwnershipKind.Repeatable, "Silver · Other");
-        yield return E(51986, "Nymian Uolosapa", 500, silver, NhMenuSilver, z, ShopOwnershipKind.Minion, "Silver · Other");
-        yield return E(45970, "Occult Coffer", 40, silver, NhMenuSilver, z, ShopOwnershipKind.Repeatable, "Silver · Other");
-        yield return E(45969, "Occult Potion", 40, silver, NhMenuSilver, z, ShopOwnershipKind.Repeatable, "Silver · Other");
+        // Silver (Other) — Fixative / shards / pots / materia (usually under the Others tab).
+        yield return E(51980, "Ninja's Soul Shard", 1000, silver, NhMenuSilverOther, z, ShopOwnershipKind.PhantomJob, "Silver · Other", SupportJobId.PhantomNinja);
+        yield return E(51981, "Black Mage's Soul Shard", 1000, silver, NhMenuSilverOther, z, ShopOwnershipKind.PhantomJob, "Silver · Other", SupportJobId.PhantomBlackMage);
+        yield return E(51982, "White Mage's Soul Shard", 1000, silver, NhMenuSilverOther, z, ShopOwnershipKind.PhantomJob, "Silver · Other", SupportJobId.PhantomWhiteMage);
+        yield return E(51983, "Red Mage's Soul Shard", 1000, silver, NhMenuSilverOther, z, ShopOwnershipKind.PhantomJob, "Silver · Other", SupportJobId.PhantomRedMage);
+        yield return E(51966, "North Horn Riding Map", 3000, silver, NhMenuSilverOther, z, ShopOwnershipKind.KeyItem, "Silver · Other");
+        yield return E(51985, "Final Final Fixative", 1200, silver, NhMenuSilverOther, z, ShopOwnershipKind.Repeatable, "Silver · Other");
+        yield return E(51986, "Nymian Uolosapa", 500, silver, NhMenuSilverOther, z, ShopOwnershipKind.Minion, "Silver · Other");
+        yield return E(45970, "Occult Coffer", 40, silver, NhMenuSilverOther, z, ShopOwnershipKind.Repeatable, "Silver · Other");
+        yield return E(45969, "Occult Potion", 40, silver, NhMenuSilverOther, z, ShopOwnershipKind.Repeatable, "Silver · Other");
 
-        foreach (ShopCatalogEntry m in MateriaPack(z, silver, NhMenuSilver, "Silver · Other", xi: 100, xii: 200))
+        foreach (ShopCatalogEntry m in MateriaPack(z, silver, NhMenuSilverOther, "Silver · Other", xi: 100, xii: 200))
         {
             yield return m;
         }

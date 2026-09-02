@@ -1,5 +1,6 @@
 using BOCCHI.Automator.Data;
 using BOCCHI.Common.Config;
+using BOCCHI.Common.Data.Fates;
 using BOCCHI.Common.Data.Goals;
 using BOCCHI.Common.Data.StateMemory;
 using BOCCHI.Common.Data.SupportJobs;
@@ -40,6 +41,13 @@ public class IllegalModeTreasureFillerService
     private bool hadFillerHunt;
 
     private bool loggedSightUnavailable;
+
+    /// <summary>
+    ///     Last primary Goal that was a pot FATE. Survives Goal forget so post-activity hunt
+    ///     can defer to Magical Elixir / pot chests even when Automator missed the same-frame latch
+    ///     (e.g. after manually stopping the filler hunt).
+    /// </summary>
+    private FateId? potFatePrimary;
 
     private bool HasTreasureSight => SupportJobTreasureSight.CanCast(supportJobs);
 
@@ -84,6 +92,11 @@ public class IllegalModeTreasureFillerService
 
         bool fillerBusy = IllegalModeActivityWork.HasFillerBlockingActivity(memory);
         bool primaryActivityNow = IllegalModeActivityWork.HasPrimaryActivity(memory);
+        if (primaryActivityNow)
+        {
+            RememberPotPrimaryIfAny();
+        }
+
         if (hadPrimaryActivity && !primaryActivityNow)
         {
             OnActivityCompleted(survey);
@@ -104,7 +117,7 @@ public class IllegalModeTreasureFillerService
             hadFillerHunt = false;
         }
 
-        if (fillerBusy)
+        if (fillerBusy || ShouldDeferToPotChestFarm())
         {
             PauseFillerHuntForActivity();
             return;
@@ -347,18 +360,20 @@ public class IllegalModeTreasureFillerService
 
     private void OnActivityCompleted(AutomaticTreasureSurveyMemory survey)
     {
-        if (survey.IsBusy)
-        {
-            return;
-        }
-
         // TriageLatchService owns raise latch; wait until it finishes before Sight / map hunt.
         if (TriageSession.IsActive(memory))
         {
             return;
         }
 
-        if (ShouldDeferToPotChestFarm())
+        // Pot chests + Magical Elixir beat Sight survey / map resume — even if a survey was
+        // already latched, or Automator missed CreateSmart this frame after a manual hunt stop.
+        if (TryDeferForPotChestFarm(survey))
+        {
+            return;
+        }
+
+        if (survey.IsBusy)
         {
             return;
         }
@@ -374,15 +389,83 @@ public class IllegalModeTreasureFillerService
         LatchPostActivityHunt(survey, "activity completed");
     }
 
+    private void RememberPotPrimaryIfAny()
+    {
+        if (!FarmsPotChests)
+        {
+            return;
+        }
+
+        if (memory.TryRemember<GoalMemory>(out GoalMemory goal)
+            && goal.Goal.GoalType is FateGoal fate
+            && zones.GetZone().IsPotFate(fate.id.Value))
+        {
+            potFatePrimary = fate.id;
+        }
+    }
+
+    private bool FarmsPotChests =>
+        automatorConfig.ShouldFarmPotChests || context.IsPotsAndTreasure;
+
+    /// <summary>
+    ///     Prefer pot chest / elixir wait over post-activity Sight or map hunt.
+    /// </summary>
+    private bool TryDeferForPotChestFarm(AutomaticTreasureSurveyMemory survey)
+    {
+        if (!FarmsPotChests)
+        {
+            potFatePrimary = null;
+            return false;
+        }
+
+        FateId? expectedPot = potFatePrimary;
+        potFatePrimary = null;
+
+        if (!ShouldDeferToPotChestFarm())
+        {
+            if (expectedPot is not { } potId)
+            {
+                return false;
+            }
+
+            // Automator.Update runs first and normally CreateSmarts; if it did not (stop / suspend
+            // race), arm Pending so the next Automator tick starts WaitingForBuff → elixir.
+            if (!memory.TryRemember<PendingPotChestFarmMemory>(out PendingPotChestFarmMemory _)
+                && !memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _))
+            {
+                memory.TryAdd(new PendingPotChestFarmMemory(potId));
+                logger.Info(
+                    "Illegal Mode: deferring treasure hunt for pot chests (fate {FateId})",
+                    potId.Value);
+            }
+        }
+
+        if (!ShouldDeferToPotChestFarm())
+        {
+            return false;
+        }
+
+        ClearPostActivityHuntLatch(survey);
+        return true;
+    }
+
     private bool ShouldDeferToPotChestFarm()
     {
-        if (!automatorConfig.ShouldFarmPotChests && !context.IsPotsAndTreasure)
+        if (!FarmsPotChests)
         {
             return false;
         }
 
         return memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _)
                || memory.TryRemember<PendingPotChestFarmMemory>(out PendingPotChestFarmMemory _);
+    }
+
+    private static void ClearPostActivityHuntLatch(AutomaticTreasureSurveyMemory survey)
+    {
+        survey.PendingSurvey = false;
+        survey.WaitingForSurveyResult = false;
+        survey.PendingMapHunt = false;
+        survey.SurveyWaitDeadlineUtc = DateTime.MinValue;
     }
 
     private void LatchPostActivityHunt(AutomaticTreasureSurveyMemory survey, string reason)
@@ -645,6 +728,7 @@ public class IllegalModeTreasureFillerService
         hadPrimaryActivity = false;
         hadFillerHunt = false;
         loggedSightUnavailable = false;
+        potFatePrimary = null;
         memory.Forget<AutomaticTreasureSurveyMemory>();
 
         if (hunter.ManagedByIllegalModeFiller)

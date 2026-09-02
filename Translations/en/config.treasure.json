@@ -77,7 +77,7 @@
     },
     "use_ninja_hide_on_dangerous_routes": {
       "label": "Ninja Hide near strong enemies",
-      "tooltip": "On: near a high-Knowledge enemy, swap to Ninja, Hide, and walk the last stretch.\nOff: do not use Hide for route threats.\nTreasure Hunt and Carrot Hunt."
+      "tooltip": "On: near a high-Knowledge enemy, swap to Ninja, Hide, and walk the last stretch. Stays on Ninja through the open so Hide is not dropped by a job swap next to the pack.\nOff: do not use Hide for route threats.\nTreasure Hunt, Carrot Hunt, and pot chest farm."
     },
     "use_occult_sprint_while_hidden": {
       "label": "Occult Sprint while Hidden",

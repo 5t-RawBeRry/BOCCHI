@@ -72,6 +72,11 @@ public class TreasureRenderer
                 BocchiUi.LabelledValue(translator.T(".treasure.elapsed"), $"{hunter.Elapsed:mm\\:ss}");
             }
 
+            if (ImGui.Button(translator.T(".treasure.stop_hunt")))
+            {
+                hunter.Toggle();
+            }
+
             TreasureHuntStatusUi.DrawProgress(hunter, translator, config);
             return;
         }

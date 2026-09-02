@@ -587,6 +587,16 @@ public class Automator
         IllegalModeActivityWork.ForgetTravelLatches(memory);
         memory.Forget<ReturningStateMemory>();
         SoftStopPathfinding();
+
+        // Drop post-activity Sight / map latch so Return-to-camp cannot beat Magical Elixir.
+        if (memory.TryRemember(out AutomaticTreasureSurveyMemory survey))
+        {
+            survey.PendingSurvey = false;
+            survey.WaitingForSurveyResult = false;
+            survey.PendingMapHunt = false;
+            survey.SurveyWaitDeadlineUtc = DateTime.MinValue;
+        }
+
         memory.TryAdd(farm);
     }
 }

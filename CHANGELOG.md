@@ -1,13 +1,23 @@
-# 4.2.0.8
+# 4.2.0.9
 
-### New
-- Trackers can show how many bronze and silver chests are still on the map (same bars as Treasure Hunter). Turn on under UI → Trackers.
+### Treasure hunt
+- No longer sits forever in front of a coffer saying "Too far away" (South Horn), then keeps retrying the same chest
+- Stops when bronze and silver remaining hit 0, not only after a Treasure Sight refresh
 
-### Fixes
-- The Black Regiment critical encounter wait area is treated as a square, not a circle
-- World → FATEs list no longer clips the progress bar under each FATE
-- Active bronze / silver counts go down when you open coffers during a hunt (including Illegal Mode auto hunt)
-- Active bronze / silver reset when you leave Occult Crescent
-- Ninja Hide (Treasure Hunt + Carrot Hunt) stays up between nearby strong enemies instead of dropping early and sitting on cooldown
-- Auto treasure hunt no longer casts Treasure Sight again right after Illegal Mode already checked fill at camp
-- "Pause auto treasure hunt for CEs" (and FATEs) now pauses Sight hunts while a CE or FATE is up — pending raises or the camp Sight timer no longer keeps you routing chests through it
+### Auto shopping
+- Opens the correct North Horn / South Horn vendor menus and switches tabs until the item is listed
+- No longer buys with the wrong currency (e.g. amulets on Fixative when Amulet pay is off)
+- Pauses treasure hunt and resumes where it left off, instead of restarting at the first pad
+
+### Illegal Mode
+- No longer sits forever after a FATE/CE when Return stays blocked — Treasure Sight survey times out and falls back to map hunt
+- Restores Phantom Knight / Bard / Monk / Dancer after knowledge-crystal buffs (was stuck on Freelancer)
+- After a pot FATE, still runs Magical Elixir / pot chests before restarting treasure hunt (including after you stop the auto hunt)
+
+### Pot chests
+- North Horn south pot: missing chest pad and divert to live coffers off the list
+- Ninja Hide near strong enemies also applies while farming pot chests
+
+### Ninja Hide
+- Stays on Ninja through coffer open next to strong enemies (swapping dropped Hide and let packs aggro)
+- Occult Sprint no longer retries a blocked phantom-job swap every tick

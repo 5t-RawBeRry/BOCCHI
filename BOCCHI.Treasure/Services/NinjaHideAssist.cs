@@ -140,10 +140,21 @@ public sealed class NinjaHideAssist(
     }
 
     /// <summary>
-    ///     Drop Hide prep before coffer / carrot interact so the treasure job and gearset are restored.
+    ///     Before coffer / carrot interact: always drop Phantom Thief (Occult Sprint).
+    ///     Gearset restore is skipped while threats remain — swapping off Ninja cancels Hide and
+    ///     pulls nearby high-Knowledge mobs before Hide can be cast again.
     /// </summary>
-    public void EndStealthForInteract()
+    /// <param name="keepNinjaWhileThreatened">
+    ///     True when a knowledge threat is still in range (see route gate remount check).
+    /// </param>
+    public void EndStealthForInteract(bool keepNinjaWhileThreatened = false)
     {
+        RestorePreviousSupportJobIfNeeded();
+        if (keepNinjaWhileThreatened)
+        {
+            return;
+        }
+
         RestorePreviousGearsetIfNeeded();
     }
 
@@ -202,6 +213,11 @@ public sealed class NinjaHideAssist(
 
     private unsafe bool TryChangeSupportJob(SupportJobId id)
     {
+        if (PhantomJobChangeGate.IsBlocked(conditions))
+        {
+            return false;
+        }
+
         if (!EzThrottler.Throttle($"NinjaHide::SupportJob::{id}", 750))
         {
             return false;

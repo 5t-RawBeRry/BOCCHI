@@ -70,6 +70,9 @@ public sealed class ShoppingService
     private int? openedMenuIndex;
     private Task<ChainResult>? teleportChain;
     private readonly HashSet<uint> skippedMissingRows = [];
+    private uint? tabHuntItemId;
+    private int tabHuntAttempts;
+    private bool tabHuntSettleGrace;
 
     private const float VendorInteractRange = 3.5f;
 
@@ -266,6 +269,7 @@ public sealed class ShoppingService
         openedMenuIndex = null;
         approachTarget = null;
         skippedMissingRows.Clear();
+        ResetTabHunt();
         teleportChain = null;
         chainManager.CancelWhere(name => name.StartsWith("Shopping::", StringComparison.Ordinal));
         vnav.Stop();
@@ -349,8 +353,6 @@ public sealed class ShoppingService
             return false;
         }
 
-        openedMenuIndex ??= desiredMenuIndex;
-
         // Confirm Yesno from a previous buy tick first.
         if (AddonHelpers.TryGetSelectYesno(out AddonSelectYesno* yesno))
         {
@@ -372,15 +374,53 @@ public sealed class ShoppingService
         ShopCatalogEntry? next = PickNextPurchase(zoneId, preferLiveRow: true);
         if (next == null)
         {
-            // Maybe need another menu for remaining preferred items.
-            ShopCatalogEntry? otherMenu = PickNextPurchase(zoneId, preferLiveRow: false);
-            if (otherMenu is { } switchTo && switchTo.MenuIndex != openedMenuIndex)
+            ShopCatalogEntry? pending = PickNextPurchase(zoneId, preferLiveRow: false);
+            // Same item in this shop at the wrong price (e.g. amulet Fixative vs silver Sink).
+            if (pending is { } wrongPay
+                && ShopExchangeAssist.TryGetListedOffer(
+                    wrongPay.ItemId,
+                    out _,
+                    out uint listedCurrency,
+                    out _)
+                && listedCurrency != 0
+                && listedCurrency != wrongPay.CurrencyItemId)
+            {
+                if (EzThrottler.Throttle("Shopping::CloseForCurrency", 1000))
+                {
+                    shop->FireCallbackInt(-1);
+                    desiredMenuIndex = wrongPay.MenuIndex;
+                    openedMenuIndex = null;
+                    ResetTabHunt();
+                    phase = Phase.OpeningMenu;
+                    logger.Debug(
+                        $"[Shopping] {wrongPay.Name} listed for currency {listedCurrency}, want {wrongPay.CurrencyItemId} — switching menu {wrongPay.MenuIndex}");
+                }
+
+                return true;
+            }
+
+            // Same menu but wrong category tab (Armor vs Others, etc.), or another menu.
+            if (pending is { } onMenu && onMenu.MenuIndex == openedMenuIndex)
+            {
+                if (TryCycleCategoryTab(shop, onMenu))
+                {
+                    return true;
+                }
+
+                skippedMissingRows.Add(onMenu.ItemId);
+                ResetTabHunt();
+                logger.Debug($"[Shopping] item {onMenu.Name} ({onMenu.ItemId}) not in any category tab — skip");
+                return true;
+            }
+
+            if (pending is { } switchTo && switchTo.MenuIndex != openedMenuIndex)
             {
                 if (EzThrottler.Throttle("Shopping::CloseForMenu", 1000))
                 {
                     shop->FireCallbackInt(-1);
                     desiredMenuIndex = switchTo.MenuIndex;
                     openedMenuIndex = null;
+                    ResetTabHunt();
                     phase = Phase.OpeningMenu;
                     logger.Debug($"[Shopping] switching to menu {desiredMenuIndex}");
                 }
@@ -398,10 +438,19 @@ public sealed class ShoppingService
         }
 
         ShopCatalogEntry entry = next.Value;
-        if (!ShopExchangeAssist.TryFindRowIndex(entry.ItemId, out uint rowIndex))
+        ResetTabHunt();
+        if (!ShopExchangeAssist.TryGetListedOffer(entry.ItemId, out uint rowIndex, out uint liveCurrency, out uint liveCost))
         {
             skippedMissingRows.Add(entry.ItemId);
             logger.Debug($"[Shopping] item {entry.Name} ({entry.ItemId}) not in open shop — skip");
+            return true;
+        }
+
+        if (liveCurrency != 0
+            && (liveCurrency != entry.CurrencyItemId || liveCost != entry.Cost))
+        {
+            skippedMissingRows.Add(entry.ItemId);
+            logger.Debug($"[Shopping] item {entry.Name} ({entry.ItemId}) not in open shop at expected cost — skip");
             return true;
         }
 
@@ -525,19 +574,39 @@ public sealed class ShoppingService
 
         if (preferLiveRow)
         {
-            // ItemId alone is not enough: the same item appears in silver and gold menus.
-            // Matching a gold offer while the silver shop is open spams failed buys.
+            // ItemId alone is not enough: Fixative (and others) list in silver, gold, and amulet
+            // shops. Only buy when the open row's currency and cost match a Pay-with offer.
             foreach (ShopCatalogEntry entry in candidates)
             {
-                if (openedMenuIndex is { } liveMenu && entry.MenuIndex != liveMenu)
+                if (!ShopExchangeAssist.TryGetListedOffer(
+                        entry.ItemId,
+                        out _,
+                        out uint liveCurrency,
+                        out uint liveCost))
                 {
                     continue;
                 }
 
-                if (ShopExchangeAssist.TryFindRowIndex(entry.ItemId, out _))
+                bool haveLiveCost = liveCurrency != 0 && liveCost != 0;
+                if (haveLiveCost)
                 {
-                    return entry;
+                    if (liveCurrency != entry.CurrencyItemId || liveCost != entry.Cost)
+                    {
+                        continue;
+                    }
                 }
+                else if (openedMenuIndex is not int opened || entry.MenuIndex != opened)
+                {
+                    // Can't read cost and we didn't open this menu — don't click the amulet listing.
+                    continue;
+                }
+
+                if (openedMenuIndex is { } assumed && entry.MenuIndex != assumed)
+                {
+                    openedMenuIndex = entry.MenuIndex;
+                }
+
+                return entry;
             }
 
             return null;
@@ -627,11 +696,55 @@ public sealed class ShoppingService
             master.Entries[menuIndex].Select();
             openedMenuIndex = menuIndex;
             skippedMissingRows.Clear();
+            ResetTabHunt();
         }
         catch (Exception ex)
         {
             logger.Warn($"[Shopping] SelectIconString failed: {ex.Message}");
         }
+    }
+
+    private void ResetTabHunt()
+    {
+        tabHuntItemId = null;
+        tabHuntAttempts = 0;
+        tabHuntSettleGrace = false;
+    }
+
+    /// <summary>
+    /// Cycle Weapons → Armor → Accessories → Others until AgentShop lists the item.
+    /// </summary>
+    private unsafe bool TryCycleCategoryTab(AtkUnitBase* shop, ShopCatalogEntry entry)
+    {
+        if (tabHuntItemId != entry.ItemId)
+        {
+            tabHuntItemId = entry.ItemId;
+            tabHuntAttempts = 0;
+            tabHuntSettleGrace = false;
+        }
+
+        if (tabHuntAttempts >= ShopExchangeAssist.CategoryTabCount)
+        {
+            // Last tab fire may need one more tick for AgentShop to refresh.
+            if (!tabHuntSettleGrace)
+            {
+                tabHuntSettleGrace = true;
+                return true;
+            }
+
+            return false;
+        }
+
+        if (!EzThrottler.Throttle("Shopping::ShopTab", 500))
+        {
+            return true;
+        }
+
+        int tabIndex = tabHuntAttempts;
+        tabHuntAttempts++;
+        logger.Debug($"[Shopping] category tab {tabIndex} for {entry.Name} ({entry.ItemId})");
+        ShopExchangeAssist.TrySelectCategoryTab(shop, tabIndex);
+        return true;
     }
 
     private static unsafe bool FirePurchaseCallback(AtkUnitBase* addon, uint rowIndex, int quantity)

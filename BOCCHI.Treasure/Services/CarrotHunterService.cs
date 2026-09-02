@@ -630,8 +630,13 @@ public sealed class CarrotHunterService
         {
             ResetFarStuckWatch();
             vnav.Stop();
-            ClearNinjaHideRequirement();
-            ninjaHide.EndStealthForInteract();
+            bool keepNinja = StillThreatenedForRemount();
+            if (!keepNinja)
+            {
+                ClearNinjaHideRequirement();
+            }
+
+            ninjaHide.EndStealthForInteract(keepNinja);
             Phase = CarrotHuntPhase.UsingItem;
             return;
         }
@@ -651,6 +656,8 @@ public sealed class CarrotHunterService
 
     private void TickUsingItem()
     {
+        MaintainNinjaHideDuringInteract();
+
         if (!TryGetCurrentLiveCarrot(out Carrot carrot))
         {
             SkipCurrentAuthored();
@@ -725,6 +732,8 @@ public sealed class CarrotHunterService
 
     private void TickOpeningBunny()
     {
+        MaintainNinjaHideDuringInteract();
+
         IGameObject? bunny = FindBunnyNear(currentTargetPosition);
         if (bunny == null)
         {
@@ -756,8 +765,13 @@ public sealed class CarrotHunterService
             return;
         }
 
-        ClearNinjaHideRequirement();
-        ninjaHide.EndStealthForInteract();
+        bool keepNinja = StillThreatenedForRemount();
+        if (!keepNinja)
+        {
+            ClearNinjaHideRequirement();
+        }
+
+        ninjaHide.EndStealthForInteract(keepNinja);
 
         if (!EzThrottler.Throttle("CarrotHunt::InteractBunny", 400))
         {
@@ -1745,6 +1759,21 @@ public sealed class CarrotHunterService
     {
         ninjaHideRequired = false;
         ninjaHideRouteGate.Reset();
+    }
+
+    private void MaintainNinjaHideDuringInteract()
+    {
+        if (!treasureConfig.UseNinjaHideOnDangerousRoutes || !ninjaHideRequired)
+        {
+            return;
+        }
+
+        if (conditions[ConditionFlag.InCombat])
+        {
+            return;
+        }
+
+        _ = ninjaHide.EnsureReady(treasureConfig.NinjaGearsetNumber);
     }
 
     private bool TryRecoverFromStuckWalk(int authoredId, float distance)

@@ -247,6 +247,8 @@ public class TreasureHunterService
 
         if (activeChain is { IsCompleted: false })
         {
+            // Interact often drops Hide; stay stealthed while the open chain runs near threats.
+            MaintainNinjaHideDuringInteract();
             return;
         }
 
@@ -393,6 +395,11 @@ public class TreasureHunterService
         }
 
         if (TryFinishSightAndMaybeAbort())
+        {
+            return;
+        }
+
+        if (TryAbortIfTrackerEmpty())
         {
             return;
         }
@@ -1480,25 +1487,23 @@ public class TreasureHunterService
         return trimmed;
     }
 
-    private bool ShouldAbortForNoChests()
+    private bool TrackerReportsNoWantedChests()
     {
-        if (!config.CastTreasureSightDuringHunt || !tracker.CountInitialised)
+        if (!tracker.CountInitialised)
         {
             return false;
         }
 
         if (config.HuntSilverChestsOnly)
         {
-            if (tracker.SilverChests > 0)
-            {
-                return false;
-            }
-        }
-        else if (tracker.BronzeChests + tracker.SilverChests > 0)
-        {
-            return false;
+            return tracker.SilverChests <= 0;
         }
 
+        return tracker.BronzeChests + tracker.SilverChests <= 0;
+    }
+
+    private bool HasRemainingCofferSteps()
+    {
         for (int i = StepIndex; i < steps.Count; i++)
         {
             if (steps[i].Type != HuntPathfinderStepType.ReturnToBaseCamp)
@@ -1508,6 +1513,29 @@ public class TreasureHunterService
         }
 
         return false;
+    }
+
+    private bool ShouldAbortForNoChests() =>
+        TrackerReportsNoWantedChests() && HasRemainingCofferSteps();
+
+    /// <summary>
+    ///     Sight counts (and opens that decrement them) can hit 0 while the authored route still
+    ///     has empty pads — stop instead of walking the rest of the map.
+    /// </summary>
+    private bool TryAbortIfTrackerEmpty()
+    {
+        if (waitingForSightCounts || pendingStartSight)
+        {
+            return false;
+        }
+
+        if (!ShouldAbortForNoChests())
+        {
+            return false;
+        }
+
+        FinishHuntEarly("no remaining coffers");
+        return true;
     }
 
     private void FinishHuntEarly(string reason)
@@ -1622,6 +1650,9 @@ public class TreasureHunterService
                 "Treasure hunt: could not open coffer {NodeId} — skipping and recalculating",
                 step.NodeId);
             checkedNodeIds.Add(step.NodeId);
+            // Divert reclaims false empty-skips from checkedNodeIds; keep open failures
+            // sticky like stuck pads so we do not loop on the same live coffer (SH 1821).
+            stuckSkippedNodeIds.Add(step.NodeId);
             LastCheckedNodeId = step.NodeId;
             ResetStuckWatch();
             FinishCurrentPad();
@@ -1776,8 +1807,15 @@ public class TreasureHunterService
         }
 
         ResetStuckWatch();
-        ClearNinjaHideRequirement();
-        ninjaHide.EndStealthForInteract();
+        // Stay on Ninja + keep Hide requirement while threatened — gearset swap drops Hide and
+        // nearby high-Knowledge mobs aggro before re-Hide.
+        bool keepNinja = StillThreatenedForRemount();
+        if (!keepNinja)
+        {
+            ClearNinjaHideRequirement();
+        }
+
+        ninjaHide.EndStealthForInteract(keepNinja);
         activeChain = chainManager.Manage(
             chains.Create($"TreasureHunt::Open({step.NodeId})")
                 .Then<OpenTreasureCofferChain, TreasureOpenTarget>(present.Position)
@@ -2149,6 +2187,21 @@ public class TreasureHunterService
             player.Position,
             config.KnowledgeHideOffset,
             config.KnowledgeThreatExitDistance);
+
+    private void MaintainNinjaHideDuringInteract()
+    {
+        if (!config.UseNinjaHideOnDangerousRoutes || !ninjaHideRequired)
+        {
+            return;
+        }
+
+        if (conditions[ConditionFlag.InCombat])
+        {
+            return;
+        }
+
+        _ = ninjaHide.EnsureReady(config.NinjaGearsetNumber);
+    }
 
     private void ClearNinjaHideRequirement()
     {

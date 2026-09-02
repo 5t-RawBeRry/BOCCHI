@@ -45,6 +45,8 @@ public class FarmingPotChestsHandler
     AutoRotationController autoRotation,
     MovementConfig movement,
     PotsConfig potsConfig,
+    TreasureConfig treasureConfig,
+    NinjaHideAssist ninjaHide,
     IAutomatorContext context,
     PandoraAutoOpenHold pandoraAutoOpen,
     IVNavmeshIpc vnav,
@@ -54,6 +56,12 @@ public class FarmingPotChestsHandler
     private const float ChestSearchRadius = 18f;
 
     private const float RevealSearchRadius = 28f;
+
+    /// <summary>
+    ///     Divert to any streamed pot coffer within this range even if it is not on an authored pad
+    ///     (authored list can miss a spawn while neighbors were already swept).
+    /// </summary>
+    private const float LiveCofferDivertRadius = 80f;
 
     /// <summary>On-pad distance for the elixir probe (not coffer interact range).</summary>
     private const float CandidateProbeRadius = 5f;
@@ -153,6 +161,10 @@ public class FarmingPotChestsHandler
     /// <summary>True while the AI holds movement for a fight (see the combat branch in Handle).</summary>
     private bool defendingInCombat;
 
+    private readonly NinjaHideRouteGate ninjaHideRouteGate = new();
+
+    private bool ninjaHideRequired;
+
     public override StatePriority GetScore()
     {
         if (conditions[ConditionFlag.Unconscious])
@@ -179,6 +191,7 @@ public class FarmingPotChestsHandler
         lastPathIssueAt = DateTimeOffset.MinValue;
         lastPathDestination = null;
         pandoraAutoOpen.Hold();
+        ClearNinjaHideRequirement();
     }
 
     public override void Exit(AutomatorState next)
@@ -195,6 +208,8 @@ public class FarmingPotChestsHandler
         tickChests.Clear();
         tickReveals.Clear();
         defendingInCombat = false;
+        ClearNinjaHideRequirement();
+        ninjaHide.RestorePreviousGearsetIfNeeded();
         hints.Disarm();
         pandoraAutoOpen.Release();
     }
@@ -210,6 +225,13 @@ public class FarmingPotChestsHandler
         {
             // Travel chains block the handler for a long time — a compass hint that lands mid-walk
             // would otherwise be applied from the arrival pad, not from where Magical Elixir was used.
+            // Open chains: re-Hide if interact dropped stealth while threats remain.
+            if (farm.Phase == PotChestFarmPhase.OpeningReveal
+                || farm.Phase == PotChestFarmPhase.BlindSweep)
+            {
+                MaintainNinjaHideDuringInteract();
+            }
+
             bool interrupt = false;
             if (farm.Mode == PotChestFarmMode.Smart
                 && farm.Phase is (PotChestFarmPhase.SearchingCandidates
@@ -560,6 +582,27 @@ public class FarmingPotChestsHandler
             farm.Phase = PotChestFarmPhase.OpeningReveal;
             farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
             TryOpenChest(reveal);
+            return;
+        }
+
+        // Authored list can miss a spawn — if a pot coffer is already streamed nearby, walk to it.
+        if (FindUnopenedRevealNearPlayer(LiveCofferDivertRadius) is { } liveDivert)
+        {
+            if (EzThrottler.Throttle("PotChestFarm::LiveDivert", 5000))
+            {
+                logger.Info(
+                    "Pot treasure: live coffer at {Pos:F0} ({Dist:F0}y) — diverting off authored route",
+                    liveDivert.Position,
+                    player.Position.Distance2D(liveDivert.Position));
+            }
+
+            farm.Phase = PotChestFarmPhase.OpeningReveal;
+            farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
+            if (!EnsurePathing(liveDivert.Position, allowRemount: false, skipIfOffMesh: false))
+            {
+                TryOpenChest(liveDivert);
+            }
+
             return;
         }
 
@@ -1036,6 +1079,12 @@ public class FarmingPotChestsHandler
     /// <returns>False when the pad is off-mesh and <paramref name="skipIfOffMesh"/> is set.</returns>
     private bool EnsurePathing(Vector3 destination, bool allowRemount = true, bool skipIfOffMesh = true)
     {
+        // Same gate as Treasure / Carrot Hunt — prepare Hide before walking into high-Knowledge mobs.
+        if (!ApplyNinjaHideGate())
+        {
+            return true;
+        }
+
         if (!TreasurePathing.TryResolvePathable(destination, player.Position.Y, vnav, skipIfOffMesh, out Vector3 pathable))
         {
             return false;
@@ -1266,10 +1315,110 @@ public class FarmingPotChestsHandler
         return OpenTreasureCofferChain.IsOpenedOrLooted(reveal) ? null : reveal;
     }
 
+    private IGameObject? FindUnopenedRevealNearPlayer(float radius)
+    {
+        IGameObject? reveal = GameObjectNearest.Find2D(
+            tickReveals,
+            player.Position,
+            radius,
+            o => o.IsTargetable);
+
+        return reveal != null && !OpenTreasureCofferChain.IsOpenedOrLooted(reveal) ? reveal : null;
+    }
+
     private IGameObject? FindUnopenedChestNear(Vector3 position)
     {
         IGameObject? chest = FindChestNear(position);
         return chest != null && !OpenTreasureCofferChain.IsOpenedOrLooted(chest) ? chest : null;
+    }
+
+    /// <returns>False while still preparing Hide (caller should wait via EnsurePathing returning true).</returns>
+    private bool ApplyNinjaHideGate()
+    {
+        if (!treasureConfig.UseNinjaHideOnDangerousRoutes)
+        {
+            ClearNinjaHideRequirement();
+            return true;
+        }
+
+        UpdateNinjaHideRequired();
+
+        if (!ninjaHideRequired)
+        {
+            ninjaHide.RestorePreviousGearsetIfNeeded();
+            return true;
+        }
+
+        if (conditions[ConditionFlag.InCombat])
+        {
+            return true;
+        }
+
+        if (ninjaHide.EnsureReady(treasureConfig.NinjaGearsetNumber))
+        {
+            if (treasureConfig.UseOccultSprintWhileHidden)
+            {
+                ninjaHide.TryOccultSprintWhileHidden();
+            }
+
+            return true;
+        }
+
+        if (treasureConfig.NinjaGearsetNumber <= 0 && !ninjaHide.IsNinja)
+        {
+            if (EzThrottler.Throttle("PotChestFarm::NinjaHideNoGearset", 10000))
+            {
+                logger.Warning(
+                    "Ninja Hide is on but gearset is 0 and you are not on Ninja — skipping Hide for this threat");
+            }
+
+            ClearNinjaHideRequirement();
+            return true;
+        }
+
+        pathfinder.Stop();
+        vnav.Stop();
+        return false;
+    }
+
+    private void UpdateNinjaHideRequired()
+    {
+        ninjaHideRequired = ninjaHideRouteGate.UpdateRequired(
+            objects,
+            player.Position,
+            ninjaHideRequired,
+            ninjaHide.IsMounted,
+            treasureConfig.KnowledgeHideOffset,
+            treasureConfig.KnowledgeThreatEnterDistance,
+            treasureConfig.KnowledgeThreatExitDistance);
+    }
+
+    private void ClearNinjaHideRequirement()
+    {
+        ninjaHideRequired = false;
+        ninjaHideRouteGate.Reset();
+    }
+
+    private void MaintainNinjaHideDuringInteract()
+    {
+        if (!treasureConfig.UseNinjaHideOnDangerousRoutes || !ninjaHideRequired)
+        {
+            return;
+        }
+
+        if (conditions[ConditionFlag.InCombat])
+        {
+            return;
+        }
+
+        // Keep Hide requirement fresh while the open runs next to the pack.
+        UpdateNinjaHideRequired();
+        if (!ninjaHideRequired)
+        {
+            return;
+        }
+
+        _ = ninjaHide.EnsureReady(treasureConfig.NinjaGearsetNumber);
     }
 
     /// <summary>

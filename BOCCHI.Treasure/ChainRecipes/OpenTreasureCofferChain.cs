@@ -102,15 +102,20 @@ public class OpenTreasureCofferChain
 
                 // Pot reveals often report Y ≈ -500 — use 2D so we still walk up and open (#170).
                 float dist2d = player.Position.Distance2D(nearby.Position);
-                if (dist2d > MaxOpenAttemptDistance)
+                if (dist2d > PreferredOpenDistance)
                 {
+                    // Keep walking — early stop + Interact fails "Too far away" on some pads
+                    // (SH 1821). EnsurePathing uses the live position this close (no mesh-snap loop).
                     EnsurePathing(nearby.Position, pathState);
-                    return false;
+                    if (dist2d > MaxOpenAttemptDistance)
+                    {
+                        return false;
+                    }
                 }
-
-                // 2.0–3.5y: do not path to a mesh snap beside the chest — that parks you
-                // at the snap (WaitUntil) while Distance to coffer stays ~2.4y (2057 sit).
-                StopNav();
+                else
+                {
+                    StopNav();
+                }
 
                 // Stay mounted when possible (forced dismount in high-knowledge areas got people killed, #175).
 
@@ -170,9 +175,9 @@ public class OpenTreasureCofferChain
     {
         Vector3 moveTarget = PathableWhenFar(destination);
 
-        // Stop against the live coffer, not the snap — snap can be 3–5y off while you
-        // are already in interact range of the object.
-        if (player.Position.Distance2D(destination) <= MaxOpenAttemptDistance)
+        // Stop only once within Pandora's ≤2y interact gate. Stopping earlier left us
+        // Interact-spamming outside game range until the 45s WaitUntil timed out.
+        if (player.Position.Distance2D(destination) <= PreferredOpenDistance)
         {
             StopNav();
             return;
