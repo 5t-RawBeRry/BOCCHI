@@ -1,0 +1,9 @@
+{
+  "label": "Logs",
+  "tooltip": "Live BOCCHI log buffer. Debug lines are captured automatically — you do not need to set Dalamud to Debug.",
+  "fields": {
+    "viewer": {
+      "label": "Viewer"
+    }
+  }
+}

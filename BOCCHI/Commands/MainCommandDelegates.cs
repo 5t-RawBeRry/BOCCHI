@@ -31,3 +31,8 @@ public class ChangelogCommandDelegate(ChangelogCommand command) : IMainCommandDe
 {
     public IOcelotCommand Command { get; } = command;
 }
+
+public class LogsCommandDelegate(LogsCommand command) : IMainCommandDelegate
+{
+    public IOcelotCommand Command { get; } = command;
+}

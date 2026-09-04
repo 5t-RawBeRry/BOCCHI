@@ -1,0 +1,19 @@
+{
+  "title": "BOCCHI — Logs",
+  "search_hint": "搜索日志…",
+  "copy_all": "复制全部 BOCCHI 日志",
+  "copy_all_tooltip": "复制版本、循环设置以及缓冲区中全部 BOCCHI 日志（供 Discord，不只是筛选结果）。Debug 行会自动收录。",
+  "clear": "清空",
+  "copied": "已复制。",
+  "col_time": "时间",
+  "col_count": "次数",
+  "col_level": "级别",
+  "col_message": "消息",
+  "level": {
+    "verbose": "Verbose+",
+    "debug": "Debug+",
+    "info": "Info+",
+    "warning": "Warning+",
+    "error": "Error"
+  }
+}

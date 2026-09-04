@@ -16,6 +16,8 @@ public class Configuration : IConfiguration
 
     public DependenciesConfig DependenciesConfig { get; set; } = new();
 
+    public LogsConfig LogsConfig { get; set; } = new();
+
     public AutomatorConfig AutomatorConfig { get; set; } = new();
 
     public MovementConfig MovementConfig { get; set; } = new();

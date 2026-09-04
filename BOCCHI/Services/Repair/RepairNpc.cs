@@ -15,7 +15,8 @@ internal static class RepairNpc
     /// <summary>ENpcData row for the Repair interaction (same id Artisan and AutoDuty use).</summary>
     public const uint RepairEventId = 720915;
 
-    public const float SearchRadius = 25f;
+    /// <summary>Wide enough to reach the Occult Crescent camp mender from the aetheryte pad.</summary>
+    public const float SearchRadius = 50f;
 
     public const float InteractRadius = 3.5f;
 

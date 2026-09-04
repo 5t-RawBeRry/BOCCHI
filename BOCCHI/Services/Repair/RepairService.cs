@@ -13,7 +13,8 @@ public class RepairService(
     AutomatorConfig config,
     IObjectTable objects,
     IDataManager data,
-    IPlayer player
+    IPlayer player,
+    IPluginLog log
 ) : IRepairService
 {
     public unsafe bool ShouldRepair()
@@ -45,20 +46,6 @@ public class RepairService(
         IChain chain = chains.Create("Repairs");
         chain.Then<UnmountStep>();
 
-        if (ShouldUseMender())
-        {
-            chain.Then<NpcRepairStep>();
-        }
-        else
-        {
-            chain.Then<RepairStep>();
-        }
-
-        return chain;
-    }
-
-    private bool ShouldUseMender()
-    {
         bool menderNearby = RepairNpc.TryFindNearby(
             objects,
             data,
@@ -66,13 +53,29 @@ public class RepairService(
             out _,
             out _);
 
-        return config.AutoRepairMethod switch
+        if (ShouldUseMender(menderNearby))
         {
-            AutoRepairMethod.MenderNpc => true,
-            AutoRepairMethod.PreferMender => menderNearby,
-            _ => false,
-        };
+            chain.Then<NpcRepairStep>();
+        }
+        else
+        {
+            if (config.AutoRepairMethod == AutoRepairMethod.MenderNpc && !menderNearby)
+            {
+                log.Warning("Mender NPC selected but none nearby — falling back to self-repair");
+            }
+
+            chain.Then<RepairStep>();
+        }
+
+        return chain;
     }
+
+    private bool ShouldUseMender(bool menderNearby) => config.AutoRepairMethod switch
+    {
+        AutoRepairMethod.MenderNpc => menderNearby,
+        AutoRepairMethod.PreferMender => menderNearby,
+        _ => false,
+    };
 
     private static unsafe bool TryGetEquipped(out InventoryContainer* equipped)
     {

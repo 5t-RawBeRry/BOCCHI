@@ -4,6 +4,10 @@
   "support": {
     "kofi_tooltip": "♥ Ko-fi (so you can keep touching grass)"
   },
+  "logs": {
+    "open_tooltip": "Open BOCCHI logs",
+    "copy_all_tooltip": "Copy all BOCCHI logs (version, rotation, buffered lines; Debug included automatically) for Discord"
+  },
   "sections": {
     "trackers": "Trackers",
     "automation": "Illegal Mode",

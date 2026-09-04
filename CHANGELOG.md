@@ -1,23 +1,22 @@
-# 4.2.0.9
+# 4.2.0.10
 
-### Treasure hunt
-- No longer sits forever in front of a coffer saying "Too far away" (South Horn), then keeps retrying the same chest
-- Stops when bronze and silver remaining hit 0, not only after a Treasure Sight refresh
+### Mob Farmer
+- Pull buffs no longer swap through Dancer / Geomancer / Monk without casting (and no longer skip Ringing Respite after Battle Bell)
 
-### Auto shopping
-- Opens the correct North Horn / South Horn vendor menus and switches tabs until the item is listed
-- No longer buys with the wrong currency (e.g. amulets on Fixative when Amulet pay is off)
-- Pauses treasure hunt and resumes where it left off, instead of restarting at the first pad
-
-### Illegal Mode
-- No longer sits forever after a FATE/CE when Return stays blocked — Treasure Sight survey times out and falls back to map hunt
-- Restores Phantom Knight / Bard / Monk / Dancer after knowledge-crystal buffs (was stuck on Freelancer)
-- After a pot FATE, still runs Magical Elixir / pot chests before restarting treasure hunt (including after you stop the auto hunt)
+### Carrot Hunt
+- Fortune Carrot no longer logs "used" and skips the pad when the game rejected the use (retries until cast / inventory drop)
+- Auto shopping pauses Carrot Hunt and resumes where it left off (same as treasure hunt)
 
 ### Pot chests
-- North Horn south pot: missing chest pad and divert to live coffers off the list
-- Ninja Hide near strong enemies also applies while farming pot chests
+- Ninja Hide arms earlier when walking to pot / 2nd-chance pads surrounded by high-Knowledge mobs (needs Use Ninja Hide on)
 
-### Ninja Hide
-- Stays on Ninja through coffer open next to strong enemies (swapping dropped Hide and let packs aggro)
-- Occult Sprint no longer retries a blocked phantom-job swap every tick
+### Logs
+- In-plugin log viewer (Config → Logs, main window list icon, or `/bocchi logs`)
+- Debug lines are captured automatically (no need to set Dalamud log level to Debug)
+- Copy all BOCCHI logs includes version, combat rotation, loaded plugins, active modes, and zone
+
+### Repair
+- Mender NPC repair no longer leaves Illegal Mode stuck on Repairing forever (timeout + short skip; falls back to self-repair if no mender nearby)
+
+### Treasure / Hide
+- Crescent Haunts no longer block Ninja Hide (they were wrongly treated as seeing through Hide)

@@ -27,6 +27,9 @@ public static class CommandServiceExtensions
         services.AddSingleton<ChangelogCommand>();
         services.AddSingleton<IMainCommandDelegate, ChangelogCommandDelegate>();
 
+        services.AddSingleton<LogsCommand>();
+        services.AddSingleton<IMainCommandDelegate, LogsCommandDelegate>();
+
         services.AddSingleton<IOcelotCommand, OchAliasCommand>();
     }
 }

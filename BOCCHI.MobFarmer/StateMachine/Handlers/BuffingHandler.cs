@@ -34,9 +34,13 @@ public class BuffingHandler
 
     private bool quickstepDone;
 
+    private bool quickstepIssued;
+
     private bool bellDone;
 
     private bool respiteDone;
+
+    private bool respiteIssued;
 
     private bool counterstanceDone;
 
@@ -52,8 +56,10 @@ public class BuffingHandler
     {
         base.Enter();
         quickstepDone = false;
+        quickstepIssued = false;
         bellDone = false;
         respiteDone = false;
+        respiteIssued = false;
         counterstanceDone = false;
         counterstanceIssued = false;
         sprintDone = false;
@@ -73,10 +79,11 @@ public class BuffingHandler
             return null;
         }
 
+        // Advance only on *Done flags — never on a Try* returning Gathering while still pending.
         if (!quickstepDone)
         {
-            FarmerPhase? quickstep = TryQuickstep();
-            if (quickstep == null && !quickstepDone)
+            TryQuickstep();
+            if (!quickstepDone)
             {
                 return null;
             }
@@ -84,8 +91,8 @@ public class BuffingHandler
 
         if (!bellDone || !respiteDone)
         {
-            FarmerPhase? geo = TryGeomancerBuffs();
-            if (geo == null && (!bellDone || !respiteDone))
+            TryGeomancerBuffs();
+            if (!bellDone || !respiteDone)
             {
                 return null;
             }
@@ -94,8 +101,8 @@ public class BuffingHandler
         // Counterstance last so Fleetfooted covers pull start, not buff idle.
         if (!counterstanceDone)
         {
-            FarmerPhase? stance = TryCounterstance();
-            if (stance == null && !counterstanceDone)
+            TryCounterstance();
+            if (!counterstanceDone)
             {
                 return null;
             }
@@ -104,20 +111,20 @@ public class BuffingHandler
         return TrySprintThenGather();
     }
 
-    private FarmerPhase? TryQuickstep()
+    private void TryQuickstep()
     {
         if (!config.ApplyQuickstep || supportJobs.Create(SupportJobId.PhantomDancer).Level < PhantomActions.QuickstepUnlock)
         {
-            quickstepDone = true;
-            return FarmerPhase.Gathering;
+            FinishQuickstep();
+            return;
         }
 
         if (config.QuickstepSkipIfRemainingMinutes > 0
             && objects.LocalPlayer is { } local
             && local.GetRemainingMinutes(PhantomBuffs.QuickerStep) >= (uint)config.QuickstepSkipIfRemainingMinutes)
         {
-            quickstepDone = true;
-            return FarmerPhase.Gathering;
+            FinishQuickstep();
+            return;
         }
 
         if (!IsJob(SupportJobId.PhantomDancer))
@@ -127,26 +134,50 @@ public class BuffingHandler
                 changer.Change(SupportJobId.PhantomDancer);
             }
 
-            return null;
+            return;
+        }
+
+        // Only treat Quicker Step as success after we issued a cast this pull — an existing
+        // crystal / prior-pull buff must not skip the every-pull Quickstep attempt.
+        if (quickstepIssued)
+        {
+            if (HasQuickstepBuff() || DateTimeOffset.UtcNow - (stepWaitStartedUtc ?? DateTimeOffset.UtcNow) >= StepGiveUp)
+            {
+                FinishQuickstep();
+            }
+
+            return;
         }
 
         if (Actions.PhantomActionII.CanCast() && Actions.PhantomActionII.Cast())
         {
-            stepWaitStartedUtc ??= DateTimeOffset.UtcNow;
-            return null;
+            quickstepIssued = true;
+            stepWaitStartedUtc = DateTimeOffset.UtcNow;
+            return;
         }
 
-        if (HasQuickstepBuff() || DateTimeOffset.UtcNow - (stepWaitStartedUtc ?? DateTimeOffset.UtcNow) >= StepGiveUp)
+        // Already on CD from a recent cast — nothing to do this pull.
+        if (Actions.PhantomActionII.GetRecastTime() > 0f)
         {
-            quickstepDone = true;
-            stepWaitStartedUtc = null;
-            return FarmerPhase.Gathering;
+            FinishQuickstep();
+            return;
         }
 
-        return null;
+        // Job just swapped — briefly wait for CanCast before giving up.
+        stepWaitStartedUtc ??= DateTimeOffset.UtcNow;
+        if (DateTimeOffset.UtcNow - stepWaitStartedUtc.Value >= StepGiveUp)
+        {
+            FinishQuickstep();
+        }
     }
 
-    private FarmerPhase? TryGeomancerBuffs()
+    private void FinishQuickstep()
+    {
+        quickstepDone = true;
+        stepWaitStartedUtc = null;
+    }
+
+    private void TryGeomancerBuffs()
     {
         // Respite shares a short CD with Quickstep — wait below; do not gate on current Recast here.
         bool wantBell = config.ApplyBattleBell && BattleBell.GetRecastTime() <= config.MaximumBattleBellWaitTime;
@@ -166,7 +197,7 @@ public class BuffingHandler
 
         if (bellDone && respiteDone)
         {
-            return FarmerPhase.Gathering;
+            return;
         }
 
         if (!IsJob(SupportJobId.PhantomGeomancer))
@@ -176,7 +207,7 @@ public class BuffingHandler
                 changer.Change(SupportJobId.PhantomGeomancer);
             }
 
-            return null;
+            return;
         }
 
         if (!bellDone)
@@ -184,12 +215,12 @@ public class BuffingHandler
             if (BattleBell.GetRecastTime() <= 0f && Actions.PhantomActionI.CanCast())
             {
                 Actions.PhantomActionI.Cast();
-                return null;
+                return;
             }
 
             if (!HasBattleBell())
             {
-                return null;
+                return;
             }
 
             bellDone = true;
@@ -203,73 +234,77 @@ public class BuffingHandler
             {
                 respiteDone = true;
                 stepWaitStartedUtc = null;
-                return FarmerPhase.Gathering;
+                return;
+            }
+
+            if (respiteIssued)
+            {
+                // Cast went out — GCD/shared CD ticking (or buff) is enough to finish.
+                if (respiteCd > 0f
+                    || HasRingingRespite()
+                    || DateTimeOffset.UtcNow - (stepWaitStartedUtc ?? DateTimeOffset.UtcNow) >= StepGiveUp)
+                {
+                    respiteDone = true;
+                    stepWaitStartedUtc = null;
+                }
+
+                return;
             }
 
             if (respiteCd > 0f)
             {
-                // Cast already went out — GCD/shared CD ticking is enough to finish.
-                if (stepWaitStartedUtc is not null)
-                {
-                    respiteDone = true;
-                    stepWaitStartedUtc = null;
-                    return FarmerPhase.Gathering;
-                }
-
-                return null;
+                return;
             }
 
             if (Actions.PhantomActionIII.CanCast() && Actions.PhantomActionIII.Cast())
             {
-                stepWaitStartedUtc ??= DateTimeOffset.UtcNow;
-                return null;
+                respiteIssued = true;
+                stepWaitStartedUtc = DateTimeOffset.UtcNow;
+                return;
             }
 
-            if (stepWaitStartedUtc is not null
-                && DateTimeOffset.UtcNow - stepWaitStartedUtc.Value >= StepGiveUp)
+            stepWaitStartedUtc ??= DateTimeOffset.UtcNow;
+            if (DateTimeOffset.UtcNow - stepWaitStartedUtc.Value >= StepGiveUp)
             {
                 respiteDone = true;
                 stepWaitStartedUtc = null;
             }
         }
-
-        return FarmerPhase.Gathering;
     }
 
-    private FarmerPhase? TryCounterstance()
+    private void TryCounterstance()
     {
         if (!config.ApplyCounterstance
             || supportJobs.Create(SupportJobId.PhantomMonk).Level < PhantomActions.CounterstanceUnlock)
         {
             counterstanceDone = true;
-            return FarmerPhase.Gathering;
+            return;
         }
 
         // Already issued this pull — wait for Fleetfooted or give up. Counterstance is
         // GCD-only; re-casting every GCD when the buff check fails is the spam bug.
-        if (stepWaitStartedUtc is not null && counterstanceIssued)
+        if (counterstanceIssued)
         {
-            if (HasFleetfooted() || DateTimeOffset.UtcNow - stepWaitStartedUtc.Value >= StepGiveUp)
+            if (HasFleetfooted() || DateTimeOffset.UtcNow - (stepWaitStartedUtc ?? DateTimeOffset.UtcNow) >= StepGiveUp)
             {
                 counterstanceDone = true;
                 counterstanceIssued = false;
                 stepWaitStartedUtc = null;
-                return FarmerPhase.Gathering;
             }
 
-            return null;
+            return;
         }
 
         float cd = Counterstance.GetRecastTime();
         if (cd > config.MaximumBattleBellWaitTime)
         {
             counterstanceDone = true;
-            return FarmerPhase.Gathering;
+            return;
         }
 
         if (cd > 0f)
         {
-            return null;
+            return;
         }
 
         if (!IsJob(SupportJobId.PhantomMonk))
@@ -279,13 +314,13 @@ public class BuffingHandler
                 changer.Change(SupportJobId.PhantomMonk);
             }
 
-            return null;
+            return;
         }
 
         if (HasFleetfooted())
         {
             counterstanceDone = true;
-            return FarmerPhase.Gathering;
+            return;
         }
 
         if (Actions.PhantomActionIII.CanCast() && Actions.PhantomActionIII.Cast())
@@ -293,8 +328,6 @@ public class BuffingHandler
             counterstanceIssued = true;
             stepWaitStartedUtc = DateTimeOffset.UtcNow;
         }
-
-        return null;
     }
 
     private FarmerPhase? TrySprintThenGather()
@@ -360,6 +393,16 @@ public class BuffingHandler
 
         return player.StatusList.Has(PhantomBuffs.BattleBell)
                || player.StatusList.Has(PhantomBuffs.BattlesClangor);
+    }
+
+    private bool HasRingingRespite()
+    {
+        if (objects.LocalPlayer is not { } player)
+        {
+            return false;
+        }
+
+        return player.StatusList.Has(PhantomBuffs.RingingRespite);
     }
 
     private bool HasQuickstepBuff()

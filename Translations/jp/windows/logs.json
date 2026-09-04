@@ -1,0 +1,19 @@
+{
+  "title": "BOCCHI — Logs",
+  "search_hint": "ログを検索...",
+  "copy_all": "BOCCHIログをすべてコピー",
+  "copy_all_tooltip": "バージョン・ローテーション・バッファ内の全BOCCHIログをDiscord用にコピーします（フィルタ結果だけではありません）。Debugは自動で取り込まれます。",
+  "clear": "クリア",
+  "copied": "コピーしました。",
+  "col_time": "時刻",
+  "col_count": "回数",
+  "col_level": "レベル",
+  "col_message": "メッセージ",
+  "level": {
+    "verbose": "Verbose+",
+    "debug": "Debug+",
+    "info": "Info+",
+    "warning": "Warning+",
+    "error": "Error"
+  }
+}

@@ -20,6 +20,9 @@
   "dependencies": {
     "label": "Dependencies"
   },
+  "logs": {
+    "label": "Logs"
+  },
   "movement": {
     "label": "Movement"
   }

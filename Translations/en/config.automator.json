@@ -133,7 +133,7 @@
     },
     "auto_repair_method": {
       "label": "Repair method",
-      "tooltip": "Self-repair: Repair action (needs crafter levels and dark matter).\nMender NPC: talk to a nearby mender at base camp (no crafter).\nPrefer mender: mender when nearby, otherwise self-repair."
+      "tooltip": "Self-repair: Repair action (needs crafter levels and dark matter).\nMender NPC: talk to a nearby mender at base camp (no crafter). If none is found, falls back to self-repair.\nPrefer mender: mender when nearby, otherwise self-repair.\nIf repair fails or hangs, Illegal Mode skips it for a short time so it does not sit on Repairing forever."
     },
     "enable_automatic_treasure_hunt_during_illegal_mode": {
       "label": "Auto treasure hunt in Illegal Mode",

@@ -4,6 +4,10 @@
   "support": {
     "kofi_tooltip": "♥ Ko-fi（外で芝生に触れ続けられるように）"
   },
+  "logs": {
+    "open_tooltip": "BOCCHIログを開く",
+    "copy_all_tooltip": "BOCCHIログをすべてコピー（バージョン・ローテーション・バッファ／Debug自動）"
+  },
   "sections": {
     "trackers": "トラッカー",
     "automation": "不正モード",

@@ -133,7 +133,7 @@
     },
     "auto_repair_method": {
       "label": "수리 방법",
-      "tooltip": "자가 수리: 수리 액션(크래프터 레벨과 암물질 필요).\n수리 NPC: 베이스캠프 근처 수리 NPC에게 말걸기(크래프터 불필요).\n수리 NPC 우선: 근처에 있으면 NPC, 없으면 자가 수리."
+      "tooltip": "자가 수리: 수리 액션(크래프터 레벨과 암물질 필요).\n수리 NPC: 베이스캠프 근처 수리 NPC에게 말걸기(크래프터 불필요). 없으면 자가 수리로 전환.\n수리 NPC 우선: 근처에 있으면 NPC, 없으면 자가 수리.\n수리가 실패하거나 멈추면 잠시 건너뛰어 Repairing에 영원히 걸리지 않습니다."
     },
     "enable_automatic_treasure_hunt_during_illegal_mode": {
       "label": "자동 모드 자동 보물 찾기",

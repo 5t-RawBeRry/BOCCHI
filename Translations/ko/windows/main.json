@@ -4,6 +4,10 @@
   "support": {
     "kofi_tooltip": "♥ Ko-fi (밖에 나가 풀밭도 만질 수 있게)"
   },
+  "logs": {
+    "open_tooltip": "BOCCHI 로그 열기",
+    "copy_all_tooltip": "BOCCHI 로그 모두 복사 (버전, 로테이션, 버퍼 / Debug 자동)"
+  },
   "sections": {
     "trackers": "추적기",
     "automation": "자동 모드",

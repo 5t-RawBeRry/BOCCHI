@@ -20,6 +20,9 @@
   "dependencies": {
     "label": "依存関係"
   },
+  "logs": {
+    "label": "ログ"
+  },
   "movement": {
     "label": "移動"
   }

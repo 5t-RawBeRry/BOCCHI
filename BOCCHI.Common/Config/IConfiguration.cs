@@ -7,6 +7,8 @@ public interface IConfiguration : IPluginConfiguration
 
     DependenciesConfig DependenciesConfig { get; set; }
 
+    LogsConfig LogsConfig { get; set; }
+
     AutomatorConfig AutomatorConfig { get; set; }
 
     MovementConfig MovementConfig { get; set; }

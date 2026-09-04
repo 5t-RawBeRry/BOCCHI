@@ -63,6 +63,12 @@ public class FarmingPotChestsHandler
     /// </summary>
     private const float LiveCofferDivertRadius = 80f;
 
+    /// <summary>
+    ///     Extra radius around the pot / 2nd-chance pad when deciding to Hide before walking in
+    ///     (on-player enter alone is too late once the pack has already aggroed).
+    /// </summary>
+    private const float PotChestHideApproachLead = 30f;
+
     /// <summary>On-pad distance for the elixir probe (not coffer interact range).</summary>
     private const float CandidateProbeRadius = 5f;
 
@@ -1080,7 +1086,7 @@ public class FarmingPotChestsHandler
     private bool EnsurePathing(Vector3 destination, bool allowRemount = true, bool skipIfOffMesh = true)
     {
         // Same gate as Treasure / Carrot Hunt — prepare Hide before walking into high-Knowledge mobs.
-        if (!ApplyNinjaHideGate())
+        if (!ApplyNinjaHideGate(destination))
         {
             return true;
         }
@@ -1333,7 +1339,7 @@ public class FarmingPotChestsHandler
     }
 
     /// <returns>False while still preparing Hide (caller should wait via EnsurePathing returning true).</returns>
-    private bool ApplyNinjaHideGate()
+    private bool ApplyNinjaHideGate(Vector3? approachingDestination = null)
     {
         if (!treasureConfig.UseNinjaHideOnDangerousRoutes)
         {
@@ -1341,7 +1347,7 @@ public class FarmingPotChestsHandler
             return true;
         }
 
-        UpdateNinjaHideRequired();
+        UpdateNinjaHideRequired(approachingDestination);
 
         if (!ninjaHideRequired)
         {
@@ -1381,7 +1387,7 @@ public class FarmingPotChestsHandler
         return false;
     }
 
-    private void UpdateNinjaHideRequired()
+    private void UpdateNinjaHideRequired(Vector3? approachingDestination = null)
     {
         ninjaHideRequired = ninjaHideRouteGate.UpdateRequired(
             objects,
@@ -1391,6 +1397,39 @@ public class FarmingPotChestsHandler
             treasureConfig.KnowledgeHideOffset,
             treasureConfig.KnowledgeThreatEnterDistance,
             treasureConfig.KnowledgeThreatExitDistance);
+
+        // Player-radius gate alone Hides too late for pot / 2nd-chance pads in packs — also arm
+        // when high-Knowledge mobs sit around the chest we are walking to.
+        if (!ninjaHideRequired && approachingDestination is { } dest)
+        {
+            ninjaHideRequired = ShouldHideForDestination(dest);
+        }
+    }
+
+    /// <summary>
+    ///     True when a Hide-eligible threat is near the pad/coffer (wider than on-player enter).
+    /// </summary>
+    private bool ShouldHideForDestination(Vector3 destination)
+    {
+        if (KnowledgeThreat.TryFindIsleblazer(
+                objects,
+                player.Position,
+                KnowledgeThreat.IsleblazerUnhideDistance,
+                out _))
+        {
+            return false;
+        }
+
+        if (KnowledgeThreat.TryGetPlayerForayLevel(objects) is not int foray)
+        {
+            return false;
+        }
+
+        int hideAt = KnowledgeThreat.HideAtOrAbove(foray, treasureConfig.KnowledgeHideOffset);
+        float lead = treasureConfig.KnowledgeThreatEnterDistance
+                     + KnowledgeThreat.MountedThreatEnterBonus
+                     + PotChestHideApproachLead;
+        return KnowledgeThreat.TryFindThreat(objects, destination, hideAt, lead, out _, out _);
     }
 
     private void ClearNinjaHideRequirement()

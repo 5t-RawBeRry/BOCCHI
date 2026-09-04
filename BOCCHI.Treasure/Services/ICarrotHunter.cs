@@ -16,6 +16,8 @@ public interface ICarrotHunter
 {
     bool Running { get; }
 
+    bool Paused { get; }
+
     CarrotHuntPhase Phase { get; }
 
     TimeSpan Elapsed { get; }
@@ -27,6 +29,10 @@ public interface ICarrotHunter
     bool IsVnavReady { get; }
 
     void Toggle();
+
+    void Pause();
+
+    void Resume();
 
     /// <summary>Manual Fortune Carrot use (for stuck / intervene).</summary>
     bool UseFortuneCarrot();

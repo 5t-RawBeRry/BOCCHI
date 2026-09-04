@@ -41,7 +41,10 @@ using Ocelot.UI.Services;
 using Ocelot.Windows;
 using System.Reflection;
 using BOCCHI.Services.MOTD;
+using BOCCHI.Services.Logging;
+using BOCCHI.Common.Services.Logging;
 using BOCCHI.Debug;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Ocelot.Lifecycle;
 
 namespace BOCCHI;
@@ -72,12 +75,14 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<OccultCrescentWindowAutoOpener>();
         services.AddSingleton<CombatPathfindCancelService>();
         services.AddSingleton<IMainWindowTitleBarContributor, IllegalModeTitleBarContributor>();
+        services.AddSingleton<IMainWindowTitleBarContributor, LogsTitleBarContributor>();
         services.AddSingleton<IMainWindowTitleBarContributor, KofiTitleBarContributor>();
         services.AddSingleton<IFieldRenderer<MobMultiSelectAttribute>, MobMultiSelectRenderer>();
         services.AddSingleton<IFieldRenderer<DisabledFateIdsAttribute>, DisabledFateIdsRenderer>();
         services.AddSingleton<IFieldRenderer<DisabledCriticalEncounterIdsAttribute>, DisabledCriticalEncounterIdsRenderer>();
         services.AddSingleton<IFieldRenderer<MountSelectAttribute>, MountSelectRenderer>();
         services.AddSingleton<IFieldRenderer<PluginDependencyStatusAttribute>, PluginDependencyStatusRenderer>();
+        services.AddSingleton<IFieldRenderer<LogsViewerAttribute>, LogsViewerRenderer>();
         services.AddSingleton<IMp3SoundPlayer, Mp3SoundPlayer>();
         services.AddSingleton<IFieldRenderer<Mp3SoundSelectAttribute>, Mp3SoundSelectRenderer>();
         services.AddSingleton<UILanguageDisplay>();
@@ -100,6 +105,20 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<IChangelogWindow>(sp => sp.GetRequiredService<ChangelogWindow>());
         services.AddSingleton<IWindow>(sp => sp.GetRequiredService<ChangelogWindow>());
         services.AddSingleton<ChangelogPopupService>();
+
+        services.AddSingleton<IBocchiLogBuffer, BocchiLogBuffer>();
+        services.AddSingleton<IBocchiLogDiagnostics, BocchiLogDiagnostics>();
+        services.AddSingleton<IBocchiLogClipboard, BocchiLogClipboard>();
+        services.AddSingleton<BocchiLogsPanel>();
+        services.AddSingleton<LogsWindow>();
+        services.AddSingleton<ILogsWindow>(sp => sp.GetRequiredService<LogsWindow>());
+        services.AddSingleton<IWindow>(sp => sp.GetRequiredService<LogsWindow>());
+        services.RemoveAll<IPluginLog>();
+        services.AddSingleton<IPluginLog>(sp =>
+        {
+            DalamudServices bag = sp.GetRequiredService<DalamudServices>();
+            return new CapturingPluginLog(bag.PluginLog, sp.GetRequiredService<IBocchiLogBuffer>());
+        });
 
         services.AddSingleton<ISupportJobFactory, SupportJobFactory>();
         services.AddSingleton<ISupportJobChanger, SupportJobChanger>();

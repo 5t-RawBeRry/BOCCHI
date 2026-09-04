@@ -4,6 +4,10 @@
   "support": {
     "kofi_tooltip": "♥ Ko-fi（这样你就能继续出门晒太阳了）"
   },
+  "logs": {
+    "open_tooltip": "打开 BOCCHI 日志",
+    "copy_all_tooltip": "复制全部 BOCCHI 日志（版本、循环、缓冲区；Debug 自动收录）"
+  },
   "sections": {
     "trackers": "统计",
     "automation": "违规模式",

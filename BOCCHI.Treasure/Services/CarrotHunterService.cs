@@ -62,6 +62,11 @@ public sealed class CarrotHunterService
 
     private static readonly TimeSpan BunnySpawnTimeout = TimeSpan.FromSeconds(20);
 
+    /// <summary>After UseItem is issued, wait this long for cast / inventory drop before retrying.</summary>
+    private static readonly TimeSpan FortuneCarrotUseConfirmTimeout = TimeSpan.FromSeconds(2.5);
+
+    private const int FortuneCarrotUseMaxAttempts = 3;
+
     /// <summary>Lateral nudge around ramp/wall geometry when pathing stalls far from the pad.</summary>
     private static readonly TimeSpan StuckNudgeTimeout = TimeSpan.FromSeconds(10);
 
@@ -105,6 +110,12 @@ public sealed class CarrotHunterService
 
     private bool itemUseIssued;
 
+    private DateTime itemUseIssuedAt = DateTime.MinValue;
+
+    private int fortuneCarrotCountAtIssue = -1;
+
+    private int fortuneCarrotUseAttempts;
+
     private AethernetData? hopDeparture;
 
     private AethernetData? hopArrival;
@@ -138,6 +149,8 @@ public sealed class CarrotHunterService
     private int stuckRepathCount;
 
     public bool Running { get; private set; }
+
+    public bool Paused { get; private set; }
 
     public CarrotHuntPhase Phase { get; private set; } = CarrotHuntPhase.Idle;
 
@@ -212,9 +225,35 @@ public sealed class CarrotHunterService
         return true;
     }
 
+    public void Pause()
+    {
+        if (!Running || Paused)
+        {
+            return;
+        }
+
+        Paused = true;
+        SoftStopMovementForPause();
+        stopwatch.Stop();
+    }
+
+    public void Resume()
+    {
+        if (!Running || !Paused)
+        {
+            return;
+        }
+
+        Paused = false;
+        if (!stopwatch.IsRunning)
+        {
+            stopwatch.Start();
+        }
+    }
+
     public void Update()
     {
-        if (!Running)
+        if (!Running || Paused)
         {
             return;
         }
@@ -668,6 +707,12 @@ public sealed class CarrotHunterService
 
         if (player.IsCasting() || conditions[ConditionFlag.Casting])
         {
+            // Cast in progress after UseItem — treat as confirmed and wait for the bunny.
+            if (itemUseIssued)
+            {
+                ConfirmFortuneCarrotUseAndWait();
+            }
+
             return;
         }
 
@@ -677,16 +722,43 @@ public sealed class CarrotHunterService
             return;
         }
 
-        if (dist > HuntDistances.UseRadius && !IsStuckNearTarget(dist))
+        // Do not UseItem from stuck-outside-range — the agent can accept the call while the
+        // game rejects the use (Ellie: "used" in log, no bunny, same pad later succeeds).
+        if (dist > HuntDistances.UseRadius)
         {
-            Phase = CarrotHuntPhase.Pathing;
+            if (IsStuckNearTarget(dist))
+            {
+                TryNavigateToward(currentTargetPosition, HuntDistances.UseRadius);
+            }
+            else
+            {
+                Phase = CarrotHuntPhase.Pathing;
+            }
+
             return;
         }
 
         if (itemUseIssued)
         {
-            waitingForBunnySince = DateTime.UtcNow;
-            Phase = CarrotHuntPhase.WaitingForBunny;
+            int remaining = InventoryItemAssist.Count(FortuneCarrotItemId);
+            if (fortuneCarrotCountAtIssue >= 0 && remaining < fortuneCarrotCountAtIssue)
+            {
+                ConfirmFortuneCarrotUseAndWait();
+                return;
+            }
+
+            if (DateTime.UtcNow - itemUseIssuedAt > FortuneCarrotUseConfirmTimeout)
+            {
+                log.Debug(
+                    "Carrot hunt: Fortune Carrot use did not start at {Pos:F0} — retrying ({Attempt}/{Max})",
+                    currentTargetPosition,
+                    fortuneCarrotUseAttempts,
+                    FortuneCarrotUseMaxAttempts);
+                itemUseIssued = false;
+                itemUseIssuedAt = DateTime.MinValue;
+                fortuneCarrotCountAtIssue = -1;
+            }
+
             return;
         }
 
@@ -697,12 +769,33 @@ public sealed class CarrotHunterService
             return;
         }
 
+        if (fortuneCarrotUseAttempts >= FortuneCarrotUseMaxAttempts)
+        {
+            log.Warning(
+                "Carrot hunt: Fortune Carrot use failed {Max} times at {Pos} — skipping",
+                FortuneCarrotUseMaxAttempts,
+                currentTargetPosition);
+            SkipCurrentAuthored();
+            return;
+        }
+
         if (!TryUseFortuneCarrot())
         {
             return;
         }
 
         itemUseIssued = true;
+        itemUseIssuedAt = DateTime.UtcNow;
+        fortuneCarrotCountAtIssue = InventoryItemAssist.Count(FortuneCarrotItemId);
+        fortuneCarrotUseAttempts++;
+        log.Debug(
+            "Carrot hunt: Fortune Carrot use issued at {Pos:F0} (attempt {Attempt})",
+            currentTargetPosition,
+            fortuneCarrotUseAttempts);
+    }
+
+    private void ConfirmFortuneCarrotUseAndWait()
+    {
         waitingForBunnySince = DateTime.UtcNow;
         Phase = CarrotHuntPhase.WaitingForBunny;
         log.Debug("Carrot hunt: Fortune Carrot used at {Pos:F0}", currentTargetPosition);
@@ -723,11 +816,28 @@ public sealed class CarrotHunterService
             return;
         }
 
-        if (DateTime.UtcNow - waitingForBunnySince > BunnySpawnTimeout)
+        if (DateTime.UtcNow - waitingForBunnySince <= BunnySpawnTimeout)
         {
-            log.Warning("Carrot hunt: no bunny chest near {Pos} — skipping", currentTargetPosition);
-            SkipCurrentAuthored();
+            return;
         }
+
+        // Item never consumed — use was a false accept; retry at the pad instead of skipping.
+        int remaining = InventoryItemAssist.Count(FortuneCarrotItemId);
+        if (fortuneCarrotCountAtIssue >= 0 && remaining >= fortuneCarrotCountAtIssue)
+        {
+            log.Debug(
+                "Carrot hunt: no bunny and Fortune Carrot still held at {Pos:F0} — retrying use",
+                currentTargetPosition);
+            itemUseIssued = false;
+            itemUseIssuedAt = DateTime.MinValue;
+            fortuneCarrotCountAtIssue = -1;
+            waitingForBunnySince = DateTime.MinValue;
+            Phase = CarrotHuntPhase.UsingItem;
+            return;
+        }
+
+        log.Warning("Carrot hunt: no bunny chest near {Pos} — skipping", currentTargetPosition);
+        SkipCurrentAuthored();
     }
 
     private void TickOpeningBunny()
@@ -906,6 +1016,9 @@ public sealed class CarrotHunterService
         currentTargetPosition = Vector3.Zero;
         ClearWalkVias();
         itemUseIssued = false;
+        itemUseIssuedAt = DateTime.MinValue;
+        fortuneCarrotCountAtIssue = -1;
+        fortuneCarrotUseAttempts = 0;
         waitingForBunnySince = DateTime.MinValue;
         ClearEmptyPadCandidate();
         ResetApproachProgress();
@@ -1548,6 +1661,9 @@ public sealed class CarrotHunterService
         }
 
         itemUseIssued = false;
+        itemUseIssuedAt = DateTime.MinValue;
+        fortuneCarrotCountAtIssue = -1;
+        fortuneCarrotUseAttempts = 0;
         currentLiveCarrotId = null;
         waitingForBunnySince = DateTime.MinValue;
         ResetApproachProgress();
@@ -1939,6 +2055,9 @@ public sealed class CarrotHunterService
         currentTargetPosition = Vector3.Zero;
         ClearWalkVias();
         itemUseIssued = false;
+        itemUseIssuedAt = DateTime.MinValue;
+        fortuneCarrotCountAtIssue = -1;
+        fortuneCarrotUseAttempts = 0;
         waitingForBunnySince = DateTime.MinValue;
         usedLiveCarrotIdsAtPad.Clear();
         ClearEmptyPadCandidate();
@@ -1964,6 +2083,11 @@ public sealed class CarrotHunterService
 
     private void SoftStopWhileUnconscious()
     {
+        SoftStopMovementForPause();
+    }
+
+    private void SoftStopMovementForPause()
+    {
         chainManager.CancelWhere(name => name.StartsWith("CarrotHunt", StringComparison.Ordinal));
         activeReturnChain = null;
         activeTeleportChain = null;
@@ -1986,6 +2110,7 @@ public sealed class CarrotHunterService
         }
 
         Running = false;
+        Paused = false;
         Phase = CarrotHuntPhase.Idle;
         finishedAuthoredIds.Clear();
         tour.Clear();

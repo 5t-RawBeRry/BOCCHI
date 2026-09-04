@@ -44,8 +44,10 @@ public class AutomationModeGuard
 
     private bool stopping;
 
-    /// <summary>Treasure hunt was running when shopping took vnav — resume it after, not a hunt that was already paused for FATE/pots.</summary>
+    /// <summary>Treasure / carrot hunt was running when shopping took vnav — resume after, not a hunt already paused for FATE/pots.</summary>
     private bool treasurePausedForShopping;
+
+    private bool carrotPausedForShopping;
 
     public void EnsureExclusive(AutomationMode mode)
     {
@@ -123,8 +125,7 @@ public class AutomationModeGuard
                 Farmer.Toggle();
             }
 
-            // Pots & Treasure / Illegal / Completionist / Mob Farmer filler may own the hunter — leave it running.
-            // Shopping needs exclusive pathing: pause treasure (resume after) and stop carrot hunt.
+            // Shopping needs exclusive pathing: pause treasure / carrot (resume after).
             if (mode == AutomationMode.Shopping)
             {
                 if (Hunter.Running && !Hunter.Paused)
@@ -133,9 +134,10 @@ public class AutomationModeGuard
                     treasurePausedForShopping = true;
                 }
 
-                if (CarrotHunter.Running)
+                if (CarrotHunter.Running && !CarrotHunter.Paused)
                 {
-                    CarrotHunter.Toggle();
+                    CarrotHunter.Pause();
+                    carrotPausedForShopping = true;
                 }
             }
             else if (mode is not AutomationMode.TreasureHunt
@@ -199,6 +201,13 @@ public class AutomationModeGuard
 
         treasurePausedForShopping = false;
 
+        if (carrotPausedForShopping && CarrotHunter.Running && CarrotHunter.Paused)
+        {
+            CarrotHunter.Resume();
+        }
+
+        carrotPausedForShopping = false;
+
         if (Farmer.Running && Farmer.Suspended && Farmer.YieldReason == FarmerYieldReason.Shopping)
         {
             Farmer.SetSuspended(false);
@@ -216,6 +225,7 @@ public class AutomationModeGuard
         try
         {
             treasurePausedForShopping = false;
+            carrotPausedForShopping = false;
             StopIllegalOrCompletionist();
 
             if (PotsTreasure.Running)

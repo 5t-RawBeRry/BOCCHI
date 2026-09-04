@@ -20,6 +20,9 @@
   "dependencies": {
     "label": "의존성"
   },
+  "logs": {
+    "label": "로그"
+  },
   "movement": {
     "label": "이동"
   }

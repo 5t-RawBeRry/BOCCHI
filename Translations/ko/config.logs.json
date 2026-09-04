@@ -1,0 +1,9 @@
+{
+  "label": "로그",
+  "tooltip": "BOCCHI 실시간 로그입니다. Debug 줄도 자동으로 담깁니다. Dalamud 로그 레벨을 Debug로 바꿀 필요 없습니다.",
+  "fields": {
+    "viewer": {
+      "label": "뷰어"
+    }
+  }
+}

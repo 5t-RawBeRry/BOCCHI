@@ -1,0 +1,9 @@
+{
+  "label": "ログ",
+  "tooltip": "BOCCHIのライブログ。Debugも自動で取り込みます。DalamudのログレベルをDebugに変える必要はありません。",
+  "fields": {
+    "viewer": {
+      "label": "ビューア"
+    }
+  }
+}
