@@ -2,13 +2,13 @@
 
 ### Illegal Mode
 - Treasure hunt stops for a pot that is already up, even if Pause for FATEs is off or the shared pot timer was cleared
-- Camp buffs start while you are already on Freelancer instead of waiting at the crystal forever. Inquiring Mind if you have it; otherwise each buff on its own job
-- If Return is still on cooldown from outside the island, walk to a shard and teleport instead of standing still
+- Camp buffs start while you are already on Freelancer instead of waiting at the crystal forever. Inquiring Mind if you have it; otherwise each buff on its own job, then back to Freelancer
+- Occult Return still fires even if overworld Return is on cooldown. If it actually cannot be used, walk to a shard and teleport instead of standing still
 - After a FATE or CE, raise nearby players before auto treasure hunt continues
 - Stop after return and teleport no longer starts treasure hunt or Returns to camp until you toggle Illegal Mode
 
 ### Combat
-- Dodging or walking out of a FATE no longer turns combat off and waits for the FATE to end
+- Dodging or stepping out of a FATE ring keeps combat on. Walking away from the FATE turns it off and travel resumes
 
 ### Treasure Hunt
 - Shared chest maps ignore fake underground spots so the hunt does not walk into the floor

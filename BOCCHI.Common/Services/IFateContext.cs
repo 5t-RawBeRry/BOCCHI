@@ -16,4 +16,9 @@ public interface IFateContext
     bool IsInCombatWith(FateId id);
 
     IEnumerable<IBattleNpc> GetTargets();
+
+    /// <summary>
+    ///     Hostiles tagged to this FATE, even if CurrentFate has dropped (outside the ring).
+    /// </summary>
+    IEnumerable<IBattleNpc> GetTargetsFor(FateId id);
 }

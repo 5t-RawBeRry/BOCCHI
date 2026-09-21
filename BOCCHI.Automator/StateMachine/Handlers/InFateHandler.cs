@@ -39,12 +39,13 @@ public class InFateHandler
             return StatePriority.Never;
         }
 
-        // Already entered this FATE — stay In FATE while it is live even if EventId drops
-        // (dodge / walk out of the participation ring). Otherwise Exit disables Wrath and
-        // the goal sits until despawn (Vertigo / Lumi).
+        // Already entered this FATE — stay In FATE while still in the fight even if EventId
+        // drops (dodge / step out of the ring). Walking away drops this so combat turns off
+        // and travel can resume (Vertigo / Lumi).
         if (memory.TryRemember<CommittedFateMemory>(out CommittedFateMemory committed)
             && committed.IsFor(fateGoal.id)
-            && fates.HasFate(fateGoal.id))
+            && fates.HasFate(fateGoal.id)
+            && IsStillInFateFight(fateGoal.id))
         {
             return StatePriority.VeryHigh;
         }
@@ -138,8 +139,15 @@ public class InFateHandler
             return;
         }
 
-        List<IBattleNpc> fateTargets = context.GetTargets().ToList();
-        InitialCombatApproachMemory<FateId> approach = GetApproachMemory(context.GetFateId());
+        FateId? liveId = context.GetFateId()
+            ?? (memory.TryRemember<GoalMemory>(out GoalMemory handleGoal)
+                && handleGoal.Goal.GoalType is FateGoal handleFate
+                    ? handleFate.id
+                    : null);
+        List<IBattleNpc> fateTargets = liveId is { } id
+            ? context.GetTargetsFor(id).ToList()
+            : [];
+        InitialCombatApproachMemory<FateId> approach = GetApproachMemory(liveId);
         if (CombatActivityHandler.HandleTargets(
                 player,
                 playerState,
@@ -164,6 +172,30 @@ public class InFateHandler
 
         approach.Track(fateId);
         return approach;
+    }
+
+    private bool IsStillInFateFight(FateId id)
+    {
+        if (context.GetFateId() == id || context.IsInCombatWith(id))
+        {
+            return true;
+        }
+
+        if (objects.LocalPlayer is not { } player)
+        {
+            return false;
+        }
+
+        float nearest = float.MaxValue;
+        foreach (IBattleNpc target in context.GetTargetsFor(id))
+        {
+            nearest = MathF.Min(nearest, player.Position.Distance2D(target.Position) - target.HitboxRadius);
+        }
+
+        Fate? live = fates.Snapshot().FirstOrDefault(f => f.Id.Value == id.Value);
+        float toCenter = live != null ? player.Position.Distance2D(live.Position) : float.MaxValue;
+        float radius = live?.Radius ?? 0f;
+        return NavigationConstants.IsWithinFateCommitment(toCenter, radius, nearest);
     }
 
     private bool IsWithinAiHandoff(IGameObject player, FateId id)

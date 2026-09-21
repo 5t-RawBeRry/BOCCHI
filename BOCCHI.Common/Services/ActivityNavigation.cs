@@ -5,7 +5,6 @@ using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Common.Data.Zones.Graph.Traversal;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
-using Ocelot.Actions;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Chain.Recipes;
@@ -272,8 +271,8 @@ public class ActivityNavigation
             return false;
         }
 
-        // Mounted Return often needs a dismount first — still offer the route.
-        return Actions.Return.CanCast()
+        // Mounted Occult Return often needs a dismount first — still offer the route.
+        return OccultReturn.CanCast()
                || conditions[ConditionFlag.Mounted]
                || conditions[ConditionFlag.Mounting];
     }

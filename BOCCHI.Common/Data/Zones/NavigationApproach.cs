@@ -46,12 +46,32 @@ public static class NavigationConstants
     /// <summary>No FATE enemies up yet: yield once this close to the live FATE centre.</summary>
     public const float FateAiHandoffFromCenter = 25f;
 
+    /// <summary>
+    ///     Extra yalms past the FATE radius before a committed In FATE is treated as left
+    ///     (AoE dodge / step out of the ring). Farther than this and not fighting → drop combat.
+    /// </summary>
+    public const float FateCommittedLeaveYalms = 40f;
+
     /// <param name="nearestTargetPastHitbox">
     ///     Distance past hitbox to the nearest FATE enemy, or <see cref="float.MaxValue"/> if none.
     /// </param>
     public static bool IsWithinFateAiHandoff(float distanceToCenter, float nearestTargetPastHitbox) =>
         nearestTargetPastHitbox <= FateAiHandoffRange
         || distanceToCenter <= FateAiHandoffFromCenter;
+
+    /// <summary>
+    ///     Still in the fight after CurrentFate dropped: near the circle, near a FATE mob, or
+    ///     within the leave leash. Not a walk-away to camp / another activity.
+    /// </summary>
+    public static bool IsWithinFateCommitment(
+        float distanceToCenter,
+        float fateRadius,
+        float nearestTargetPastHitbox)
+    {
+        float leash = MathF.Max(fateRadius, FateAiHandoffFromCenter) + FateCommittedLeaveYalms;
+        return nearestTargetPastHitbox <= FateAiHandoffRange
+               || distanceToCenter <= leash;
+    }
 
     /// <summary>
     ///     Added to LGB CE combat radius for debug green.

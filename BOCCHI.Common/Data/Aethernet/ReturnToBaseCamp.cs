@@ -2,7 +2,6 @@ using BOCCHI.Common.Data.Zones;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.UI;
-using Ocelot.Actions;
 using Ocelot.Chain;
 using Ocelot.Chain.Extensions;
 using Ocelot.Ipc.VNavmesh;
@@ -11,7 +10,7 @@ using Ocelot.Services.Pathfinding;
 namespace BOCCHI.Common.Data.Aethernet;
 
 /// <summary>
-///     Cast Return / Demi-Return and wait until base camp (auto-accepts the Yesno).
+///     Cast Occult Return and wait until base camp (auto-accepts the Yesno).
 /// </summary>
 public static class ReturnToBaseCamp
 {
@@ -54,9 +53,9 @@ public static class ReturnToBaseCamp
                         return StepResult.Success();
                     }
 
-                    if (Actions.Return.CanCast())
+                    if (OccultReturn.CanCast())
                     {
-                        Actions.Return.Cast();
+                        OccultReturn.Cast();
                     }
 
                     return StepResult.Success();
@@ -81,9 +80,9 @@ public static class ReturnToBaseCamp
                         return ValueTask.FromResult(false);
                     }
 
-                    if (Actions.Return.CanCast())
+                    if (OccultReturn.CanCast())
                     {
-                        Actions.Return.Cast();
+                        OccultReturn.Cast();
                     }
 
                     return ValueTask.FromResult(false);

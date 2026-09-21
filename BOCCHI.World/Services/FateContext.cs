@@ -25,18 +25,18 @@ public class FateContext(IObjectTable objects) : IFateContext
     public IEnumerable<IBattleNpc> GetTargets()
     {
         FateId? id = GetFateId();
-        if (id == null)
-        {
-            return [];
-        }
+        return id == null ? [] : GetTargetsFor(id.Value);
+    }
 
+    public IEnumerable<IBattleNpc> GetTargetsFor(FateId id)
+    {
         IPlayerCharacter? player = objects.LocalPlayer;
         if (player == null)
         {
             return [];
         }
 
-        ushort fateId = id.Value.Value;
+        ushort fateId = id.Value;
 
         return objects.OfType<IBattleNpc>()
             .Where(obj => obj is { IsDead: false, IsTargetable: true })

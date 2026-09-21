@@ -64,8 +64,7 @@ internal static class IllegalModeActivityWork
     }
 
     /// <summary>
-    ///     Clears restore latches that match the current job, and drops a Freelancer latch while
-    ///     already on a real combat job (Freelancer is only for Inquiring Mind / Sight casts).
+    ///     Clears restore latches that already match the current job.
     /// </summary>
     public static bool TryClearCompletedJobRestore(IAutomatorMemory memory, ISupportJobFactory jobs)
     {
@@ -79,15 +78,6 @@ internal static class IllegalModeActivityWork
             return false;
         }
 
-        // Freelancer is never a restore destination — drop a stale Freelancer latch once we are
-        // back on any other job. Do NOT treat Knight/Bard/Monk/Dancer as temporary: those are
-        // valid mains and also crystal-buff casters (otherwise Freelancer sticks after refresh).
-        if (current.Id != SupportJobId.PhantomFreelancer)
-        {
-            ForgetIfBuffSwapTarget<BuffSupportJobMemory>(memory, m => m.Job);
-            ForgetIfBuffSwapTarget<TreasureSightSupportJobMemory>(memory, m => m.Job);
-        }
-
         ForgetIfMatchesCurrent<BuffSupportJobMemory>(memory, current.Id, m => m.Job);
         ForgetIfMatchesCurrent<TreasureSightSupportJobMemory>(memory, current.Id, m => m.Job);
         ForgetIfMatchesCurrent<TriageSupportJobMemory>(memory, current.Id, m => m.Job);
@@ -96,14 +86,11 @@ internal static class IllegalModeActivityWork
     }
 
     /// <summary>
-    ///     Jobs used only as temporary cast vehicles — never a restore destination.
-    ///     Crystal buffs also use Knight/Bard/Monk/Dancer, but those are valid mains and must
-    ///     remain latchable (see <see cref="TryRememberPreBuffJob"/>).
+    ///     Latch the job you were on before the buff SM starts swapping — including Freelancer,
+    ///     so per-job crystal buffs return you there afterward (#211).
+    ///     Does not overwrite an existing latch (Knight/Bard/… stay the restore target if IM
+    ///     swaps to Freelancer mid-cycle).
     /// </summary>
-    public static bool IsBuffSwapJob(SupportJobId id) =>
-        id is SupportJobId.PhantomFreelancer;
-
-    /// <summary>Latch the current combat job once before the buff SM starts swapping.</summary>
     public static bool TryRememberPreBuffJob(IAutomatorMemory memory, ISupportJobFactory jobs)
     {
         if (memory.TryRemember<BuffSupportJobMemory>(out _))
@@ -111,7 +98,7 @@ internal static class IllegalModeActivityWork
             return false;
         }
 
-        if (!jobs.TryGetCurrent(out SupportJob current) || IsBuffSwapJob(current.Id))
+        if (!jobs.TryGetCurrent(out SupportJob current))
         {
             return false;
         }
@@ -142,16 +129,6 @@ internal static class IllegalModeActivityWork
         Func<T, SupportJobId> job) where T : class
     {
         if (memory.TryRemember(out T saved) && job(saved) == current)
-        {
-            memory.Forget<T>();
-        }
-    }
-
-    private static void ForgetIfBuffSwapTarget<T>(
-        IAutomatorMemory memory,
-        Func<T, SupportJobId> job) where T : class
-    {
-        if (memory.TryRemember(out T saved) && IsBuffSwapJob(job(saved)))
         {
             memory.Forget<T>();
         }

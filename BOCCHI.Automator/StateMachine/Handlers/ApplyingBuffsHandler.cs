@@ -58,8 +58,8 @@ public class ApplyingBuffsHandler
             return StatePriority.Never;
         }
 
-        // Starting on Freelancer is valid (#211). Inquiring Mind (Freelancer 15) if unlocked;
-        // otherwise each crystal buff is applied on its own job and we stay on that job.
+        // Starting on Freelancer is valid (#211). Inquiring Mind if unlocked; otherwise each
+        // crystal buff on its own job, then restore back to Freelancer.
         return StatePriority.MediumHigh;
     }
 
@@ -74,8 +74,8 @@ public class ApplyingBuffsHandler
         {
             logger.Info(
                 buffs.CanUseInquiringMind()
-                    ? "Illegal Mode buff: already Freelancer — Inquiring Mind"
-                    : "Illegal Mode buff: already Freelancer without Inquiring Mind — applying each buff on its job");
+                    ? "Illegal Mode buff: already Freelancer — Inquiring Mind, then stay Freelancer"
+                    : "Illegal Mode buff: already Freelancer without Inquiring Mind — each buff on its job, then back to Freelancer");
         }
 
         if (IllegalModeActivityWork.TryRememberPreBuffJob(memory, jobs))
@@ -91,13 +91,6 @@ public class ApplyingBuffsHandler
                 "Illegal Mode buff: kept existing restore latch {Job} (current {Current})",
                 existing,
                 jobs.TryGetCurrent(out SupportJob cur) ? cur.Id.ToString() : "?");
-        }
-        else if (jobs.TryGetCurrent(out SupportJob current)
-                 && IllegalModeActivityWork.IsBuffSwapJob(current.Id))
-        {
-            logger.Debug(
-                "Illegal Mode buff: no restore latch (already on temporary job {Job})",
-                current.Id);
         }
     }
 

@@ -75,7 +75,7 @@ public sealed class CommittedCriticalEncounterMemory(CriticalEncounterId encount
 
 /// <summary>
 ///     InFate already started for this FATE. Keep In FATE / combat AI if EventId drops after a
-///     dodge or walking out of the participation ring (otherwise Wrath is locked until despawn).
+///     dodge or stepping out of the ring, but not after walking away from the FATE.
 /// </summary>
 public sealed class CommittedFateMemory(FateId fateId)
 {

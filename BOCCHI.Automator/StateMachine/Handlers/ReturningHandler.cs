@@ -134,13 +134,13 @@ public class ReturningHandler
             return StatePriority.Never;
         }
 
-        // Opportunistic Return while idle (OC usually has no Return CD; overworld CD can carry in).
+        // Opportunistic Occult Return while idle. Overworld Return CD is a different action.
         if (!idle.IsReadyToReturn())
         {
             return StatePriority.Never;
         }
 
-        return ReturnDelay.IsOnCooldown() ? StatePriority.Never : StatePriority.VeryLow;
+        return StatePriority.VeryLow;
     }
 
     public override void Enter()
@@ -298,27 +298,12 @@ public class ReturningHandler
             }
         }
 
-        if (ReturnDelay.IsOnCooldown())
-        {
-            if (EzThrottler.Throttle("ReturningHandler::Cooldown", 5000))
-            {
-                logger.Debug(
-                    "Return on cooldown ({Recast:F0}s) — continuing via aethernet",
-                    Actions.Return.GetRecastTime());
-            }
-
-            OnReturnTimedOut(memory.TryRemember<ReturningStateMemory>(out ReturningStateMemory queued)
-                ? queued.GetTimeQueued()
-                : TimeSpan.Zero);
-            return;
-        }
-
-        if (Actions.Return.CanCast())
+        if (OccultReturn.CanCast())
         {
             pathfinder.Stop();
             vnav.Stop();
-            logger.Debug("Casting Return to camp");
-            Actions.Return.Cast();
+            logger.Debug("Casting Occult Return to camp");
+            OccultReturn.Cast();
             return;
         }
 
@@ -330,15 +315,15 @@ public class ReturningHandler
 
     private void OnReturnTimedOut(TimeSpan queued)
     {
-        // Last try — CanCast can be overly strict after combat while UseAction still works.
+        // Last try — status can lag after combat while UseAction still works.
         pathfinder.Stop();
         vnav.Stop();
-        Actions.Return.Cast();
+        OccultReturn.Cast();
 
         if (EzThrottler.Throttle("ReturningHandler::Timeout", 5000))
         {
             logger.Warning(
-                "Return to camp timed out after {Seconds:F0}s (cooldown/combat/mount?) — continuing without Return",
+                "Return to camp timed out after {Seconds:F0}s (combat/mount/cast blocked?) — continuing without Return",
                 queued.TotalSeconds);
         }
 
@@ -376,7 +361,7 @@ public class ReturningHandler
         float animLock = actions != null ? actions->AnimationLock : -1f;
 
         logger.Debug(
-            "Return not ready (mounted={Mounted}, combat={Combat}, jumping={Jumping}, occupied={Occupied}, status={Status}, recast={Recast:F2}, animLock={AnimLock:F2})",
+            "Occult Return not ready (mounted={Mounted}, combat={Combat}, jumping={Jumping}, occupied={Occupied}, status={Status}, overworldRecast={Recast:F2}, animLock={AnimLock:F2})",
             DismountAssist.IsMounted(conditions),
             conditions[ConditionFlag.InCombat],
             ECommonsPlayer.IsJumping,

@@ -64,8 +64,8 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
                 walkToDepartureCost + walkToGoalFromInbound);
         }
 
-        // Field → camp via shard is a fallback when Return is on cooldown. ReturnTeleportWalk
-        // still wins on cost (40 vs hop 50 + walk) when Return is available.
+        // Field → camp via shard is a fallback when Occult Return cannot be used.
+        // ReturnTeleportWalk still wins on cost (40 vs hop 50 + walk) when it can.
         return new(
             walkToDepartureCost + NavigationConstants.AethernetHopCost + walkToGoalFromInbound,
             BuildTeleportSteps(departure, inboundMeta.AetheryteId, goal, inbound, start));
