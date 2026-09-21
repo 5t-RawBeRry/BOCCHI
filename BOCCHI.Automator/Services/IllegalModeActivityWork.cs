@@ -86,10 +86,8 @@ internal static class IllegalModeActivityWork
     }
 
     /// <summary>
-    ///     Latch the job you were on before the buff SM starts swapping — including Freelancer,
-    ///     so per-job crystal buffs return you there afterward (#211).
-    ///     Does not overwrite an existing latch (Knight/Bard/… stay the restore target if IM
-    ///     swaps to Freelancer mid-cycle).
+    ///     Latch the current phantom job before buffs swap (#211), including Freelancer.
+    ///     Does not overwrite an existing latch.
     /// </summary>
     public static bool TryRememberPreBuffJob(IAutomatorMemory memory, ISupportJobFactory jobs)
     {

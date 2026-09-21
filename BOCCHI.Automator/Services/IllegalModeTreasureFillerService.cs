@@ -162,6 +162,7 @@ public class IllegalModeTreasureFillerService
             return;
         }
 
+        // Stop after return: do not start or resume hunt while paused at the shard.
         if (memory.TryRemember<NavigationInterruptedMemory>(out NavigationInterruptedMemory _))
         {
             return;

@@ -47,8 +47,7 @@ public static class NavigationConstants
     public const float FateAiHandoffFromCenter = 25f;
 
     /// <summary>
-    ///     Extra yalms past the FATE radius before a committed In FATE is treated as left
-    ///     (AoE dodge / step out of the ring). Farther than this and not fighting → drop combat.
+    ///     Extra yalms past the FATE radius before a committed In FATE is treated as left.
     /// </summary>
     public const float FateCommittedLeaveYalms = 40f;
 
@@ -59,10 +58,7 @@ public static class NavigationConstants
         nearestTargetPastHitbox <= FateAiHandoffRange
         || distanceToCenter <= FateAiHandoffFromCenter;
 
-    /// <summary>
-    ///     Still in the fight after CurrentFate dropped: near the circle, near a FATE mob, or
-    ///     within the leave leash. Not a walk-away to camp / another activity.
-    /// </summary>
+    /// <summary>Near the FATE circle or a FATE mob after CurrentFate dropped — not a walk-away.</summary>
     public static bool IsWithinFateCommitment(
         float distanceToCenter,
         float fateRadius,

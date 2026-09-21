@@ -58,8 +58,7 @@ public class ApplyingBuffsHandler
             return StatePriority.Never;
         }
 
-        // Starting on Freelancer is valid (#211). Inquiring Mind if unlocked; otherwise each
-        // crystal buff on its own job, then restore back to Freelancer.
+        // Starting on Freelancer is valid (#211). Restore the phantom job you started on.
         return StatePriority.MediumHigh;
     }
 

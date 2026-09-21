@@ -39,9 +39,8 @@ public class InFateHandler
             return StatePriority.Never;
         }
 
-        // Already entered this FATE — stay In FATE while still in the fight even if EventId
-        // drops (dodge / step out of the ring). Walking away drops this so combat turns off
-        // and travel can resume (Vertigo / Lumi).
+        // Stay In FATE while still in the fight if EventId drops (dodge / step out of the ring).
+        // Walking away drops combat so travel can resume.
         if (memory.TryRemember<CommittedFateMemory>(out CommittedFateMemory committed)
             && committed.IsFor(fateGoal.id)
             && fates.HasFate(fateGoal.id)
