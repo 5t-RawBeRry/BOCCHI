@@ -74,6 +74,17 @@ public sealed class CommittedCriticalEncounterMemory(CriticalEncounterId encount
 }
 
 /// <summary>
+///     InFate already started for this FATE. Keep In FATE / combat AI if EventId drops after a
+///     dodge or walking out of the participation ring (otherwise Wrath is locked until despawn).
+/// </summary>
+public sealed class CommittedFateMemory(FateId fateId)
+{
+    public FateId FateId { get; } = fateId;
+
+    public bool IsFor(FateId id) => FateId == id;
+}
+
+/// <summary>
 ///     In FATE/CE combat — block travel replan until the activity goal is dropped.
 ///     Avoids edge stutter when FATE sync flickers and Pathfinding fights BOCCHI AI.
 /// </summary>

@@ -358,6 +358,7 @@ public sealed class ShoppingService(
 
         return memory.TryRemember<WaitingForCriticalEncounterMemory>(out WaitingForCriticalEncounterMemory _)
                || memory.TryRemember<CommittedCriticalEncounterMemory>(out CommittedCriticalEncounterMemory _)
+               || memory.TryRemember<CommittedFateMemory>(out CommittedFateMemory _)
                || memory.TryRemember<WaitingForPotFateMemory>(out WaitingForPotFateMemory _)
                || memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _)
                || memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _)

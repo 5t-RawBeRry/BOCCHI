@@ -1,3 +1,4 @@
+using BOCCHI.Automator.Services;
 using BOCCHI.Common.Data.Aethernet;
 using BOCCHI.Common.Config;
 using BOCCHI.Common.Data.CriticalEncounters;
@@ -366,7 +367,7 @@ public class PathCalculator
         GraphTraverser traverser = new(graph, pathfinder, logger);
         traverser.AddCalculator(new WalkTeleportWalkCalculator());
         traverser.AddCalculator(new DirectWalkCalculator());
-        if (addReturnCalculator)
+        if (addReturnCalculator && !ReturnDelay.IsOnCooldown())
         {
             traverser.AddCalculator(new ReturnTeleportWalkCalculator());
         }

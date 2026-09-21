@@ -64,12 +64,8 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
                 walkToDepartureCost + walkToGoalFromInbound);
         }
 
-        // Field → base camp via shard loses to Return; leave to ReturnTeleportWalk.
-        if (inbound.Type == NodeType.BaseCampAetheryte && departure.Type != NodeType.BaseCampAetheryte)
-        {
-            return null;
-        }
-
+        // Field → camp via shard is a fallback when Return is on cooldown. ReturnTeleportWalk
+        // still wins on cost (40 vs hop 50 + walk) when Return is available.
         return new(
             walkToDepartureCost + NavigationConstants.AethernetHopCost + walkToGoalFromInbound,
             BuildTeleportSteps(departure, inboundMeta.AetheryteId, goal, inbound, start));
@@ -144,12 +140,6 @@ public class WalkTeleportWalkCalculator : IGraphCandidateCalculator
             }
 
             if (IsSameAetheryte(departure, altInbound, altMeta))
-            {
-                continue;
-            }
-
-            // Field → base camp via shard is Return's job.
-            if (altInbound.Type == NodeType.BaseCampAetheryte && departure.Type != NodeType.BaseCampAetheryte)
             {
                 continue;
             }

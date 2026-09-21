@@ -88,7 +88,10 @@ public class AutoRotationController(
         // Keep AI on while In FATE / In CE (travel suspended). EventId alone must not (#200).
         if (!CombatSuppressedByActivity
             && memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _)
-            && (criticalEncounters.IsInCriticalEncounter() || fates.IsInFate()))
+            && (criticalEncounters.IsInCriticalEncounter()
+                || fates.IsInFate()
+                || memory.TryRemember<CommittedFateMemory>(out CommittedFateMemory _)
+                || memory.TryRemember<CommittedCriticalEncounterMemory>(out CommittedCriticalEncounterMemory _)))
         {
             if (lastSyncSkipReason != "keep-in-activity")
             {
@@ -162,7 +165,7 @@ public class AutoRotationController(
             return;
         }
 
-        // Committed CE survives death (EventId can lag after YesAlready raise) — still re-arm.
+        // Committed CE/FATE survives EventId lag after a dodge or raise — still re-arm.
         if (memory.TryRemember<CommittedCriticalEncounterMemory>(out CommittedCriticalEncounterMemory _)
             || criticalEncounters.IsInCriticalEncounter())
         {
@@ -170,7 +173,8 @@ public class AutoRotationController(
             return;
         }
 
-        if (fates.IsInFate())
+        if (memory.TryRemember<CommittedFateMemory>(out CommittedFateMemory _)
+            || fates.IsInFate())
         {
             EnableActivity(CombatActivity.Fate);
         }

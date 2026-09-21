@@ -296,6 +296,7 @@ public class GoalValidator
     private bool IsEngagedWithFate(FateId id) =>
         fateContext.GetFateId() == id
         || (conditions[ConditionFlag.InCombat] && fateContext.IsInCombatWith(id))
+        || (memory.TryRemember<CommittedFateMemory>(out CommittedFateMemory committed) && committed.IsFor(id))
         || (memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _)
             && memory.TryRemember<GoalMemory>(out GoalMemory goal)
             && goal.Goal.GoalType is FateGoal(var goalId)

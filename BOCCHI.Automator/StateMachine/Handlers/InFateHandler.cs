@@ -39,6 +39,16 @@ public class InFateHandler
             return StatePriority.Never;
         }
 
+        // Already entered this FATE — stay In FATE while it is live even if EventId drops
+        // (dodge / walk out of the participation ring). Otherwise Exit disables Wrath and
+        // the goal sits until despawn (Vertigo / Lumi).
+        if (memory.TryRemember<CommittedFateMemory>(out CommittedFateMemory committed)
+            && committed.IsFor(fateGoal.id)
+            && fates.HasFate(fateGoal.id))
+        {
+            return StatePriority.VeryHigh;
+        }
+
         if (context.GetFateId() != fateGoal.id)
         {
             return StatePriority.Never;
@@ -73,7 +83,21 @@ public class InFateHandler
         memory.Forget<GoalPathStepMemory>();
         pathfinder.Stop();
         autoRotation.EnableForFate();
-        logger.Info("Entered FATE {Id} — travel suspended", context.GetFateId()?.Value.ToString() ?? "?");
+        memory.Forget<CommittedFateMemory>();
+        FateId? entered = context.GetFateId();
+        if (entered == null
+            && memory.TryRemember<GoalMemory>(out GoalMemory goal)
+            && goal.Goal.GoalType is FateGoal fateGoal)
+        {
+            entered = fateGoal.id;
+        }
+
+        if (entered is { } fateId)
+        {
+            memory.TryAdd(new CommittedFateMemory(fateId));
+        }
+
+        logger.Info("Entered FATE {Id} — travel suspended", entered?.Value.ToString() ?? "?");
     }
 
     public override void Exit(AutomatorState next)
@@ -84,12 +108,13 @@ public class InFateHandler
         {
             memory.Forget<SuspendTravelForActivityMemory>();
             autoRotation.DisableAi();
-            logger.Info("Died in FATE — clearing travel suspend for raise");
+            logger.Info("Died in FATE — keeping commitment for raise");
             base.Exit(next);
             return;
         }
 
         memory.Forget<SuspendTravelForActivityMemory>();
+        memory.Forget<CommittedFateMemory>();
         autoRotation.DisableAi();
         logger.Info("Left FATE — travel resumed");
         base.Exit(next);

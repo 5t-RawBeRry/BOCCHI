@@ -148,6 +148,7 @@ public sealed unsafe class CombatPathfindCancelService
 
     private bool ActivityOwnsMovement() =>
         memory.TryRemember<SuspendTravelForActivityMemory>(out SuspendTravelForActivityMemory _)
+        || memory.TryRemember<CommittedFateMemory>(out CommittedFateMemory _)
         || fates.IsInFate()
         || criticalEncounters.IsInCriticalEncounter()
         || farmerFactory().Running

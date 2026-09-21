@@ -69,6 +69,12 @@ public class ReturningHandler
             return StatePriority.VeryHigh;
         }
 
+        // Stop-after-return paused at the shard — do not Return to camp or the user walk is undone.
+        if (memory.TryRemember<NavigationInterruptedMemory>(out NavigationInterruptedMemory _))
+        {
+            return StatePriority.Never;
+        }
+
         // Treasure hunt is the idle filler in Pots & Treasure — never Return-to-camp.
         if (automator.IsPotsAndTreasure)
         {
@@ -128,8 +134,13 @@ public class ReturningHandler
             return StatePriority.Never;
         }
 
-        // Opportunistic Return while idle (OC has no Return CD). Keep below ChoosingActivity.
-        return idle.IsReadyToReturn() ? StatePriority.VeryLow : StatePriority.Never;
+        // Opportunistic Return while idle (OC usually has no Return CD; overworld CD can carry in).
+        if (!idle.IsReadyToReturn())
+        {
+            return StatePriority.Never;
+        }
+
+        return ReturnDelay.IsOnCooldown() ? StatePriority.Never : StatePriority.VeryLow;
     }
 
     public override void Enter()
@@ -287,6 +298,21 @@ public class ReturningHandler
             }
         }
 
+        if (ReturnDelay.IsOnCooldown())
+        {
+            if (EzThrottler.Throttle("ReturningHandler::Cooldown", 5000))
+            {
+                logger.Debug(
+                    "Return on cooldown ({Recast:F0}s) — continuing via aethernet",
+                    Actions.Return.GetRecastTime());
+            }
+
+            OnReturnTimedOut(memory.TryRemember<ReturningStateMemory>(out ReturningStateMemory queued)
+                ? queued.GetTimeQueued()
+                : TimeSpan.Zero);
+            return;
+        }
+
         if (Actions.Return.CanCast())
         {
             pathfinder.Stop();
@@ -312,7 +338,7 @@ public class ReturningHandler
         if (EzThrottler.Throttle("ReturningHandler::Timeout", 5000))
         {
             logger.Warning(
-                "Return to camp timed out after {Seconds:F0}s (combat/mount/cast blocked?) — continuing without Return",
+                "Return to camp timed out after {Seconds:F0}s (cooldown/combat/mount?) — continuing without Return",
                 queued.TotalSeconds);
         }
 

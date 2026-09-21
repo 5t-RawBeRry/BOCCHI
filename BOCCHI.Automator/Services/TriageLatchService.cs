@@ -65,12 +65,6 @@ public sealed class TriageLatchService
             return;
         }
 
-        // Treasure hunt owns travel — triage cannot run until the hunt pauses or ends.
-        if (automator.SuspendedForTreasure)
-        {
-            return;
-        }
-
         if (!TriageRaiseJob.AnyUnlocked(supportJobs))
         {
             logger.Info("Triage Mode skipped — Phantom Chemist / White Mage not unlocked");
@@ -82,6 +76,7 @@ public sealed class TriageLatchService
             return;
         }
 
+        automator.SetSuspendedForTreasure(false);
         memory.TryAdd(new PendingTriageMemory());
         logger.Info("Triage Mode latched — raisable targets nearby");
     }

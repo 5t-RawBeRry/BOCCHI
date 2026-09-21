@@ -1,10 +1,20 @@
 using BOCCHI.Common.Config;
+using Ocelot.Actions;
 
 namespace BOCCHI.Automator.Services;
 
-/// <summary>Random pause before Return after a FATE/CE (humanize; OC has no Return CD).</summary>
+/// <summary>Random pause before Return after a FATE/CE (humanize).</summary>
 public static class ReturnDelay
 {
+    /// <summary>
+    ///     Overworld Return CD carries into Occult Crescent. Recast above this means Return is
+    ///     genuinely unavailable — not just mounted / occupied (<see cref="Ocelot.Actions.Action.CanCast"/>).
+    /// </summary>
+    public const float CooldownRecastSeconds = 3f;
+
+    public static bool IsOnCooldown() =>
+        Actions.Return.GetRecastTime() > CooldownRecastSeconds;
+
     /// <summary>
     ///     Uniform roll in [2, max] seconds inclusive, where max is
     ///     <see cref="AutomatorConfig.MaxRemoteIdleTimeSeconds"/> (clamped to at least 2).

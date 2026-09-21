@@ -156,6 +156,16 @@ public class IllegalModeTreasureFillerService
     /// </summary>
     private void UpdateRunningFillerHunt(bool activityNow)
     {
+        if (TriageSession.IsActive(memory))
+        {
+            PauseHuntForYield("triage");
+            return;
+        }
+
+        if (memory.TryRemember<NavigationInterruptedMemory>(out NavigationInterruptedMemory _))
+        {
+            return;
+        }
         // Pot FATE ending starts FarmingPotChests — leave-early yield ends then, but the hunt
         // must stay paused for the whole farm. Otherwise ResumeNearPlayer fights Automator's
         // SuspendedForTreasure + PotChestFarmMemory latch every tick (idle elixir / no pathing).
@@ -285,7 +295,9 @@ public class IllegalModeTreasureFillerService
 
     private bool TryPauseForStartableYield()
     {
-        if (hunter.Paused || !HasStartableYieldTarget(out string kind))
+        if (memory.TryRemember<NavigationInterruptedMemory>(out NavigationInterruptedMemory _)
+            || hunter.Paused
+            || !HasStartableYieldTarget(out string kind))
         {
             return false;
         }
@@ -368,7 +380,8 @@ public class IllegalModeTreasureFillerService
     {
         if (memory.TryRemember<WaitingForPotFateMemory>(out WaitingForPotFateMemory _)
             || memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory _)
-            || memory.TryRemember<PendingPotChestFarmMemory>(out PendingPotChestFarmMemory _))
+            || memory.TryRemember<PendingPotChestFarmMemory>(out PendingPotChestFarmMemory _)
+            || memory.TryRemember<CommittedFateMemory>(out CommittedFateMemory _))
         {
             return true;
         }
@@ -390,6 +403,11 @@ public class IllegalModeTreasureFillerService
 
     private void OnActivityCompleted(AutomaticTreasureSurveyMemory survey)
     {
+        if (memory.TryRemember<NavigationInterruptedMemory>(out NavigationInterruptedMemory _))
+        {
+            return;
+        }
+
         // TriageLatchService owns raise latch; wait until it finishes before Sight / map hunt.
         if (TriageSession.IsActive(memory))
         {
@@ -556,7 +574,9 @@ public class IllegalModeTreasureFillerService
 
     private void TryStartPendingMapHunt(AutomaticTreasureSurveyMemory survey)
     {
-        if (!hunter.IsVnavAvailable || TriageSession.IsActive(memory))
+        if (memory.TryRemember<NavigationInterruptedMemory>(out NavigationInterruptedMemory _)
+            || !hunter.IsVnavAvailable
+            || TriageSession.IsActive(memory))
         {
             return;
         }
@@ -651,6 +671,11 @@ public class IllegalModeTreasureFillerService
 
     private bool ShouldStartHunt(AutomaticTreasureSurveyMemory survey)
     {
+        if (memory.TryRemember<NavigationInterruptedMemory>(out NavigationInterruptedMemory _))
+        {
+            return false;
+        }
+
         if (!hunter.IsVnavAvailable || survey.IsBusy)
         {
             return false;
