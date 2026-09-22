@@ -3,7 +3,7 @@
     "label": "Starting"
   },
   "idle": {
-    "label": "Idle"
+    "label": "Waiting"
   },
   "dead": {
     "label": "Dead"

@@ -18,8 +18,8 @@ public class CombatAutorotationDisplay : IEnumDisplay<CombatAutorotation>
     {
         CombatAutorotation.WrathCombo => "Wrath Combo + BOCCHI AI",
         CombatAutorotation.RotationSolverReborn => "Rotation Solver Reborn + BOCCHI AI",
-        CombatAutorotation.BossMod => "BossMod autorotation",
-        CombatAutorotation.BossModReborn => "BossMod Reborn autorotation",
+        CombatAutorotation.BossMod => "BossMod rotation",
+        CombatAutorotation.BossModReborn => "BossMod Reborn rotation",
         _ => "None",
     };
 }

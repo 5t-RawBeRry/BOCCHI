@@ -50,6 +50,7 @@ public class FarmingPotChestsHandler
     IAutomatorContext context,
     PandoraAutoOpenHold pandoraAutoOpen,
     IVNavmeshIpc vnav,
+    PotChestLocationSyncService potChests,
     ILogger<FarmingPotChestsHandler> logger
 ) : ScoreStateHandler<AutomatorState, StatePriority>(AutomatorState.FarmingPotChests)
 {
@@ -137,8 +138,6 @@ public class FarmingPotChestsHandler
 
     /// <summary>Hunt coffer positions — objects nearer one of these are not pot reveals.</summary>
     private readonly List<Vector3> foreignSpots = [];
-
-    private int authoredSpotsFate = -1;
 
     /// <summary>Last destination handed to the pathfinder, for drift detection.</summary>
     private Vector3? lastPathDestination;
@@ -498,7 +497,7 @@ public class FarmingPotChestsHandler
 
         preferDirectApproach = false;
         pathfinder.Stop();
-        TryOpenChest(reveal);
+        TryOpenChest(reveal, farm);
         return true;
     }
 
@@ -543,7 +542,7 @@ public class FarmingPotChestsHandler
                 farm.SeedPool(BuildActivePool(farm));
                 if (farm.Pool.Count == 0)
                 {
-                    logger.Warning("Pot treasure: no authored chest spots for this pot — blind fallback");
+                    logger.Warning("Pot treasure: no known chest locations for this pot — blind fallback");
                     FallBackToBlind(farm);
                     return;
                 }
@@ -624,7 +623,7 @@ public class FarmingPotChestsHandler
         {
             farm.Phase = PotChestFarmPhase.OpeningReveal;
             farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
-            TryOpenChest(reveal);
+            TryOpenChest(reveal, farm);
             return;
         }
 
@@ -643,7 +642,7 @@ public class FarmingPotChestsHandler
             farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
             if (!EnsurePathing(liveDivert.Position, allowRemount: false, skipIfOffMesh: false))
             {
-                TryOpenChest(liveDivert);
+                TryOpenChest(liveDivert, farm);
             }
 
             return;
@@ -761,7 +760,7 @@ public class FarmingPotChestsHandler
         {
             farm.Phase = PotChestFarmPhase.OpeningReveal;
             farm.PhaseStartedUtc = DateTimeOffset.UtcNow;
-            TryOpenChest(settledChest);
+            TryOpenChest(settledChest, farm);
             return;
         }
 
@@ -904,7 +903,7 @@ public class FarmingPotChestsHandler
 
             ResetApproachWatch();
             pathfinder.Stop();
-            TryOpenChest(reveal);
+            TryOpenChest(reveal, farm);
             return;
         }
 
@@ -981,7 +980,7 @@ public class FarmingPotChestsHandler
             if (farm.Pool.Count > 0 && farm.HintsApplied < MaxHintReadings && HasTreasureBuff())
             {
                 logger.Debug(
-                    "Pot treasure: second-chance set spent — re-reading from {Count} reroll pad(s)",
+                    "Pot treasure: second-chance set spent — re-reading from {Count} second-chance location(s)",
                     farm.Pool.Count);
                 farm.NarrowTo(farm.Pool);
                 return;
@@ -1092,7 +1091,7 @@ public class FarmingPotChestsHandler
         preferDirectApproach = false;
         ResetApproachWatch();
         pathfinder.Stop();
-        TryOpenChest(liveChest);
+        TryOpenChest(liveChest, farm);
     }
 
     private void SkipCurrentBlindChest(PotChestFarmMemory farm, Vector3 target, string reason)
@@ -1276,8 +1275,10 @@ public class FarmingPotChestsHandler
         travelSteps = null;
     }
 
-    private void TryOpenChest(IGameObject chest)
+    private void TryOpenChest(IGameObject chest, PotChestFarmMemory farm)
     {
+        potChests.Submit(farm.FateId.Value, ResolveIsReroll(chest.Position, farm), chest.Position);
+
         // Pot reveals need feet — normal hunt coffers stay mounted (#175).
         if (DismountAssist.TryDismount(conditions, ReportDismount) || ECommonsPlayer.IsJumping)
         {
@@ -1291,6 +1292,43 @@ public class FarmingPotChestsHandler
                 .Then<OpenTreasureCofferChain, TreasureOpenTarget>(
                     new TreasureOpenTarget(position, PotTreasureIds.RevealCofferBaseIds))
         );
+    }
+
+    /// <summary>
+    ///     Second-chance farm → reroll. Otherwise nearer baked/shared reroll pad than primary.
+    /// </summary>
+    private bool ResolveIsReroll(Vector3 position, PotChestFarmMemory farm)
+    {
+        if (farm.OnRerollPool)
+        {
+            return true;
+        }
+
+        IZone zone = zones.GetZone();
+        float nearestPrimary = NearestPadDistance(potChests.GetPrimaryPads(zone, farm.FateId.Value), position);
+        float nearestReroll = NearestPadDistance(potChests.GetRerollPads(zone), position);
+        if (nearestReroll == float.MaxValue)
+        {
+            return false;
+        }
+
+        if (nearestPrimary == float.MaxValue)
+        {
+            return true;
+        }
+
+        return nearestReroll + 2f < nearestPrimary;
+    }
+
+    private static float NearestPadDistance(IReadOnlyList<PotChestData> pads, Vector3 position)
+    {
+        float best = float.MaxValue;
+        foreach (PotChestData pad in pads)
+        {
+            best = MathF.Min(best, position.Distance2D(pad.Position));
+        }
+
+        return best;
     }
 
     private Vector3 PathableTreasurePosition(Vector3 position)
@@ -1604,12 +1642,12 @@ public class FarmingPotChestsHandler
 
         if (!TryActivateRerollPool(farm, markOpenedChest: true, narrowImmediately: true))
         {
-            logger.Warning("Pot treasure: reroll offered but this zone has no authored reroll pads");
+            logger.Warning("Pot treasure: reroll offered but this zone has no second-chance chest locations");
             return;
         }
 
         logger.Info(
-            "Pot treasure: second chest offered — switching to {Count} reroll pad(s)",
+            "Pot treasure: second chest offered — switching to {Count} second-chance location(s)",
             farm.Pool.Count);
     }
 
@@ -1633,13 +1671,13 @@ public class FarmingPotChestsHandler
 
         if (!TryActivateRerollPool(farm, markOpenedChest: false, narrowImmediately: false))
         {
-            logger.Warning("Pot treasure: coffer opened but this zone has no authored reroll pads — ending farm");
+            logger.Warning("Pot treasure: coffer opened but this zone has no second-chance chest locations — ending farm");
             FinishFarm();
             return false;
         }
 
         logger.Info(
-            "Pot treasure: first coffer opened — locking search to {Count} second-chance pad(s)",
+            "Pot treasure: first coffer opened — locking search to {Count} second-chance location(s)",
             farm.Pool.Count);
         return true;
     }
@@ -1649,7 +1687,7 @@ public class FarmingPotChestsHandler
         bool markOpenedChest,
         bool narrowImmediately)
     {
-        List<PotTreasureCandidate> reroll = PotTreasureFilter.BuildRerollPool(zones.GetZone());
+        List<PotTreasureCandidate> reroll = PotTreasureFilter.BuildRerollPool(potChests.GetRerollPads(zones.GetZone()));
         if (reroll.Count == 0)
         {
             return false;
@@ -1673,10 +1711,13 @@ public class FarmingPotChestsHandler
     }
 
     /// <summary>Authored spots for the current search: pot FATE pads, or rerolls after a coffer.</summary>
-    private List<PotTreasureCandidate> BuildActivePool(PotChestFarmMemory farm) =>
-        farm.HasOpenedChest || farm.OnRerollPool
-            ? PotTreasureFilter.BuildRerollPool(zones.GetZone())
-            : PotTreasureFilter.BuildPool(zones.GetZone(), farm.FateId.Value);
+    private List<PotTreasureCandidate> BuildActivePool(PotChestFarmMemory farm)
+    {
+        IZone zone = zones.GetZone();
+        return farm.HasOpenedChest || farm.OnRerollPool
+            ? PotTreasureFilter.BuildRerollPool(potChests.GetRerollPads(zone))
+            : PotTreasureFilter.BuildPool(potChests.GetPrimaryPads(zone, farm.FateId.Value));
+    }
 
     /// <summary>Same opt-in the blind sweep uses, so pool and sweep cover the same pads.</summary>
     private bool ShouldIncludeRerolls =>
@@ -1699,10 +1740,10 @@ public class FarmingPotChestsHandler
                 return;
             }
 
-            positions.AddRange(zone.GetRerollPotChestData().Select(c => c.Position));
+            positions.AddRange(potChests.GetRerollPads(zone).Select(c => c.Position));
             if (positions.Count == 0)
             {
-                logger.Warning("Pot treasure: no second-chance pads left to sweep — ending farm");
+                logger.Warning("Pot treasure: no second-chance locations left to sweep — ending farm");
                 FinishFarm();
                 return;
             }
@@ -1711,15 +1752,12 @@ public class FarmingPotChestsHandler
         }
         else
         {
-            if (zone.GetPotChestData().TryGetValue(farm.FateId.Value, out List<PotChestData>? chests))
-            {
-                positions.AddRange(chests.Select(c => c.Position));
-            }
+            positions.AddRange(potChests.GetPrimaryPads(zone, farm.FateId.Value).Select(c => c.Position));
 
             // First-chest blind can still visit reroll pads as a last resort.
             if (ShouldIncludeRerolls)
             {
-                positions.AddRange(zone.GetRerollPotChestData().Select(c => c.Position));
+                positions.AddRange(potChests.GetRerollPads(zone).Select(c => c.Position));
             }
         }
 
@@ -1750,26 +1788,16 @@ public class FarmingPotChestsHandler
         player.PlayerCharacter?.StatusList.Has(PotTreasureIds.TreasureBuffStatusId) == true;
 
     /// <summary>
-    ///     Every authored pot chest position for the current FATE, including rerolls. A pot reveal
-    ///     only ever appears on one of these, which is what separates it from ordinary field coffers.
+    ///     Every pot chest position for the current FATE, including rerolls (shared catalog when on).
+    ///     A pot reveal only ever appears on one of these, which is what separates it from ordinary field coffers.
     /// </summary>
     private void EnsureAuthoredSpots(PotChestFarmMemory farm)
     {
-        if (authoredSpotsFate == farm.FateId.Value)
-        {
-            return;
-        }
-
-        authoredSpotsFate = farm.FateId.Value;
         authoredSpots.Clear();
 
         IZone zone = zones.GetZone();
-        if (zone.GetPotChestData().TryGetValue(farm.FateId.Value, out List<PotChestData>? chests))
-        {
-            authoredSpots.AddRange(chests.Select(c => c.Position));
-        }
-
-        authoredSpots.AddRange(zone.GetRerollPotChestData().Select(c => c.Position));
+        authoredSpots.AddRange(potChests.GetPrimaryPads(zone, farm.FateId.Value).Select(c => c.Position));
+        authoredSpots.AddRange(potChests.GetRerollPads(zone).Select(c => c.Position));
 
         foreignSpots.Clear();
         foreignSpots.AddRange(

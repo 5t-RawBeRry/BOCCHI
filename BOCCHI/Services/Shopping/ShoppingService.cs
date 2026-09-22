@@ -88,7 +88,7 @@ public sealed class ShoppingService(
     {
         if (!knightshopper.IsAvailable)
         {
-            detail = "Knightshopper IPC not available (plugin loaded?).";
+            detail = "Knightshopper isn’t loaded or ready.";
             return false;
         }
 

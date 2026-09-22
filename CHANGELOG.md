@@ -1,13 +1,13 @@
-# 4.2.0.14
+# 4.2.0.15
 
-### Illegal Mode
-- Camp buffs start while you are already on Freelancer instead of waiting at the crystal. Inquiring Mind if you have it; otherwise each buff on its own job, then back to the phantom job you started on
-- Occult Return still works even if overworld Return is on cooldown. If it cannot be used, walk to a shard and teleport
-- After a FATE or CE, raise nearby players before auto treasure hunt continues
-- Stop after return and teleport no longer starts treasure hunt or Returns to camp until you toggle Illegal Mode
+### Share chest locations
+- Shared maps can now **fix wrong** built-in treasure chest and carrot spots, not only add missing ones
+- Magic Pot chest spots are shared the same way: uploaded when you open one, downloaded for farming — wrong ones get corrected, missing ones get added
+- Renamed from “Share maps” so it’s clear this is about chest and carrot places, not where you are standing
 
-### Combat
-- Dodging or stepping out of a FATE ring keeps combat on. Walking away from the FATE turns it off and travel resumes
-
-### Pot chests
-- South Horn — Pleading Pots: pad at ~22.9, 16.7 is the tree/house chest at ~22.4, 17.0
+### Clearer wording everywhere
+- Config, status, chat, and logs use plainer language
+- Status and Details show FATE and Critical Encounter names, and simple travel steps (walking / teleport / return to camp)
+- Treasure Hunt, nearby chests, and farm spots no longer show raw IDs or world coordinates
+- FATEs & CEs list shows plain status (in progress, registering)
+- Clearer labels for combat rotation, travel plugin, path map, waiting status, and copying logs

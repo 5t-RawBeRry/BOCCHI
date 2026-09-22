@@ -696,7 +696,7 @@ public class TreasureHunterService
             }
 
             log.Debug(
-                "Treasure hunt South Horn: start segment {Segment} (pad {Pad}); camp entry pending (inCamp={InCamp})",
+                "Treasure hunt South Horn: start segment {Segment} (chest {Pad}); camp entry pending (inCamp={InCamp})",
                 startSegment ?? "-",
                 pendingEntryNodeId?.ToString() ?? "-",
                 zone.IsInBasecamp());
@@ -801,7 +801,7 @@ public class TreasureHunterService
         }
 
         log.Info(
-            "Treasure hunt: resume pad {NodeId} is {Dist:F0}y away — repathing from player",
+            "Treasure hunt: resume chest {NodeId} is {Dist:F0}y away — repathing from player",
             resumeId,
             dist);
     }
@@ -933,7 +933,7 @@ public class TreasureHunterService
         if (TreasureHuntPathOverrides.IsDensePackApproach(zoneId, step.NodeId))
         {
             log.Debug(
-                "Treasure hunt stuck near {NodeId} — skipping lateral nudge (dense-pack pad); waiting for skip timeout",
+                "Treasure hunt stuck near {NodeId} — skipping lateral nudge (dense pack); waiting for skip timeout",
                 step.NodeId);
             PauseStuckApproachWithoutNudge();
             return;
@@ -1583,7 +1583,7 @@ public class TreasureHunterService
 
         int trimmed = TrimNearbyEmptyNodesAfterSight();
         log.Debug(
-            "Treasure Sight refresh: {Bronze} bronze / {Silver} silver remaining; trimmed {Trimmed} nearby empty pad(s)",
+            "Treasure Sight refresh: {Bronze} bronze / {Silver} silver remaining; trimmed {Trimmed} nearby empty location(s)",
             tracker.BronzeChests,
             tracker.SilverChests,
             trimmed);
@@ -2659,7 +2659,8 @@ public class TreasureHunterService
                     continue;
                 }
 
-                // Layout transform Y is often bogus (reveal altitude / inside floor). Prefer baked coords.
+                // Layout transform Y is often bogus (reveal altitude / inside floor). Prefer baked coords;
+                // accepted crowd for the same dataId can replace a wrong bake after merge.
                 if (authored?.Position is { } bakedPosition)
                 {
                     position = bakedPosition;
@@ -2670,6 +2671,7 @@ public class TreasureHunterService
         }
 
         MergeBakedTreasurePads(zones.GetZone().GetTreasureData());
+        ApplyCrowdsourcedCofferCorrections(cofferLocations.GetAcceptedForCurrentZone());
         MergeCrowdsourcedTreasurePads(cofferLocations.GetAcceptedForCurrentZone());
 
         if (layoutTreasure.Count == 0)
@@ -2724,7 +2726,38 @@ public class TreasureHunterService
 
         if (added > 0)
         {
-            log.Debug("Treasure hunt: merged {Count} baked pad(s) not in active layout", added);
+            log.Debug("Treasure hunt: merged {Count} baked location(s) not in active layout", added);
+        }
+    }
+
+    /// <summary>
+    ///     Same coffer dataId in the accepted catalog, far from the bake → snap to crowd centroid
+    ///     (keeps layout id for path overrides). Near matches leave the bake alone.
+    /// </summary>
+    private void ApplyCrowdsourcedCofferCorrections(IReadOnlyList<CrowdsourcedCofferCandidate> liveSpots)
+    {
+        if (liveSpots.Count == 0)
+        {
+            return;
+        }
+
+        int corrected = 0;
+        for (int i = 0; i < layoutTreasure.Count; i++)
+        {
+            TreasureLayoutDatum pad = layoutTreasure[i];
+            Vector3 next = CrowdsourcedPadCorrection.CorrectCofferPosition(pad.Id, pad.Position, liveSpots);
+            if (!CrowdsourcedPadCorrection.IsCofferCorrection(pad.Position, next))
+            {
+                continue;
+            }
+
+            layoutTreasure[i] = pad with { Position = next };
+            corrected++;
+        }
+
+        if (corrected > 0)
+        {
+            log.Info("Treasure hunt: corrected {Count} baked location(s) from shared catalog", corrected);
         }
     }
 
@@ -2761,7 +2794,7 @@ public class TreasureHunterService
 
         if (added > 0)
         {
-            log.Info("Treasure hunt: merged {Count} shared pad(s) not in active layout", added);
+            log.Info("Treasure hunt: merged {Count} shared location(s) not in active layout", added);
         }
     }
 
@@ -2783,7 +2816,7 @@ public class TreasureHunterService
         }
 
         log.Debug(
-            "Treasure hunt authored segments cached: {Count} pads",
+            "Treasure hunt authored segments cached: {Count} locations",
             authoredNodeSegments.Count);
     }
 

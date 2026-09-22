@@ -1,6 +1,6 @@
 {
   "label": "Logs",
-  "tooltip": "Live BOCCHI log buffer. Debug lines are captured automatically — you do not need to set Dalamud to Debug.",
+  "tooltip": "Live BOCCHI log. Extra detail lines are included automatically — you do not need to change Dalamud’s log level.",
   "fields": {
     "viewer": {
       "label": "Viewer"

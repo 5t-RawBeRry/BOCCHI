@@ -253,7 +253,7 @@ public abstract class HuntRoutePlanner
         NodeDataCache[(zoneId, filename)] = data;
         AuthoredRouteCache[zoneId] = new AuthoredRoutePayload(authoredEntries, authoredSegments);
         log.Debug(
-            "Cached hunt route data for {Zone}: {Nodes} node(s), {Pads} authored pad(s)",
+            "Cached hunt route data for {Zone}: {Nodes} node(s), {Pads} authored location(s)",
             zoneId,
             data.NodeToNodeDistances.Count,
             authoredEntries.Count);
@@ -300,7 +300,7 @@ public abstract class HuntRoutePlanner
             }
 
             log.Debug(
-                "Loaded authored treasure route for {Zone}: {Pads} pads in {Segments} segment(s)",
+                "Loaded authored treasure route for {Zone}: {Pads} locations in {Segments} segment(s)",
                 zoneId,
                 authoredEntries.Count,
                 route.Segments.Count);

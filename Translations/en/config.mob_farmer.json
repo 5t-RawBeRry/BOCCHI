@@ -46,8 +46,8 @@
       "name": "Name",
       "enabled": "On",
       "priority": "Priority",
-      "origin": "Origin",
-      "set_origin": "Set origin here",
+      "origin": "Farm point",
+      "set_origin": "Set farm point here",
       "use_stack": "Use stack / stop point",
       "stack": "Stack / stop point",
       "set_stack": "Set stack point here",
@@ -59,15 +59,15 @@
     },
     "claimed_player_radius": {
       "label": "Claimed player radius (yalms)",
-      "tooltip": "Treat the spot as claimed if another player stays this close to the origin or stack point."
+      "tooltip": "Treat the spot as claimed if another player stays this close to the farm point or stack point."
     },
     "min_euclidean_distance_to_return_home": {
       "label": "Go home if farther than",
-      "tooltip": "After a fight, walk back to the spot origin only if farther than this (yalms)."
+      "tooltip": "After a fight, walk back to the farm point only if farther than this (yalms)."
     },
     "return_to_start_in_waiting_phase": {
       "label": "Return to spot after combat",
-      "tooltip": "Walk back to the current farm spot origin when the fight ends. No spots: where you stood when you pressed Start."
+      "tooltip": "Walk back to the current farm point when the fight ends. No spots: where you stood when you pressed Start."
     },
     "render_debug_lines": {
       "label": "Show debug lines",
@@ -131,7 +131,7 @@
     },
     "yield_to_treasure_hunt": {
       "label": "Treasure Hunt on a timer",
-      "tooltip": "On: pause and run Treasure Hunt on the interval below if fill meets the bronze/silver % on Treasure Hunter.\nNeeds a recent Treasure Sight reading.\nOff: no timed Treasure Hunt from Mob Farmer."
+      "tooltip": "On: pause and run Treasure Hunt on the interval below if remaining bronze/silver meets the % on Treasure Hunter.\nNeeds a recent Treasure Sight reading.\nOff: no timed Treasure Hunt from Mob Farmer."
     },
     "treasure_hunt_interval_minutes": {
       "label": "Interval (minutes)"

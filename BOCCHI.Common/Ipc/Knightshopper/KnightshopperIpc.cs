@@ -6,7 +6,7 @@ namespace BOCCHI.Common.Ipc.Knightshopper;
 
 /// <summary>
 /// Typed client adapted from Knightshopper's shipped
-/// <c>docs/KnightshopperIpc.cs</c> (Purchase.* gates).
+/// <c>BOCCHI.Common/Ipc/Knightshopper/</c> (Purchase.* gates).
 /// </summary>
 public sealed class KnightshopperIpc : IKnightshopperIpc, IOnStop, IDisposable
 {

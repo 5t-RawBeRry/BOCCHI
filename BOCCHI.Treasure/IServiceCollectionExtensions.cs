@@ -11,6 +11,7 @@ public static class IServiceCollectionExtensions
     {
         services.AddSingleton<CarrotLocationSyncService>();
         services.AddSingleton<CofferLocationSyncService>();
+        services.AddSingleton<PotChestLocationSyncService>();
         services.AddSingleton<ITreasureTracker, TreasureTracker>();
         services.AddSingleton<ICarrotTracker, CarrotTracker>();
         services.AddSingleton<ITreasureHunter, TreasureHunterService>();

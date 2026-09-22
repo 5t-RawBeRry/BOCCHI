@@ -75,14 +75,14 @@ public class AutomatorRenderer
         {
             BocchiUi.LabelledValue(
                 translator.T(".status.goal"),
-                GoalFormatHelper.Describe(goalMemory.Goal, translator));
+                GoalFormatHelper.Describe(goalMemory.Goal, translator, data));
         }
 
         if (memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory potFarm))
         {
             BocchiUi.LabelledValue(
                 translator.T(".automation.automator.pot_chest_farm"),
-                $"Fate {potFarm.FateId.Value}");
+                GoalFormatHelper.FateName(data, potFarm.FateId.Value));
             BocchiUi.LabelledValue(
                 translator.T(".automation.automator.chests_remaining"),
                 $"{potFarm.RemainingChests}/{potFarm.TotalChests}");
@@ -103,7 +103,7 @@ public class AutomatorRenderer
             {
                 BocchiUi.LabelledValue(
                     $"{translator.T(".status.current_step")} {stepIndex++}",
-                    step.Describe());
+                    PathStepFormatHelper.Describe(step, translator, data));
             }
         }
 

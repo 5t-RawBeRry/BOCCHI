@@ -14,7 +14,6 @@ namespace BOCCHI.Fates;
 public class FatesRenderer
 (
     IFateRepository fates,
-    IFateScorer fateScorer,
     IActivityNavigation navigation,
     IZoneProvider zones,
     UIConfig uiConfig,
@@ -51,9 +50,7 @@ public class FatesRenderer
 
         foreach (Fate fate in snapshots)
         {
-            FateScore score = fateScorer.Score(fate);
-            string details =
-                $"Score {score:F1} · {fate.State} {fate.Progress}% · #{fate.Id.Value} · {fate.Position:f0} · r{fate.Radius}";
+            string details = FormatFateDetails(fate);
 
             ActivitySnapshotRenderer.RenderCompactWithActions(
                 navigation,
@@ -75,6 +72,21 @@ public class FatesRenderer
                 eventDrops.Render(fate.Id.Value, drops);
             }
         }
+    }
+
+    private string FormatFateDetails(Fate fate)
+    {
+        string state = fate.State.ToString() switch
+        {
+            "Preparation" => translator.T(".world.fates.state_preparation"),
+            "Running" => translator.T(".world.fates.state_running"),
+            "Ending" => translator.T(".world.fates.state_ending"),
+            _ => fate.State.ToString(),
+        };
+
+        return fate.Progress is > 0 and < 100
+            ? $"{state} · {fate.Progress}%"
+            : state;
     }
 
     public bool ShouldRender() => uiConfig.ShowWorldSection;

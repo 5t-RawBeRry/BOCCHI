@@ -6,7 +6,7 @@
   },
   "logs": {
     "open_tooltip": "BOCCHI 로그 열기",
-    "copy_all_tooltip": "BOCCHI 로그 모두 복사 (버전, 로테이션, 버퍼 / Debug 자동)"
+    "copy_all_tooltip": "BOCCHI 로그 모두 복사 (버전, 로테이션, 최근 줄 / 지원용)"
   },
   "sections": {
     "trackers": "추적기",
@@ -26,14 +26,18 @@
     "carrot_hunt": "재물당근 찾기",
     "on": "켜짐",
     "off": "꺼짐",
-    "idle": "대기",
+    "idle": "실행 중인 모드 없음",
     "whats_running": "실행 중",
     "shopping_paused": "쇼핑 중",
     "click_section": "이 섹션 열기",
     "emergency_stop_tooltip": "긴급 정지 — 모든 자동화·이동·버프를 멈춥니다",
     "emergency_stop_done": "[BOCCHI] 긴급 정지",
     "goal": "목표",
-    "current_step": "현재 단계",
+    "current_step": "단계",
+    "path_step_walk": "이동 중",
+    "path_step_teleport": "텔레포트 중",
+    "path_step_teleport_to": "{0}(으)로 텔레포트",
+    "path_step_return": "베이스캠프로 귀환 중",
     "chests": "항아리 상자"
   },
   "pot_timer": {
@@ -121,14 +125,14 @@
       "refresh_pathfinding": "경로 다시 짜기",
       "refresh_pathfinding_tooltip": "지금 경로를 버리고, 서 있는 곳에서 새로 짭니다.",
       "rebuild_path_map": "경로 맵 다시 만들기",
-      "rebuild_path_map_tooltip": "이 지역의 경로 맵을 다시 불러옵니다(vnavmesh 재빌드와는 다름). 경로 실패나 캠프 근처에서 멈출 때 쓰세요.",
+      "rebuild_path_map_tooltip": "이 지역의 경로 맵을 다시 불러옵니다(이동 플러그인 메시 재빌드와는 다름). 경로 실패나 캠프 근처에서 멈출 때 쓰세요.",
       "path_map": "경로 맵",
       "path_map_idle": "자동 모드를 켜면 로드됩니다",
       "path_map_loading": "불러오는 중…",
       "path_map_building": "만드는 중 (끝날 때까지 자동 모드가 기다림)…",
       "path_map_ready_cache": "준비됨 (저장됨)",
-      "path_map_ready_shipped": "준비됨 (번들)",
-      "path_map_ready_built": "준비됨 (방금 만듦)",
+      "path_map_ready_shipped": "준비됨 (BOCCHI에 포함)",
+      "path_map_ready_built": "준비됨 (이 지역용으로 만듦)",
       "path_map_rebuilding": "[BOCCHI] 이 지역의 경로 맵을 다시 만드는 중…",
       "path_map_rebuild_wrong_zone": "[BOCCHI] 경로 맵 다시 만들기는 초승달 섬에서만 됩니다.",
       "details": "상세",
@@ -175,7 +179,7 @@
       "off_left_zone": "[BOCCHI] 초승달 섬를 떠나 항아리 & 보물 찾기 꺼짐",
       "description": "항아리 돌발과 항아리 상자를 한 뒤, 다음 항아리로 떠날 때까지 보물 찾기를 합니다.",
       "phase": "단계",
-      "requires_vnav": "[BOCCHI] 항아리 & 보물 찾기에는 vnavmesh 플러그인이 필요합니다.",
+      "requires_vnav": "[BOCCHI] 항아리 & 보물 찾기에는 이동 플러그인(vnavmesh)이 필요합니다.",
       "resume_treasure_hunt": "보물 찾기 재개",
       "resume_treasure_hunt_tooltip": "대기를 건너뛰고 보물 찾기를 한 번 더 시작합니다.",
       "active_fates": "진행 중인 항아리 돌발",
@@ -194,16 +198,25 @@
   "world": {
     "fates": {
       "title": "돌발",
-      "none": "진행 중인 돌발이 없습니다."
+      "none": "진행 중인 돌발이 없습니다.",
+      "state_preparation": "준비 중",
+      "state_running": "진행 중",
+      "state_ending": "종료 중"
     },
     "critical_encounters": {
       "title": "비상 조우",
-      "none": "진행 중인 비상 조우가 없습니다."
+      "none": "진행 중인 비상 조우가 없습니다.",
+      "state_inactive": "대기",
+      "state_register": "등록 중",
+      "state_warmup": "곧 시작",
+      "state_battle": "진행 중",
+      "registering": "등록 가능",
+      "warmup": "곧 시작"
     }
   },
   "treasure": {
     "title": "보물 찾기",
-    "requires_vnav": "vnavmesh 플러그인이 필요합니다.",
+    "requires_vnav": "이동 플러그인(vnavmesh)이 필요합니다.",
     "waiting_navmesh": "맵이 준비될 때까지 기다리는 중…",
     "start_hunt": "보물 찾기 시작",
     "start_hunt_tooltip": "지도의 청동·백은 상자를 돌며 열고, 빈 자리는 건너뜁니다.",

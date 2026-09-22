@@ -36,7 +36,7 @@ public sealed class PluginDependencyStatusRenderer(
 
         BocchiUi.SectionTitle(T(translator, "required"));
         ImGui.Spacing();
-        Draw("vnavmesh", "vnavmesh", translator, VnavStatus);
+        Draw("Travel (vnavmesh)", "vnavmesh", translator, VnavStatus);
         Draw("Lifestream", "Lifestream", translator, (_, t) => IpcStatus(lifestream.IsAvailable, t));
 
         ImGui.Spacing();

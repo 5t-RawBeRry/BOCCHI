@@ -1,20 +1,39 @@
 .vs/
 .idea/
-BOCCHI/obj/
-BOCCHI/bin/
 *.user
+*.DotSettings.user
+*.sln.DotSettings.user
 BOCCHI/.env
 node_modules/
-BOCCHI*/obj
-BOCCHI*/bin
 .cursor/
+Thumbs.db
+.DS_Store
 
-# Worker local state (gitignore inside coffer-api uses these names; keep a root copy too)
+# Build outputs — project folders only (do not use **/bin; that hits package bins)
+BOCCHI*/[Bb]in/
+BOCCHI*/[Oo]bj/
+Ocelot/Ocelot*/[Bb]in/
+Ocelot/Ocelot*/[Oo]bj/
+# Keep tracked release helpers under /bin and Ocelot/bin
+!/bin/
+!/bin/**
+!Ocelot/bin/
+!Ocelot/bin/**
+
+# Worker local state
 cloudflare/coffer-api/.wrangler/
 cloudflare/coffer-api/node_modules/
 cloudflare/coffer-api/dist/
 
-# Legacy monolith code superseded by BOCCHI.* projects on rewrite
+# Legacy monolith / orphan paths
 /BOCCHI/Modules/
 /BOCCHI/Chains/
 /BOCCHI/Data/EventData.cs
+/BOCCHI/ActionHelpers/
+/BOCCHI/Enums/
+/BOCCHI/ItemHelpers/
+/BOCCHI/Pathfinding/
+/BOCCHI/Windows/
+/stubs/
+/Data/
+/Translations/fr/

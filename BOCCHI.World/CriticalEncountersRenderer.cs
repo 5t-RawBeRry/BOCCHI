@@ -56,8 +56,7 @@ public class CriticalEncountersRenderer
 
         foreach (CriticalEncounter criticalEncounter in snapshots)
         {
-            string details =
-                $"{criticalEncounter.State} · #{criticalEncounter.Id.Value} · {criticalEncounter.Position:f0}";
+            string details = FormatCeState(criticalEncounter.State);
 
             bool showActions = criticalEncounter.State is DynamicEventState.Register or DynamicEventState.Warmup
                                && criticalEncounter.Position is { X: not float.NaN };
@@ -105,15 +104,15 @@ public class CriticalEncountersRenderer
             return;
         }
 
+        string stateLabel = FormatCeState(tower.State);
         string details = tower.State switch
         {
             DynamicEventState.Register when tower.GetTimeUntilStart() is { } remaining =>
                 remaining <= TimeSpan.Zero
-                    ? $"{tower.State} · #{tower.Id.Value} · registering…"
-                    : $"{tower.State} · #{tower.Id.Value} · {remaining.Minutes:D2}:{remaining.Seconds:D2}",
-            DynamicEventState.Warmup => $"{tower.State} · #{tower.Id.Value} · warmup",
-            DynamicEventState.Inactive => $"{tower.State} · #{tower.Id.Value}",
-            var _ => $"{tower.State} · #{tower.Id.Value}"
+                    ? $"{stateLabel} · {translator.T(".world.critical_encounters.registering")}"
+                    : $"{stateLabel} · {remaining.Minutes:D2}:{remaining.Seconds:D2}",
+            DynamicEventState.Warmup => $"{stateLabel} · {translator.T(".world.critical_encounters.warmup")}",
+            _ => stateLabel,
         };
 
         ActivitySnapshotRenderer.RenderCompact(tower.Name, details);
@@ -124,10 +123,20 @@ public class CriticalEncountersRenderer
             _ => BocchiUi.StatusChipKind.Muted,
         };
         ImGui.SameLine(0f, 8f);
-        BocchiUi.DrawStatusChip(tower.State.ToString(), kind);
+        BocchiUi.DrawStatusChip(stateLabel, kind);
 
         showed = true;
     }
+
+    private string FormatCeState(DynamicEventState state) =>
+        state switch
+        {
+            DynamicEventState.Inactive => translator.T(".world.critical_encounters.state_inactive"),
+            DynamicEventState.Register => translator.T(".world.critical_encounters.state_register"),
+            DynamicEventState.Warmup => translator.T(".world.critical_encounters.state_warmup"),
+            DynamicEventState.Battle => translator.T(".world.critical_encounters.state_battle"),
+            _ => state.ToString(),
+        };
 
     public bool ShouldRender() => uiConfig.ShowWorldSection;
 }

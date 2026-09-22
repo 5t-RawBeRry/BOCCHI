@@ -21,7 +21,7 @@
     },
     "should_farm_pot_chests": {
       "label": "Farm pot chests after pot FATEs",
-      "tooltip": "On: after a pot FATE, drink Magical Elixir and follow the compass while Cache Me lasts. No hint: walks known chest spots instead.\nOff: leave after the pot FATE without farming chests."
+      "tooltip": "On: after a pot FATE, drink Magical Elixir and follow the compass while Cache Me lasts. If the compass doesn’t point to a chest, walk the known chest list instead.\nOff: leave after the pot FATE without farming chests."
     },
     "should_preposition_to_pots": {
       "label": "Wait near pots before they spawn",
@@ -35,7 +35,7 @@
       "tooltip": "While walking to a FATE, switch to a CE only when registration has this many seconds or fewer left. Higher = leave sooner. 0 = switch as soon as a CE is up. Already in the FATE: finish it first."
     },
     "combat_autorotation": {
-      "label": "Combat autorotation",
+      "label": "Combat rotation",
       "tooltip": "Which plugin runs your rotation in FATEs, CEs, and Mob Farmer fights.\nPaused while traveling or pulling.\nNone: you fight manually."
     },
     "update_boss_mod_presets_automatically": {
@@ -65,8 +65,8 @@
         "label": "Max distance to target | Ranged"
       },
       "overdodge": {
-        "label": "Overdodge",
-        "tooltip": "Extra space from dangerous areas while pathfinding.",
+        "label": "Extra dodge space",
+        "tooltip": "Extra space from dangerous areas while traveling.",
         "none": "None",
         "small": "Small (0.5y)",
         "medium": "Medium (1.5y)",
@@ -137,19 +137,19 @@
     },
     "enable_automatic_treasure_hunt_during_illegal_mode": {
       "label": "Auto treasure hunt in Illegal Mode",
-      "tooltip": "On: after a FATE or CE, return to camp and run Treasure Sight if known. Starts a hunt when bronze/silver fill meets the % on Treasure Hunter.\nAlso casts Sight at camp while waiting (Interval below), then hunts if fill is high enough — so you are not AFK between CEs.\nWithout Sight: uses the built-in map (those % ignored), always pauses for FATE/CE, then resumes.\nOff: do not start treasure hunts from Illegal Mode."
+      "tooltip": "On: after a FATE or CE, return to camp and run Treasure Sight if known. Starts a hunt when bronze/silver remaining meets the % on Treasure Hunter.\nAlso casts Sight at camp while waiting (Interval below), then hunts if enough chests remain — so you are not sitting idle between CEs.\nWithout Sight: uses the built-in chest list (those % ignored), always pauses for FATE/CE, then resumes.\nOff: do not start treasure hunts from Illegal Mode."
     },
     "pause_auto_treasure_hunt_for_fate": {
       "label": "Pause auto treasure hunt for FATEs",
-      "tooltip": "On: while Auto treasure hunt is running, pause when a FATE is available (or already in one), then resume nearby afterward.\nOff: with Treasure Sight, keep hunting through FATEs (map hunt without Sight always pauses).\nNeeds Auto treasure hunt in Illegal Mode."
+      "tooltip": "On: while Auto treasure hunt is running, pause when a FATE is available (or already in one), then resume nearby afterward.\nOff: with Treasure Sight, keep hunting through FATEs (a hunt using the default chest list always pauses for FATEs).\nNeeds Auto treasure hunt in Illegal Mode."
     },
     "pause_auto_treasure_hunt_for_pots": {
       "label": "Pause auto treasure hunt for pots",
-      "tooltip": "On: pause the hunt when Pot timing says leave for the next pot (or a pot is already up), then resume nearby afterward. Uses “Leave for pots this many minutes early” on Pot timing.\nOff: keep hunting through pot leave-early (live pots still pause if Pause for FATEs is on, or always on map hunt without Sight).\nNeeds Auto treasure hunt in Illegal Mode, and farm pots or wait near pots."
+      "tooltip": "On: pause the hunt when Pot timing says leave for the next pot (or a pot is already up), then resume nearby afterward. Uses “Leave for pots this many minutes early” on Pot timing.\nOff: keep hunting through pot leave-early (live pots still pause if Pause for FATEs is on, or always when using the default chest list without Sight).\nNeeds Auto treasure hunt in Illegal Mode, and farm pots or wait near pots."
     },
     "pause_auto_treasure_hunt_for_critical_encounter": {
       "label": "Pause auto treasure hunt for CEs",
-      "tooltip": "On: while Auto treasure hunt is running, pause when a Critical Encounter is available (or already in one), then resume nearby afterward.\nOff: with Treasure Sight, keep hunting through CEs (map hunt without Sight always pauses).\nNeeds Auto treasure hunt in Illegal Mode."
+      "tooltip": "On: while Auto treasure hunt is running, pause when a Critical Encounter is available (or already in one), then resume nearby afterward.\nOff: with Treasure Sight, keep hunting through CEs (a hunt using the default chest list always pauses for CEs).\nNeeds Auto treasure hunt in Illegal Mode."
     }
   }
 }

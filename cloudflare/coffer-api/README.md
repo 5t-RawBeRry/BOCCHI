@@ -4,9 +4,10 @@ Payload shape for coffers matches AOCC (`POST /api/v1/observations`) so the plug
 
 Unlike AOCC’s pot-reveal-only filter, this API accepts **any positive coffer `dataId`** in Occult Crescent territories (**1252** South Horn, **1346** North Horn).
 
-**End-user use in BOCCHI (Config → Treasure Hunter → Share maps with the community; default on):**
+**End-user use in BOCCHI (Config → Treasure Hunter → Share chest locations; default on):**
 - **Pot cycles** (`/api/v1/pot-cycles`) — share Magic Pot spawn anchors per instance.
 - **Carrot locations** (`/api/v1/carrot-locations`) — Carrot Hunt downloads accepted pads and merges with baked list; clients upload sightings.
+- **Pot-chest locations** (`/api/v1/pot-chest-locations`) — Magic Pot chest spots (per FATE and reroll flag); clients upload sightings when community pads are on.
 - **Coffer candidates** (`/api/v1/candidates` + observation POST) — Treasure Hunt downloads accepted spots and unions them with the baked map; clients upload bronze/silver opens.
 
 ## Paid-plan behaviour
@@ -16,11 +17,11 @@ Unlike AOCC’s pot-reveal-only filter, this API accepts **any positive coffer `
 - Cluster updates increment centroid/counts in D1 (no full re-aggregate), then cron deletes processed rows older than **14 days**.
 - Catalog cache is busted only when a pad is **newly accepted** (or after admin review), not on every centroid nudge.
 - Public catalogs omit pads with **Y below −250** (unload / inside-floor ghosts). POSTs with that altitude are rejected; cron also rejects any that already got accepted. Hamlet basement (~−162) is kept.
-- Public catalogs (`/api/v1/candidates`, `/api/v1/carrot-locations`) are compact (id + zone + position), with isolate memory cache + Cache API + `Cache-Control: max-age=300`.
+- Public catalogs (`/api/v1/candidates`, `/api/v1/carrot-locations`, `/api/v1/pot-chest-locations`) are compact (id + zone + position), with isolate memory cache + Cache API + `Cache-Control: max-age=300`.
 - Pot-cycle GET **hits** are cached **20s** (misses are not). A new POST invalidates that instance key.
 - Pot-cycle prune deletes up to **25k × 20 rounds** per cron (no free-tier write cap).
 - Unique index on `(instance_key, pot_fate_id, spawn_at_unix)` + `INSERT OR IGNORE`.
-- Separate IP rate limits: **60/min** observations & carrots, **120/min** pot-cycle GET/POST.
+- Separate IP rate limits: **60/min** observations, carrots, and pot-chest locations, **120/min** pot-cycle GET/POST.
 - Traces sampled at **1%**; logs stay at 100%.
 
 ## Local setup
@@ -37,6 +38,8 @@ npm run dev
 - `GET http://localhost:8787/api/v1/candidates?territoryId=1252` (accepted catalog for hunt routing)
 - `POST http://localhost:8787/api/v1/carrot-locations`
 - `GET http://localhost:8787/api/v1/carrot-locations?territoryId=1252` (accepted carrot pads)
+- `POST http://localhost:8787/api/v1/pot-chest-locations`
+- `GET http://localhost:8787/api/v1/pot-chest-locations?territoryId=1252` (accepted pot-chest pads)
 - `POST http://localhost:8787/api/v1/pot-cycles`
 - `GET http://localhost:8787/api/v1/pot-cycles?instanceKey=...`
 
@@ -54,7 +57,7 @@ Copy into BOCCHI is not required — the plugin posts to:
 
 `https://bocchi-coffer-api.kagekazu.workers.dev/api/v1/observations`
 
-(URL is hardcoded; sync follows Share maps — default on, while in Occult Crescent.)
+(URL is hardcoded; sync follows community pads — default on, while in Occult Crescent.)
 
 Optional admin token:
 

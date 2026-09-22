@@ -49,6 +49,7 @@ public class Automator
     AutoRotationController autoRotation,
     IAutomationModeGuard modeGuard,
     Func<ITreasureHunter> hunterFactory,
+    PotChestLocationSyncService potChests,
     ITranslator<MainWindow> translator,
     ILogger<Automator> logger
 ) : IAutomator, IOnUpdate, IOnStop
@@ -525,8 +526,10 @@ public class Automator
 
         // Magical Elixir + compass hints whenever we have pot chest data (SH authored groups, NH binned).
         // WaitingForBuff waits for Cache Me; leftover elixir alone must not start a blind sweep.
+        potChests.EnsureFreshForFarm();
         ActivityData? potFate = zone.GetPotFateData().FirstOrDefault(f => f.Id == fateId.Value);
-        if (potFate != null && PotTreasureFilter.CanRunSmart(zone, fateId.Value))
+        IReadOnlyList<PotChestData> primaryPads = potChests.GetPrimaryPads(zone, fateId.Value);
+        if (potFate != null && zone.IsPotFate(fateId.Value) && PotTreasureFilter.CanRunSmart(primaryPads))
         {
             logger.Info("Starting pot treasure (elixir/hints) for fate {FateId}", fateId.Value);
             BeginExclusivePotChestFarm(PotChestFarmMemory.CreateSmart(fateId));
@@ -542,15 +545,15 @@ public class Automator
             return;
         }
 
-        if (!zone.GetPotChestData().TryGetValue(fateId.Value, out List<PotChestData>? chestData))
+        if (primaryPads.Count == 0)
         {
             return;
         }
 
-        List<Vector3> positions = chestData.Select(chest => chest.Position).ToList();
+        List<Vector3> positions = primaryPads.Select(chest => chest.Position).ToList();
         if (context.IsPotsAndTreasure || potsConfig.ShouldFarmRerollPotChests)
         {
-            positions.AddRange(zone.GetRerollPotChestData().Select(chest => chest.Position));
+            positions.AddRange(potChests.GetRerollPads(zone).Select(chest => chest.Position));
         }
 
         if (objects.LocalPlayer is not { } player)
@@ -604,15 +607,15 @@ public class Automator
 
         int? bestFate = null;
         float bestDist = float.MaxValue;
-        foreach (KeyValuePair<int, List<PotChestData>> group in zone.GetPotChestData())
+        foreach (ActivityData pot in pots)
         {
-            foreach (PotChestData chest in group.Value)
+            foreach (PotChestData chest in potChests.GetPrimaryPads(zone, pot.Id))
             {
                 float dist = playerPos.Distance2D(chest.Position);
                 if (dist < bestDist)
                 {
                     bestDist = dist;
-                    bestFate = group.Key;
+                    bestFate = pot.Id;
                 }
             }
         }

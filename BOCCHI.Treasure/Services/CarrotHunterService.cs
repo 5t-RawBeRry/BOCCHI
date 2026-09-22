@@ -76,7 +76,7 @@ public sealed class CarrotHunterService
 
     private readonly CampReturnSession campReturn = new("CarrotHunt::Return");
 
-    private const string FinishedRouteMessage = "Carrot Hunt finished the authored route.";
+    private const string FinishedRouteMessage = "Carrot Hunt finished.";
 
     private const string OutOfCarrotsMessage = "Out of Fortune Carrots — stopping Carrot Hunt.";
 
@@ -159,7 +159,7 @@ public sealed class CarrotHunterService
 
         if (!IsVnavAvailable || !IsVnavReady)
         {
-            BocchiChat.PrintError(chat, uiConfig, "Carrot Hunt needs vnavmesh ready.");
+            BocchiChat.PrintError(chat, uiConfig, "Carrot Hunt needs the travel plugin ready for this zone.");
             return;
         }
 
@@ -172,7 +172,7 @@ public sealed class CarrotHunterService
         IZone zone = zones.GetZone();
         if (!zone.IsOccultCrescentZone() || carrotLocations.GetHuntPads(zone).Count == 0)
         {
-            BocchiChat.PrintError(chat, uiConfig, "No authored carrot map for this zone.");
+            BocchiChat.PrintError(chat, uiConfig, "No carrot locations for this zone.");
             return;
         }
 
@@ -336,7 +336,7 @@ public sealed class CarrotHunterService
         }
 
         finishedAuthoredIds.Clear();
-        log.Information("Carrot hunt: full empty pass — rechecking all pads for respawns");
+        log.Information("Carrot hunt: full empty pass — rechecking all locations for respawns");
         RecalculateAndAdvance();
         return Phase != CarrotHuntPhase.Idle;
     }
@@ -1023,7 +1023,7 @@ public sealed class CarrotHunterService
                 HuntDistances.LocalClusterRadius,
                 preferLive: true) is int localLive)
         {
-            log.Debug("Carrot hunt preferring local live pad {Id}", localLive);
+            log.Debug("Carrot hunt preferring local live location {Id}", localLive);
             return localLive;
         }
 
@@ -1032,7 +1032,7 @@ public sealed class CarrotHunterService
                 HuntDistances.LocalClusterRadius,
                 preferLive: false) is int localPad)
         {
-            log.Debug("Carrot hunt preferring local unfinished pad {Id}", localPad);
+            log.Debug("Carrot hunt preferring local unfinished location {Id}", localPad);
             return localPad;
         }
 
@@ -1111,7 +1111,7 @@ public sealed class CarrotHunterService
         if (bestId is int id)
         {
             log.Debug(
-                "Carrot hunt preferring live nearby pad {Id} at {Distance:F1}y",
+                "Carrot hunt preferring live nearby location {Id} at {Distance:F1}y",
                 id,
                 bestDist);
         }

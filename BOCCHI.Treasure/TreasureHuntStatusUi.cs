@@ -13,7 +13,7 @@ namespace BOCCHI.Treasure;
 /// <summary>Shared hunt progress / Discord resume UX (last coffer id + map flag).</summary>
 public static class TreasureHuntStatusUi
 {
-    /// <summary>1-based coffer progress for the session (counts up as pads are checked).</summary>
+    /// <summary>1-based coffer progress for the session (counts up as locations are checked).</summary>
     public static string FormatProgress(ITreasureHunter hunter, ITranslator<MainWindow> translator)
     {
         if (hunter.WaitingForSafeWindow)
@@ -98,18 +98,14 @@ public static class TreasureHuntStatusUi
             BocchiUi.MutedText(progress);
         }
 
-        if (hunter.LastCheckedNodeId is { } lastId)
+        if (hunter.LastCheckedNodeId is { })
         {
             ImGui.TextColored(BocchiUi.Header, translator.T(".treasure.last_checked"));
-            ImGui.SameLine(0f, 8f);
-            BocchiUi.MutedText(lastId.ToString());
         }
 
-        if (hunter.TryGetResumeCoffer(out uint resumeId, out _))
+        if (hunter.TryGetResumeCoffer(out uint _, out _))
         {
             ImGui.TextColored(BocchiUi.Header, translator.T(".treasure.resume_coffer"));
-            ImGui.SameLine(0f, 8f);
-            BocchiUi.MutedText(resumeId.ToString());
             ImGui.SameLine(0f, 8f);
             using (ImRaii.PushFont(UiBuilder.IconFont))
             {
@@ -144,7 +140,7 @@ public static class TreasureHuntStatusUi
         {
             ImGui.TextColored(BocchiUi.Header, translator.T(".treasure.distance_to_chest"));
             ImGui.SameLine(0f, 8f);
-            BocchiUi.MutedText($"{hunter.StepDistance:F2}");
+            BocchiUi.MutedText($"{hunter.StepDistance:F1}y");
         }
     }
 }

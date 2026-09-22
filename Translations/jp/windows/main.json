@@ -6,7 +6,7 @@
   },
   "logs": {
     "open_tooltip": "BOCCHIログを開く",
-    "copy_all_tooltip": "BOCCHIログをすべてコピー（バージョン・ローテーション・バッファ／Debug自動）"
+    "copy_all_tooltip": "BOCCHIログをすべてコピー（バージョン・ローテーション・最近の行／サポート用）"
   },
   "sections": {
     "trackers": "トラッカー",
@@ -26,14 +26,18 @@
     "carrot_hunt": "キャロットハント",
     "on": "オン",
     "off": "オフ",
-    "idle": "待機中",
+    "idle": "何も実行していません",
     "whats_running": "稼働中",
     "shopping_paused": "買い物中",
     "click_section": "このセクションを開く",
     "emergency_stop_tooltip": "緊急停止 — すべての自動化・移動・バフを止めます",
     "emergency_stop_done": "[BOCCHI] 緊急停止",
     "goal": "目標",
-    "current_step": "いまの手順",
+    "current_step": "手順",
+    "path_step_walk": "移動中",
+    "path_step_teleport": "テレポート中",
+    "path_step_teleport_to": "{0} へテレポート",
+    "path_step_return": "ベースキャンプへ帰還中",
     "chests": "マジックポット宝箱"
   },
   "pot_timer": {
@@ -121,14 +125,14 @@
       "refresh_pathfinding": "ルートを作り直す",
       "refresh_pathfinding_tooltip": "いまのルートを捨てて、現在地から新しく計画します。",
       "rebuild_path_map": "経路マップを再構築",
-      "rebuild_path_map_tooltip": "このゾーンの経路マップを再読み込みします（vnavmesh の再構築とは別です）。ルート失敗やキャンプ付近で止まるときに使います。",
+      "rebuild_path_map_tooltip": "このゾーンの経路マップを再読み込みします（移動プラグインのメッシュ再構築とは別です）。ルート失敗やキャンプ付近で止まるときに使います。",
       "path_map": "経路マップ",
       "path_map_idle": "不正モード開始時に読み込みます",
       "path_map_loading": "読み込み中…",
       "path_map_building": "構築中（完了まで不正モードは待ちます）…",
       "path_map_ready_cache": "準備完了（保存済み）",
-      "path_map_ready_shipped": "準備完了（同梱）",
-      "path_map_ready_built": "準備完了（いま構築）",
+      "path_map_ready_shipped": "準備完了（BOCCHI 同梱）",
+      "path_map_ready_built": "準備完了（このゾーン用に構築）",
       "path_map_rebuilding": "[BOCCHI] このゾーンの経路マップを再構築しています…",
       "path_map_rebuild_wrong_zone": "[BOCCHI] 経路マップの再構築はオカルトクレセント内でのみ使えます。",
       "details": "詳細",
@@ -175,7 +179,7 @@
       "off_left_zone": "[BOCCHI] オカルトクレセントを離れたためポット＆トレジャー オフ",
       "description": "マジックポットFATEと宝箱を行い、次のマジックポットへ向かう時間までトレジャーハントします。",
       "phase": "フェーズ",
-      "requires_vnav": "[BOCCHI] ポット＆トレジャーには vnavmesh プラグインが必要です。",
+      "requires_vnav": "[BOCCHI] ポット＆トレジャーには移動プラグイン（vnavmesh）が必要です。",
       "resume_treasure_hunt": "トレジャーハントを再開",
       "resume_treasure_hunt_tooltip": "待機をスキップして、次のトレジャーハント巡回を開始します。",
       "active_fates": "進行中のマジックポットFATE",
@@ -194,16 +198,25 @@
   "world": {
     "fates": {
       "title": "FATE",
-      "none": "進行中の FATE はありません。"
+      "none": "進行中の FATE はありません。",
+      "state_preparation": "準備中",
+      "state_running": "進行中",
+      "state_ending": "終了中"
     },
     "critical_encounters": {
       "title": "クリティカルエンカウント",
-      "none": "進行中のクリティカルエンカウントはありません。"
+      "none": "進行中のクリティカルエンカウントはありません。",
+      "state_inactive": "待機",
+      "state_register": "受付中",
+      "state_warmup": "まもなく開始",
+      "state_battle": "進行中",
+      "registering": "受付中",
+      "warmup": "まもなく開始"
     }
   },
   "treasure": {
     "title": "トレジャーハンター",
-    "requires_vnav": "vnavmesh プラグインが必要です。",
+    "requires_vnav": "移動プラグイン（vnavmesh）が必要です。",
     "waiting_navmesh": "マップの準備を待っています…",
     "start_hunt": "トレジャーハント開始",
     "start_hunt_tooltip": "マップ上の銅・銀の宝箱を巡回して開け、空の場所はスキップします。",

@@ -1,8 +1,8 @@
-/** Isolate + Cache API for public accepted-catalog GETs (coffers / carrots). */
+/** Isolate + Cache API for public accepted-catalog GETs (coffers / carrots / pot-chests). */
 
 export const CATALOG_CACHE_TTL_SECONDS = 300;
 
-type CatalogKind = "coffers" | "carrots";
+type CatalogKind = "coffers" | "carrots" | "pot-chests";
 
 interface MemoryEntry {
   expiresAt: number;
@@ -135,6 +135,7 @@ export async function invalidateAcceptedCatalogCaches(): Promise<void> {
   for (const territoryId of territories) {
     deletes.push(caches.default.delete(catalogCacheRequest("coffers", territoryId)));
     deletes.push(caches.default.delete(catalogCacheRequest("carrots", territoryId)));
+    deletes.push(caches.default.delete(catalogCacheRequest("pot-chests", territoryId)));
   }
 
   await Promise.all(deletes);

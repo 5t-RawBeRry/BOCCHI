@@ -4,37 +4,39 @@ using System.Numerics;
 namespace BOCCHI.Treasure.Services;
 
 /// <summary>
-///     Merge baked Carrot Hunt pads with worker-accepted locations.
-///     Keeps baked ids (path overrides); remote-only pads use <c>1000 + candidateId</c>.
-///     Accepted remotes that mutually match a bake beyond merge radius overwrite that bake's position.
+///     Merge baked Magic Pot chest pads with worker-accepted locations.
+///     Mutual-nearest remotes beyond merge radius overwrite the bake; others add as new pads.
 /// </summary>
-public static class CarrotPadCatalog
+public static class PotChestPadCatalog
 {
-    /// <summary>Match remote centroids to baked pads (worker clusters at ~1.5y).</summary>
     public const float MergeRadius = 3f;
 
     public const float MergeRadiusSq = MergeRadius * MergeRadius;
 
-    public const int RemoteIdOffset = 1000;
+    /// <summary>Same association window as carrot bake correction.</summary>
+    public const float MaxCorrection = CrowdsourcedPadCorrection.CarrotMaxCorrection;
 
-    public static List<CarrotData> Merge(
-        IReadOnlyList<CarrotData> baked,
-        IReadOnlyList<AcceptedCarrotLocation> remote)
+    public const float MaxCorrectionSq = CrowdsourcedPadCorrection.CarrotMaxCorrectionSq;
+
+    public static List<PotChestData> Merge(
+        IReadOnlyList<PotChestData> baked,
+        IReadOnlyList<AcceptedPotChestLocation> remote)
     {
-        if (baked.Count == 0)
-        {
-            return [];
-        }
-
         if (remote.Count == 0)
         {
             return baked.ToList();
         }
 
-        List<CarrotData> merged = CorrectBaked(baked, remote);
-        HashSet<int> usedIds = merged.Select(b => b.Id).ToHashSet();
+        if (baked.Count == 0)
+        {
+            return remote
+                .Where(r => !TreasurePathing.IsUnloadAltitude(r.Position))
+                .Select(r => new PotChestData(r.Position, 99))
+                .ToList();
+        }
 
-        foreach (AcceptedCarrotLocation location in remote)
+        List<PotChestData> merged = CorrectBaked(baked, remote);
+        foreach (AcceptedPotChestLocation location in remote)
         {
             if (TreasurePathing.IsUnloadAltitude(location.Position)
                 || merged.Any(b => Vector3.DistanceSquared(b.Position, location.Position) <= MergeRadiusSq))
@@ -42,30 +44,20 @@ public static class CarrotPadCatalog
                 continue;
             }
 
-            int id = RemoteIdOffset + location.CandidateId;
-            if (!usedIds.Add(id))
-            {
-                continue;
-            }
-
-            merged.Add(new CarrotData(id, location.Position, 0));
+            merged.Add(new PotChestData(location.Position, 99));
         }
 
         return merged;
     }
 
-    /// <summary>
-    ///     Mutual-nearest remote within <see cref="CrowdsourcedPadCorrection.CarrotMaxCorrection"/>
-    ///     that disagrees past <see cref="MergeRadius"/> replaces the bake position (id kept).
-    /// </summary>
-    private static List<CarrotData> CorrectBaked(
-        IReadOnlyList<CarrotData> baked,
-        IReadOnlyList<AcceptedCarrotLocation> remote)
+    private static List<PotChestData> CorrectBaked(
+        IReadOnlyList<PotChestData> baked,
+        IReadOnlyList<AcceptedPotChestLocation> remote)
     {
-        List<CarrotData> result = new(baked.Count);
+        List<PotChestData> result = new(baked.Count);
         for (int bi = 0; bi < baked.Count; bi++)
         {
-            CarrotData bake = baked[bi];
+            PotChestData bake = baked[bi];
             int bestRemote = -1;
             float bestSq = float.MaxValue;
             for (int ri = 0; ri < remote.Count; ri++)
@@ -86,9 +78,7 @@ public static class CarrotPadCatalog
                 bestRemote = ri;
             }
 
-            if (bestRemote < 0
-                || bestSq <= MergeRadiusSq
-                || bestSq > CrowdsourcedPadCorrection.CarrotMaxCorrectionSq)
+            if (bestRemote < 0 || bestSq <= MergeRadiusSq || bestSq > MaxCorrectionSq)
             {
                 result.Add(bake);
                 continue;
@@ -122,4 +112,9 @@ public static class CarrotPadCatalog
     }
 }
 
-public readonly record struct AcceptedCarrotLocation(int CandidateId, ushort TerritoryId, Vector3 Position);
+public readonly record struct AcceptedPotChestLocation(
+    int CandidateId,
+    ushort TerritoryId,
+    int PotFateId,
+    bool IsReroll,
+    Vector3 Position);

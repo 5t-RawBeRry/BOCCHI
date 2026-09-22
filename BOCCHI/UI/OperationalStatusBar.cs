@@ -238,13 +238,15 @@ public class OperationalStatusBar
             ImGui.Spacing();
             if (memory.TryRemember<GoalMemory>(out GoalMemory goalMemory))
             {
-                BocchiUi.MutedText($"{translator.T(".status.goal")}: {GoalFormatHelper.Describe(goalMemory.Goal, translator)}");
+                BocchiUi.MutedText(
+                    $"{translator.T(".status.goal")}: {GoalFormatHelper.Describe(goalMemory.Goal, translator, data)}");
             }
 
             if (memory.TryRemember<PotChestFarmMemory>(out PotChestFarmMemory potFarm))
             {
+                string fateName = GoalFormatHelper.FateName(data, potFarm.FateId.Value);
                 BocchiUi.MutedText(
-                    $"{translator.T(".status.chests")}: {potFarm.RemainingChests}/{potFarm.TotalChests} (Fate {potFarm.FateId.Value})");
+                    $"{translator.T(".status.chests")}: {potFarm.RemainingChests}/{potFarm.TotalChests} ({fateName})");
             }
         }
     }

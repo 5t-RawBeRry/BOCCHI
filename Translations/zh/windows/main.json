@@ -6,7 +6,7 @@
   },
   "logs": {
     "open_tooltip": "打开 BOCCHI 日志",
-    "copy_all_tooltip": "复制全部 BOCCHI 日志（版本、循环、缓冲区；Debug 自动收录）"
+    "copy_all_tooltip": "复制全部 BOCCHI 日志（版本、循环、近期行，供支持用）"
   },
   "sections": {
     "trackers": "统计",
@@ -26,14 +26,18 @@
     "carrot_hunt": "胡萝卜狩猎",
     "on": "开",
     "off": "关",
-    "idle": "待机",
+    "idle": "当前没有运行中的模式",
     "whats_running": "运行中",
     "shopping_paused": "购物中",
     "click_section": "打开此分区",
     "emergency_stop_tooltip": "紧急停止 —— 停止全部自动化、移动与增益",
     "emergency_stop_done": "[BOCCHI] 紧急停止",
     "goal": "目标",
-    "current_step": "当前步骤",
+    "current_step": "步骤",
+    "path_step_walk": "步行中",
+    "path_step_teleport": "传送中",
+    "path_step_teleport_to": "传送至 {0}",
+    "path_step_return": "返回营地中",
     "chests": "魔法罐宝箱"
   },
   "pot_timer": {
@@ -121,14 +125,14 @@
       "refresh_pathfinding": "重新规划路线",
       "refresh_pathfinding_tooltip": "放弃当前路线，从你所在位置重新规划。",
       "rebuild_path_map": "重建路径图",
-      "rebuild_path_map_tooltip": "重新加载本区域路径图（与重建 vnavmesh 不同）。路线失败或在营地附近卡住时使用。",
+      "rebuild_path_map_tooltip": "重新加载本区域路径图（与重建旅行插件的网格不同）。路线失败或在营地附近卡住时使用。",
       "path_map": "路径图",
       "path_map_idle": "开启违规模式时加载",
       "path_map_loading": "加载中…",
       "path_map_building": "构建中（完成前违规模式会等待）…",
       "path_map_ready_cache": "已就绪（已保存）",
-      "path_map_ready_shipped": "已就绪（自带）",
-      "path_map_ready_built": "已就绪（刚构建）",
+      "path_map_ready_shipped": "已就绪（随 BOCCHI 附带）",
+      "path_map_ready_built": "已就绪（为本区域构建）",
       "path_map_rebuilding": "[BOCCHI] 正在重建本区域路径图…",
       "path_map_rebuild_wrong_zone": "[BOCCHI] 仅可在神典石内重建路径图。",
       "details": "详情",
@@ -175,7 +179,7 @@
       "off_left_zone": "[BOCCHI] 已离开神典石 — 魔法罐与寻宝已关闭",
       "description": "先做魔法罐危命任务并收取宝箱，随后寻宝直到该动身前往下一罐。",
       "phase": "阶段",
-      "requires_vnav": "[BOCCHI] 魔法罐与寻宝需要 vnavmesh 插件。",
+      "requires_vnav": "[BOCCHI] 魔法罐与寻宝需要旅行插件（vnavmesh）。",
       "resume_treasure_hunt": "继续寻宝",
       "resume_treasure_hunt_tooltip": "跳过等待并开始下一轮寻宝。",
       "active_fates": "进行中的魔法罐危命",
@@ -194,16 +198,25 @@
   "world": {
     "fates": {
       "title": "危命任务",
-      "none": "当前没有进行中的危命任务。"
+      "none": "当前没有进行中的危命任务。",
+      "state_preparation": "准备中",
+      "state_running": "进行中",
+      "state_ending": "即将结束"
     },
     "critical_encounters": {
       "title": "紧急遭遇战",
-      "none": "当前没有进行中的紧急遭遇战。"
+      "none": "当前没有进行中的紧急遭遇战。",
+      "state_inactive": "未开启",
+      "state_register": "报名中",
+      "state_warmup": "即将开始",
+      "state_battle": "进行中",
+      "registering": "可报名",
+      "warmup": "即将开始"
     }
   },
   "treasure": {
     "title": "寻宝",
-    "requires_vnav": "需要 vnavmesh 插件。",
+    "requires_vnav": "需要旅行插件（vnavmesh）。",
     "waiting_navmesh": "正在等待地图就绪……",
     "start_hunt": "开始寻宝",
     "start_hunt_tooltip": "按地图巡视青铜/白银宝箱并开启，空点会跳过。",

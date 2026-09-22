@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace BOCCHI.Treasure.Services;
 
-/// <summary>Shared HTTP / timing / position-key helpers for coffer and carrot crowdsource sync.</summary>
+/// <summary>Shared HTTP / timing / position-key helpers for coffer, carrot, and pot-chest crowdsource sync.</summary>
 internal static class CrowdsourceSyncHttp
 {
     public static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
@@ -28,4 +28,7 @@ internal static class CrowdsourceSyncHttp
 
     public static string PositionKey(ushort territory, uint dataId, Vector3 position) =>
         $"{territory}:{dataId}:{FormatCoord(position.X)}:{FormatCoord(position.Y)}:{FormatCoord(position.Z)}";
+
+    public static string PositionKey(ushort territory, int potFateId, bool isReroll, Vector3 position) =>
+        $"{territory}:{potFateId}:{(isReroll ? 1 : 0)}:{FormatCoord(position.X)}:{FormatCoord(position.Y)}:{FormatCoord(position.Z)}";
 }

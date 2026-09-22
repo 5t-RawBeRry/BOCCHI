@@ -29,7 +29,7 @@
     },
     "show_active_treasure_tracker": {
       "label": "Show active bronze / silver",
-      "tooltip": "On: show Treasure Sight fill (Active bronze / Active silver) in Trackers.\nOff: only show those bars under Treasure Hunter.\nCounts update after you cast Treasure Sight."
+      "tooltip": "On: show remaining bronze / silver from Treasure Sight in Trackers.\nOff: only show those bars under Treasure Hunter.\nCounts update after you cast Treasure Sight."
     },
     "show_world_section": {
       "label": "Show FATEs & CEs list"
@@ -64,7 +64,7 @@
     },
     "show_bocchi_chat_prefix": {
       "label": "Show BOCCHI chat messages",
-      "tooltip": "On: print plugin messages to chat with a [BOCCHI] tag.\nOff: hide them (startup MOTD still shows)."
+      "tooltip": "On: print plugin messages to chat with a [BOCCHI] tag.\nOff: hide them (the startup MOTD still shows)."
     }
   }
 }

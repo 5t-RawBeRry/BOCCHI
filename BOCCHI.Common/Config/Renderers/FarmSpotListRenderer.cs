@@ -109,7 +109,7 @@ public sealed class FarmSpotListRenderer(IPlayer player) : IFieldRenderer<FarmSp
             changed = true;
         }
 
-        BocchiUi.MutedText($"{T(translator, fieldKey, "origin")}: {Format(spot.Origin)}");
+        BocchiUi.MutedText($"{T(translator, fieldKey, "origin")}: {FormatRelative(spot.Origin, player.Position)}");
         if (ImGui.Button(T(translator, fieldKey, "set_origin")))
         {
             spot.SetOrigin(player.Position);
@@ -130,7 +130,8 @@ public sealed class FarmSpotListRenderer(IPlayer player) : IFieldRenderer<FarmSp
 
         if (spot.UseStackPoint)
         {
-            BocchiUi.MutedText($"{T(translator, fieldKey, "stack")}: {Format(spot.StackPoint ?? Vector3.Zero)}");
+            BocchiUi.MutedText(
+                $"{T(translator, fieldKey, "stack")}: {FormatRelative(spot.StackPoint ?? Vector3.Zero, player.Position)}");
             if (ImGui.Button(T(translator, fieldKey, "set_stack")))
             {
                 spot.SetStackPoint(player.Position);
@@ -152,7 +153,8 @@ public sealed class FarmSpotListRenderer(IPlayer player) : IFieldRenderer<FarmSp
         return changed;
     }
 
-    private static string Format(Vector3 p) => $"{p.X:0.0}, {p.Y:0.0}, {p.Z:0.0}";
+    private static string FormatRelative(Vector3 point, Vector3 from) =>
+        $"{Vector3.Distance(point, from):0}y";
 
     private static string T(ITranslator translator, string fieldKey, string suffix)
     {

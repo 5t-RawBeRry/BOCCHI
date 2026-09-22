@@ -3,7 +3,7 @@
     "label": "시작 중"
   },
   "idle": {
-    "label": "대기"
+    "label": "대기 중"
   },
   "dead": {
     "label": "전투불능"

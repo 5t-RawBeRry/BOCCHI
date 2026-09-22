@@ -9,7 +9,8 @@ namespace BOCCHI.Common.Config;
 public class TreasureConfig : IAutoConfig
 {
     /// <summary>
-    /// Download community carrot/coffer pads and pot timers; anonymously upload what you see.
+    /// Download community coffer/carrot/pot-chest pads and pot timers; anonymously upload pads you see.
+    /// Accepted pads also correct wrong built-in positions when community pads are enabled.
     /// </summary>
     [Checkbox(Order = 0, Section = "shared_maps")]
     public bool EnableSharedMaps { get; set; } = true;
@@ -39,7 +40,7 @@ public class TreasureConfig : IAutoConfig
     public string HuntCompleteSound { get; set; } = "Moogle";
 
     /// <summary>
-    ///     Carrot Hunt: empty pads stay skipped; after each Fortune Carrot use, every pad
+    ///     Carrot Hunt: empty locations stay skipped; after each Fortune Carrot use, every location
     ///     must be checked again (respawns). When a full pass finds none, keep checking
     ///     until Stop or out of Fortune Carrots.
     /// </summary>
@@ -50,7 +51,7 @@ public class TreasureConfig : IAutoConfig
     [Checkbox(Order = 9, Section = "treasure_hunt")]
     public bool CastTreasureSightDuringHunt { get; set; } = true;
 
-    /// <summary>Recast Treasure Sight every N hunt locations checked (opened or empty pads).</summary>
+    /// <summary>Recast Treasure Sight every N hunt locations checked (opened or empty).</summary>
     [IntRange(1, 50, Order = 10, Indent = 1, Requires = nameof(CastTreasureSightDuringHunt), Section = "treasure_hunt")]
     public int TreasureSightEveryNLocations { get; set; } = 10;
 
@@ -76,7 +77,7 @@ public class TreasureConfig : IAutoConfig
     public int HuntMinSilverPercent { get; set; } = 50;
 
     /// <summary>
-    ///     How close (yalms) before an empty pad is trusted and skipped. Lower walks closer
+    ///     How close (yalms) before an empty chest location is trusted and skipped. Lower walks closer
     ///     (safer when chests load late); higher skips from farther away.
     /// </summary>
     [FloatRange(10f, 60f, Order = 15, Section = "treasure_hunt")]

@@ -1,8 +1,8 @@
 {
   "label": "Treasure Hunter",
-  "tooltip": "Coffer and carrot lines, Treasure Hunt, and Carrot Hunt.",
+  "tooltip": "Treasure chest and carrot lines, Treasure Hunt, and Carrot Hunt.",
   "sections": {
-    "shared_maps": "Shared maps",
+    "shared_maps": "Chest locations",
     "radar": "Radar",
     "completion": "When hunt ends",
     "carrot_hunt": "Carrot Hunt",
@@ -11,8 +11,8 @@
   },
   "fields": {
     "enable_shared_maps": {
-      "label": "Share maps with the community",
-      "tooltip": "On: while in Occult Crescent, download shared carrot/coffer pads and pot timers, and anonymously upload what you see. Built-in pads still work if download fails.\nOff: no download or upload — built-in maps and local pot timing only."
+      "label": "Share chest locations",
+      "tooltip": "On: while in Occult Crescent, download shared treasure chest, carrot, and Magic Pot chest locations and pot timers, and anonymously upload locations you open or find (not where your character is standing). Shared locations can also fix wrong built-in ones. The built-in list still works if download fails.\nOff: no download or upload — built-in locations and local pot timing only."
     },
     "draw_line_to_bronze_chests": {
       "label": "Lines to bronze coffers",
@@ -35,7 +35,7 @@
     },
     "loop_carrot_hunt": {
       "label": "Loop Carrot Hunt",
-      "tooltip": "On: skip empty pads; after each Fortune Carrot, check every pad again. If a full pass finds none, keep checking until Stop or you run out of carrots.\nOff: one pass, then finish."
+      "tooltip": "On: skip empty carrot locations; after each Fortune Carrot, check every location again. If a full pass finds none, keep checking until Stop or you run out of carrots.\nOff: one pass, then finish."
     },
     "play_sound_on_hunt_complete": {
       "label": "Play sound when Treasure Hunt finishes"
@@ -60,16 +60,16 @@
       "label": "Silver coffers only"
     },
     "hunt_min_bronze_percent": {
-      "label": "Min bronze fill to auto-hunt (%)",
-      "tooltip": "With Treasure Sight: start when bronze fill is at least this % of 30 — or when silver meets its %.\nUsed by General → Auto treasure hunt and Mob Farmer → Treasure Hunt on a timer.\nWithout Sight: Illegal Mode uses the built-in map and ignores this."
+      "label": "Min bronze remaining to auto-hunt (%)",
+      "tooltip": "With Treasure Sight: start when bronze remaining is at least this % of 30 — or when silver meets its %.\nUsed by General → Auto treasure hunt and Mob Farmer → Treasure Hunt on a timer.\nWithout Sight: Illegal Mode uses the built-in chest list and ignores this."
     },
     "hunt_min_silver_percent": {
-      "label": "Min silver fill to auto-hunt (%)",
-      "tooltip": "With Treasure Sight: start when silver fill is at least this % of 8 — or when bronze meets its %.\nUsed by General → Auto treasure hunt and Mob Farmer → Treasure Hunt on a timer.\nWithout Sight: Illegal Mode uses the built-in map and ignores this."
+      "label": "Min silver remaining to auto-hunt (%)",
+      "tooltip": "With Treasure Sight: start when silver remaining is at least this % of 8 — or when bronze meets its %.\nUsed by General → Auto treasure hunt and Mob Farmer → Treasure Hunt on a timer.\nWithout Sight: Illegal Mode uses the built-in chest list and ignores this."
     },
     "empty_pad_trust_distance": {
-      "label": "Empty pad check distance",
-      "tooltip": "How close (yalms) before treating a pad as empty and moving on. Lower = walk closer (safer when coffers load late); higher = skip sooner."
+      "label": "Empty chest check distance",
+      "tooltip": "How close (yalms) before treating a chest location as empty and moving on. Lower = walk closer (safer when chests load late); higher = skip sooner."
     },
     "skip_unsafe_treasure_windows": {
       "label": "Skip dangerous weather / Ashkin",
@@ -77,7 +77,7 @@
     },
     "use_ninja_hide_on_dangerous_routes": {
       "label": "Ninja Hide near strong enemies",
-      "tooltip": "On: near a high-Knowledge enemy, swap to Ninja, Hide, and walk the last stretch. Stays on Ninja through the open so Hide is not dropped by a job swap next to the pack.\nOff: do not use Hide for route threats.\nTreasure Hunt, Carrot Hunt, and pot chest farm."
+      "tooltip": "On: near a high-Knowledge enemy, swap to Ninja, Hide, and walk the last stretch. Stays on Ninja through the open so Hide is not dropped by a job swap next to the pack.\nOff: do not use Hide for route threats.\nTreasure Hunt, Carrot Hunt, and Magic Pot chest farm."
     },
     "use_occult_sprint_while_hidden": {
       "label": "Occult Sprint while Hidden",
@@ -89,11 +89,11 @@
     },
     "knowledge_hide_offset": {
       "label": "Hide vs enemies this many Knowledge above you",
-      "tooltip": "Hide when a nearby enemy's Knowledge is at least yours plus this. Higher = only stronger enemies. Negative = also weaker ones. Uses your real Knowledge, not synced South Horn. 0 = same Knowledge or higher."
+      "tooltip": "Hide when a nearby enemy's Knowledge is at least yours plus this. Higher = only stronger enemies. Negative = also weaker ones. Uses your real Knowledge, not the Knowledge sync on South Horn. 0 = same Knowledge or higher."
     },
     "knowledge_threat_enter_distance": {
       "label": "Start Hide within (yalms)",
-      "tooltip": "Start Hide when a dangerous enemy is this close. While mounted, starts 5 yalms earlier. A few crowded North Horn pads start Hide farther out automatically."
+      "tooltip": "Start Hide when a dangerous enemy is this close. While mounted, starts 5 yalms earlier. A few crowded North Horn chest locations start Hide farther out automatically."
     },
     "knowledge_threat_exit_distance": {
       "label": "Keep Hide until farther than (yalms)",

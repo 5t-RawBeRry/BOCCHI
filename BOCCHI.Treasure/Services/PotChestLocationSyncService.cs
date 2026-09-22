@@ -1,9 +1,7 @@
 using BOCCHI.Common.Config;
-using BOCCHI.Common.Data;
 using BOCCHI.Common.Data.Zones;
 using BOCCHI.Common.Data.Zones.Graph;
 using BOCCHI.Common.Services;
-using BOCCHI.Treasure.Data;
 using Dalamud.Plugin;
 using Ocelot.Lifecycle;
 using Ocelot.Services.Logger;
@@ -16,21 +14,19 @@ using System.Text.Json.Serialization;
 namespace BOCCHI.Treasure.Services;
 
 /// <summary>
-///     Fetches the accepted chewed-carrot catalog for Carrot Hunt and anonymously uploads
-///     sightings when shared maps are enabled. HTTP runs off the framework thread.
+///     Fetches accepted Magic Pot chest pads and anonymously uploads opens when Share maps is on.
 /// </summary>
-public sealed class CarrotLocationSyncService
+public sealed class PotChestLocationSyncService
 (
     TreasureConfig config,
     IZoneProvider zones,
-    ICarrotTracker carrots,
     IDalamudPluginInterface plugin,
-    ILogger<CarrotLocationSyncService> logger
+    ILogger<PotChestLocationSyncService> logger
 ) : IOnUpdate
 {
     public const string ApiBaseUrl = PotCycleSyncService.ApiBaseUrl;
 
-    public const string ApiUrl = ApiBaseUrl + "/api/v1/carrot-locations";
+    public const string ApiUrl = ApiBaseUrl + "/api/v1/pot-chest-locations";
 
     private readonly Queue<PendingSubmit> queue = new();
 
@@ -52,10 +48,7 @@ public sealed class CarrotLocationSyncService
 
     private CatalogOutcome? completedCatalog;
 
-    private IReadOnlyList<AcceptedCarrotLocation> acceptedLocations = [];
-
-    /// <summary>After <see cref="CarrotTracker"/> (default Order 0).</summary>
-    public int Order => -10;
+    private IReadOnlyList<AcceptedPotChestLocation> accepted = [];
 
     public UpdateLimit UpdateLimit =>
         new()
@@ -64,22 +57,60 @@ public sealed class CarrotLocationSyncService
             Limit = 1000
         };
 
-    /// <summary>
-    ///     Baked pads with accepted remotes overwriting wrong bakes (mutual nearest), plus any
-    ///     remote-only pads. Offline / share off → baked only.
-    /// </summary>
-    public IReadOnlyList<CarrotData> GetHuntPads(IZone zone)
+    /// <summary>Kick a refresh before planning a pot farm (non-blocking if already recent).</summary>
+    public void EnsureFreshForFarm()
     {
-        List<CarrotData> baked = zone.GetCarrotData();
-        if (!config.EnableSharedMaps
-            || baked.Count == 0
-            || catalogTerritory != zone.TerritoryType
-            || acceptedLocations.Count == 0)
+        if (!config.EnableSharedMaps || !zones.GetZone().IsOccultCrescentZone())
         {
-            return baked;
+            return;
         }
 
-        return CarrotPadCatalog.Merge(baked, acceptedLocations);
+        StartCatalogRefresh(zones.GetZone().TerritoryType, force: true);
+    }
+
+    /// <summary>Primary pot pads for a FATE — baked with accepted corrections / extras.</summary>
+    public IReadOnlyList<PotChestData> GetPrimaryPads(IZone zone, int fateId)
+    {
+        if (!zone.GetPotChestData().TryGetValue(fateId, out List<PotChestData>? baked))
+        {
+            baked = [];
+        }
+
+        return MergePool(zone, fateId, isReroll: false, baked);
+    }
+
+    /// <summary>Second-chance pads — baked with accepted corrections / extras.</summary>
+    public IReadOnlyList<PotChestData> GetRerollPads(IZone zone)
+    {
+        List<PotChestData> baked = zone.GetRerollPotChestData();
+        // Reroll rows are shared across pot FATEs; filter remotes with isReroll and any fate id.
+        return MergeRerollPool(zone, baked);
+    }
+
+    public bool CanRunSmart(IZone zone, int fateId) =>
+        zone.IsPotFate(fateId) && GetPrimaryPads(zone, fateId).Count > 0;
+
+    public void Submit(int potFateId, bool isReroll, Vector3 position)
+    {
+        if (!config.EnableSharedMaps || !zones.GetZone().IsOccultCrescentZone())
+        {
+            return;
+        }
+
+        if (TreasurePathing.IsUnloadAltitude(position))
+        {
+            return;
+        }
+
+        ushort territory = zones.GetZone().TerritoryType;
+        string key = CrowdsourceSyncHttp.PositionKey(territory, potFateId, isReroll, position);
+        if (queuedKeys.Contains(key) || submittedKeys.Contains(key))
+        {
+            return;
+        }
+
+        queue.Enqueue(new PendingSubmit(territory, potFateId, isReroll, position, key));
+        queuedKeys.Add(key);
     }
 
     public void Update()
@@ -88,9 +119,9 @@ public sealed class CarrotLocationSyncService
 
         if (!config.EnableSharedMaps)
         {
-            if (acceptedLocations.Count > 0)
+            if (accepted.Count > 0)
             {
-                acceptedLocations = [];
+                accepted = [];
                 catalogTerritory = 0;
             }
 
@@ -103,10 +134,41 @@ public sealed class CarrotLocationSyncService
             return;
         }
 
-        ushort territory = zone.TerritoryType;
-        EnqueueSightedCarrots(territory);
         StartNextUpload();
-        StartCatalogRefresh(territory);
+        StartCatalogRefresh(zone.TerritoryType, force: false);
+    }
+
+    private IReadOnlyList<PotChestData> MergePool(
+        IZone zone,
+        int fateId,
+        bool isReroll,
+        IReadOnlyList<PotChestData> baked)
+    {
+        if (!config.EnableSharedMaps
+            || catalogTerritory != zone.TerritoryType
+            || accepted.Count == 0)
+        {
+            return baked;
+        }
+
+        List<AcceptedPotChestLocation> remotes = accepted
+            .Where(a => a.PotFateId == fateId && a.IsReroll == isReroll)
+            .ToList();
+        return remotes.Count == 0 ? baked.ToList() : PotChestPadCatalog.Merge(baked, remotes);
+    }
+
+    private IReadOnlyList<PotChestData> MergeRerollPool(IZone zone, IReadOnlyList<PotChestData> baked)
+    {
+        if (!config.EnableSharedMaps
+            || catalogTerritory != zone.TerritoryType
+            || accepted.Count == 0)
+        {
+            return baked;
+        }
+
+        // Reroll pads are zone-wide; accept any fate id marked isReroll (dedupe by position in Merge).
+        List<AcceptedPotChestLocation> remotes = accepted.Where(a => a.IsReroll).ToList();
+        return remotes.Count == 0 ? baked.ToList() : PotChestPadCatalog.Merge(baked, remotes);
     }
 
     private void ApplyCompletedWork()
@@ -126,8 +188,9 @@ public sealed class CarrotLocationSyncService
 
                 nextUploadAttemptUtc = DateTime.UtcNow;
                 logger.Info(
-                    "[CarrotLocationSync] uploaded territory={Territory} pos=({X:F2},{Y:F2},{Z:F2})",
-                    upload.TerritoryId,
+                    "[PotChestLocationSync] uploaded fate={Fate} reroll={Reroll} pos=({X:F2},{Y:F2},{Z:F2})",
+                    upload.PotFateId,
+                    upload.IsReroll,
                     upload.X,
                     upload.Y,
                     upload.Z);
@@ -137,11 +200,11 @@ public sealed class CarrotLocationSyncService
                 nextUploadAttemptUtc = DateTime.UtcNow + CrowdsourceSyncHttp.RetryDelay;
                 if (upload.Error is { } uploadError)
                 {
-                    logger.Warn("[CarrotLocationSync] upload failed: {Message}", uploadError);
+                    logger.Warn("[PotChestLocationSync] upload failed: {Message}", uploadError);
                 }
                 else
                 {
-                    logger.Warn("[CarrotLocationSync] upload rejected: {Status}", upload.Status ?? "?");
+                    logger.Warn("[PotChestLocationSync] upload rejected: {Status}", upload.Status ?? "?");
                 }
             }
         }
@@ -155,51 +218,25 @@ public sealed class CarrotLocationSyncService
         catalogInFlight = false;
         if (catalog.Success)
         {
-            acceptedLocations = catalog.Locations;
+            accepted = catalog.Locations;
             catalogTerritory = catalog.TerritoryId;
             nextCatalogFetchUtc = DateTime.UtcNow + CrowdsourceSyncHttp.CatalogRefreshInterval;
             logger.Info(
-                "[CarrotLocationSync] catalog territory={Territory} locations={Count}",
+                "[PotChestLocationSync] catalog territory={Territory} locations={Count}",
                 catalog.TerritoryId,
-                acceptedLocations.Count);
+                accepted.Count);
         }
         else
         {
             nextCatalogFetchUtc = DateTime.UtcNow + CrowdsourceSyncHttp.RetryDelay;
             if (catalog.Error is { } catalogError)
             {
-                logger.Warn("[CarrotLocationSync] catalog failed: {Message}", catalogError);
+                logger.Warn("[PotChestLocationSync] catalog failed: {Message}", catalogError);
             }
             else
             {
-                logger.Warn("[CarrotLocationSync] catalog rejected: {Status}", catalog.Status ?? "?");
+                logger.Warn("[PotChestLocationSync] catalog rejected: {Status}", catalog.Status ?? "?");
             }
-        }
-    }
-
-    private void EnqueueSightedCarrots(ushort territory)
-    {
-        foreach (Carrot carrot in carrots.Carrots)
-        {
-            if (!carrot.IsValid())
-            {
-                continue;
-            }
-
-            Vector3 position = carrot.GetPosition();
-            if (TreasurePathing.IsUnloadAltitude(position))
-            {
-                continue;
-            }
-
-            string key = CrowdsourceSyncHttp.PositionKey(territory, position);
-            if (queuedKeys.Contains(key) || submittedKeys.Contains(key))
-            {
-                continue;
-            }
-
-            queue.Enqueue(new PendingSubmit(territory, position, key));
-            queuedKeys.Add(key);
         }
     }
 
@@ -214,12 +251,13 @@ public sealed class CarrotLocationSyncService
         string json = JsonSerializer.Serialize(new
         {
             territoryId = (int)pending.TerritoryId,
+            potFateId = pending.PotFateId,
+            isReroll = pending.IsReroll,
             worldX = pending.Position.X,
             worldY = pending.Position.Y,
             worldZ = pending.Position.Z,
-            objectBaseId = (int)OccultObjectType.Carrot,
             installationHash = InstallationId.GetHash(plugin),
-            pluginVersion = typeof(CarrotLocationSyncService).Assembly.GetName().Version?.ToString() ?? "0",
+            pluginVersion = typeof(PotChestLocationSyncService).Assembly.GetName().Version?.ToString() ?? "0",
             observedAtUtc = DateTime.UtcNow.ToString("O"),
         });
 
@@ -249,21 +287,22 @@ public sealed class CarrotLocationSyncService
         }
     }
 
-    private void StartCatalogRefresh(ushort territory)
+    private void StartCatalogRefresh(ushort territory, bool force)
     {
         if (catalogInFlight)
         {
             return;
         }
 
-        if (catalogTerritory == territory
+        if (!force
+            && catalogTerritory == territory
             && DateTime.UtcNow < nextCatalogFetchUtc
-            && acceptedLocations.Count > 0)
+            && accepted.Count > 0)
         {
             return;
         }
 
-        if (DateTime.UtcNow < nextCatalogFetchUtc && catalogTerritory == territory)
+        if (!force && DateTime.UtcNow < nextCatalogFetchUtc && catalogTerritory == territory)
         {
             return;
         }
@@ -289,16 +328,31 @@ public sealed class CarrotLocationSyncService
                 return;
             }
 
-            CarrotCatalogResponse? parsed = JsonSerializer.Deserialize<CarrotCatalogResponse>(body, CrowdsourceSyncHttp.JsonOptions);
-            List<AcceptedCarrotLocation> locations = parsed?.Locations?
-                .Where(l => l.TerritoryId == territory && l.Position != null)
-                .Select(l => new AcceptedCarrotLocation(
-                    l.CandidateId,
-                    (ushort)l.TerritoryId,
-                    new Vector3(l.Position!.X, l.Position.Y, l.Position.Z)))
-                .Where(l => !TreasurePathing.IsUnloadAltitude(l.Position))
-                .ToList()
-                ?? [];
+            CatalogResponse? parsed = JsonSerializer.Deserialize<CatalogResponse>(body, CrowdsourceSyncHttp.JsonOptions);
+            List<AcceptedPotChestLocation> locations = [];
+            if (parsed?.Locations != null)
+            {
+                foreach (CatalogEntry entry in parsed.Locations)
+                {
+                    if (entry.Position == null || entry.TerritoryId != territory)
+                    {
+                        continue;
+                    }
+
+                    Vector3 position = new(entry.Position.X, entry.Position.Y, entry.Position.Z);
+                    if (TreasurePathing.IsUnloadAltitude(position))
+                    {
+                        continue;
+                    }
+
+                    locations.Add(new AcceptedPotChestLocation(
+                        entry.CandidateId,
+                        (ushort)entry.TerritoryId,
+                        entry.PotFateId,
+                        entry.IsReroll,
+                        position));
+                }
+            }
 
             Interlocked.Exchange(ref completedCatalog, CatalogOutcome.Ok(territory, locations));
         }
@@ -308,13 +362,20 @@ public sealed class CarrotLocationSyncService
         }
     }
 
-    private readonly record struct PendingSubmit(ushort TerritoryId, Vector3 Position, string Key);
+    private readonly record struct PendingSubmit(
+        ushort TerritoryId,
+        int PotFateId,
+        bool IsReroll,
+        Vector3 Position,
+        string Key);
 
     private sealed class UploadOutcome
     {
         public required string Key { get; init; }
 
-        public required ushort TerritoryId { get; init; }
+        public required int PotFateId { get; init; }
+
+        public required bool IsReroll { get; init; }
 
         public required float X { get; init; }
 
@@ -331,7 +392,8 @@ public sealed class CarrotLocationSyncService
         public static UploadOutcome Ok(PendingSubmit pending) => new()
         {
             Key = pending.Key,
-            TerritoryId = pending.TerritoryId,
+            PotFateId = pending.PotFateId,
+            IsReroll = pending.IsReroll,
             X = pending.Position.X,
             Y = pending.Position.Y,
             Z = pending.Position.Z,
@@ -341,7 +403,8 @@ public sealed class CarrotLocationSyncService
         public static UploadOutcome Rejected(PendingSubmit pending, string status) => new()
         {
             Key = pending.Key,
-            TerritoryId = pending.TerritoryId,
+            PotFateId = pending.PotFateId,
+            IsReroll = pending.IsReroll,
             X = pending.Position.X,
             Y = pending.Position.Y,
             Z = pending.Position.Z,
@@ -352,7 +415,8 @@ public sealed class CarrotLocationSyncService
         public static UploadOutcome Failed(PendingSubmit pending, string error) => new()
         {
             Key = pending.Key,
-            TerritoryId = pending.TerritoryId,
+            PotFateId = pending.PotFateId,
+            IsReroll = pending.IsReroll,
             X = pending.Position.X,
             Y = pending.Position.Y,
             Z = pending.Position.Z,
@@ -367,13 +431,15 @@ public sealed class CarrotLocationSyncService
 
         public required bool Success { get; init; }
 
-        public IReadOnlyList<AcceptedCarrotLocation> Locations { get; init; } = [];
+        public IReadOnlyList<AcceptedPotChestLocation> Locations { get; init; } = [];
 
         public string? Status { get; init; }
 
         public string? Error { get; init; }
 
-        public static CatalogOutcome Ok(ushort territory, IReadOnlyList<AcceptedCarrotLocation> locations) => new()
+        public static CatalogOutcome Ok(
+            ushort territory,
+            IReadOnlyList<AcceptedPotChestLocation> locations) => new()
         {
             TerritoryId = territory,
             Success = true,
@@ -395,19 +461,25 @@ public sealed class CarrotLocationSyncService
         };
     }
 
-    private sealed class CarrotCatalogResponse
+    private sealed class CatalogResponse
     {
         [JsonPropertyName("locations")]
-        public List<CarrotLocationDto>? Locations { get; set; }
+        public List<CatalogEntry>? Locations { get; set; }
     }
 
-    private sealed class CarrotLocationDto
+    private sealed class CatalogEntry
     {
         [JsonPropertyName("candidateId")]
         public int CandidateId { get; set; }
 
         [JsonPropertyName("territoryId")]
         public int TerritoryId { get; set; }
+
+        [JsonPropertyName("potFateId")]
+        public int PotFateId { get; set; }
+
+        [JsonPropertyName("isReroll")]
+        public bool IsReroll { get; set; }
 
         [JsonPropertyName("position")]
         public PositionDto? Position { get; set; }

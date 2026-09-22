@@ -6,7 +6,7 @@
   },
   "logs": {
     "open_tooltip": "Open BOCCHI logs",
-    "copy_all_tooltip": "Copy all BOCCHI logs (version, rotation, buffered lines; Debug included automatically) for Discord"
+    "copy_all_tooltip": "Copy all BOCCHI logs (version, rotation, and recent lines for Discord support)"
   },
   "sections": {
     "trackers": "Trackers",
@@ -26,14 +26,18 @@
     "carrot_hunt": "Carrot Hunt",
     "on": "On",
     "off": "Off",
-    "idle": "Idle",
+    "idle": "Nothing running",
     "whats_running": "Running",
     "shopping_paused": "Shopping",
     "click_section": "Open this section",
     "emergency_stop_tooltip": "Emergency Stop — stop all automation, movement, and buffs",
     "emergency_stop_done": "[BOCCHI] Emergency Stop",
     "goal": "Goal",
-    "current_step": "Current step",
+    "current_step": "Step",
+    "path_step_walk": "Walking",
+    "path_step_teleport": "Teleporting",
+    "path_step_teleport_to": "Teleport to {0}",
+    "path_step_return": "Returning to base camp",
     "chests": "Pot chests"
   },
   "pot_timer": {
@@ -121,14 +125,14 @@
       "refresh_pathfinding": "Replan route",
       "refresh_pathfinding_tooltip": "Drop the current route and plan a new one from where you are.",
       "rebuild_path_map": "Rebuild path map",
-      "rebuild_path_map_tooltip": "Reload this zone’s route map (not the same as rebuilding vnavmesh). Use if routes fail or you freeze near camp.",
+      "rebuild_path_map_tooltip": "Reload this zone’s route map (not the same as rebuilding the travel plugin’s mesh). Use if routes fail or you freeze near camp.",
       "path_map": "Path map",
       "path_map_idle": "Loads when Illegal Mode starts",
       "path_map_loading": "Loading…",
       "path_map_building": "Building (Illegal Mode waits until this finishes)…",
       "path_map_ready_cache": "Ready (saved)",
-      "path_map_ready_shipped": "Ready (bundled)",
-      "path_map_ready_built": "Ready (just built)",
+      "path_map_ready_shipped": "Ready (included with BOCCHI)",
+      "path_map_ready_built": "Ready (built for this zone)",
       "path_map_rebuilding": "[BOCCHI] Rebuilding path map for this zone…",
       "path_map_rebuild_wrong_zone": "[BOCCHI] Rebuild path map only works in Occult Crescent.",
       "details": "Details",
@@ -175,7 +179,7 @@
       "off_left_zone": "[BOCCHI] Left Occult Crescent — Pots & Treasure Off",
       "description": "Does pot FATEs and pot chests, then treasure hunts until it is time to leave for the next pot.",
       "phase": "Phase",
-      "requires_vnav": "[BOCCHI] Pots & Treasure needs the vnavmesh plugin.",
+      "requires_vnav": "[BOCCHI] Pots & Treasure needs the travel plugin (vnavmesh).",
       "resume_treasure_hunt": "Resume treasure hunt",
       "resume_treasure_hunt_tooltip": "Skip the wait and start another treasure hunt pass.",
       "active_fates": "Active pot FATE",
@@ -194,19 +198,28 @@
   "world": {
     "fates": {
       "title": "FATEs",
-      "none": "No active FATEs."
+      "none": "No active FATEs.",
+      "state_preparation": "Preparing",
+      "state_running": "In progress",
+      "state_ending": "Ending"
     },
     "critical_encounters": {
       "title": "Critical Encounters",
-      "none": "No active Critical Encounters."
+      "none": "No active Critical Encounters.",
+      "state_inactive": "Inactive",
+      "state_register": "Registering",
+      "state_warmup": "Starting soon",
+      "state_battle": "In progress",
+      "registering": "Open now",
+      "warmup": "Starting soon"
     }
   },
   "treasure": {
     "title": "Treasure Hunter",
-    "requires_vnav": "Needs the vnavmesh plugin.",
+    "requires_vnav": "Needs the travel plugin (vnavmesh).",
     "waiting_navmesh": "Waiting for the travel plugin to finish loading this zone…",
     "start_hunt": "Start Treasure Hunt",
-    "start_hunt_tooltip": "Route bronze and silver coffers from the map, open them, and skip empty pads.",
+    "start_hunt_tooltip": "Route bronze and silver coffers from the map, open them, and skip empty locations.",
     "pause_hunt": "Pause",
     "resume_hunt": "Resume",
     "stop_hunt": "Stop Treasure Hunt",
@@ -235,7 +248,7 @@
     "distance": "Distance: {0:F1}y",
     "position": "({0:F1}, {1:F1}, {2:F1})",
     "carrot_hunt_title": "Carrot Hunt",
-    "carrot_hunt_description": "Visits chewed-carrot pads, uses Fortune Carrots, and opens bunny chests.",
+    "carrot_hunt_description": "Visits chewed carrot locations, uses Fortune Carrots, and opens bunny chests.",
     "start_carrot_hunt": "Start Carrot Hunt",
     "stop_carrot_hunt": "Stop Carrot Hunt",
     "use_fortune_carrot": "Use Fortune Carrot",
@@ -243,13 +256,13 @@
     "carrot_hunt_phase": "Phase",
     "fortune_carrots": "Fortune Carrots",
     "carrot_hunt_phases": {
-      "idle": "Picking next pad",
+      "idle": "Picking next location",
       "pathing": "Walking to carrot",
       "using_item": "Using Fortune Carrot",
       "waiting_for_bunny": "Waiting for bunny chest",
       "opening_bunny": "Opening bunny chest",
       "approaching_aetheryte": "Walking to aetheryte",
-      "teleporting": "Teleporting via aethernet",
+      "teleporting": "Using aethernet",
       "returning": "Returning to base camp"
     }
   }

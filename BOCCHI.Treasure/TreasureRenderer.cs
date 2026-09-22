@@ -269,7 +269,7 @@ public class TreasureRenderer
             Vector3 pos = treasure.GetPosition();
             string name = treasure.GetName();
             string details =
-                $"{string.Format(translator.T(".treasure.distance"), player.Position.Distance(pos))} · {pos:f0}";
+                string.Format(translator.T(".treasure.distance"), player.Position.Distance(pos));
 
             ActivitySnapshotRenderer.RenderCompactWithActions(
                 navigation,
