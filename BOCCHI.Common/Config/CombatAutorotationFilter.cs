@@ -1,25 +1,19 @@
 using Ocelot.Config.Renderers.Enum;
-using Ocelot.Ipc.RotationSolverReborn;
 using Ocelot.Services.PluginStatus;
 
 namespace BOCCHI.Common.Config;
 
 /// <summary>
-///     Hides combat backends whose plugins are not loaded, so the dropdown only offers choices that
-///     would actually work.
+///     Combat rotation dropdown: primary backends (Wrath, BossMod) stay listed; Reborn forks only
+///     appear when that plugin is installed. The saved choice is never hidden.
 ///     <para>
-///     Wrath and Rotation Solver drive the rotation, but the movement and dodging half is BOCCHI AI,
-///     which is BossMod's misc AI — so those two additionally need BossMod or BossMod Reborn. That
-///     is why the dependency page marks all three as in use when either is selected.
+///     Wrath and Rotation Solver drive the rotation, but movement/dodging is BOCCHI AI (BossMod
+///     misc AI) — so those need BossMod or BossMod Reborn when you actually run them.
 ///     </para>
 /// </summary>
-public class CombatAutorotationFilter(IPluginStatus plugins, IRotationSolverRebornIpc rsr, AutomatorConfig config)
+public class CombatAutorotationFilter(IPluginStatus plugins, AutomatorConfig config)
     : IEnumFilter<CombatAutorotation>
 {
-    private const string WrathCombo = "WrathCombo";
-
-    private const string BossMod = "BossMod";
-
     private const string BossModReborn = "BossModReborn";
 
     public bool Filter(CombatAutorotation value)
@@ -33,15 +27,14 @@ public class CombatAutorotationFilter(IPluginStatus plugins, IRotationSolverRebo
 
         return value switch
         {
-            CombatAutorotation.WrathCombo => plugins.IsLoaded(WrathCombo) && HasBocchiAi(),
+            // Primary options — always listed (Dependencies shows Not installed if missing).
+            CombatAutorotation.WrathCombo => true,
+            CombatAutorotation.BossMod => true,
+            // Reborn forks — only if installed.
             CombatAutorotation.RotationSolverReborn =>
-                CombatPluginPresence.RotationSolverReborn(plugins, rsr) && HasBocchiAi(),
-            CombatAutorotation.BossMod => plugins.IsLoaded(BossMod),
-            CombatAutorotation.BossModReborn => plugins.IsLoaded(BossModReborn),
+                plugins.IsInstalled(CombatPluginPresence.RotationSolver),
+            CombatAutorotation.BossModReborn => plugins.IsInstalled(BossModReborn),
             _ => false,
         };
     }
-
-    /// <summary>BOCCHI AI handles movement/dodging for the Wrath and RSR options.</summary>
-    private bool HasBocchiAi() => plugins.IsLoaded(BossMod) || plugins.IsLoaded(BossModReborn);
 }

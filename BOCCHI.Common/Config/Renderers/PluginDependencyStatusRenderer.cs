@@ -54,27 +54,66 @@ public sealed class PluginDependencyStatusRenderer(
             BocchiUi.MutedWrapped(string.Format(T(translator, "using"), CombatDisplay.Display(automator.CombatAutorotation)));
         }
 
-        BocchiUi.MutedWrapped(T(translator, "optional_intro"));
+        BocchiUi.MutedWrapped(OptionalIntro(translator));
         ImGui.Spacing();
 
         Draw("Wrath Combo", "WrathCombo", translator, inUse: InUse("WrathCombo"));
-        Draw(
-            "Rotation Solver Reborn",
-            CombatPluginPresence.RotationSolver,
-            translator,
-            RsrIpcIfReachable,
-            InUse(CombatPluginPresence.RotationSolver));
+        if (ShouldShowOptional(CombatPluginPresence.RotationSolver, InUse(CombatPluginPresence.RotationSolver)))
+        {
+            Draw(
+                "Rotation Solver Reborn",
+                CombatPluginPresence.RotationSolver,
+                translator,
+                RsrIpcIfReachable,
+                InUse(CombatPluginPresence.RotationSolver));
+        }
+
         Draw("BossMod", "BossMod", translator, BossModIpcIfLoaded, InUse("BossMod"));
-        Draw("BossMod Reborn", "BossModReborn", translator, BossModIpcIfLoaded, InUse("BossModReborn"));
+        if (ShouldShowOptional("BossModReborn", InUse("BossModReborn")))
+        {
+            Draw("BossMod Reborn", "BossModReborn", translator, BossModIpcIfLoaded, InUse("BossModReborn"));
+        }
 
         return false;
     }
 
+    /// <summary>
+    ///     Mentions RSR / BossMod Reborn only when those plugins are installed — there is no
+    ///     plain “Rotation Solver”, only Rotation Solver Reborn.
+    /// </summary>
+    private string OptionalIntro(ITranslator translator)
+    {
+        bool rsr = IsInstalled(CombatPluginPresence.RotationSolver);
+        bool bmr = IsInstalled("BossModReborn");
+        string key = (rsr, bmr) switch
+        {
+            (true, true) => "optional_intro_rsr_bmr",
+            (true, false) => "optional_intro_rsr",
+            (false, true) => "optional_intro_bmr",
+            _ => "optional_intro",
+        };
+        return T(translator, key);
+    }
+
+    /// <summary>
+    ///     RSR / BossMod Reborn are alternate forks — hide when not installed unless the player
+    ///     already selected them (so a broken pick still explains itself).
+    /// </summary>
+    private bool ShouldShowOptional(string internalName, bool inUse) =>
+        inUse || IsInstalled(internalName);
+
+    private bool IsInstalled(string internalName) =>
+        pluginStatus.IsInstalled(internalName)
+        || (internalName == CombatPluginPresence.RotationSolver && rsr.IsAvailable);
+
     private bool InUse(string internalName) => automator.CombatAutorotation switch
     {
-        CombatAutorotation.WrathCombo => internalName is "WrathCombo" or "BossMod" or "BossModReborn",
+        // Wrath / RSR need a BossMod fork for BOCCHI AI — only mark forks that are actually installed.
+        CombatAutorotation.WrathCombo => internalName == "WrathCombo"
+            || ((internalName is "BossMod" or "BossModReborn") && IsInstalled(internalName)),
         CombatAutorotation.RotationSolverReborn =>
-            internalName is CombatPluginPresence.RotationSolver or "BossMod" or "BossModReborn",
+            internalName == CombatPluginPresence.RotationSolver
+            || ((internalName is "BossMod" or "BossModReborn") && IsInstalled(internalName)),
         CombatAutorotation.BossMod => internalName == "BossMod",
         CombatAutorotation.BossModReborn => internalName == "BossModReborn",
         _ => false,
