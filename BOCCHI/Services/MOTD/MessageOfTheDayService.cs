@@ -23,7 +23,7 @@ public class MessageOfTheDayService(IChatGui chat, IClientState client, IFramewo
         "Chika says that choice is an illusion.",
         "Xan felt left out. (He is cute)",
         "We ban bocchi until i see a Lexy quote when logging ijn.",
-        "Ask Kage how to turn these off on Discord!",
+        "Ask Faye how to turn these off on Discord!",
     ];
 
     private bool printedThisSession;
