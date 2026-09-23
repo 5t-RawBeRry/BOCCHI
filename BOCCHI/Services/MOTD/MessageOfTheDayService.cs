@@ -22,7 +22,7 @@ public class MessageOfTheDayService(IChatGui chat, IClientState client, IFramewo
         "MOTD brought to you by Faye, trying to cling onto the last remnants of her relevance.",
         "Chika says that choice is an illusion.",
         "Xan felt left out. (He is cute)",
-        "we ban bocchi until i see a lexy quote when logging ijn",
+        "We ban bocchi until i see a Lexy quote when logging ijn.",
     ];
 
     private bool printedThisSession;
