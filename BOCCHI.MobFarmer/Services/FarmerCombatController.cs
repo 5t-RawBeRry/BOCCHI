@@ -38,7 +38,7 @@ public sealed class FarmerCombatController(
             return;
         }
 
-        session.Prepare(CombatAutorotationSetup.ToRecipe(automatorConfig.CombatAutorotation));
+        session.Prepare(CombatAutorotationSetup.ToRecipe(automatorConfig));
         session.Disable();
     }
 

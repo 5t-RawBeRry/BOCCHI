@@ -1,4 +1,5 @@
 using BOCCHI.Common.Config.Fields;
+using Newtonsoft.Json;
 using Ocelot.Config;
 using Ocelot.Config.Fields;
 
@@ -36,6 +37,17 @@ public class AutomatorConfig : IAutoConfig
     /// </summary>
     [EnumSelect<CombatAutorotation, CombatAutorotationDisplay, CombatAutorotationFilter>(Order = 6, Section = "combat")]
     public CombatAutorotation CombatAutorotation { get; set; } = CombatAutorotation.WrathCombo;
+
+    /// <summary>
+    ///     Wrath phantom-job option names (e.g. <c>Phantom_Berserker_Rage</c>) BOCCHI leaves off
+    ///     when it takes over Wrath's Occult Crescent settings. Applied when Illegal Mode / Mob
+    ///     Farmer starts.
+    /// </summary>
+    [WrathOccultOptionBlacklist(Order = 6, Indent = 1, Requires = nameof(UsesWrathCombo), Section = "combat")]
+    [JsonProperty(ObjectCreationHandling = ObjectCreationHandling.Replace)]
+    public HashSet<string> DisabledWrathOccultOptions { get; set; } = [];
+
+    public bool UsesWrathCombo => CombatAutorotation == CombatAutorotation.WrathCombo;
 
     /// <summary>
     ///     When on, rebuild BOCCHI's BossMod FATE/CE presets from the settings below when they

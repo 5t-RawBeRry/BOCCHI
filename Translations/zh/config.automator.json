@@ -38,6 +38,12 @@
       "label": "战斗循环",
       "tooltip": "危命、紧急遭遇战和刷怪战斗中由哪个插件负责循环。\n赶路或拉怪时暂停。\nNone：手动战斗。"
     },
+    "disabled_wrath_occult_options": {
+      "label": "BOCCHI 可使用的辅助职业技能（Wrath Combo）",
+      "tooltip": "取消勾选的技能在 BOCCHI 接管 Wrath 的新月岛设置时保持关闭，例如辅助狂战士的「狂怒」可能导致吃机制而死亡。\n更改在下次启动违规模式或刷怪时生效。\n悬停技能可查看其 Wrath 选项名。",
+      "empty": "未加载 Wrath Combo，或当前 Wrath 版本不提供辅助职业选项列表。",
+      "built_in": "BOCCHI 始终关闭此项。"
+    },
     "update_boss_mod_presets_automatically": {
       "label": "自动更新预设",
       "tooltip": "开启：下方设置变更、违规模式启动、或切换职业/近战·远程时，重建 BOCCHI AI 预设。\n关闭：保留当前预设；按「更新预设」应用下方设置。",

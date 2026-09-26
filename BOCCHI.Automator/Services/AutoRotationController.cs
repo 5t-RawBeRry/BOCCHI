@@ -56,7 +56,7 @@ public class AutoRotationController(
             return;
         }
 
-        session.Prepare(CombatAutorotationSetup.ToRecipe(config.CombatAutorotation));
+        session.Prepare(CombatAutorotationSetup.ToRecipe(config));
         session.Tick(CurrentPhantomJobId());
         SyncActivityCombat();
     }

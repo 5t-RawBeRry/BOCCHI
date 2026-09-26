@@ -38,6 +38,12 @@
       "label": "Combat rotation",
       "tooltip": "Which plugin runs your rotation in FATEs, CEs, and Mob Farmer fights.\nPaused while traveling or pulling.\nNone: you fight manually."
     },
+    "disabled_wrath_occult_options": {
+      "label": "Phantom job actions BOCCHI may use (Wrath Combo)",
+      "tooltip": "Unchecked actions stay off when BOCCHI takes over Wrath's Occult Crescent settings, e.g. Berserker Rage, which can make you eat mechanics.\nChanges apply the next time Illegal Mode or Mob Farmer starts.\nHover an action to see its Wrath option name.",
+      "empty": "Wrath Combo is not loaded, or this Wrath version does not list phantom job options.",
+      "built_in": "BOCCHI always leaves this one off."
+    },
     "update_boss_mod_presets_automatically": {
       "label": "Update presets automatically",
       "tooltip": "On: rewrite BOCCHI AI presets from the settings below when they change, Illegal Mode starts, or you change job / melee / ranged.\nOff: keep current presets; press Update presets to apply the settings below.",
