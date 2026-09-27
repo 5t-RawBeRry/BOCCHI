@@ -1,9 +1,12 @@
 # 4.2.0.16
 
 ### Illegal Mode
-- Path planning failures no longer freeze Illegal Mode until you emergency-stop - it retries, then briefly skips that FATE/CE and picks another
-- Critical Encounter arrival is less likely to fail right after you walk into the wait area
-- Walking to an aetheryte for teleport is less likely to cancel/replan in a loop when you are already a step from the pad (also fixes stopping a step short of the knowledge crystal for buffs)
+- If it can’t find a path to a FATE or Critical Encounter, it no longer sits idle until you stop and start — it tries again, then briefly skips that one and picks something else
+- Less likely to get stuck right after walking into a Critical Encounter
+- Less likely to loop while one step short of an aetheryte (or the knowledge crystal when refreshing buffs)
+
+### Combat
+- You can turn off individual Wrath Combo phantom job actions (for example Berserker Rage) so Illegal Mode and Mob Farmer leave them off
 
 ### Magic Pot timers
 - If Eureka Linker is installed and showing pot timers, Illegal Mode uses those times (your own live pot still wins when you see one)
