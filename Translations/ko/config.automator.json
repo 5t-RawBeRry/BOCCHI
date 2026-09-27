@@ -38,6 +38,12 @@
       "label": "전투 로테이션",
       "tooltip": "돌발·비상 조우·몹 파머 전투에서 로테이션을 맡을 플러그인.\n이동·끌어오기 중에는 일시 중지.\nNone: 직접 싸움."
     },
+    "disabled_wrath_occult_options": {
+      "label": "BOCCHI가 사용할 서포트 직업 기술 (Wrath Combo)",
+      "tooltip": "체크를 해제한 기술은 BOCCHI가 Wrath의 초승달 섬 설정을 가져갈 때 꺼진 상태로 유지됩니다. 예: 광전사의 '분노'는 기믹을 맞고 사망하는 원인이 될 수 있습니다.\n변경 사항은 다음에 불법 모드 또는 몹 파밍을 시작할 때 적용됩니다.\n기술에 마우스를 올리면 Wrath 옵션 이름이 표시됩니다.",
+      "empty": "Wrath Combo가 로드되지 않았거나, 이 Wrath 버전은 서포트 직업 옵션 목록을 제공하지 않습니다.",
+      "built_in": "BOCCHI가 항상 끄는 항목입니다."
+    },
     "update_boss_mod_presets_automatically": {
       "label": "프리셋 자동 업데이트",
       "tooltip": "켜짐: 아래 설정이 바뀔 때·자동 모드 시작·직업/근접·원거리 전환 시 BOCCHI AI 프리셋을 다시 만듭니다.\n꺼짐: 현재 프리셋을 유지합니다. 반영하려면 프리셋 업데이트를 누르세요.",

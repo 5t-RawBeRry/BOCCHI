@@ -95,6 +95,7 @@ public sealed class Plugin(IDalamudPluginInterface plugin, IPluginLog logger) : 
         services.AddSingleton<NoOpFilter<AutoRepairMethod>>();
         services.AddSingleton<IFieldRenderer<TriageRaiseJobAttribute>, TriageRaiseJobRenderer>();
         services.AddSingleton<IFieldRenderer<BossModPresetOptionsAttribute>, BossModPresetOptionsRenderer>();
+        services.AddSingleton<IFieldRenderer<WrathOccultOptionBlacklistAttribute>, WrathOccultOptionBlacklistRenderer>();
         services.AddSingleton<IFieldRenderer<FarmSpotListAttribute>, FarmSpotListRenderer>();
         services.AddSingleton<MobFarmerYieldService>();
 

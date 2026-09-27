@@ -9,12 +9,14 @@ namespace BOCCHI.Common.Config;
 /// <summary>Shared Illegal Mode / Mob Farmer combat-backend wiring.</summary>
 public static class CombatAutorotationSetup
 {
-    public static CombatRotationRecipe ToRecipe(CombatAutorotation value) => value switch
+    public static CombatRotationRecipe ToRecipe(AutomatorConfig config) => config.CombatAutorotation switch
     {
         CombatAutorotation.WrathCombo => new(
             JobRotationBackendKind.Wrath,
             CombatAiKind.MiscAi,
-            ManualTargeting: true),
+            ManualTargeting: true,
+            // Snapshot: the session keeps this until the next Prepare.
+            DisabledOccultOptions: [.. config.DisabledWrathOccultOptions]),
         CombatAutorotation.RotationSolverReborn => new(
             JobRotationBackendKind.RotationSolverReborn,
             CombatAiKind.MiscAi,
